@@ -2,11 +2,11 @@ import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/user.model';
 import { OTPStore } from '../models/otpStore.model';
-import { tokenService } from './token.service';
+import { tokenService, DeviceInfo } from './token.service';
 import { emailService } from './email.service';
 import { ApiError } from '../utils/ApiError';
 import { MESSAGES } from '../constants/messages';
-import { generateOTP } from '../utils/generateToken';
+import { generateOTP, verifyAccessToken } from '../utils/generateToken';
 import { IUserResponse } from '../interfaces/IUser';
 import { env } from '../config/env';
 import { logger } from '../utils/logger';
@@ -53,12 +53,11 @@ export class AuthService {
 
   async sendVerificationOTP(email: string): Promise<void> {
     const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-      throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
-    }
-    if (user.isEmailVerified) {
+    if (!user || user.isEmailVerified) {
       return;
     }
+
+    await OTPStore.deleteMany({ email: email.toLowerCase(), purpose: 'email_verification' });
 
     const otp = generateOTP();
     await OTPStore.create({
@@ -91,7 +90,8 @@ export class AuthService {
 
   async login(
     email: string,
-    password: string
+    password: string,
+    deviceInfo: DeviceInfo,
   ): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
@@ -103,19 +103,64 @@ export class AuthService {
       throw ApiError.forbidden(MESSAGES.ERROR.ACCOUNT_DISABLED);
     }
 
+    if (!user.isEmailVerified) {
+      throw ApiError.unauthorized(MESSAGES.ERROR.EMAIL_NOT_VERIFIED);
+    }
+
+    if (user.accountLockedUntil && user.accountLockedUntil > new Date()) {
+      logger.warn('Attempted login on locked account', {
+        email: user.email,
+        userId: user._id.toString(),
+        lockLevel: user.lockLevel,
+        lockedUntil: user.accountLockedUntil,
+        ip: deviceInfo.ip,
+      });
+      throw ApiError.tooManyRequests(MESSAGES.ERROR.ACCOUNT_LOCKED);
+    }
+
+    if (user.accountLockedUntil && user.accountLockedUntil <= new Date()) {
+      user.failedLoginAttempts = 0;
+      user.accountLockedUntil = undefined;
+    }
+
     if (!user.password) {
+      user.failedLoginAttempts += 1;
+      user.lastFailedLogin = new Date();
+      user.lastFailedLoginIp = deviceInfo.ip;
+      await this.applyAccountLock(user);
       throw ApiError.unauthorized(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      user.failedLoginAttempts += 1;
+      user.lastFailedLogin = new Date();
+      user.lastFailedLoginIp = deviceInfo.ip;
+      await this.applyAccountLock(user);
       throw ApiError.unauthorized(MESSAGES.ERROR.INVALID_CREDENTIALS);
     }
+
+    if (user.failedLoginAttempts > 0 || user.lockLevel > 0 || user.accountLockedUntil) {
+      logger.info('Account unlocked after successful login', {
+        email: user.email,
+        userId: user._id.toString(),
+        previousLockLevel: user.lockLevel,
+        ip: deviceInfo.ip,
+      });
+    }
+
+    user.failedLoginAttempts = 0;
+    user.accountLockedUntil = undefined;
+    user.lockLevel = 0;
+    user.lastFailedLogin = undefined;
+    user.lastFailedLoginIp = undefined;
+    await user.save();
 
     const tokens = await tokenService.generateTokens(
       user._id.toString(),
       user.email,
-      user.role
+      user.role,
+      deviceInfo,
     );
 
     return {
@@ -125,7 +170,31 @@ export class AuthService {
     };
   }
 
-  async googleAuth(profile: any): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
+  private async applyAccountLock(user: any): Promise<void> {
+    const LOCK_THRESHOLD = 5;
+    const LOCK_DURATIONS = [15, 30, 60, 1440];
+
+    if (user.failedLoginAttempts >= LOCK_THRESHOLD) {
+      const level = Math.min(user.lockLevel, LOCK_DURATIONS.length - 1);
+      const lockMinutes = LOCK_DURATIONS[level];
+      user.accountLockedUntil = new Date(Date.now() + lockMinutes * 60 * 1000);
+      user.lockLevel += 1;
+      user.failedLoginAttempts = 0;
+
+      logger.warn('Account locked due to multiple failed attempts', {
+        email: user.email,
+        userId: user._id.toString(),
+        lockLevel: user.lockLevel,
+        lockDurationMinutes: lockMinutes,
+        lockedUntil: user.accountLockedUntil,
+        ip: user.lastFailedLoginIp,
+      });
+    }
+
+    await user.save();
+  }
+
+  async googleAuth(profile: any, deviceInfo: DeviceInfo): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     const email = profile.emails?.[0]?.value;
     if (!email) {
       throw ApiError.badRequest('Google account must have an email address');
@@ -156,7 +225,7 @@ export class AuthService {
       throw ApiError.forbidden(MESSAGES.ERROR.ACCOUNT_DISABLED);
     }
 
-    const tokens = await tokenService.generateTokens(user._id.toString(), user.email, user.role);
+    const tokens = await tokenService.generateTokens(user._id.toString(), user.email, user.role, deviceInfo);
 
     return {
       user: this.sanitizeUser(user),
@@ -165,7 +234,7 @@ export class AuthService {
     };
   }
 
-  async googleAuthWithCredential(credential: string): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
+  async googleAuthWithCredential(credential: string, deviceInfo: DeviceInfo): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     let ticket;
     try {
       ticket = await googleClient.verifyIdToken({
@@ -210,7 +279,7 @@ export class AuthService {
       throw ApiError.forbidden(MESSAGES.ERROR.ACCOUNT_DISABLED);
     }
 
-    const tokens = await tokenService.generateTokens(user._id.toString(), user.email, user.role);
+    const tokens = await tokenService.generateTokens(user._id.toString(), user.email, user.role, deviceInfo);
 
     return {
       user: this.sanitizeUser(user),
@@ -219,12 +288,39 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string): Promise<void> {
-    await tokenService.removeRefreshToken(userId);
+  async logout(token: string, userId: string, accessToken?: string): Promise<void> {
+    await tokenService.revokeSession(token, userId);
+
+    if (accessToken) {
+      try {
+        const decoded = verifyAccessToken(accessToken) as any;
+        if (decoded.jti && decoded.exp) {
+          await tokenService.revokeAccessToken(decoded.jti, userId, new Date(decoded.exp * 1000));
+        }
+      } catch {
+        // Invalid access token – skip revocation
+      }
+    }
   }
 
-  async refreshToken(token: string): Promise<{ accessToken: string; refreshToken: string }> {
-    return tokenService.refreshAccessToken(token);
+  async logoutAllDevices(userId: string, accessToken?: string): Promise<void> {
+    await tokenService.revokeAllSessions(userId);
+    await tokenService.revokeAllAccessTokens(userId);
+
+    if (accessToken) {
+      try {
+        const decoded = verifyAccessToken(accessToken) as any;
+        if (decoded.jti && decoded.exp) {
+          await tokenService.revokeAccessToken(decoded.jti, userId, new Date(decoded.exp * 1000));
+        }
+      } catch {
+        // Invalid access token – skip revocation
+      }
+    }
+  }
+
+  async refreshToken(token: string, deviceInfo: DeviceInfo): Promise<{ accessToken: string; refreshToken: string }> {
+    return tokenService.refreshAccessToken(token, deviceInfo);
   }
 
   async forgotPassword(email: string): Promise<void> {

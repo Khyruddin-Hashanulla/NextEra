@@ -1,17 +1,18 @@
 import { z } from 'zod';
+import { FIELD_SIZES } from '../utils/validation';
 
 export const createLiveClassSchema = z.object({
   body: z.object({
-    course: z.string().min(1, 'Course ID is required'),
-    title: z.string().min(1, 'Title is required').max(200),
-    description: z.string().optional().default(''),
-    topic: z.string().optional().default(''),
-    agenda: z.string().optional().default(''),
-    startTime: z.string().min(1, 'Start time is required'),
+    course: z.string().min(1, 'Course ID is required').max(FIELD_SIZES.URL),
+    title: z.string().min(1, 'Title is required').max(FIELD_SIZES.TITLE),
+    description: z.string().max(FIELD_SIZES.DESCRIPTION).optional().default(''),
+    topic: z.string().max(FIELD_SIZES.TOPIC).optional().default(''),
+    agenda: z.string().max(FIELD_SIZES.AGENDA).optional().default(''),
+    startTime: z.string().min(1, 'Start time is required').max(FIELD_SIZES.TIMESTAMP),
     duration: z.number().int().min(1, 'Duration must be at least 1 minute').max(1440),
-    timezone: z.string().optional().default('UTC'),
+    timezone: z.string().max(FIELD_SIZES.NAME).optional().default('UTC'),
     meetingProvider: z.enum(['zoom', 'google_meet', 'other']).optional().default('zoom'),
-    password: z.string().optional(),
+    password: z.string().max(FIELD_SIZES.TOKEN).optional(),
     settings: z.object({
       muteOnEntry: z.boolean().optional(),
       approvalType: z.enum(['automatic', 'manual']).optional(),
@@ -29,14 +30,14 @@ export const createLiveClassSchema = z.object({
 
 export const updateLiveClassSchema = z.object({
   body: z.object({
-    title: z.string().min(1).max(200).optional(),
-    description: z.string().optional(),
-    topic: z.string().optional(),
-    agenda: z.string().optional(),
-    startTime: z.string().optional(),
+    title: z.string().min(1).max(FIELD_SIZES.TITLE).optional(),
+    description: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
+    topic: z.string().max(FIELD_SIZES.TOPIC).optional(),
+    agenda: z.string().max(FIELD_SIZES.AGENDA).optional(),
+    startTime: z.string().max(FIELD_SIZES.TIMESTAMP).optional(),
     duration: z.number().int().min(1).max(1440).optional(),
-    timezone: z.string().optional(),
-    password: z.string().optional(),
+    timezone: z.string().max(FIELD_SIZES.NAME).optional(),
+    password: z.string().max(FIELD_SIZES.TOKEN).optional(),
     settings: z.object({
       muteOnEntry: z.boolean().optional(),
       approvalType: z.enum(['automatic', 'manual']).optional(),
@@ -53,13 +54,13 @@ export const updateLiveClassSchema = z.object({
 
 export const addRecordingSchema = z.object({
   body: z.object({
-    liveClass: z.string().min(1),
-    course: z.string().min(1),
-    title: z.string().min(1),
-    url: z.string().url('Recording URL is required'),
-    password: z.string().optional(),
-    duration: z.number().int().optional(),
-    format: z.string().optional(),
-    thumbnailUrl: z.string().optional(),
+    liveClass: z.string().min(1).max(FIELD_SIZES.URL),
+    course: z.string().min(1).max(FIELD_SIZES.URL),
+    title: z.string().min(1).max(FIELD_SIZES.TITLE),
+    url: z.string().url('Recording URL is required').max(FIELD_SIZES.URL),
+    password: z.string().max(FIELD_SIZES.TOKEN).optional(),
+    duration: z.number().int().max(86400).optional(),
+    format: z.string().max(FIELD_SIZES.NAME).optional(),
+    thumbnailUrl: z.string().max(FIELD_SIZES.URL).optional(),
   }),
 });

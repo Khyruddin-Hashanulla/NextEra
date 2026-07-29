@@ -27,11 +27,11 @@ export interface IInstructorSubscriptionPlan extends Document {
 
 const instructorSubscriptionPlanSchema = new Schema<IInstructorSubscriptionPlan>(
   {
-    name: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true, maxlength: 200 },
     type: { type: String, enum: ['free', 'paid'], required: true, default: 'free' },
     price: { type: Number, required: true, default: 0, min: 0 },
     durationDays: { type: Number, required: true, default: 30 },
-    description: { type: String, default: '' },
+    description: { type: String, default: '', maxlength: 5000 },
     features: {
       freeCoursesLimit: { type: Number, default: 2 },
       unlimitedCourses: { type: Boolean, default: false },

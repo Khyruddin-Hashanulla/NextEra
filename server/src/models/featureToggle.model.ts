@@ -13,9 +13,9 @@ export interface IFeatureToggle extends Document {
 
 const featureToggleSchema = new Schema<IFeatureToggle>(
   {
-    key: { type: String, required: true, unique: true, lowercase: true },
-    name: { type: String, required: true },
-    description: { type: String, default: '' },
+    key: { type: String, required: true, unique: true, lowercase: true, maxlength: 100 },
+    name: { type: String, required: true, maxlength: 200 },
+    description: { type: String, default: '', maxlength: 500 },
     enabled: { type: Boolean, default: true },
     category: {
       type: String,

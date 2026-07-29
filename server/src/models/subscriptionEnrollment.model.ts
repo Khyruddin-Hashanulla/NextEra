@@ -32,6 +32,7 @@ const subscriptionEnrollmentSchema = new Schema<ISubscriptionEnrollment>(
 );
 
 subscriptionEnrollmentSchema.index({ user: 1, status: 1 });
+subscriptionEnrollmentSchema.index({ razorpayOrderId: 1 }, { unique: true });
 
 export const SubscriptionEnrollment = mongoose.model<ISubscriptionEnrollment>(
   'SubscriptionEnrollment',

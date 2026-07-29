@@ -15,7 +15,7 @@ if (env.googleClientId && env.googleClientSecret) {
       },
       async (_accessToken, _refreshToken, profile, done) => {
         try {
-          const result = await authService.googleAuth(profile);
+          const result = await authService.googleAuth(profile, { userAgent: 'Google OAuth', ip: '' });
           done(null, result);
         } catch (error) {
           logger.error('Google OAuth error:', error);

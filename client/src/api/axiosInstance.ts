@@ -1,5 +1,24 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { API_BASE_URL, TOKEN_KEYS } from '@/lib/constants';
+import { mockAdapter } from '@/mocks/adapter';
+import { isMockingEnabled } from '@/mocks/config';
+
+let csrfToken: string | null = null;
+
+const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
+
+export async function fetchCsrfToken(): Promise<void> {
+  try {
+    const { data } = await axiosInstance.get('/csrf-token');
+    csrfToken = data.data?.csrfToken ?? null;
+  } catch {
+    csrfToken = null;
+  }
+}
+
+export function getCsrfToken(): string | null {
+  return csrfToken;
+}
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -9,12 +28,26 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
+if (isMockingEnabled()) {
+  axiosInstance.defaults.adapter = mockAdapter;
+}
+
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    if (
+      config.method &&
+      !SAFE_METHODS.includes(config.method.toUpperCase()) &&
+      csrfToken &&
+      config.headers
+    ) {
+      config.headers['X-CSRF-Token'] = csrfToken;
+    }
+
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
@@ -86,6 +119,11 @@ axiosInstance.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    const errorData = error.response?.data as { message?: string } | undefined;
+    if (error.response?.status === 403 && errorData?.message?.toLowerCase().includes('csrf')) {
+      await fetchCsrfToken();
     }
 
     return Promise.reject(error);

@@ -1,7 +1,10 @@
+import mongoose from 'mongoose';
 import { User } from '../models/user.model';
 import { Course } from '../models/course.model';
 import { Enrollment } from '../models/enrollment.model';
 import { Payment } from '../models/payment.model';
+import { Payout } from '../models/payout.model';
+import { PlatformWallet } from '../models/platformWallet.model';
 import { Category } from '../models/category.model';
 import { Coupon } from '../models/coupon.model';
 import { Blog } from '../models/blog.model';
@@ -23,6 +26,11 @@ import { RolePermission } from '../models/rolePermission.model';
 import { ApiError } from '../utils/ApiError';
 import { MESSAGES } from '../constants/messages';
 import { ROLES } from '../constants/roles';
+import { escapeRegex } from '../utils/escapeRegex';
+import { withTransaction } from '../utils/transaction';
+import { paymentService } from './payment.service';
+import { logger } from '../utils/logger';
+import { cascadeDeleteService } from './cascadeDelete.service';
 
 export class AdminService {
   async getDashboardStats() {
@@ -129,9 +137,10 @@ export class AdminService {
   async listUsers(page: number, limit: number, search?: string, role?: string) {
     const query: any = {};
     if (search) {
+      const escaped = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { name: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
       ];
     }
     if (role) query.role = role;
@@ -170,17 +179,19 @@ export class AdminService {
     return user;
   }
 
-  async deleteUser(userId: string) {
-    const user = await User.findByIdAndDelete(userId);
+  async deleteUser(userId: string, adminId: string) {
+    const user = await User.findById(userId);
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
-    await Promise.all([
-      Enrollment.deleteMany({ user: userId }),
-      Course.deleteMany({ instructor: userId }),
-    ]);
+    if (user.role === ROLES.ADMIN) {
+      throw ApiError.badRequest('Admins cannot be deleted. Use deactivation instead.');
+    }
+    await withTransaction(async (session) => {
+      await cascadeDeleteService.deleteUser(userId, adminId, session);
+    });
   }
 
   async getPendingInstructors() {
-    return User.find({ role: ROLES.INSTRUCTOR, isEmailVerified: true }).sort({ createdAt: -1 }).lean();
+    return User.find({ role: ROLES.INSTRUCTOR, isEmailVerified: true, isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
   }
 
   async approveInstructor(userId: string) {
@@ -191,10 +202,12 @@ export class AdminService {
     return user;
   }
 
-  async rejectInstructor(userId: string) {
+  async rejectInstructor(userId: string, adminId: string) {
     const user = await User.findById(userId);
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
-    await User.findByIdAndDelete(userId);
+    await withTransaction(async (session) => {
+      await cascadeDeleteService.deleteUser(userId, adminId, session);
+    });
   }
 
   async listCategories() {
@@ -339,9 +352,10 @@ export class AdminService {
   async listCourses(page: number, limit: number, search?: string, status?: string, category?: string) {
     const query: any = {};
     if (search) {
+      const escaped = escapeRegex(search);
       query.$or = [
-        { title: { $regex: search, $options: 'i' } },
-        { 'meta.seoTitle': { $regex: search, $options: 'i' } },
+        { title: { $regex: escaped, $options: 'i' } },
+        { 'meta.seoTitle': { $regex: escaped, $options: 'i' } },
       ];
     }
     if (status) query.status = status;
@@ -377,22 +391,21 @@ export class AdminService {
   }
 
   async approveCourse(courseId: string) {
-    const course = await Course.findByIdAndUpdate(
-      courseId,
-      { status: 'published', publishedAt: new Date() },
-      { new: true }
-    );
+    const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'review') throw ApiError.badRequest('Course must be in review status to approve');
+    course.status = 'approved';
+    await course.save();
     return course;
   }
 
   async rejectCourse(courseId: string, reason?: string) {
-    const course = await Course.findByIdAndUpdate(
-      courseId,
-      { status: 'draft', adminNote: reason || 'Course rejected' },
-      { new: true }
-    );
+    const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'review') throw ApiError.badRequest('Course must be in review status to reject');
+    course.status = 'rejected';
+    course.rejectionReason = reason || '';
+    await course.save();
     return course;
   }
 
@@ -493,13 +506,21 @@ export class AdminService {
   }
 
   async approveRefund(refundId: string, adminId: string, adminNote?: string) {
-    const refund = await Refund.findByIdAndUpdate(
-      refundId,
-      { status: 'approved', processedBy: adminId, processedAt: new Date(), adminNote },
-      { new: true }
-    );
+    const refund = await Refund.findById(refundId).populate('payment');
     if (!refund) throw ApiError.notFound('Refund request not found');
-    return refund;
+    if (refund.status !== 'pending') throw ApiError.badRequest('Refund is not in pending status');
+
+    const payment = refund.payment as any;
+    const isFullRefund = refund.refundType === 'full' || refund.amount >= payment.amount;
+
+    return paymentService.processRefundPayment(
+      payment._id.toString(),
+      refund.amount,
+      refund.reason,
+      refund.refundType || 'full',
+      adminId,
+      adminNote
+    );
   }
 
   async rejectRefund(refundId: string, adminId: string, adminNote?: string) {
@@ -576,10 +597,11 @@ export class AdminService {
   async listCertificates(page: number, limit: number, search?: string) {
     const query: any = {};
     if (search) {
+      const escaped = escapeRegex(search);
       const users = await User.find({
         $or: [
-          { name: { $regex: search, $options: 'i' } },
-          { email: { $regex: search, $options: 'i' } },
+          { name: { $regex: escaped, $options: 'i' } },
+          { email: { $regex: escaped, $options: 'i' } },
         ],
       }).select('_id').lean();
       query.user = { $in: users.map((u) => u._id) };
@@ -784,9 +806,10 @@ export class AdminService {
   async listStudents(page: number, limit: number, search?: string): Promise<any> {
     const query: any = { role: ROLES.STUDENT };
     if (search) {
+      const escaped = escapeRegex(search);
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { name: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
       ];
     }
 

@@ -12,9 +12,9 @@ export interface IFaq extends Document {
 
 const faqSchema = new Schema<IFaq>(
   {
-    question: { type: String, required: true, trim: true },
-    answer: { type: String, required: true },
-    category: { type: String, default: 'general', trim: true },
+    question: { type: String, required: true, trim: true, maxlength: 500 },
+    answer: { type: String, required: true, maxlength: 5000 },
+    category: { type: String, default: 'general', trim: true, maxlength: 100 },
     order: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
   },

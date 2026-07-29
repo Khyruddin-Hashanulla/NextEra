@@ -21,6 +21,7 @@ export const MESSAGES = {
     INVALID_REFRESH_TOKEN: 'Invalid refresh token.',
     EMAIL_NOT_VERIFIED: 'Please verify your email before logging in.',
     ACCOUNT_DISABLED: 'Your account has been disabled.',
+    ACCOUNT_LOCKED: 'Your account is temporarily locked due to multiple failed login attempts. Please try again later.',
     RATE_LIMIT_EXCEEDED: 'Too many requests. Please try again later.',
     INTERNAL_ERROR: 'An internal server error occurred.',
     VALIDATION_ERROR: 'Validation failed.',

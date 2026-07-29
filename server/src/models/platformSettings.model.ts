@@ -10,6 +10,13 @@ export interface IPlatformSettings extends Document {
   allowRegistration: boolean;
   defaultUserRole: 'student' | 'instructor';
   currency: string;
+  commissionPercentage: number;
+  gstPercentage: number;
+  minimumPayoutAmount: number;
+  supportEmail: string;
+  timezone: string;
+  defaultInstructorPlan: string;
+  refundWindowDays: number;
   socialLinks: {
     youtube: string;
     twitter: string;
@@ -26,22 +33,25 @@ const platformSettingsSchema = new Schema<IPlatformSettings>(
     platformName: {
       type: String,
       default: 'NextEra',
+      maxlength: 100,
     },
     platformEmail: {
       type: String,
       default: '',
+      maxlength: 254,
     },
     logo: {
-      url: { type: String, default: '' },
-      publicId: { type: String, default: '' },
+      url: { type: String, default: '', maxlength: 500 },
+      publicId: { type: String, default: '', maxlength: 200 },
     },
     favicon: {
-      url: { type: String, default: '' },
-      publicId: { type: String, default: '' },
+      url: { type: String, default: '', maxlength: 500 },
+      publicId: { type: String, default: '', maxlength: 200 },
     },
     metaDescription: {
       type: String,
       default: '',
+      maxlength: 300,
     },
     maintenanceMode: {
       type: Boolean,
@@ -60,11 +70,48 @@ const platformSettingsSchema = new Schema<IPlatformSettings>(
       type: String,
       default: 'INR',
     },
+    commissionPercentage: {
+      type: Number,
+      default: 25,
+      min: 0,
+      max: 100,
+    },
+    gstPercentage: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    minimumPayoutAmount: {
+      type: Number,
+      default: 100,
+      min: 0,
+    },
+    supportEmail: {
+      type: String,
+      default: '',
+      maxlength: 254,
+    },
+    timezone: {
+      type: String,
+      default: 'UTC',
+      maxlength: 50,
+    },
+    defaultInstructorPlan: {
+      type: String,
+      default: 'none',
+      maxlength: 100,
+    },
+    refundWindowDays: {
+      type: Number,
+      default: 14,
+      min: 0,
+    },
     socialLinks: {
-      youtube: { type: String, default: '' },
-      twitter: { type: String, default: '' },
-      linkedin: { type: String, default: '' },
-      instagram: { type: String, default: '' },
+      youtube: { type: String, default: '', maxlength: 500 },
+      twitter: { type: String, default: '', maxlength: 500 },
+      linkedin: { type: String, default: '', maxlength: 500 },
+      instagram: { type: String, default: '', maxlength: 500 },
     },
     updatedBy: {
       type: Schema.Types.ObjectId,

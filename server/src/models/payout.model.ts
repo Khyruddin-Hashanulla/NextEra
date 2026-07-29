@@ -34,11 +34,11 @@ const payoutSchema = new Schema<IPayout>(
       enum: ['pending', 'processing', 'completed', 'failed'],
       default: 'pending',
     },
-    razorpayPayoutId: String,
-    utr: String,
+    razorpayPayoutId: { type: String, maxlength: 200 },
+    utr: { type: String, maxlength: 100 },
     scheduledDate: { type: Date, required: true },
     completedDate: Date,
-    notes: String,
+    notes: { type: String, maxlength: 2000 },
   },
   { timestamps: true }
 );

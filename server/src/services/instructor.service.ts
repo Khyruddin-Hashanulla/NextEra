@@ -9,6 +9,7 @@ import { Certificate } from '../models/certificate.model';
 import { Coupon } from '../models/coupon.model';
 import { ApiError } from '../utils/ApiError';
 import { ROLES } from '../constants/roles';
+import { escapeRegex } from '../utils/escapeRegex';
 
 export class InstructorService {
   async apply(
@@ -171,7 +172,7 @@ export class InstructorService {
     const match: any = { course: { $in: courseIds } };
     if (search) {
       const users = await User.find({
-        $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }],
+        $or: [{ name: { $regex: escapeRegex(search), $options: 'i' } }, { email: { $regex: escapeRegex(search), $options: 'i' } }],
       })
         .select('_id')
         .lean();
@@ -234,7 +235,6 @@ export class InstructorService {
   }
 
   async updateCoupon(
-    instructorId: string,
     couponId: string,
     data: {
       code?: string;
@@ -247,14 +247,14 @@ export class InstructorService {
       isActive?: boolean;
     }
   ) {
-    const coupon = await Coupon.findOne({ _id: couponId, createdBy: instructorId });
+    const coupon = await Coupon.findById(couponId);
     if (!coupon) throw ApiError.notFound('Coupon not found');
     Object.assign(coupon, data);
     return coupon.save();
   }
 
-  async deleteCoupon(instructorId: string, couponId: string) {
-    const coupon = await Coupon.findOneAndDelete({ _id: couponId, createdBy: instructorId });
+  async deleteCoupon(couponId: string) {
+    const coupon = await Coupon.findByIdAndDelete(couponId);
     if (!coupon) throw ApiError.notFound('Coupon not found');
     return { deleted: true };
   }
@@ -324,8 +324,8 @@ export class InstructorService {
     return Announcement.create({ ...data, instructor: instructorId });
   }
 
-  async deleteAnnouncement(instructorId: string, announcementId: string) {
-    const announcement = await Announcement.findOneAndDelete({ _id: announcementId, instructor: instructorId });
+  async deleteAnnouncement(announcementId: string) {
+    const announcement = await Announcement.findByIdAndDelete(announcementId);
     if (!announcement) throw ApiError.notFound('Announcement not found');
     return { deleted: true };
   }
@@ -422,14 +422,22 @@ export class InstructorService {
 
     const certificateId = Date.now().toString(36) + Math.random().toString(36).substring(2, 11).toUpperCase();
 
-    return Certificate.create({
-      user: data.userId,
-      course: data.courseId,
-      enrollment: data.enrollmentId,
-      certificateId,
-      qrCodeUrl: data.qrCodeUrl || '',
-      certificateUrl: data.certificateUrl || '',
-    });
+    try {
+      return await Certificate.create({
+        user: data.userId,
+        course: data.courseId,
+        enrollment: data.enrollmentId,
+        certificateId,
+        qrCodeUrl: data.qrCodeUrl || '',
+        certificateUrl: data.certificateUrl || '',
+      });
+    } catch (error: any) {
+      if (error?.code === 11000) {
+        const cert = await Certificate.findOne({ enrollment: data.enrollmentId }).lean();
+        if (cert) return cert;
+      }
+      throw error;
+    }
   }
 }
 

@@ -8,6 +8,20 @@ export interface ICommissionSplit {
   instructorShare: number;
 }
 
+export interface IPaymentFailureDetails {
+  failureCode: string;
+  failureReason: string;
+  failureDescription: string;
+  paymentMethod: string;
+  bank: string;
+  wallet: string;
+  upiProvider: string;
+  cardLast4: string;
+  cardNetwork: string;
+  cardIssuer: string;
+  failedAt: Date;
+}
+
 export interface IPayment extends Document {
   user: mongoose.Types.ObjectId;
   type: 'course' | 'bundle' | 'subscription';
@@ -28,6 +42,10 @@ export interface IPayment extends Document {
   totalCommissionAmount: number;
   totalInstructorShare: number;
   walletCredited: boolean;
+  pendingReason?: string;
+  failureDetails?: IPaymentFailureDetails;
+  paymentCapturedAt?: Date;
+  refundedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -109,6 +127,22 @@ const paymentSchema = new Schema<IPayment>(
     totalCommissionAmount: { type: Number, default: 0 },
     totalInstructorShare: { type: Number, default: 0 },
     walletCredited: { type: Boolean, default: false },
+    pendingReason: { type: String },
+    failureDetails: {
+      failureCode: { type: String },
+      failureReason: { type: String },
+      failureDescription: { type: String },
+      paymentMethod: { type: String },
+      bank: { type: String },
+      wallet: { type: String },
+      upiProvider: { type: String },
+      cardLast4: { type: String },
+      cardNetwork: { type: String },
+      cardIssuer: { type: String },
+      failedAt: { type: Date },
+    },
+    paymentCapturedAt: { type: Date },
+    refundedAt: { type: Date },
   },
   { timestamps: true }
 );

@@ -4,7 +4,7 @@ import type { StudentDashboard, EnrolledCourse, CourseDetail, Note, Bookmark, Di
 export const studentApi = {
   getDashboard: () => axiosInstance.get<{ data: StudentDashboard }>('/student/dashboard'),
 
-  listCourses: (params?: { search?: string; category?: string; level?: string; page?: number; limit?: number }) =>
+  listCourses: (params?: { search?: string; category?: string; level?: string; sort?: string; featured?: string; page?: number; limit?: number }) =>
     axiosInstance.get<{ data: any }>('/student/courses', { params }),
 
   getCourseDetail: (id: string) =>
@@ -97,6 +97,9 @@ export const studentApi = {
   getPaymentById: (id: string) =>
     axiosInstance.get<{ data: any }>(`/student/payments/${id}`),
 
+  retryPayment: (paymentId: string) =>
+    axiosInstance.post<{ data: any }>(`/student/payments/${paymentId}/retry`),
+
   generateInvoice: (paymentId: string) =>
     axiosInstance.get(`/student/payments/${paymentId}/invoice`, { responseType: 'blob' }),
 
@@ -132,4 +135,3 @@ export const studentApi = {
   verifySubscriptionPayment: (data: { razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }) =>
     axiosInstance.post<{ data: { success: boolean; paymentId: string; subscriptionEnrollment: any } }>('/student/subscriptions/payments/verify', data),
 };
-

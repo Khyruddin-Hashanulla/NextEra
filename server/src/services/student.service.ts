@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import mongoose from 'mongoose';
 import { User } from '../models/user.model';
 import { Course } from '../models/course.model';
 import { Bundle } from '../models/bundle.model';
@@ -19,9 +20,12 @@ import { Coupon } from '../models/coupon.model';
 import { Notification } from '../models/notification.model';
 import { Wishlist } from '../models/wishlist.model';
 import { ApiError } from '../utils/ApiError';
+import { sanitizePlainText } from '../utils/sanitize';
+import { escapeRegex } from '../utils/escapeRegex';
 import { env } from '../config/env';
 import { generateCertificateSignature, generateQrCodeDataUrl, verifyCertificateSignature } from '../utils/certificate';
 import { logger } from '../utils/logger';
+import { withTransaction } from '../utils/transaction';
 import { paymentService } from './payment.service';
 
 const RAZORPAY_KEY_ID = env.razorpayKeyId;
@@ -49,7 +53,7 @@ export class StudentService {
   // ─── Course Catalog ──────────────────────────────────────────
   async listCourses(search?: string, category?: string, level?: string, page = 1, limit = 12) {
     const filter: any = { status: 'published', isApproved: true };
-    if (search) filter.title = { $regex: search, $options: 'i' };
+    if (search) filter.title = { $regex: escapeRegex(search), $options: 'i' };
     if (category) filter.category = category;
     if (level) filter.level = level;
 
@@ -118,6 +122,10 @@ export class StudentService {
 
   async verifyPayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
     return paymentService.verifyCoursePayment(userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
+  }
+
+  async retryPayment(userId: string, paymentId: string) {
+    return paymentService.retryPayment(userId, paymentId);
   }
 
   // ─── Bundles ─────────────────────────────────────────────────
@@ -259,14 +267,14 @@ export class StudentService {
     return notes;
   }
 
-  async updateNote(noteId: string, userId: string, data: { content: string; timestamp?: number }) {
-    const note = await Note.findOneAndUpdate({ _id: noteId, user: userId }, { $set: data }, { new: true });
+  async updateNote(noteId: string, data: { content: string; timestamp?: number }) {
+    const note = await Note.findByIdAndUpdate(noteId, { $set: data }, { new: true });
     if (!note) throw ApiError.notFound('Note not found');
     return note;
   }
 
-  async deleteNote(noteId: string, userId: string) {
-    const note = await Note.findOneAndDelete({ _id: noteId, user: userId });
+  async deleteNote(noteId: string) {
+    const note = await Note.findByIdAndDelete(noteId);
     if (!note) throw ApiError.notFound('Note not found');
   }
 
@@ -338,20 +346,24 @@ export class StudentService {
     const existing = await Review.findOne({ user: userId, course: courseId });
     if (existing) throw ApiError.conflict('You have already reviewed this course');
 
-    const newReview = await Review.create({ user: userId, course: courseId, rating, review });
-    await this.updateCourseRatings(courseId);
-    return newReview;
+    return withTransaction(async (session) => {
+      const [newReview] = await Review.create([{ user: userId, course: courseId, rating, review }], { session });
+      await this.updateCourseRatings(courseId, session);
+      return newReview;
+    });
   }
 
-  async updateReview(reviewId: string, userId: string, rating: number, review?: string) {
-    const updated = await Review.findOneAndUpdate(
-      { _id: reviewId, user: userId },
-      { $set: { rating, review } },
-      { new: true }
-    );
-    if (!updated) throw ApiError.notFound('Review not found');
-    await this.updateCourseRatings(updated.course.toString());
-    return updated;
+  async updateReview(reviewId: string, rating: number, review?: string) {
+    return withTransaction(async (session) => {
+      const updated = await Review.findByIdAndUpdate(
+        reviewId,
+        { $set: { rating, review } },
+        { new: true, session }
+      );
+      if (!updated) throw ApiError.notFound('Review not found');
+      await this.updateCourseRatings(updated.course.toString(), session);
+      return updated;
+    });
   }
 
   async listReviews(courseId: string, page = 1, limit = 10) {
@@ -368,16 +380,16 @@ export class StudentService {
     return { reviews, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
-  private async updateCourseRatings(courseId: string) {
+  private async updateCourseRatings(courseId: string, session?: mongoose.ClientSession) {
     const stats = await Review.aggregate([
       { $match: { course: courseId as any } },
       { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } },
-    ]);
+    ]).session(session || null);
     if (stats.length > 0) {
       await Course.findByIdAndUpdate(courseId, {
         averageRating: Math.round(stats[0].averageRating * 10) / 10,
         totalReviews: stats[0].totalReviews,
-      });
+      }, { session });
     }
   }
 
@@ -483,19 +495,29 @@ export class StudentService {
 
     const certificateUrl = `${env.clientUrl}/certificates/${certificateId}?signature=${digitalSignature.slice(0, 16)}`;
 
-    const certificate = await Certificate.create({
-      user: userId,
-      course: courseId,
-      enrollment: enrollment._id,
-      certificateId,
-      qrCodeUrl,
-      certificateUrl,
-      digitalSignature,
-    });
+    try {
+      return await withTransaction(async (session) => {
+        const [certificate] = await Certificate.create([{
+          user: userId,
+          course: courseId,
+          enrollment: enrollment._id,
+          certificateId,
+          qrCodeUrl,
+          certificateUrl,
+          digitalSignature,
+        }], { session });
 
-    await Enrollment.findByIdAndUpdate(enrollment._id, { certificateUrl });
+        await Enrollment.findByIdAndUpdate(enrollment._id, { certificateUrl }, { session });
 
-    return certificate;
+        return certificate;
+      });
+    } catch (error: any) {
+      if (error?.code === 11000) {
+        const existing = await Certificate.findOne({ user: userId, course: courseId }).lean();
+        if (existing) return existing;
+      }
+      throw error;
+    }
   }
 
   async getCertificates(userId: string): Promise<any> {
@@ -613,7 +635,7 @@ export class StudentService {
   <div class="details">
     <div>
       <strong>Bill To:</strong>
-      <p>${user.name}<br>${user.email}</p>
+      <p>${sanitizePlainText(user.name)}<br>${sanitizePlainText(user.email)}</p>
     </div>
     <div style="text-align:right">
       <strong>Invoice #:</strong> ${invoiceNumber}<br>
@@ -623,7 +645,7 @@ export class StudentService {
   </div>
   <table>
     <tr><th>Description</th><th>Amount</th></tr>
-    <tr><td>${courseTitle}</td><td>₹${amount}</td></tr>
+    <tr><td>${sanitizePlainText(courseTitle)}</td><td>₹${amount}</td></tr>
     ${payment.discountAmount > 0 ? `<tr><td>Discount</td><td>-₹${discount}</td></tr>` : ''}
     <tr style="font-weight:bold"><td>Total</td><td>₹${amount}</td></tr>
   </table>

@@ -2,6 +2,7 @@ import { Blog } from '../models/blog.model';
 import { BlogComment } from '../models/blogComment.model';
 import { BlogBookmark } from '../models/blogBookmark.model';
 import { ApiError } from '../utils/ApiError';
+import { escapeRegex } from '../utils/escapeRegex';
 
 function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200;
@@ -21,10 +22,11 @@ export const listPublishedBlogs = async (options: {
   if (options.category) query.categories = options.category;
   if (options.tag) query.tags = options.tag;
   if (options.search) {
+    const escaped = escapeRegex(options.search);
     query.$or = [
-      { title: { $regex: options.search, $options: 'i' } },
-      { excerpt: { $regex: options.search, $options: 'i' } },
-      { content: { $regex: options.search, $options: 'i' } },
+      { title: { $regex: escaped, $options: 'i' } },
+      { excerpt: { $regex: escaped, $options: 'i' } },
+      { content: { $regex: escaped, $options: 'i' } },
     ];
   }
 

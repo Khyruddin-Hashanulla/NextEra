@@ -38,7 +38,7 @@ export function RolePermissionsPage() {
   const openEdit = (rp: RolePermission) => {
     setEditing(rp);
     const merged = allModules.map((module) => {
-      const existing = rp.permissions.find((p) => p.module === module);
+      const existing = rp.permissions.find((p: { module: string; actions: string[] }) => p.module === module);
       return { module, actions: existing?.actions || [] };
      });
     setFormPermissions(merged);
@@ -88,7 +88,7 @@ export function RolePermissionsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-1 mb-4">
-                    {rp.permissions.slice(0, 5).map((p) => (
+                    {rp.permissions.slice(0, 5).map((p: { module: string; actions: string[] }) => (
                       <div key={p.module} className="flex items-center justify-between text-sm">
                         <span className="capitalize">{p.module}</span>
                         <span className="text-xs text-muted-foreground">{p.actions.join(', ')}</span>

@@ -61,12 +61,12 @@ export const createCoupon = asyncHandler(async (req: Request, res: Response) => 
 });
 
 export const updateCoupon = asyncHandler(async (req: Request, res: Response) => {
-  const data = await instructorService.updateCoupon(req.currentUser!.userId, req.params.id, req.body);
+  const data = await instructorService.updateCoupon(req.params.id, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Coupon updated', data));
 });
 
 export const deleteCoupon = asyncHandler(async (req: Request, res: Response) => {
-  await instructorService.deleteCoupon(req.currentUser!.userId, req.params.id);
+  await instructorService.deleteCoupon(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Coupon deleted', null));
 });
 
@@ -98,7 +98,7 @@ export const createAnnouncement = asyncHandler(async (req: Request, res: Respons
 });
 
 export const deleteAnnouncement = asyncHandler(async (req: Request, res: Response) => {
-  await instructorService.deleteAnnouncement(req.currentUser!.userId, req.params.id);
+  await instructorService.deleteAnnouncement(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Announcement deleted', null));
 });
 

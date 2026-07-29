@@ -20,12 +20,12 @@ export const getBySlug = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const update = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.update(req.params.id, req.currentUser!.userId, req.body);
+  const data = await courseService.update(req.params.id, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course updated', data));
 });
 
 export const remove = asyncHandler(async (req: Request, res: Response) => {
-  await courseService.delete(req.params.id, req.currentUser!.userId);
+  await courseService.delete(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course deleted', null));
 });
 
@@ -47,7 +47,7 @@ export const listAll = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const submitForReview = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.submitForReview(req.params.id, req.currentUser!.userId);
+  const data = await courseService.submitForReview(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course submitted for review', data));
 });
 
@@ -62,18 +62,23 @@ export const reject = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const publish = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.publish(req.params.id, req.currentUser!.userId);
+  const data = await courseService.publish(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course published', data));
 });
 
 export const unpublish = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.unpublish(req.params.id, req.currentUser!.userId);
+  const data = await courseService.unpublish(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course unpublished', data));
 });
 
 export const archive = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.archive(req.params.id, req.currentUser!.userId);
+  const data = await courseService.archive(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course archived', data));
+});
+
+export const restore = asyncHandler(async (req: Request, res: Response) => {
+  const data = await courseService.restore(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course restored', data));
 });
 
 export const toggleFeatured = asyncHandler(async (req: Request, res: Response) => {
@@ -92,22 +97,22 @@ export const getPublishedCurriculum = asyncHandler(async (req: Request, res: Res
 });
 
 export const createSection = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.createSection(req.params.id, req.currentUser!.userId, req.body);
+  const data = await courseService.createSection(req.params.id, req.body);
   res.status(HTTP_STATUS.CREATED).json(ApiResponse.success('Section created', data));
 });
 
 export const updateSection = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.updateSection(req.params.sectionId, req.params.id, req.currentUser!.userId, req.body);
+  const data = await courseService.updateSection(req.params.sectionId, req.params.id, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Section updated', data));
 });
 
 export const removeSection = asyncHandler(async (req: Request, res: Response) => {
-  await courseService.deleteSection(req.params.sectionId, req.params.id, req.currentUser!.userId);
+  await courseService.deleteSection(req.params.sectionId, req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Section deleted', null));
 });
 
 export const reorderSections = asyncHandler(async (req: Request, res: Response) => {
-  await courseService.reorderSections(req.params.id, req.currentUser!.userId, req.body.sectionOrder);
+  await courseService.reorderSections(req.params.id, req.body.sectionOrder);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Sections reordered', null));
 });
 
@@ -118,22 +123,22 @@ export const getSection = asyncHandler(async (req: Request, res: Response) => {
 
 export const createLecture = asyncHandler(async (req: Request, res: Response) => {
   const { sectionId } = req.params;
-  const data = await courseService.createLecture(sectionId, req.params.id, req.currentUser!.userId, req.body);
+  const data = await courseService.createLecture(sectionId, req.params.id, req.body);
   res.status(HTTP_STATUS.CREATED).json(ApiResponse.success('Lecture created', data));
 });
 
 export const updateLecture = asyncHandler(async (req: Request, res: Response) => {
-  const data = await courseService.updateLecture(req.params.lectureId, req.params.id, req.currentUser!.userId, req.body);
+  const data = await courseService.updateLecture(req.params.lectureId, req.params.id, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Lecture updated', data));
 });
 
 export const removeLecture = asyncHandler(async (req: Request, res: Response) => {
-  await courseService.deleteLecture(req.params.lectureId, req.params.id, req.currentUser!.userId);
+  await courseService.deleteLecture(req.params.lectureId, req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Lecture deleted', null));
 });
 
 export const reorderLectures = asyncHandler(async (req: Request, res: Response) => {
-  await courseService.reorderLectures(req.params.sectionId, req.params.id, req.currentUser!.userId, req.body.lectureOrder);
+  await courseService.reorderLectures(req.params.sectionId, req.params.id, req.body.lectureOrder);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Lectures reordered', null));
 });
 

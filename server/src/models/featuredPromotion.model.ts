@@ -26,7 +26,7 @@ const featuredPromotionSchema = new Schema<IFeaturedPromotion>(
     payment: { type: Schema.Types.ObjectId, ref: 'Payment' },
     status: { type: String, enum: ['active', 'expired', 'cancelled'], default: 'active' },
     position: { type: Number, default: 0 },
-    notes: String,
+    notes: { type: String, maxlength: 500 },
   },
   { timestamps: true }
 );

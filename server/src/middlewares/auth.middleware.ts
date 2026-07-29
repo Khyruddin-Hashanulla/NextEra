@@ -4,6 +4,7 @@ import { ApiError } from '../utils/ApiError';
 import { MESSAGES } from '../constants/messages';
 import { TokenPayload } from '../interfaces/IUser';
 import { User as UserModel } from '../models/user.model';
+import { RevokedToken } from '../models/revokedToken.model';
 
 declare global {
   namespace Express {
@@ -27,6 +28,17 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
     const userDoc = await UserModel.findById(decoded.userId);
     if (!userDoc || !userDoc.isActive) {
       throw ApiError.unauthorized(MESSAGES.ERROR.UNAUTHORIZED);
+    }
+
+    if (decoded.jti) {
+      const revoked = await RevokedToken.findOne({ jti: decoded.jti });
+      if (revoked) {
+        throw ApiError.unauthorized(MESSAGES.ERROR.SESSION_EXPIRED);
+      }
+    }
+
+    if (decoded.tokenVersion !== undefined && decoded.tokenVersion < userDoc.tokenVersion) {
+      throw ApiError.unauthorized(MESSAGES.ERROR.SESSION_EXPIRED);
     }
 
     req.currentUser = decoded;

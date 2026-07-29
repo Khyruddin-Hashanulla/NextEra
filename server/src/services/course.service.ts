@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Course } from '../models/course.model';
 import { Section } from '../models/section.model';
 import { Lecture } from '../models/lecture.model';
@@ -6,13 +7,18 @@ import { Enrollment } from '../models/enrollment.model';
 import { Review } from '../models/review.model';
 import { ApiError } from '../utils/ApiError';
 import { ROLES } from '../constants/roles';
+import { withTransaction } from '../utils/transaction';
+import { escapeRegex } from '../utils/escapeRegex';
+import { cascadeDeleteService } from './cascadeDelete.service';
 
 export class CourseService {
   // ─── CRUD ────────────────────────────────────────────────────
   async create(instructorId: string, data: any) {
-    const course = await Course.create({ ...data, instructor: instructorId });
-    await User.findByIdAndUpdate(instructorId, { $inc: { totalCourses: 1 } });
-    return course;
+    return withTransaction(async (session) => {
+      const [course] = await Course.create([{ ...data, instructor: instructorId }], { session });
+      await User.findByIdAndUpdate(instructorId, { $inc: { totalCourses: 1 } }, { session });
+      return course;
+    });
   }
 
   async getById(courseId: string) {
@@ -33,32 +39,37 @@ export class CourseService {
     return course;
   }
 
-  async update(courseId: string, instructorId: string, data: any) {
-    const course = await Course.findOneAndUpdate(
-      { _id: courseId, instructor: instructorId },
-      { $set: { ...data, lastActivity: new Date() } },
+  async update(courseId: string, data: any) {
+    const protectedFields = ['status', 'isApproved', 'isActive', 'publishedAt', 'archivedAt', 'rejectionReason'];
+    const sanitized = Object.keys(data).reduce((acc: any, key) => {
+      if (!protectedFields.includes(key)) acc[key] = data[key];
+      return acc;
+    }, {});
+
+    const course = await Course.findByIdAndUpdate(
+      courseId,
+      { $set: { ...sanitized, lastActivity: new Date() } },
       { new: true, runValidators: true }
     ).populate('category', 'name').lean();
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+    if (!course) throw ApiError.notFound('Course not found');
     return course;
   }
 
-  async delete(courseId: string, instructorId: string) {
-    const course = await Course.findOneAndDelete({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
-    await Section.deleteMany({ course: courseId });
-    await Lecture.deleteMany({ course: courseId });
-    await Enrollment.deleteMany({ course: courseId });
-    await Review.deleteMany({ course: courseId });
-    await User.findByIdAndUpdate(instructorId, { $inc: { totalCourses: -1 } });
-    return { deleted: true };
+  async delete(courseId: string) {
+    return withTransaction(async (session) => {
+      const course = await Course.findByIdAndDelete(courseId, { session });
+      if (!course) throw ApiError.notFound('Course not found');
+      await cascadeDeleteService.deleteCourse(courseId, session);
+      await User.findByIdAndUpdate(course.instructor, { $inc: { totalCourses: -1 } }, { session });
+      return { deleted: true };
+    });
   }
 
   async duplicate(courseId: string, instructorId: string) {
     const original = await Course.findById(courseId).lean();
     if (!original) throw ApiError.notFound('Course not found');
 
-    const newCourseData = { ...original, _id: undefined, __v: undefined, createdAt: undefined, updatedAt: undefined };
+    const newCourseData: any = { ...original, _id: undefined, __v: undefined, createdAt: undefined, updatedAt: undefined };
     newCourseData.title = `${original.title} (Copy)`;
     newCourseData.status = 'draft';
     newCourseData.isApproved = false;
@@ -67,21 +78,26 @@ export class CourseService {
     newCourseData.totalReviews = 0;
     newCourseData.lastActivity = new Date();
 
-    const newCourse = await Course.create(newCourseData);
+    return withTransaction(async (session) => {
+      const [newCourse] = await Course.create([newCourseData], { session });
 
-    const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
-    for (const section of sections) {
-      const { _id, createdAt, updatedAt, ...sectionData } = section;
-      const newSection = await Section.create({ ...sectionData, course: newCourse._id });
+      const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
+      for (const section of sections) {
+        const { _id, createdAt, updatedAt, ...sectionData } = section;
+        const [newSection] = await Section.create([{ ...sectionData, course: newCourse._id }], { session });
 
-      const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 }).lean();
-      for (const lecture of lectures) {
-        const { _id: lecId, createdAt: lc, updatedAt: lu, ...lectureData } = lecture;
-        await Lecture.create({ ...lectureData, section: newSection._id, course: newCourse._id });
+        const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 }).lean();
+        const lectureDocs = lectures.map((lecture: any) => {
+          const { _id: lecId, createdAt: lc, updatedAt: lu, ...lectureData } = lecture;
+          return { ...lectureData, section: newSection._id, course: newCourse._id };
+        });
+        if (lectureDocs.length > 0) {
+          await Lecture.insertMany(lectureDocs, { session, ordered: true });
+        }
       }
-    }
 
-    return newCourse;
+      return newCourse;
+    });
   }
 
   async listByInstructor(instructorId: string, status?: string) {
@@ -95,7 +111,7 @@ export class CourseService {
 
   async listAll(filters: { search?: string; category?: string; level?: string; status?: string; page?: number; limit?: number; sort?: string; featured?: boolean }) {
     const query: any = {};
-    if (filters.search) query.title = { $regex: filters.search, $options: 'i' };
+    if (filters.search) query.title = { $regex: escapeRegex(filters.search), $options: 'i' };
     if (filters.category) query.category = filters.category;
     if (filters.level) query.level = filters.level;
     if (filters.status) query.status = filters.status;
@@ -120,11 +136,11 @@ export class CourseService {
   }
 
   // ─── Publishing Workflow ─────────────────────────────────────
-  async submitForReview(courseId: string, instructorId: string) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
+  async submitForReview(courseId: string) {
+    const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
-    if (course.status !== 'draft' && course.status !== 'review') {
-      throw ApiError.badRequest('Only draft courses can be submitted for review');
+    if (course.status !== 'draft' && course.status !== 'rejected') {
+      throw ApiError.badRequest('Only draft or rejected courses can be submitted for review');
     }
 
     const sectionCount = await Section.countDocuments({ course: courseId });
@@ -137,6 +153,8 @@ export class CourseService {
 
     await this.recalculateTotals(courseId, course);
     course.status = 'review';
+    course.rejectionReason = '';
+    course.lastActivity = new Date();
     await course.save();
     return course;
   }
@@ -144,9 +162,9 @@ export class CourseService {
   async approve(courseId: string) {
     const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
-    if (course.status !== 'review') throw ApiError.badRequest('Course is not in review status');
-    course.status = 'published';
-    course.isApproved = true;
+    if (course.status !== 'review') throw ApiError.badRequest('Course must be in review status to approve');
+    course.status = 'approved';
+    course.lastActivity = new Date();
     await course.save();
     return course;
   }
@@ -154,16 +172,21 @@ export class CourseService {
   async reject(courseId: string, reason?: string) {
     const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
-    if (course.status !== 'review') throw ApiError.badRequest('Course is not in review status');
-    course.status = 'draft';
-    course.isApproved = false;
+    if (course.status !== 'review') throw ApiError.badRequest('Course must be in review status to reject');
+    course.status = 'rejected';
+    course.rejectionReason = reason || '';
+    course.lastActivity = new Date();
     await course.save();
-    return { rejected: true, reason };
+    return course;
   }
 
-  async publish(courseId: string, instructorId: string) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
+  async publish(courseId: string) {
+    const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'approved') {
+      throw ApiError.badRequest('Course must be approved before publishing');
+    }
+
     const sections = await Section.countDocuments({ course: courseId });
     if (!sections) throw ApiError.badRequest('Add at least one section before publishing');
     const lectures = await Lecture.countDocuments({ course: courseId });
@@ -176,23 +199,39 @@ export class CourseService {
     return course;
   }
 
-  async unpublish(courseId: string, instructorId: string) {
-    const course = await Course.findOneAndUpdate(
-      { _id: courseId, instructor: instructorId, status: 'published' },
-      { status: 'draft', courseType: 'draft', lastActivity: new Date() },
-      { new: true }
-    );
-    if (!course) throw ApiError.notFound('Course not found or not published');
+  async unpublish(courseId: string) {
+    const course = await Course.findById(courseId);
+    if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'published') {
+      throw ApiError.badRequest('Only published courses can be unpublished');
+    }
+    course.status = 'draft';
+    course.lastActivity = new Date();
+    await course.save();
     return course;
   }
 
-  async archive(courseId: string, instructorId: string) {
-    const course = await Course.findOneAndUpdate(
-      { _id: courseId, instructor: instructorId },
-      { status: 'archived', lastActivity: new Date() },
-      { new: true }
-    );
+  async archive(courseId: string) {
+    const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'published' && course.status !== 'approved') {
+      throw ApiError.badRequest('Only published or approved courses can be archived');
+    }
+    course.status = 'archived';
+    course.lastActivity = new Date();
+    await course.save();
+    return course;
+  }
+
+  async restore(courseId: string) {
+    const course = await Course.findById(courseId);
+    if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'archived') {
+      throw ApiError.badRequest('Only archived courses can be restored');
+    }
+    course.status = 'draft';
+    course.lastActivity = new Date();
+    await course.save();
     return course;
   }
 
@@ -244,21 +283,21 @@ export class CourseService {
   }
 
   // ─── Sections ────────────────────────────────────────────────
-  async createSection(courseId: string, instructorId: string, data: { title: string; description?: string; objective?: string }) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async createSection(courseId: string, data: { title: string; description?: string; objective?: string }) {
+    const course = await Course.findById(courseId);
+    if (!course) throw ApiError.notFound('Course not found');
 
     const lastSection = await Section.findOne({ course: courseId }).sort({ order: -1 });
     const order = (lastSection?.order ?? -1) + 1;
 
-    const section = await Section.create({ course: courseId, ...data, order });
-    await Course.findByIdAndUpdate(courseId, { $inc: { totalSections: 1 }, lastActivity: new Date() });
-    return section;
+    return withTransaction(async (session) => {
+      const [section] = await Section.create([{ course: courseId, ...data, order }], { session });
+      await Course.findByIdAndUpdate(courseId, { $inc: { totalSections: 1 }, lastActivity: new Date() }, { session });
+      return section;
+    });
   }
 
-  async updateSection(sectionId: string, courseId: string, instructorId: string, data: any) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async updateSection(sectionId: string, courseId: string, data: any) {
 
     const section = await Section.findOneAndUpdate(
       { _id: sectionId, course: courseId },
@@ -269,23 +308,22 @@ export class CourseService {
     return section;
   }
 
-  async deleteSection(sectionId: string, courseId: string, instructorId: string) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async deleteSection(sectionId: string, courseId: string) {
 
-    const section = await Section.findOneAndDelete({ _id: sectionId, course: courseId });
-    if (!section) throw ApiError.notFound('Section not found');
+    return withTransaction(async (session) => {
+      const section = await Section.findOneAndDelete({ _id: sectionId, course: courseId }, { session });
+      if (!section) throw ApiError.notFound('Section not found');
 
-    const deletedLectures = await Lecture.deleteMany({ section: sectionId });
-    await Course.findByIdAndUpdate(courseId, {
-      $inc: { totalSections: -1, totalLectures: -deletedLectures.deletedCount },
-      lastActivity: new Date(),
+      const deletedLectures = await Lecture.countDocuments({ section: sectionId });
+      await cascadeDeleteService.deleteSection(sectionId, courseId, session);
+      await Course.findByIdAndUpdate(courseId, {
+        $inc: { totalSections: -1, totalLectures: -deletedLectures },
+        lastActivity: new Date(),
+      }, { session });
     });
   }
 
-  async reorderSections(courseId: string, instructorId: string, sectionOrder: { sectionId: string; order: number }[]) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async reorderSections(courseId: string, sectionOrder: { sectionId: string; order: number }[]) {
 
     const updates = sectionOrder.map((s) => Section.findByIdAndUpdate(s.sectionId, { order: s.order }));
     await Promise.all(updates);
@@ -299,9 +337,7 @@ export class CourseService {
   }
 
   // ─── Lectures ────────────────────────────────────────────────
-  async createLecture(sectionId: string, courseId: string, instructorId: string, data: any) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async createLecture(sectionId: string, courseId: string, data: any) {
 
     const section = await Section.findOne({ _id: sectionId, course: courseId });
     if (!section) throw ApiError.notFound('Section not found');
@@ -315,9 +351,7 @@ export class CourseService {
     return lecture;
   }
 
-  async updateLecture(lectureId: string, courseId: string, instructorId: string, data: any) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async updateLecture(lectureId: string, courseId: string, data: any) {
 
     const lecture = await Lecture.findOneAndUpdate(
       { _id: lectureId, course: courseId },
@@ -331,20 +365,19 @@ export class CourseService {
     return lecture;
   }
 
-  async deleteLecture(lectureId: string, courseId: string, instructorId: string) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async deleteLecture(lectureId: string, courseId: string) {
 
-    const lecture = await Lecture.findOneAndDelete({ _id: lectureId, course: courseId });
+    const lecture = await Lecture.findById(lectureId).select('section').lean();
     if (!lecture) throw ApiError.notFound('Lecture not found');
 
-    await this.recalculateSection(lecture.section.toString());
-    await this.recalculateCourseTotals(courseId);
+    return withTransaction(async (session) => {
+      await cascadeDeleteService.deleteLecture(lectureId, courseId, session);
+      await this.recalculateSection(lecture.section.toString());
+      await this.recalculateCourseTotals(courseId);
+    });
   }
 
-  async reorderLectures(sectionId: string, courseId: string, instructorId: string, lectureOrder: { lectureId: string; order: number }[]) {
-    const course = await Course.findOne({ _id: courseId, instructor: instructorId });
-    if (!course) throw ApiError.notFound('Course not found or unauthorized');
+  async reorderLectures(sectionId: string, courseId: string, lectureOrder: { lectureId: string; order: number }[]) {
 
     const updates = lectureOrder.map((l) => Lecture.findByIdAndUpdate(l.lectureId, { order: l.order }));
     await Promise.all(updates);

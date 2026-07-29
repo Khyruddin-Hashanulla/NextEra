@@ -1,9 +1,13 @@
 import { LoginForm } from '../components/LoginForm';
+import { AuthLayout } from '../components/AuthLayout';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export function LoginPage() {
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <LoginForm />
-    </div>
+    <PageTransition>
+      <AuthLayout>
+        <LoginForm />
+      </AuthLayout>
+    </PageTransition>
   );
 }

@@ -22,7 +22,7 @@ export interface IAffiliate extends Document {
 const affiliateSchema = new Schema<IAffiliate>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    code: { type: String, required: true, unique: true, uppercase: true, trim: true },
+    code: { type: String, required: true, unique: true, uppercase: true, trim: true, maxlength: 50 },
     commissionPercent: { type: Number, required: true, default: 10, min: 1, max: 50 },
     totalEarnings: { type: Number, default: 0 },
     totalClicks: { type: Number, default: 0 },
@@ -30,10 +30,10 @@ const affiliateSchema = new Schema<IAffiliate>(
     status: { type: String, enum: ['active', 'inactive'], default: 'active' },
     payoutMethod: { type: String, enum: ['bank', 'paypal', 'upi'], default: 'bank' },
     payoutDetails: {
-      bankAccount: String,
-      bankIfsc: String,
-      paypalEmail: String,
-      upiId: String,
+      bankAccount: { type: String, maxlength: 50 },
+      bankIfsc: { type: String, maxlength: 20 },
+      paypalEmail: { type: String, maxlength: 254 },
+      upiId: { type: String, maxlength: 100 },
     },
   },
   { timestamps: true }

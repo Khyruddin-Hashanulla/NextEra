@@ -1,36 +1,54 @@
-import { useQuery } from '@tanstack/react-query';
-import { studentApi } from '@/api/endpoints/student';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FileQuestion, BarChart3, BookOpen } from 'lucide-react';
+import { EmptyState } from '@/components/common/EmptyState';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const item = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: 'easeOut' as const } },
+};
 
 export function QuizzesPage() {
-  const { data: courses, isLoading } = useQuery({
-    queryKey: ['student', 'my-courses'],
-    queryFn: () => studentApi.getMyCourses().then((r: any) => r.data.data),
-  });
-
-  if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  }
-
-  const quizLectures = courses?.flatMap((enrollment: any) => []);
-
   return (
-    <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Quiz Attempts</h1>
-        <p className="text-muted-foreground">Track your quiz performance across courses</p>
-      </div>
+    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
+      <motion.div variants={item}>
+        <h1 className="text-2xl font-bold tracking-tight">Quiz History</h1>
+        <p className="mt-1 text-muted-foreground">Track your quiz performance across courses</p>
+      </motion.div>
 
-      <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Attempt quizzes from the course player to see your results here.
-          <div className="mt-2">
-            <Link to="/student/my-courses" className="text-sm text-primary hover:underline">Go to My Courses</Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+      <motion.div variants={item}>
+        <EmptyState
+          icon={<FileQuestion className="h-8 w-8" />}
+          title="No quiz attempts yet"
+          description="Attempt quizzes from the course player to see your results here"
+          action={{ label: 'Go to My Courses', href: '/student/my-courses' }}
+        />
+      </motion.div>
+
+      <motion.div variants={item} className="grid gap-4 sm:grid-cols-3">
+        <div className="rounded-xl border bg-card p-5 text-center">
+          <BarChart3 className="mx-auto h-8 w-8 text-muted-foreground/50" />
+          <p className="mt-2 text-sm font-medium">Total Attempts</p>
+          <p className="text-2xl font-bold text-muted-foreground">0</p>
+        </div>
+        <div className="rounded-xl border bg-card p-5 text-center">
+          <FileQuestion className="mx-auto h-8 w-8 text-muted-foreground/50" />
+          <p className="mt-2 text-sm font-medium">Average Score</p>
+          <p className="text-2xl font-bold text-muted-foreground">--</p>
+        </div>
+        <div className="rounded-xl border bg-card p-5 text-center">
+          <BookOpen className="mx-auto h-8 w-8 text-muted-foreground/50" />
+          <p className="mt-2 text-sm font-medium">Passed</p>
+          <p className="text-2xl font-bold text-muted-foreground">0</p>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }

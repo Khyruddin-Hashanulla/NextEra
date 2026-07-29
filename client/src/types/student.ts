@@ -120,7 +120,7 @@ export interface Bundle {
   totalLectures: number;
   level: string;
   tags: string[];
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'review' | 'approved' | 'published' | 'rejected' | 'archived';
   totalEnrollments: number;
   createdAt: string;
 }

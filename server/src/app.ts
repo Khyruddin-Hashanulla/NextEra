@@ -13,23 +13,59 @@ import { globalRateLimiter } from './middlewares/rateLimiter.middleware';
 import { requestLogger } from './middlewares/logger.middleware';
 import { errorHandler } from './middlewares/errorHandler.middleware';
 import { maintenanceMode } from './middlewares/maintenance.middleware';
+import { httpsRedirect } from './middlewares/httpsRedirect.middleware';
+import { payloadGuard } from './middlewares/payloadGuard.middleware';
 import { bulkSeedFeatures } from './services/featureToggle.service';
 import { startScheduler } from './services/scheduler.service';
+import { doubleCsrfProtection } from './config/csrf';
+import csrfRoutes from './routes/csrf.routes';
 import routes from './routes/index';
 import { logger } from './utils/logger';
+import { ApiError } from './utils/ApiError';
+import { sanitizeRequestBody } from './utils/sanitize';
 
 const app = express();
 
-app.use(helmet());
+if (env.nodeEnv === 'production') {
+  app.set('trust proxy', 1);
+  logger.info('Trust proxy enabled (production)');
+}
+
+app.use(httpsRedirect);
+
+app.use(
+  helmet({
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  })
+);
+
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
+app.use(sanitizeRequestBody);
+app.use(payloadGuard);
 app.use(passport.initialize());
 app.use(globalRateLimiter);
 app.use(requestLogger);
 app.use(maintenanceMode);
+
+app.use('/api/v1', csrfRoutes);
+
+app.use('/api/v1', (req, res, next) => {
+  doubleCsrfProtection(req, res, (err) => {
+    if (err) {
+      next(ApiError.forbidden('Invalid or missing CSRF token'));
+    } else {
+      next();
+    }
+  });
+});
 
 app.use('/api/v1', routes);
 

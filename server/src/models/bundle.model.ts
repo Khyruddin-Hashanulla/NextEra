@@ -22,13 +22,13 @@ export interface IBundle extends Document {
 
 const bundleSchema = new Schema<IBundle>(
   {
-    title: { type: String, required: true, trim: true },
-    slug: { type: String, lowercase: true },
-    description: { type: String, default: '' },
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    slug: { type: String, lowercase: true, maxlength: 200 },
+    description: { type: String, default: '', maxlength: 5000 },
     shortDescription: { type: String, maxlength: 300, default: '' },
     thumbnail: {
-      url: { type: String, default: '' },
-      publicId: { type: String, default: '' },
+      url: { type: String, default: '', maxlength: 500 },
+      publicId: { type: String, default: '', maxlength: 200 },
     },
     courses: [{ type: Schema.Types.ObjectId, ref: 'Course' }],
     price: { type: Number, required: true, min: 0 },
@@ -36,7 +36,7 @@ const bundleSchema = new Schema<IBundle>(
     totalDuration: { type: Number, default: 0 },
     totalLectures: { type: Number, default: 0 },
     level: { type: String, default: 'all' },
-    tags: [String],
+    tags: [{ type: String, maxlength: 50 }],
     status: { type: String, enum: ['draft', 'published', 'archived'], default: 'draft' },
     totalEnrollments: { type: Number, default: 0 },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

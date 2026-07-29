@@ -2,6 +2,8 @@ import { CodingProblem } from '../models/codingProblem.model';
 import { CodingSubmission, ITestResult, ICodingSubmission } from '../models/codingSubmission.model';
 import { ApiError } from '../utils/ApiError';
 import mongoose from 'mongoose';
+import { withTransaction } from '../utils/transaction';
+import { escapeRegex } from '../utils/escapeRegex';
 
 interface ListProblemsOptions {
   difficulty?: string;
@@ -49,8 +51,10 @@ export const deleteProblem = async (problemId: string, userId: string) => {
   const problem = await CodingProblem.findById(problemId);
   if (!problem) throw ApiError.notFound('Problem not found');
   if (problem.createdBy.toString() !== userId) throw ApiError.forbidden('Not authorized');
-  await CodingSubmission.deleteMany({ problem: problemId });
-  await CodingProblem.findByIdAndDelete(problemId);
+  await withTransaction(async (session) => {
+    await CodingSubmission.deleteMany({ problem: problemId }, { session });
+    await CodingProblem.findByIdAndDelete(problemId, { session });
+  });
 };
 
 export const getProblemById = async (problemId: string) => {
@@ -72,9 +76,10 @@ export const listProblems = async (options: ListProblemsOptions) => {
   if (options.category) query.categories = options.category;
   if (options.course) query.course = new mongoose.Types.ObjectId(options.course);
   if (options.search) {
+    const escaped = escapeRegex(options.search);
     query.$or = [
-      { title: { $regex: options.search, $options: 'i' } },
-      { tags: { $regex: options.search, $options: 'i' } },
+      { title: { $regex: escaped, $options: 'i' } },
+      { tags: { $regex: escaped, $options: 'i' } },
     ];
   }
 

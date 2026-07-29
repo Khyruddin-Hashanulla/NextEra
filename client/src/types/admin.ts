@@ -8,6 +8,13 @@ export interface PlatformSettings {
   favicon: { url: string; publicId: string };
   metaDescription: string;
   currency: string;
+  commissionPercentage: number;
+  gstPercentage: number;
+  minimumPayoutAmount: number;
+  supportEmail: string;
+  timezone: string;
+  defaultInstructorPlan: string;
+  refundWindowDays: number;
   socialLinks: {
     facebook: string;
     twitter: string;
@@ -178,8 +185,34 @@ export interface SupportTicket extends Record<string, any> {}
 export interface FaqItem extends Record<string, any> {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface EmailTemplate extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface AuditLogItem extends Record<string, any> {}
+export interface AuditLogItem {
+  _id: string;
+  adminId: { _id: string; name: string; email: string; avatar?: { url: string } };
+  adminName: string;
+  adminEmail: string;
+  action: string;
+  resourceType: string;
+  resourceId?: string;
+  resourceName?: string;
+  previousData?: Record<string, any>;
+  newData?: Record<string, any>;
+  changedFields?: string[];
+  requestMethod?: string;
+  requestUrl?: string;
+  route?: string;
+  statusCode?: number;
+  success: boolean;
+  errorMessage?: string;
+  ipAddress?: string;
+  userAgent?: string;
+  deviceType?: string;
+  browser?: string;
+  operatingSystem?: string;
+  requestId?: string;
+  metadata?: Record<string, any>;
+  timestamp: string;
+  createdAt: string;
+}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SecurityLogItem extends Record<string, any> {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface

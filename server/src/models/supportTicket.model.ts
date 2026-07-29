@@ -24,12 +24,12 @@ export interface ISupportTicket extends Document {
 const ticketMessageSchema = new Schema<ITicketMessage>(
   {
     sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    message: { type: String, required: true },
+    message: { type: String, required: true, maxlength: 5000 },
     attachments: [
       {
-        url: { type: String },
-        publicId: { type: String },
-        name: { type: String },
+        url: { type: String, maxlength: 500 },
+        publicId: { type: String, maxlength: 200 },
+        name: { type: String, maxlength: 200 },
       },
     ],
     createdAt: { type: Date, default: Date.now },
@@ -39,8 +39,8 @@ const ticketMessageSchema = new Schema<ITicketMessage>(
 const supportTicketSchema = new Schema<ISupportTicket>(
   {
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    subject: { type: String, required: true, trim: true },
-    description: { type: String, required: true },
+    subject: { type: String, required: true, trim: true, maxlength: 200 },
+    description: { type: String, required: true, maxlength: 5000 },
     category: {
       type: String,
       enum: ['technical', 'billing', 'course', 'account', 'other'],

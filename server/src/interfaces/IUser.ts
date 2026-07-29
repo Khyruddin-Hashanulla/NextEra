@@ -1,4 +1,4 @@
-import { Document } from 'mongoose';
+import mongoose, { Document } from 'mongoose';
 import { Role } from '../constants/roles';
 
 export interface IUser extends Document {
@@ -19,9 +19,17 @@ export interface IUser extends Document {
     website?: string;
   };
   isEmailVerified: boolean;
-  refreshToken?: string;
   googleId?: string;
   isActive: boolean;
+  isDeleted: boolean;
+  deletedAt?: Date;
+  deletedBy?: mongoose.Types.ObjectId;
+  failedLoginAttempts: number;
+  accountLockedUntil?: Date;
+  lockLevel: number;
+  lastFailedLogin?: Date;
+  lastFailedLoginIp?: string;
+  tokenVersion: number;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   instructorProfile?: {
@@ -72,4 +80,6 @@ export interface TokenPayload {
   userId: string;
   role: Role;
   email: string;
+  jti?: string;
+  tokenVersion?: number;
 }

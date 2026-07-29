@@ -16,20 +16,20 @@ export interface IBackupLog extends Document {
 
 const backupLogSchema = new Schema<IBackupLog>(
   {
-    fileName: { type: String, required: true },
+    fileName: { type: String, required: true, maxlength: 255 },
     fileSize: { type: Number, default: 0 },
     type: { type: String, enum: ['full', 'partial'], default: 'full' },
-    collections: [{ type: String }],
+    collections: [{ type: String, maxlength: 100 }],
     status: {
       type: String,
       enum: ['running', 'completed', 'failed'],
       default: 'running',
     },
-    url: { type: String },
-    error: { type: String },
+    url: { type: String, maxlength: 500 },
+    error: { type: String, maxlength: 5000 },
     startedAt: { type: Date, default: Date.now },
     completedAt: { type: Date },
-    createdBy: { type: String },
+    createdBy: { type: String, maxlength: 200 },
   },
   { timestamps: { createdAt: true, updatedAt: false } }
 );

@@ -1,9 +1,13 @@
 import { RegisterForm } from '../components/RegisterForm';
+import { AuthLayout } from '../components/AuthLayout';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export function RegisterPage() {
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <RegisterForm />
-    </div>
+    <PageTransition>
+      <AuthLayout>
+        <RegisterForm />
+      </AuthLayout>
+    </PageTransition>
   );
 }

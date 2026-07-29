@@ -2,7 +2,7 @@ import { Router } from 'express';
 import {
   create, getById, getBySlug, update, remove, duplicate,
   listMyCourses, listAll,
-  submitForReview, approve, reject, publish, unpublish, archive, toggleFeatured,
+  submitForReview, approve, reject, publish, unpublish, archive, restore, toggleFeatured,
   getCurriculum, getPublishedCurriculum,
   createSection, updateSection, removeSection, reorderSections, getSection,
   createLecture, updateLecture, removeLecture, reorderLectures, getLecture,
@@ -11,6 +11,11 @@ import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { ROLES } from '../constants/roles';
+import {
+  verifyCourseOwnership,
+  verifySectionOwnership,
+  verifyLectureOwnership,
+} from '../middlewares/ownership.middleware';
 import {
   createCourseSchema, updateCourseSchema,
   createSectionSchema, updateSectionSchema,
@@ -34,29 +39,30 @@ router.get('/:id/sections/:sectionId', authenticate, authorize(ROLES.INSTRUCTOR,
 router.get('/:id/lectures/:lectureId', getLecture);
 
 router.post('/', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(createCourseSchema), create);
-router.put('/:id', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(updateCourseSchema), update);
-router.delete('/:id', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), remove);
-router.post('/:id/duplicate', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), duplicate);
+router.put('/:id', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, validate(updateCourseSchema), update);
+router.delete('/:id', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, remove);
+router.post('/:id/duplicate', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, duplicate);
 
 // Publishing
-router.post('/:id/submit', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), submitForReview);
+router.post('/:id/submit', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, submitForReview);
 router.post('/:id/approve', authenticate, authorize(ROLES.ADMIN), approve);
 router.post('/:id/reject', authenticate, authorize(ROLES.ADMIN), reject);
-router.post('/:id/publish', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), publish);
-router.post('/:id/unpublish', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), unpublish);
-router.post('/:id/archive', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), archive);
+router.post('/:id/publish', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, publish);
+router.post('/:id/unpublish', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, unpublish);
+router.post('/:id/archive', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, archive);
+router.post('/:id/restore', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, restore);
 router.post('/:id/featured', authenticate, authorize(ROLES.ADMIN), toggleFeatured);
 
 // Sections
-router.post('/:id/sections', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(createSectionSchema), createSection);
-router.put('/:id/sections/:sectionId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(updateSectionSchema), updateSection);
-router.delete('/:id/sections/:sectionId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), removeSection);
-router.put('/:id/sections/reorder', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(reorderSectionsSchema), reorderSections);
+router.post('/:id/sections', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, validate(createSectionSchema), createSection);
+router.put('/:id/sections/:sectionId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifySectionOwnership, validate(updateSectionSchema), updateSection);
+router.delete('/:id/sections/:sectionId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifySectionOwnership, removeSection);
+router.put('/:id/sections/reorder', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, validate(reorderSectionsSchema), reorderSections);
 
 // Lectures
-router.post('/:id/sections/:sectionId/lectures', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(createLectureSchema), createLecture);
-router.put('/:id/lectures/:lectureId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(updateLectureSchema), updateLecture);
-router.delete('/:id/lectures/:lectureId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), removeLecture);
-router.put('/:id/sections/:sectionId/lectures/reorder', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(reorderLecturesSchema), reorderLectures);
+router.post('/:id/sections/:sectionId/lectures', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifySectionOwnership, validate(createLectureSchema), createLecture);
+router.put('/:id/lectures/:lectureId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyLectureOwnership, validate(updateLectureSchema), updateLecture);
+router.delete('/:id/lectures/:lectureId', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyLectureOwnership, removeLecture);
+router.put('/:id/sections/:sectionId/lectures/reorder', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifySectionOwnership, validate(reorderLecturesSchema), reorderLectures);
 
 export default router;

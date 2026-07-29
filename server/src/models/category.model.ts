@@ -17,20 +17,24 @@ const categorySchema = new Schema<ICategory>(
       required: [true, 'Category name is required'],
       unique: true,
       trim: true,
+      maxlength: 100,
     },
     slug: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
+      maxlength: 100,
     },
     description: {
       type: String,
       default: '',
+      maxlength: 500,
     },
     icon: {
       type: String,
       default: '',
+      maxlength: 200,
     },
     isActive: {
       type: Boolean,

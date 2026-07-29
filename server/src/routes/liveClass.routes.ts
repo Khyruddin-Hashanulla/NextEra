@@ -10,6 +10,7 @@ import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { ROLES } from '../constants/roles';
+import { verifyLiveClassOwnership } from '../middlewares/ownership.middleware';
 import {
   createLiveClassSchema, updateLiveClassSchema, addRecordingSchema,
 } from '../validators/liveClass.validator';
@@ -25,10 +26,10 @@ router.post('/instructor/recordings', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), 
 router.delete('/instructor/recordings/:id', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), deleteRecording);
 
 router.post('/', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(createLiveClassSchema), createLiveClass);
-router.put('/:id', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(updateLiveClassSchema), updateLiveClass);
-router.post('/:id/cancel', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), cancelLiveClass);
-router.post('/:id/start', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), startLiveClass);
-router.post('/:id/end', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), endLiveClass);
+router.put('/:id', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyLiveClassOwnership, validate(updateLiveClassSchema), updateLiveClass);
+router.post('/:id/cancel', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyLiveClassOwnership, cancelLiveClass);
+router.post('/:id/start', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyLiveClassOwnership, startLiveClass);
+router.post('/:id/end', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyLiveClassOwnership, endLiveClass);
 
 // ─── Student Routes ────────────────────────────────────────────
 router.get('/student', listStudentLiveClasses);

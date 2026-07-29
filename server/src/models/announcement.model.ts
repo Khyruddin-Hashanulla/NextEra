@@ -15,12 +15,12 @@ const announcementSchema = new Schema<IAnnouncement>(
   {
     course: { type: Schema.Types.ObjectId, ref: 'Course', required: true },
     instructor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    title: { type: String, required: true, trim: true },
-    message: { type: String, required: true },
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    message: { type: String, required: true, maxlength: 5000 },
     attachments: [{
-      url: { type: String },
-      publicId: { type: String },
-      name: { type: String },
+      url: { type: String, maxlength: 500 },
+      publicId: { type: String, maxlength: 200 },
+      name: { type: String, maxlength: 200 },
     }],
     sendEmail: { type: Boolean, default: false },
   },

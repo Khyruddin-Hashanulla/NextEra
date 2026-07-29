@@ -3,6 +3,7 @@ import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { ROLES } from '../constants/roles';
 import { validate } from '../middlewares/validate.middleware';
+import { verifyCodingSubmissionOwnership } from '../middlewares/ownership.middleware';
 import * as codingController from '../controllers/codingProblem.controller';
 import {
   createCodingProblemSchema,
@@ -62,6 +63,7 @@ router.get(
 router.get(
   '/submissions/:submissionId',
   authenticate,
+  verifyCodingSubmissionOwnership,
   codingController.getSubmissionById,
 );
 

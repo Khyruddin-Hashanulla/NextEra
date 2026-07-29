@@ -16,12 +16,12 @@ export interface ISubscription extends Document {
 
 const subscriptionSchema = new Schema<ISubscription>(
   {
-    name: { type: String, required: true, trim: true },
-    description: { type: String, default: '' },
+    name: { type: String, required: true, trim: true, maxlength: 200 },
+    description: { type: String, default: '', maxlength: 5000 },
     price: { type: Number, required: true, min: 0 },
     discountedPrice: { type: Number, default: 0, min: 0 },
     durationDays: { type: Number, required: true, default: 30 },
-    features: [String],
+    features: [{ type: String, maxlength: 200 }],
     level: {
       type: String,
       enum: ['basic', 'standard', 'premium'],

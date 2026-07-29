@@ -72,12 +72,12 @@ export const listNotes = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export const updateNote = asyncHandler(async (req: Request, res: Response) => {
-  const data = await studentService.updateNote(req.params.id, req.currentUser!.userId, req.body);
+  const data = await studentService.updateNote(req.params.id, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Note updated', data));
 });
 
 export const deleteNote = asyncHandler(async (req: Request, res: Response) => {
-  await studentService.deleteNote(req.params.id, req.currentUser!.userId);
+  await studentService.deleteNote(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Note deleted', null));
 });
 
@@ -120,7 +120,7 @@ export const createReview = asyncHandler(async (req: Request, res: Response) => 
 
 export const updateReview = asyncHandler(async (req: Request, res: Response) => {
   const { rating, review } = req.body;
-  const data = await studentService.updateReview(req.params.id, req.currentUser!.userId, rating, review);
+  const data = await studentService.updateReview(req.params.id, rating, review);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Review updated', data));
 });
 
@@ -180,6 +180,12 @@ export const toggleWishlist = asyncHandler(async (req: Request, res: Response) =
 export const listWishlist = asyncHandler(async (req: Request, res: Response) => {
   const data = await studentService.listWishlist(req.currentUser!.userId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Wishlist fetched', data));
+});
+
+// ─── Retry Payment ─────────────────────────────────────────────
+export const retryPayment = asyncHandler(async (req: Request, res: Response) => {
+  const data = await studentService.retryPayment(req.currentUser!.userId, req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Payment retry initiated', data));
 });
 
 // ─── Order History ─────────────────────────────────────────────

@@ -22,11 +22,11 @@ const rolePermissionSchema = new Schema<IRolePermission>(
     },
     permissions: [
       {
-        module: { type: String, required: true },
+        module: { type: String, required: true, maxlength: 100 },
         actions: [{ type: String, enum: ['create', 'read', 'update', 'delete'] }],
       },
     ],
-    description: { type: String },
+    description: { type: String, maxlength: 500 },
     isDefault: { type: Boolean, default: false },
   },
   { timestamps: true }

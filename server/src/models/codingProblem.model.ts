@@ -32,21 +32,21 @@ export interface ICodingProblem extends Document {
 }
 
 const testCaseSchema = new Schema<ITestCase>({
-  input: { type: String, required: true },
-  expectedOutput: { type: String, required: true },
+  input: { type: String, required: true, maxlength: 5000 },
+  expectedOutput: { type: String, required: true, maxlength: 5000 },
   isSample: { type: Boolean, default: false },
-  explanation: { type: String },
+  explanation: { type: String, maxlength: 2000 },
 }, { _id: false });
 
 const codingProblemSchema = new Schema<ICodingProblem>(
   {
     title: { type: String, required: true, trim: true, maxlength: 200 },
-    slug: { type: String, required: true, unique: true, lowercase: true },
+    slug: { type: String, required: true, unique: true, lowercase: true, maxlength: 200 },
     description: { type: String, required: true, maxlength: 50000 },
     difficulty: { type: String, enum: ['easy', 'medium', 'hard'], required: true },
-    tags: [{ type: String, trim: true, lowercase: true }],
-    categories: [{ type: String, trim: true, lowercase: true }],
-    supportedLanguages: [{ type: String, enum: ['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust'], default: ['javascript', 'python'] }],
+    tags: [{ type: String, trim: true, lowercase: true, maxlength: 50 }],
+    categories: [{ type: String, trim: true, lowercase: true, maxlength: 50 }],
+    supportedLanguages: [{ type: String, enum: ['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust'], default: ['javascript', 'python'], maxlength: 20 }],
     timeLimit: { type: Number, default: 2, min: 1, max: 60 },
     memoryLimit: { type: Number, default: 256, min: 16, max: 1024 },
     testCases: [testCaseSchema],
@@ -63,7 +63,6 @@ const codingProblemSchema = new Schema<ICodingProblem>(
   { timestamps: true }
 );
 
-codingProblemSchema.index({ slug: 1 }, { unique: true });
 codingProblemSchema.index({ difficulty: 1, isPublished: 1 });
 codingProblemSchema.index({ tags: 1 });
 

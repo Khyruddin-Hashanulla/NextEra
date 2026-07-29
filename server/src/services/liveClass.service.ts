@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { LiveClass } from '../models/liveClass.model';
 import { LiveClassRecording } from '../models/liveClassRecording.model';
 import { Enrollment } from '../models/enrollment.model';
@@ -5,6 +6,7 @@ import { Course } from '../models/course.model';
 import { User } from '../models/user.model';
 import { ApiError } from '../utils/ApiError';
 import { logger } from '../utils/logger';
+import { withTransaction } from '../utils/transaction';
 
 export class LiveClassService {
   private async getZoomAccessToken(): Promise<string | null> {
@@ -436,34 +438,39 @@ export class LiveClassService {
       throw ApiError.badRequest('Class is not currently live');
     }
 
-    liveClass.status = 'ended';
-
+    let recordings: any[] = [];
     if (liveClass.recording.autoRecord) {
-      const recordings = await this.getZoomRecordings(liveClass.zoomMeetingId);
-
-      for (const rec of recordings) {
-        if (rec.status === 'completed') {
-          await LiveClassRecording.create({
-            liveClass: liveClass._id,
-            course: liveClass.course,
-            instructor: instructorId,
-            title: `${liveClass.title} - Recording`,
-            description: `Recording of ${liveClass.title}`,
-            url: rec.play_url || rec.download_url || '',
-            password: liveClass.zoomPassword,
-            duration: rec.duration || 0,
-            fileSize: rec.file_size || 0,
-            format: rec.file_type || 'mp4',
-            zoomRecordingId: rec.id || '',
-            status: 'available',
-            thumbnailUrl: '',
-          });
-        }
-      }
+      recordings = await this.getZoomRecordings(liveClass.zoomMeetingId);
     }
 
-    await liveClass.save();
-    return liveClass;
+    return withTransaction(async (session) => {
+      liveClass.status = 'ended';
+      await liveClass.save({ session });
+
+      const completedRecordings = recordings
+        .filter((rec: any) => rec.status === 'completed')
+        .map((rec: any) => ({
+          liveClass: liveClass._id,
+          course: liveClass.course,
+          instructor: instructorId,
+          title: `${liveClass.title} - Recording`,
+          description: `Recording of ${liveClass.title}`,
+          url: rec.play_url || rec.download_url || '',
+          password: liveClass.zoomPassword,
+          duration: rec.duration || 0,
+          fileSize: rec.file_size || 0,
+          format: rec.file_type || 'mp4',
+          zoomRecordingId: rec.id || '',
+          status: 'available' as const,
+          thumbnailUrl: '',
+        }));
+
+      if (completedRecordings.length > 0) {
+        await LiveClassRecording.insertMany(completedRecordings, { session });
+      }
+
+      return liveClass;
+    });
   }
 
   // ─── Join Live Class (student) ─────────────────────────────

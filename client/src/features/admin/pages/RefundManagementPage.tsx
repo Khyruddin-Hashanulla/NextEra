@@ -26,11 +26,13 @@ export function RefundManagementPage() {
   const approveMutation = useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) => adminApi.approveRefund(id, note),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-refunds'] }); addToast({ title: 'Refund approved', variant: 'success' }); setProcessTarget(null); setAdminNote(''); },
+    onError: (err: any) => { addToast({ title: err?.response?.data?.message || 'Failed to approve refund', variant: 'error' }); setProcessTarget(null); },
    });
 
   const rejectMutation = useMutation({
     mutationFn: ({ id, note }: { id: string; note?: string }) => adminApi.rejectRefund(id, note),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-refunds'] }); addToast({ title: 'Refund rejected', variant: 'success' }); setProcessTarget(null); setAdminNote(''); },
+    onError: (err: any) => { addToast({ title: err?.response?.data?.message || 'Failed to reject refund', variant: 'error' }); setProcessTarget(null); },
    });
 
   const refunds = data?.data?.data?.refunds || [];
@@ -91,8 +93,9 @@ export function RefundManagementPage() {
             <Button onClick={() => {
               if (processTarget?.action === 'approve') approveMutation.mutate({ id: processTarget!.id, note: adminNote || undefined});
               else rejectMutation.mutate({ id: processTarget!.id, note: adminNote || undefined});
-            }} variant={processTarget?.action === 'reject' ? 'destructive' : 'default'} className="w-full">
-              {processTarget?.action === 'approve' ? 'Approve Refund' : 'Reject Refund'}
+            }} variant={processTarget?.action === 'reject' ? 'destructive' : 'default'} className="w-full"
+              disabled={approveMutation.isPending || rejectMutation.isPending}>
+              {(approveMutation.isPending || rejectMutation.isPending) ? 'Processing...' : (processTarget?.action === 'approve' ? 'Approve Refund' : 'Reject Refund')}
             </Button>
           </div>
         </DialogContent>

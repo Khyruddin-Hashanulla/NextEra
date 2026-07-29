@@ -1,10 +1,18 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/auth.service';
+import { DeviceInfo } from '../services/token.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { MESSAGES } from '../constants/messages';
 import { HTTP_STATUS } from '../constants/httpStatus';
-import { env } from '../config/env';
+import { setRefreshTokenCookie, clearRefreshTokenCookie } from '../config/cookies';
+
+function extractDeviceInfo(req: Request): DeviceInfo {
+  return {
+    userAgent: (req.headers['user-agent'] as string) || '',
+    ip: req.ip || req.socket.remoteAddress || '',
+  };
+}
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
@@ -16,14 +24,10 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
-  const { user, accessToken, refreshToken } = await authService.login(email, password);
+  const deviceInfo = extractDeviceInfo(req);
+  const { user, accessToken, refreshToken } = await authService.login(email, password, deviceInfo);
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: env.nodeEnv === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setRefreshTokenCookie(res, refreshToken);
 
   res.status(HTTP_STATUS.OK).json(
     ApiResponse.success(MESSAGES.AUTH.LOGIN_SUCCESS, {
@@ -36,14 +40,10 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
 export const googleAuth = asyncHandler(async (req: Request, res: Response) => {
   const { credential } = req.body;
-  const { user, accessToken, refreshToken } = await authService.googleAuthWithCredential(credential);
+  const deviceInfo = extractDeviceInfo(req);
+  const { user, accessToken, refreshToken } = await authService.googleAuthWithCredential(credential, deviceInfo);
 
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: env.nodeEnv === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setRefreshTokenCookie(res, refreshToken);
 
   res.status(HTTP_STATUS.OK).json(
     ApiResponse.success(MESSAGES.AUTH.GOOGLE_AUTH_SUCCESS, {
@@ -80,14 +80,10 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     return;
   }
 
-  const tokens = await authService.refreshToken(token);
+  const deviceInfo = extractDeviceInfo(req);
+  const tokens = await authService.refreshToken(token, deviceInfo);
 
-  res.cookie('refreshToken', tokens.refreshToken, {
-    httpOnly: true,
-    secure: env.nodeEnv === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  setRefreshTokenCookie(res, tokens.refreshToken);
 
   res.status(HTTP_STATUS.OK).json(
     ApiResponse.success(MESSAGES.AUTH.TOKEN_REFRESHED, {
@@ -113,12 +109,32 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
   );
 });
 
+function extractAccessToken(req: Request): string | undefined {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    return authHeader.slice(7);
+  }
+  return undefined;
+}
+
 export const logout = asyncHandler(async (req: Request, res: Response) => {
-  if (req.currentUser) {
-    await authService.logout(req.currentUser.userId);
+  const token = req.cookies?.refreshToken || req.body?.refreshToken;
+  if (token && req.currentUser) {
+    await authService.logout(token, req.currentUser.userId, extractAccessToken(req));
   }
 
-  res.clearCookie('refreshToken');
+  clearRefreshTokenCookie(res);
+  res.status(HTTP_STATUS.OK).json(
+    ApiResponse.success(MESSAGES.AUTH.LOGOUT_SUCCESS, null)
+  );
+});
+
+export const logoutAllDevices = asyncHandler(async (req: Request, res: Response) => {
+  if (req.currentUser) {
+    await authService.logoutAllDevices(req.currentUser.userId, extractAccessToken(req));
+  }
+
+  clearRefreshTokenCookie(res);
   res.status(HTTP_STATUS.OK).json(
     ApiResponse.success(MESSAGES.AUTH.LOGOUT_SUCCESS, null)
   );

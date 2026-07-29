@@ -51,8 +51,12 @@ export interface ICourse extends Document {
   whatYouWillLearn: string[];
   visibility: 'public' | 'private';
   courseType: 'paid' | 'free' | 'draft' | 'private';
-  status: 'draft' | 'review' | 'published' | 'archived';
+  status: 'draft' | 'review' | 'approved' | 'published' | 'rejected' | 'archived';
   isApproved: boolean;
+  isActive: boolean;
+  rejectionReason: string;
+  publishedAt: Date | null;
+  archivedAt: Date | null;
   featured: boolean;
   badge: string;
   totalDuration: number;
@@ -132,10 +136,14 @@ const courseSchema = new Schema<ICourse>(
     },
     status: {
       type: String,
-      enum: ['draft', 'review', 'published', 'archived'],
+      enum: ['draft', 'review', 'approved', 'published', 'rejected', 'archived'],
       default: 'draft',
     },
     isApproved: { type: Boolean, default: false },
+    isActive: { type: Boolean, default: true },
+    rejectionReason: { type: String, default: '' },
+    publishedAt: { type: Date, default: null },
+    archivedAt: { type: Date, default: null },
     featured: { type: Boolean, default: false },
     badge: { type: String, default: '' },
     totalDuration: { type: Number, default: 0 },
@@ -166,12 +174,33 @@ courseSchema.pre('save', function (next) {
   if (this.isModified('title') && !this.slug) {
     this.slug = this.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   }
-  if (this.isModified('courseType')) {
-    if (this.courseType === 'paid') this.visibility = 'public';
-    else if (this.courseType === 'free') this.visibility = 'public';
-    else if (this.courseType === 'private') this.visibility = 'private';
-    else if (this.courseType === 'draft') this.visibility = 'public';
+
+  if (this.isModified('status') || this.isNew) {
+    const s = this.status;
+
+    if (s === 'published') {
+      this.isApproved = true;
+      this.isActive = true;
+      this.visibility = 'public';
+      if (!this.publishedAt) this.publishedAt = new Date();
+    }
+
+    if (s === 'archived') {
+      this.isActive = false;
+      this.visibility = 'private';
+      if (!this.archivedAt) this.archivedAt = new Date();
+    }
+
+    if (s === 'draft' || s === 'rejected') {
+      this.isApproved = false;
+      this.visibility = 'private';
+    }
+
+    if (s === 'review' || s === 'approved') {
+      this.visibility = 'private';
+    }
   }
+
   next();
 });
 

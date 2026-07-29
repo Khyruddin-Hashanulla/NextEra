@@ -14,11 +14,11 @@ export interface IEmailTemplate extends Document {
 
 const emailTemplateSchema = new Schema<IEmailTemplate>(
   {
-    name: { type: String, required: true, trim: true },
-    slug: { type: String, required: true, unique: true, lowercase: true },
-    subject: { type: String, required: true },
-    body: { type: String, required: true },
-    variables: [{ type: String }],
+    name: { type: String, required: true, trim: true, maxlength: 200 },
+    slug: { type: String, required: true, unique: true, lowercase: true, maxlength: 200 },
+    subject: { type: String, required: true, maxlength: 500 },
+    body: { type: String, required: true, maxlength: 50000 },
+    variables: [{ type: String, maxlength: 100 }],
     category: {
       type: String,
       enum: ['auth', 'notification', 'marketing', 'transactional'],

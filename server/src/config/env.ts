@@ -1,47 +1,125 @@
 import dotenv from 'dotenv';
 import path from 'path';
+import { z } from 'zod';
 
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+  PORT: z.coerce.number().default(5000),
+
+  MONGODB_URI: z.string().min(1, 'MONGODB_URI is required'),
+
+  JWT_ACCESS_SECRET: z.string().min(1, 'JWT_ACCESS_SECRET is required'),
+  JWT_REFRESH_SECRET: z.string().min(1, 'JWT_REFRESH_SECRET is required'),
+  JWT_ACCESS_EXPIRES_IN: z.string().default('15m'),
+  JWT_REFRESH_EXPIRES_IN: z.string().default('7d'),
+
+  GOOGLE_CLIENT_ID: z.string().default(''),
+  GOOGLE_CLIENT_SECRET: z.string().default(''),
+  GOOGLE_CALLBACK_URL: z.string().default('http://localhost:5000/api/v1/auth/google/callback'),
+
+  CSRF_SECRET: z.string().min(32, 'CSRF_SECRET must be at least 32 characters'),
+
+  CLOUDINARY_CLOUD_NAME: z.string().default(''),
+  CLOUDINARY_API_KEY: z.string().default(''),
+  CLOUDINARY_API_SECRET: z.string().default(''),
+
+  RAZORPAY_KEY_ID: z.string().default(''),
+  RAZORPAY_KEY_SECRET: z.string().default(''),
+
+  SMTP_HOST: z.string().default('smtp.gmail.com'),
+  SMTP_PORT: z.coerce.number().default(587),
+  SMTP_USER: z.string().default(''),
+  SMTP_PASS: z.string().default(''),
+  EMAIL_FROM: z.string().default('noreply@nextera.com'),
+
+  CLIENT_URL: z.string().default('http://localhost:5173'),
+  SERVER_URL: z.string().optional(),
+  COOKIE_DOMAIN: z.string().optional(),
+
+  ZOOM_ACCOUNT_ID: z.string().default(''),
+  ZOOM_CLIENT_ID: z.string().default(''),
+  ZOOM_CLIENT_SECRET: z.string().default(''),
+
+  CERTIFICATE_SECRET: z.string().min(1, 'CERTIFICATE_SECRET is required'),
+
+  OPENAI_API_KEY: z.string().default(''),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
+});
+
+const parsed = envSchema.safeParse(process.env);
+
+if (!parsed.success) {
+  console.error('Invalid environment variables:');
+  const errors = parsed.error.flatten().fieldErrors;
+  for (const [key, messages] of Object.entries(errors)) {
+    console.error(`  - ${key}: ${messages?.join(', ')}`);
+  }
+  process.exit(1);
+}
+
+const raw = parsed.data;
+
+const isProduction = raw.NODE_ENV === 'production';
+
+function requireHttpsUrl(value: string, name: string): void {
+  if (isProduction && !value.startsWith('https://')) {
+    console.error(`${name} must use HTTPS in production. Current value: ${value}`);
+    process.exit(1);
+  }
+}
+
+requireHttpsUrl(raw.CLIENT_URL, 'CLIENT_URL');
+if (raw.SERVER_URL) {
+  requireHttpsUrl(raw.SERVER_URL, 'SERVER_URL');
+}
+
 export const env = {
-  nodeEnv: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT || '5000', 10),
+  nodeEnv: raw.NODE_ENV,
+  port: raw.PORT,
+  mongodbUri: raw.MONGODB_URI,
 
-  mongodbUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/nextera',
+  jwtAccessSecret: raw.JWT_ACCESS_SECRET,
+  jwtRefreshSecret: raw.JWT_REFRESH_SECRET,
+  jwtAccessExpiresIn: raw.JWT_ACCESS_EXPIRES_IN,
+  jwtRefreshExpiresIn: raw.JWT_REFRESH_EXPIRES_IN,
 
-  jwtAccessSecret: process.env.JWT_ACCESS_SECRET || 'fallback-access-secret',
-  jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || 'fallback-refresh-secret',
-  jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
-  jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+  googleClientId: raw.GOOGLE_CLIENT_ID,
+  googleClientSecret: raw.GOOGLE_CLIENT_SECRET,
+  googleCallbackUrl: raw.GOOGLE_CALLBACK_URL,
 
-  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
-  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-  googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:5000/api/v1/auth/google/callback',
+  csrfSecret: raw.CSRF_SECRET,
 
-  cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME || '',
-  cloudinaryApiKey: process.env.CLOUDINARY_API_KEY || '',
-  cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET || '',
+  cloudinaryCloudName: raw.CLOUDINARY_CLOUD_NAME,
+  cloudinaryApiKey: raw.CLOUDINARY_API_KEY,
+  cloudinaryApiSecret: raw.CLOUDINARY_API_SECRET,
 
-  razorpayKeyId: process.env.RAZORPAY_KEY_ID || '',
-  razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || '',
+  razorpayKeyId: raw.RAZORPAY_KEY_ID,
+  razorpayKeySecret: raw.RAZORPAY_KEY_SECRET,
 
-  smtpHost: process.env.SMTP_HOST || 'smtp.gmail.com',
-  smtpPort: parseInt(process.env.SMTP_PORT || '587', 10),
-  smtpUser: process.env.SMTP_USER || '',
-  smtpPass: process.env.SMTP_PASS || '',
-  emailFrom: process.env.EMAIL_FROM || 'noreply@nextera.com',
+  smtpHost: raw.SMTP_HOST,
+  smtpPort: raw.SMTP_PORT,
+  smtpUser: raw.SMTP_USER,
+  smtpPass: raw.SMTP_PASS,
+  emailFrom: raw.EMAIL_FROM,
 
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  clientUrl: raw.CLIENT_URL,
+  serverUrl: raw.SERVER_URL,
+  cookieDomain: raw.COOKIE_DOMAIN,
 
-  zoomAccountId: process.env.ZOOM_ACCOUNT_ID || '',
-  zoomClientId: process.env.ZOOM_CLIENT_ID || '',
-  zoomClientSecret: process.env.ZOOM_CLIENT_SECRET || '',
+  zoomAccountId: raw.ZOOM_ACCOUNT_ID,
+  zoomClientId: raw.ZOOM_CLIENT_ID,
+  zoomClientSecret: raw.ZOOM_CLIENT_SECRET,
 
-  certificateSecret: process.env.CERTIFICATE_SECRET || 'nextera-cert-secret-fallback',
+  certificateSecret: raw.CERTIFICATE_SECRET,
 
-  openaiApiKey: process.env.OPENAI_API_KEY || '',
-  openaiModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  openaiApiKey: raw.OPENAI_API_KEY,
+  openaiModel: raw.OPENAI_MODEL,
 
-  rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10),
-  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
-} as const;
+  rateLimitWindowMs: raw.RATE_LIMIT_WINDOW_MS,
+  rateLimitMax: raw.RATE_LIMIT_MAX,
+};

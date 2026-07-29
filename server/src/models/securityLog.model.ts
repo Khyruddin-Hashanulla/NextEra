@@ -23,8 +23,8 @@ const securityLogSchema = new Schema<ISecurityLog>(
         'api_key_revoked', 'suspicious_activity',
       ],
     },
-    ip: { type: String },
-    userAgent: { type: String },
+    ip: { type: String, maxlength: 45 },
+    userAgent: { type: String, maxlength: 500 },
     details: { type: Schema.Types.Mixed },
     severity: {
       type: String,

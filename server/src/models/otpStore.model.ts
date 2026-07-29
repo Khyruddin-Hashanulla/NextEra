@@ -16,10 +16,12 @@ const otpStoreSchema = new Schema<IOTPStore>(
       lowercase: true,
       trim: true,
       index: true,
+      maxlength: 254,
     },
     otp: {
       type: String,
       required: [true, 'OTP is required'],
+      maxlength: 10,
     },
     purpose: {
       type: String,

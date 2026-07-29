@@ -20,8 +20,8 @@ const quizAttemptSchema = new Schema<IQuizAttempt>(
     lecture: { type: Schema.Types.ObjectId, ref: 'Lecture', required: true },
     answers: [
       {
-        question: { type: String, required: true },
-        selectedAnswer: { type: String, required: true },
+        question: { type: String, required: true, maxlength: 2000 },
+        selectedAnswer: { type: String, required: true, maxlength: 2000 },
         isCorrect: { type: Boolean, required: true },
       },
     ],

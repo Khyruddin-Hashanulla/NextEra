@@ -1,9 +1,13 @@
 import { ResetPasswordForm } from '../components/ResetPasswordForm';
+import { AuthLayout } from '../components/AuthLayout';
+import { PageTransition } from '@/components/common/PageTransition';
 
 export function ResetPasswordPage() {
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12">
-      <ResetPasswordForm />
-    </div>
+    <PageTransition>
+      <AuthLayout>
+        <ResetPasswordForm />
+      </AuthLayout>
+    </PageTransition>
   );
 }

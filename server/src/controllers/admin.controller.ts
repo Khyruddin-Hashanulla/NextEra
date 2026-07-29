@@ -5,6 +5,7 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { HTTP_STATUS } from '../constants/httpStatus';
 import * as featureToggleService from '../services/featureToggle.service';
+import { auditService } from '../services/audit.service';
 
 export const getDashboardStats = asyncHandler(async (_req: Request, res: Response) => {
   const stats = await adminService.getDashboardStats();
@@ -54,7 +55,8 @@ export const updateUserStatus = asyncHandler(async (req: Request, res: Response)
 });
 
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  await adminService.deleteUser(req.params.id);
+  const adminId = (req as any).user._id;
+  await adminService.deleteUser(req.params.id, adminId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('User deleted', null));
 });
 
@@ -69,7 +71,8 @@ export const approveInstructor = asyncHandler(async (req: Request, res: Response
 });
 
 export const rejectInstructor = asyncHandler(async (req: Request, res: Response) => {
-  await adminService.rejectInstructor(req.params.id);
+  const adminId = (req as any).user._id;
+  await adminService.rejectInstructor(req.params.id, adminId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructor rejected', null));
 });
 
@@ -311,6 +314,19 @@ export const rejectRefund = asyncHandler(async (req: Request, res: Response) => 
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Refund rejected', data));
 });
 
+export const issueRefund = asyncHandler(async (req: Request, res: Response) => {
+  const { amount, reason, refundType, adminNote } = req.body;
+  const data = await paymentService.processRefundPayment(
+    req.params.id,
+    amount,
+    reason,
+    refundType || 'full',
+    req.currentUser!.userId,
+    adminNote
+  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Refund processed', data));
+});
+
 // ─── Support Tickets ────────────────────────────────────────────
 export const listSupportTickets = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
@@ -404,9 +420,30 @@ export const listAuditLogs = asyncHandler(async (req: Request, res: Response) =>
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
   const action = req.query.action as string;
-  const userId = req.query.userId as string;
-  const data = await adminService.listAuditLogs(page, limit, action, userId);
+  const adminId = req.query.adminId as string;
+  const resourceType = req.query.resourceType as string;
+  const search = req.query.search as string;
+  const success = req.query.success as string | undefined;
+  const startDate = req.query.startDate as string;
+  const endDate = req.query.endDate as string;
+  const sortBy = (req.query.sortBy as string) || 'createdAt';
+  const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
+  const data = await auditService.search({
+    page, limit, action, adminId, resourceType, search,
+    success: success !== undefined ? success === 'true' : undefined,
+    startDate, endDate, sortBy, sortOrder,
+  });
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Audit logs fetched', data));
+});
+
+export const listAuditActions = asyncHandler(async (_req: Request, res: Response) => {
+  const actions = await auditService.getActions();
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Audit actions fetched', actions));
+});
+
+export const listAuditResourceTypes = asyncHandler(async (_req: Request, res: Response) => {
+  const types = await auditService.getResourceTypes();
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Audit resource types fetched', types));
 });
 
 // ─── Security Logs ───────────────────────────────────────────

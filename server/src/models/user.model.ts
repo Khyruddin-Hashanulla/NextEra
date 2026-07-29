@@ -53,10 +53,6 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    refreshToken: {
-      type: String,
-      select: false,
-    },
     googleId: {
       type: String,
       index: true,
@@ -65,6 +61,19 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: { type: Date },
+    deletedBy: { type: Schema.Types.ObjectId, ref: 'User' },
+    failedLoginAttempts: { type: Number, default: 0 },
+    accountLockedUntil: { type: Date },
+    lockLevel: { type: Number, default: 0 },
+    lastFailedLogin: { type: Date },
+    lastFailedLoginIp: { type: String },
+    tokenVersion: { type: Number, default: 0 },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
     instructorProfile: {
@@ -114,7 +123,6 @@ const userSchema = new Schema<IUser>(
       transform(_doc: any, ret: Record<string, any>) {
         delete ret.__v;
         delete ret.password;
-        delete ret.refreshToken;
         delete ret.resetPasswordToken;
         delete ret.resetPasswordExpire;
         return ret;

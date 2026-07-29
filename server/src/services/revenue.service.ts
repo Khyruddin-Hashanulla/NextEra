@@ -8,6 +8,7 @@ import { FeaturedPromotion } from '../models/featuredPromotion.model';
 import { User } from '../models/user.model';
 import { Course } from '../models/course.model';
 import { ApiError } from '../utils/ApiError';
+import { escapeRegex } from '../utils/escapeRegex';
 import { logger } from '../utils/logger';
 
 export class RevenueService {
@@ -248,7 +249,7 @@ export class RevenueService {
     const filter: any = {};
     if (search) {
       filter.$or = [
-        { code: { $regex: search, $options: 'i' } },
+        { code: { $regex: escapeRegex(search), $options: 'i' } },
       ];
     }
     const skip = (page - 1) * limit;

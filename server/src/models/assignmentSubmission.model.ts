@@ -24,9 +24,9 @@ const assignmentSubmissionSchema = new Schema<IAssignmentSubmission>(
     content: { type: String, default: '', maxlength: 5000 },
     files: [
       {
-        url: { type: String, required: true },
-        publicId: { type: String, required: true },
-        name: { type: String, required: true },
+        url: { type: String, required: true, maxlength: 500 },
+        publicId: { type: String, required: true, maxlength: 200 },
+        name: { type: String, required: true, maxlength: 200 },
       },
     ],
     status: { type: String, enum: ['submitted', 'graded'], default: 'submitted' },

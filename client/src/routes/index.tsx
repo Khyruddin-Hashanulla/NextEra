@@ -31,7 +31,7 @@ import { BannerManagementPage } from '@/features/admin/pages/BannerManagementPag
 import { RefundManagementPage } from '@/features/admin/pages/RefundManagementPage';
 import { SupportTicketsPage } from '@/features/admin/pages/SupportTicketsPage';
 import { CertificatesManagementPage } from '@/features/admin/pages/CertificatesManagementPage';
-import { FAQPage } from '@/features/admin/pages/FAQPage';
+import { FAQPage as AdminFAQPage } from '@/features/admin/pages/FAQPage';
 import { EmailTemplatesPage } from '@/features/admin/pages/EmailTemplatesPage';
 import { AuditLogsPage } from '@/features/admin/pages/AuditLogsPage';
 import { SecurityLogsPage } from '@/features/admin/pages/SecurityLogsPage';
@@ -84,18 +84,47 @@ import { BundlesListPage } from '@/features/student/pages/BundlesListPage';
 import { BundleDetailPage } from '@/features/student/pages/BundleDetailPage';
 import { SubscriptionsPage } from '@/features/student/pages/SubscriptionsPage';
 
+// Public pages
+import { HomePage } from '@/features/public/pages/HomePage';
+import { AboutPage } from '@/features/public/pages/AboutPage';
+import { CoursesPage as PublicCoursesPage } from '@/features/public/pages/CoursesPage';
+import { CourseDetailPage } from '@/features/public/pages/CourseDetailPage';
+import { InstructorsPage as PublicInstructorsPage } from '@/features/public/pages/InstructorsPage';
+import { InstructorProfilePage } from '@/features/public/pages/InstructorProfilePage';
+import { BlogListPage as PublicBlogListPage } from '@/features/public/pages/BlogListPage';
+import { BlogDetailPage as PublicBlogDetailPage } from '@/features/public/pages/BlogDetailPage';
+import { ContactPage } from '@/features/public/pages/ContactPage';
+import { FAQPage as PublicFAQPage } from '@/features/public/pages/FAQPage';
+import { PrivacyPage } from '@/features/public/pages/PrivacyPage';
+import { TermsPage } from '@/features/public/pages/TermsPage';
+import { NotFoundPage } from '@/features/public/pages/NotFoundPage';
+
 export const router = createBrowserRouter([
   {
     path: ROUTES.HOME,
     element: <AppLayout />,
     children: [
-      { index: true, element: <div>Home Page</div> },
+      { index: true, element: <HomePage /> },
       { path: ROUTES.LOGIN, element: <LoginPage /> },
       { path: ROUTES.REGISTER, element: <RegisterPage /> },
       { path: ROUTES.FORGOT_PASSWORD, element: <ForgotPasswordPage /> },
       { path: ROUTES.RESET_PASSWORD, element: <ResetPasswordPage /> },
       { path: ROUTES.VERIFY_EMAIL, element: <VerifyEmailPage /> },
       { path: ROUTES.OAUTH_CALLBACK, element: <OAuthCallbackPage /> },
+      { path: ROUTES.ABOUT, element: <AboutPage /> },
+      { path: ROUTES.CONTACT, element: <ContactPage /> },
+      { path: ROUTES.FAQ, element: <PublicFAQPage /> },
+      { path: ROUTES.PRIVACY, element: <PrivacyPage /> },
+      { path: ROUTES.TERMS, element: <TermsPage /> },
+      { path: ROUTES.COURSES, element: <PublicCoursesPage /> },
+      { path: ROUTES.COURSE_DETAIL(':id'), element: <CourseDetailPage /> },
+      { path: ROUTES.BUNDLES, element: <BundlesListPage /> },
+      { path: ROUTES.BUNDLE_DETAIL(':id'), element: <BundleDetailPage /> },
+      { path: '/instructors', element: <PublicInstructorsPage /> },
+      { path: '/instructors/:id', element: <InstructorProfilePage /> },
+      { path: '/blog', element: <PublicBlogListPage /> },
+      { path: '/blog/:slug', element: <PublicBlogDetailPage /> },
+      { path: '/certificates/verify/:certificateId', element: <CertificateVerifyPage /> },
       {
         path: ROUTES.DASHBOARD,
         element: (
@@ -104,13 +133,6 @@ export const router = createBrowserRouter([
           </AuthGuard>
         ),
       },
-      {
-        path: ROUTES.COURSES,
-        element: <CoursesPage />,
-      },
-      { path: '/blog', element: <BlogListPage /> },
-      { path: '/blog/:slug', element: <BlogDetailPage /> },
-      { path: '/certificates/verify/:certificateId', element: <CertificateVerifyPage /> },
       {
         path: '/instructor/apply',
         element: (
@@ -143,6 +165,7 @@ export const router = createBrowserRouter([
           </AuthGuard>
         ),
       },
+      { path: '*', element: <NotFoundPage /> },
     ],
   },
   {
@@ -176,7 +199,7 @@ export const router = createBrowserRouter([
       { path: 'tickets', element: <SupportTicketsPage /> },
       { path: 'certificates', element: <CertificatesManagementPage /> },
       { path: 'banners', element: <BannerManagementPage /> },
-      { path: 'faq', element: <FAQPage /> },
+      { path: 'faq', element: <AdminFAQPage /> },
       { path: 'email-templates', element: <EmailTemplatesPage /> },
       { path: 'cms-pages', element: <CMSPagesPage /> },
       { path: 'role-permissions', element: <RolePermissionsPage /> },

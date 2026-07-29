@@ -7,11 +7,15 @@ export interface IRefund extends Document {
   bundle?: Types.ObjectId;
   amount: number;
   reason: string;
+  refundType: 'full' | 'partial';
   status: 'pending' | 'approved' | 'rejected' | 'processed';
   processedBy?: Types.ObjectId;
   processedAt?: Date;
   adminNote?: string;
   razorpayRefundId?: string;
+  razorpayRefundStatus?: string;
+  razorpayRefundSpeed?: string;
+  gatewayResponse?: Record<string, any>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,7 +27,12 @@ const refundSchema = new Schema<IRefund>(
     course: { type: Schema.Types.ObjectId, ref: 'Course' },
     bundle: { type: Schema.Types.ObjectId, ref: 'Bundle' },
     amount: { type: Number, required: true },
-    reason: { type: String, required: true },
+    reason: { type: String, required: true, maxlength: 2000 },
+    refundType: {
+      type: String,
+      enum: ['full', 'partial'],
+      default: 'full',
+    },
     status: {
       type: String,
       enum: ['pending', 'approved', 'rejected', 'processed'],
@@ -31,8 +40,11 @@ const refundSchema = new Schema<IRefund>(
     },
     processedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     processedAt: { type: Date },
-    adminNote: { type: String },
-    razorpayRefundId: { type: String },
+    adminNote: { type: String, maxlength: 2000 },
+    razorpayRefundId: { type: String, maxlength: 200 },
+    razorpayRefundStatus: { type: String, maxlength: 50 },
+    razorpayRefundSpeed: { type: String, maxlength: 50 },
+    gatewayResponse: { type: Schema.Types.Mixed },
   },
   { timestamps: true }
 );

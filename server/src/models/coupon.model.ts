@@ -23,6 +23,7 @@ const couponSchema = new Schema<ICoupon>(
       unique: true,
       uppercase: true,
       trim: true,
+      maxlength: 50,
     },
     discountType: {
       type: String,

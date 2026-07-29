@@ -133,6 +133,8 @@ export const adminApi = {
     axiosInstance.put<ApiResponse<RefundRequest>>(`/admin/refunds/${id}/approve`, { adminNote }),
   rejectRefund: (id: string, adminNote?: string) =>
     axiosInstance.put<ApiResponse<RefundRequest>>(`/admin/refunds/${id}/reject`, { adminNote }),
+  issueRefund: (paymentId: string, data: { amount: number; reason: string; refundType?: string; adminNote?: string }) =>
+    axiosInstance.post<ApiResponse<any>>(`/admin/payments/${paymentId}/refund`, data),
 
   // ─── Support Tickets ────────────────────────────────────────────
   listSupportTickets: (params?: { page?: number; limit?: number; status?: string; priority?: string }) =>
@@ -164,8 +166,15 @@ export const adminApi = {
   deleteEmailTemplate: (id: string) => axiosInstance.delete<ApiResponse<null>>(`/admin/email-templates/${id}`),
 
   // ─── Audit & Security Logs ─────────────────────────────────────
-  listAuditLogs: (params?: { page?: number; limit?: number; action?: string; userId?: string }) =>
+  listAuditLogs: (params?: {
+    page?: number; limit?: number; action?: string;
+    adminId?: string; resourceType?: string; search?: string;
+    success?: string; startDate?: string; endDate?: string;
+    sortBy?: string; sortOrder?: 'asc' | 'desc';
+  }) =>
     axiosInstance.get<ApiResponse<{ logs: AuditLogItem[]; pagination: any }>>('/admin/audit-logs', { params }),
+  listAuditActions: () => axiosInstance.get<ApiResponse<string[]>>('/admin/audit-actions'),
+  listAuditResourceTypes: () => axiosInstance.get<ApiResponse<string[]>>('/admin/audit-resource-types'),
   listSecurityLogs: (params?: { page?: number; limit?: number; event?: string; severity?: string }) =>
     axiosInstance.get<ApiResponse<{ logs: SecurityLogItem[]; pagination: any }>>('/admin/security-logs', { params }),
 

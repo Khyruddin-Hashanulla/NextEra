@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { FileUpload } from '@/components/ui/file-upload';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, CheckCircle, Clock, XCircle, Upload } from 'lucide-react';
+import { Loader2, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 export function ApplyPage() {
   const [form, setForm] = useState({
@@ -78,8 +79,8 @@ export function ApplyPage() {
     );
   }
 
-  const setFile = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) setForm({ ...form, [field]: e.target.files[0] });
+  const setFile = (field: string) => (file: File | null) => {
+    setForm({ ...form, [field]: file });
   };
 
   return (
@@ -111,7 +112,13 @@ export function ApplyPage() {
 
           <div className="space-y-2">
             <Label>Profile Photo</Label>
-            <Input type="file" accept="image/*" onChange={setFile('photo')} />
+            <FileUpload
+              accept="image/*"
+              maxSize={5 * 1024 * 1024}
+              label="Upload profile photo"
+              value={form.photo}
+              onChange={setFile('photo')}
+            />
           </div>
 
           <div className="space-y-2">
@@ -147,17 +154,35 @@ export function ApplyPage() {
 
           <div className="space-y-2">
             <Label>Resume</Label>
-            <Input type="file" accept=".pdf,.doc,.docx" onChange={setFile('resume')} />
+            <FileUpload
+              accept=".pdf,.doc,.docx,application/pdf,application/msword"
+              maxSize={10 * 1024 * 1024}
+              label="Upload resume"
+              value={form.resume}
+              onChange={setFile('resume')}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Identity Proof</Label>
-            <Input type="file" accept="image/*,.pdf" onChange={setFile('identityProof')} />
+            <FileUpload
+              accept="image/*,.pdf"
+              maxSize={10 * 1024 * 1024}
+              label="Upload identity proof"
+              value={form.identityProof}
+              onChange={setFile('identityProof')}
+            />
           </div>
 
           <div className="space-y-2">
             <Label>Demo Video</Label>
-            <Input type="file" accept="video/*" onChange={setFile('demoVideo')} />
+            <FileUpload
+              accept="video/*"
+              maxSize={200 * 1024 * 1024}
+              label="Upload demo video"
+              value={form.demoVideo}
+              onChange={setFile('demoVideo')}
+            />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

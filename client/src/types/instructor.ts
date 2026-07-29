@@ -96,8 +96,10 @@ export interface Course {
   whatYouWillLearn: string[];
   visibility: 'public' | 'private';
   courseType: 'paid' | 'free' | 'draft' | 'private';
-  status: 'draft' | 'review' | 'published' | 'archived';
+  status: 'draft' | 'review' | 'approved' | 'published' | 'rejected' | 'archived';
   isApproved: boolean;
+  isActive: boolean;
+  rejectionReason: string;
   featured: boolean;
   badge: string;
   totalDuration: number;

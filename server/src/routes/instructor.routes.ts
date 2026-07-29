@@ -17,6 +17,10 @@ import { authorize } from '../middlewares/authorize.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { ROLES } from '../constants/roles';
 import {
+  verifyCouponOwnership,
+  verifyAnnouncementOwnership,
+} from '../middlewares/ownership.middleware';
+import {
   applySchema, createCouponSchema, updateCouponSchema,
   replyToReviewSchema, createAnnouncementSchema, updateProfileSchema,
   issueCertificateSchema,
@@ -44,8 +48,8 @@ router.get('/students', getStudents);
 // Coupons
 router.get('/coupons', listCoupons);
 router.post('/coupons', validate(createCouponSchema), createCoupon);
-router.put('/coupons/:id', validate(updateCouponSchema), updateCoupon);
-router.delete('/coupons/:id', deleteCoupon);
+router.put('/coupons/:id', verifyCouponOwnership, validate(updateCouponSchema), updateCoupon);
+router.delete('/coupons/:id', verifyCouponOwnership, deleteCoupon);
 
 // Reviews
 router.get('/reviews', getReviews);
@@ -54,7 +58,7 @@ router.post('/reviews/:id/reply', validate(replyToReviewSchema), replyToReview);
 // Announcements
 router.get('/announcements', listAnnouncements);
 router.post('/announcements', validate(createAnnouncementSchema), createAnnouncement);
-router.delete('/announcements/:id', deleteAnnouncement);
+router.delete('/announcements/:id', verifyAnnouncementOwnership, deleteAnnouncement);
 
 // Profile
 router.get('/profile', getProfile);

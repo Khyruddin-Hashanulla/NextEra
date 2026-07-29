@@ -16,13 +16,13 @@ export interface IBanner extends Document {
 
 const bannerSchema = new Schema<IBanner>(
   {
-    title: { type: String, required: true, trim: true },
-    subtitle: { type: String, trim: true },
+    title: { type: String, required: true, trim: true, maxlength: 200 },
+    subtitle: { type: String, trim: true, maxlength: 300 },
     image: {
-      url: { type: String, required: true },
-      publicId: { type: String, default: '' },
+      url: { type: String, required: true, maxlength: 500 },
+      publicId: { type: String, default: '', maxlength: 200 },
     },
-    link: { type: String },
+    link: { type: String, maxlength: 500 },
     position: {
       type: String,
       enum: ['hero', 'sidebar', 'promo', 'footer'],

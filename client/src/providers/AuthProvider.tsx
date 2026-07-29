@@ -3,7 +3,8 @@ import { User } from '@/types/user';
 import { authApi } from '@/api/endpoints/auth';
 import { TOKEN_KEYS } from '@/lib/constants';
 import { ApiError } from '@/types/api';
-import axios from 'axios';
+import { queryClient } from '@/api/queryClient';
+import axiosInstance, { fetchCsrfToken } from '@/api/axiosInstance';
 
 interface AuthContextValue {
   user: User | null;
@@ -23,15 +24,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
+    const init = async () => {
+      await fetchCsrfToken();
 
-    const fetchUser = async () => {
+      const token = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const { data } = await axios.get('/api/v1/users/me', {
+        const { data } = await axiosInstance.get('/users/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(data.data);
@@ -43,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    fetchUser();
+    init();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -76,6 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
       setUser(null);
+      queryClient.clear();
     }
   }, []);
 
