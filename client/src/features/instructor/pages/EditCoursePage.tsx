@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
+import { EditCourseSkeleton } from '@/components/skeletons/FormSkeleton';
 import {
-  Loader2, Plus, Trash2, ChevronDown, ChevronUp, FileVideo, FileText, FileCheck,
+  Plus, Trash2, ChevronDown, ChevronUp, FileVideo, FileText, FileCheck,
   Edit3, Globe, Lock, Play, HelpCircle, ArrowLeft,
 } from 'lucide-react';
 
@@ -30,13 +31,13 @@ export function EditCoursePage() {
 
   const { data: course, isLoading: courseLoading } = useQuery({
     queryKey: ['instructor', 'course', id],
-    queryFn: () => instructorApi.getCourse(id!).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getCourse(id!, signal).then((r) => r.data.data),
     enabled: !!id,
   });
 
   const { data: curriculum, isLoading: curriculumLoading } = useQuery({
     queryKey: ['instructor', 'curriculum', id],
-    queryFn: () => instructorApi.getCurriculum(id!).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getCurriculum(id!, signal).then((r) => r.data.data),
     enabled: !!id,
   });
 
@@ -119,7 +120,7 @@ export function EditCoursePage() {
   }
 
   if (courseLoading || curriculumLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <EditCourseSkeleton />;
   }
 
   const statusBadge = (s: string | undefined) => {

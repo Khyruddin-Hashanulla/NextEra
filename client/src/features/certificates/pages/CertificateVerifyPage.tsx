@@ -5,26 +5,41 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink } from 'lucide-react';
+import { CertificateVerifySkeleton } from '@/components/skeletons/CertificateSkeleton';
+import { CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink, Download } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function CertificateVerifyPage() {
   const { certificateId } = useParams<{ certificateId: string }>();
 
-  const { data: certData, isLoading, error } = useQuery({
+  const { data: cert, isLoading, error } = useQuery({
     queryKey: ['certificate-verify', certificateId],
-    queryFn: () => studentApi.verifyCertificate(certificateId!).then(r => r.data),
+    queryFn: ({ signal }) => studentApi.verifyCertificate(certificateId!, signal).then(r => r.data.data),
     enabled: !!certificateId,
   });
 
+  const handleDownload = async () => {
+    if (!cert?.certificateId) return;
+    try {
+      const response = await studentApi.downloadCertificate(cert.certificateId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `certificate-${cert.certificateId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Download failed', e);
+    }
+  };
+
   if (isLoading) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <CertificateVerifySkeleton />;
   }
 
-  if (error || !certData) {
+  if (error || !cert) {
     return (
       <div className="max-w-lg mx-auto px-4 py-16 text-center space-y-4">
         <XCircle className="h-16 w-16 text-red-400 mx-auto" />
@@ -39,14 +54,14 @@ export function CertificateVerifyPage() {
     );
   }
 
-  const cert = certData as any;
+  const isValid = cert.signatureValid && !cert.isRevoked;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
       <Card className="border-2 shadow-lg">
         <CardHeader className="text-center pb-2">
           <div className="mx-auto mb-4">
-            {cert.signatureValid ? (
+            {isValid ? (
               <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="h-10 w-10 text-green-600" />
               </div>
@@ -60,9 +75,12 @@ export function CertificateVerifyPage() {
             <Award className="h-6 w-6 text-primary" />
             <CardTitle className="text-2xl">Certificate of Completion</CardTitle>
           </div>
-          <Badge variant={cert.signatureValid ? 'default' : 'destructive'} className="mt-2">
-            {cert.signatureValid ? 'Verified' : 'Invalid Signature'}
+          <Badge variant={isValid ? 'default' : 'destructive'} className="mt-2">
+            {isValid ? 'Verified' : cert.isRevoked ? 'Revoked' : 'Invalid Signature'}
           </Badge>
+          {cert.isRevoked && cert.revokedReason && (
+            <p className="text-sm text-red-500 mt-2">Reason: {cert.revokedReason}</p>
+          )}
         </CardHeader>
 
         <CardContent className="space-y-6 pt-4">
@@ -73,7 +91,7 @@ export function CertificateVerifyPage() {
               <User className="h-5 w-5 text-muted-foreground shrink-0" />
               <div>
                 <p className="text-xs text-muted-foreground">Student</p>
-                <p className="font-medium">{cert.user?.name || 'N/A'}</p>
+                <p className="font-medium">{(cert.user as any)?.name || 'N/A'}</p>
               </div>
             </div>
 
@@ -84,6 +102,16 @@ export function CertificateVerifyPage() {
                 <p className="font-medium">{cert.course?.title || 'N/A'}</p>
               </div>
             </div>
+
+            {cert.metadata?.courseLevel && (
+              <div className="flex items-center gap-3">
+                <Award className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Level</p>
+                  <p className="font-medium capitalize">{cert.metadata.courseLevel}</p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-3">
               <Calendar className="h-5 w-5 text-muted-foreground shrink-0" />
@@ -108,12 +136,22 @@ export function CertificateVerifyPage() {
             <div className="flex items-center gap-3">
               <Shield className="h-5 w-5 text-muted-foreground shrink-0" />
               <div>
-                <p className="text-xs text-muted-foreground">Digital Signature Status</p>
-                <p className={`font-medium ${cert.signatureValid ? 'text-green-600' : 'text-red-600'}`}>
-                  {cert.signatureValid ? 'Authentic — Certificate has not been tampered with' : 'Invalid — Certificate may have been altered'}
+                <p className="text-xs text-muted-foreground">Digital Signature</p>
+                <p className={`font-medium ${isValid ? 'text-green-600' : 'text-red-600'}`}>
+                  {isValid ? 'Authentic — Certificate has not been tampered with' : cert.isRevoked ? 'Certificate has been revoked' : 'Invalid — Certificate may have been altered'}
                 </p>
               </div>
             </div>
+
+            {cert.version > 1 && (
+              <div className="flex items-center gap-3">
+                <Award className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Version</p>
+                  <p className="font-medium">v{cert.version}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           <Separator />
@@ -122,7 +160,7 @@ export function CertificateVerifyPage() {
             <div className="text-center space-y-2">
               <p className="text-xs text-muted-foreground">Scan QR to verify</p>
               <div className="inline-block border rounded-lg p-2 bg-white">
-                <img src={cert.qrCodeUrl} alt="Verification QR Code" className="w-32 h-32 mx-auto" />
+                <OptimizedImage src={cert.qrCodeUrl} alt="Verification QR Code" placeholderType="qrcode" className="mx-auto" containerClassName="w-32 h-32" />
               </div>
             </div>
           )}
@@ -131,6 +169,11 @@ export function CertificateVerifyPage() {
             <Button variant="outline" size="sm" asChild>
               <Link to="/">Home</Link>
             </Button>
+            {isValid && (
+              <Button variant="default" size="sm" onClick={handleDownload}>
+                <Download className="h-4 w-4 mr-1" /> Download PDF
+              </Button>
+            )}
             {cert.certificateUrl && (
               <Button variant="outline" size="sm" asChild>
                 <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer">

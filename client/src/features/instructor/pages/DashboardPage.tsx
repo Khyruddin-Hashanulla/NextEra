@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import SubscriptionBadge from '@/components/instructor/SubscriptionBadge';
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,7 +34,7 @@ export function DashboardPage() {
 
   const { data: dashboard, isLoading } = useQuery({
     queryKey: ['instructor', 'dashboard'],
-    queryFn: () => instructorApi.getDashboard().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getDashboard(signal).then((r) => r.data.data),
   });
 
   if (isLoading) {
@@ -52,11 +53,14 @@ export function DashboardPage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
-          </h1>
-          <p className="mt-1 text-muted-foreground">Your teaching overview</p>
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Welcome back{user?.name ? `, ${user.name.split(' ')[0]}` : ''}
+            </h1>
+            <p className="mt-1 text-muted-foreground">Your teaching overview</p>
+          </div>
+          <SubscriptionBadge />
         </div>
         <Link to="/instructor/courses/create">
           <Button>

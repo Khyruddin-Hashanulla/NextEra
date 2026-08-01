@@ -3,6 +3,7 @@ import { studentApi } from '@/api/endpoints/student';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { SubscriptionsSkeleton } from '@/components/skeletons/CertificateSkeleton';
 import { Loader2, Check, Crown, Clock, CalendarDays } from 'lucide-react';
 import { useToast } from '@/providers/ToastProvider';
 import { useState } from 'react';
@@ -79,11 +80,7 @@ export function SubscriptionsPage() {
   };
 
   if (plansLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <SubscriptionsSkeleton />;
   }
 
   const isSubscribed = mySub?.status === 'active';

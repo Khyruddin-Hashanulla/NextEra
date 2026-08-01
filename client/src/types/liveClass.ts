@@ -50,7 +50,14 @@ export interface LiveClassRecording {
   fileSize: number;
   format: string;
   zoomRecordingId: string;
-  status: 'processing' | 'available' | 'failed';
+  meetingId: string;
+  hostId: string;
+  topic: string;
+  playUrl: string;
+  downloadUrl: string;
+  recordingStart?: string;
+  recordingEnd?: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'deleted' | 'available';
   thumbnailUrl: string;
   views: number;
   downloadable: boolean;

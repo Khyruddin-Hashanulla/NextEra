@@ -1,12 +1,16 @@
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import { LiveClass } from '../models/liveClass.model';
-import { LiveClassRecording } from '../models/liveClassRecording.model';
+import { LiveClassRecording, COMPLETED_RECORDING_STATUSES, RECORDING_STATUS } from '../models/liveClassRecording.model';
+import { WebhookEvent } from '../models/webhookEvent.model';
 import { Enrollment } from '../models/enrollment.model';
 import { Course } from '../models/course.model';
 import { User } from '../models/user.model';
 import { ApiError } from '../utils/ApiError';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
+import { escapeRegex } from '../utils/escapeRegex';
+import { subscriptionPermissionService } from './subscriptionPermission.service';
 
 export class LiveClassService {
   private async getZoomAccessToken(): Promise<string | null> {
@@ -273,6 +277,8 @@ export class LiveClassService {
       throw ApiError.forbidden('You do not own this course');
     }
 
+    await subscriptionPermissionService.requireLiveClassPermission(instructorId);
+
     const startTime = new Date(data.startTime);
     const endTime = new Date(startTime.getTime() + data.duration * 60000);
 
@@ -455,13 +461,20 @@ export class LiveClassService {
           instructor: instructorId,
           title: `${liveClass.title} - Recording`,
           description: `Recording of ${liveClass.title}`,
+          topic: liveClass.topic || liveClass.title,
           url: rec.play_url || rec.download_url || '',
+          playUrl: rec.play_url || '',
+          downloadUrl: rec.download_url || '',
           password: liveClass.zoomPassword,
           duration: rec.duration || 0,
           fileSize: rec.file_size || 0,
           format: rec.file_type || 'mp4',
           zoomRecordingId: rec.id || '',
-          status: 'available' as const,
+          meetingId: liveClass.zoomMeetingId,
+          hostId: rec.host_id || '',
+          recordingStart: rec.recording_start ? new Date(rec.recording_start) : undefined,
+          recordingEnd: rec.recording_end ? new Date(rec.recording_end) : undefined,
+          status: 'completed' as const,
           thumbnailUrl: '',
         }));
 
@@ -560,7 +573,7 @@ export class LiveClassService {
       password: data.password || '',
       duration: data.duration || 0,
       format: data.format || 'mp4',
-      status: 'available',
+      status: 'completed',
       thumbnailUrl: data.thumbnailUrl || '',
     });
   }
@@ -580,7 +593,7 @@ export class LiveClassService {
   }
 
   // ─── Student Recordings (by enrolled courses) ──────────────
-  async listStudentRecordings(studentId: string, page = 1, limit = 20) {
+  async listStudentRecordings(studentId: string, page = 1, limit = 20, courseId?: string) {
     const enrollments = await Enrollment.find({ user: studentId }).select('course').lean();
     const courseIds = enrollments.map((e) => e.course);
 
@@ -588,16 +601,26 @@ export class LiveClassService {
       return { recordings: [], pagination: { page, limit, total: 0, pages: 0 } };
     }
 
+    const filter: any = { status: { $in: COMPLETED_RECORDING_STATUSES } };
+    if (courseId) {
+      if (!courseIds.some((c) => c.toString() === courseId)) {
+        return { recordings: [], pagination: { page, limit, total: 0, pages: 0 } };
+      }
+      filter.course = courseId;
+    } else {
+      filter.course = { $in: courseIds };
+    }
+
     const skip = (page - 1) * limit;
     const [recordings, total] = await Promise.all([
-      LiveClassRecording.find({ course: { $in: courseIds }, status: 'available' })
+      LiveClassRecording.find(filter)
         .populate('course', 'title thumbnail')
         .populate('instructor', 'name avatar')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      LiveClassRecording.countDocuments({ course: { $in: courseIds }, status: 'available' }),
+      LiveClassRecording.countDocuments(filter),
     ]);
 
     return { recordings, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
@@ -626,6 +649,267 @@ export class LiveClassService {
     } catch (error) {
       logger.error('Failed to notify enrolled students', error);
     }
+  }
+
+  // ─── Zoom Recording Webhook (Idempotent) ───────────────────
+  async handleZoomRecordingWebhook(payload: any) {
+    const eventType = payload?.event || '';
+    const object = payload?.payload?.object || {};
+
+    if (eventType === 'endpoint.url_validation') {
+      const plainToken = object?.plainToken || '';
+      const encryptedToken = crypto
+        .createHmac('sha256', process.env.ZOOM_WEBHOOK_SECRET || '')
+        .update(plainToken)
+        .digest('base64');
+      return { encryptedToken };
+    }
+
+    const eventId = payload?.event_id || payload?.eventId;
+    if (!eventId) {
+      logger.warn('Zoom webhook received without event_id', { event: eventType });
+      return { received: true };
+    }
+
+    const isRecordingReady =
+      eventType === 'recording.ready' ||
+      eventType === 'recording.completed' ||
+      eventType === 'recording.file.completed';
+    const isRecordingDeleted =
+      eventType === 'recording.deleted' || eventType === 'recording.trashed';
+    const isRecordingTransition =
+      eventType === 'recording.paused' ||
+      eventType === 'recording.resumed' ||
+      eventType === 'recording.started';
+
+    if (!isRecordingReady && !isRecordingDeleted && !isRecordingTransition) {
+      logger.info('Zoom webhook ignored', { event: eventType, eventId });
+      return { received: true };
+    }
+
+    return withTransaction(async (session) => {
+      const existingEvent = await WebhookEvent.findOne({ eventId }).session(session);
+      if (existingEvent) {
+        logger.info('Duplicate Zoom webhook', { eventId, event: eventType });
+        return { received: true, duplicate: true };
+      }
+
+      await WebhookEvent.create(
+        [
+          {
+            eventId,
+            eventType,
+            paymentId: '',
+            orderId: '',
+            payloadHash: crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex'),
+            status: 'processed',
+          },
+        ],
+        { session }
+      );
+
+      const candidateMeetingIds = new Set<string>();
+      if (object.id) candidateMeetingIds.add(String(object.id));
+      if (object.uuid) candidateMeetingIds.add(String(object.uuid));
+      for (const file of object?.recording_files || []) {
+        if (file.meeting_id) candidateMeetingIds.add(String(file.meeting_id));
+      }
+
+      if (candidateMeetingIds.size === 0) {
+        logger.warn('Zoom webhook: no meeting identifiers in payload', { eventId, event: eventType });
+        return { received: true };
+      }
+
+      const liveClass = await LiveClass.findOne({ zoomMeetingId: { $in: [...candidateMeetingIds] } }).session(session);
+      if (!liveClass) {
+        logger.warn('Zoom webhook: no matching live class', { meetingIds: [...candidateMeetingIds], eventId });
+        return { received: true, noClass: true };
+      }
+
+      if (isRecordingDeleted) {
+        const fileIds = (object?.recording_files || [])
+          .map((file: any) => file.id)
+          .filter(Boolean);
+        const result = await LiveClassRecording.updateMany(
+          { $or: [{ zoomRecordingId: { $in: fileIds } }, { meetingId: { $in: [...candidateMeetingIds] } }] },
+          { status: RECORDING_STATUS.DELETED },
+          { session }
+        );
+        return { received: true, deleted: result.modifiedCount };
+      }
+
+      const files = object?.recording_files || [];
+      if (isRecordingTransition || files.length === 0) {
+        return { received: true };
+      }
+
+      const upserted = await this.upsertZoomRecordingFiles(liveClass, object, files, session);
+      return { received: true, processed: true, recordings: upserted.length };
+    });
+  }
+
+  // ─── Sync Recordings for a Live Class (Instructor/Admin) ───
+  async syncRecordingsForClass(liveClassId: string, instructorId?: string) {
+    const liveClass = await LiveClass.findById(liveClassId);
+    if (!liveClass) throw ApiError.notFound('Live class not found');
+    if (instructorId && liveClass.instructor.toString() !== instructorId) {
+      throw ApiError.forbidden('You do not own this live class');
+    }
+    if (!liveClass.zoomMeetingId) {
+      throw ApiError.badRequest('This live class has no Zoom meeting to sync');
+    }
+
+    const token = await this.getZoomAccessToken();
+    if (!token) throw ApiError.badRequest('Zoom integration is not configured');
+
+    const response = await fetch(
+      `https://api.zoom.us/v2/meetings/${liveClass.zoomMeetingId}/recordings`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!response.ok) {
+      logger.error('Zoom recordings sync failed', {
+        status: response.status,
+        meetingId: liveClass.zoomMeetingId,
+      });
+      throw ApiError.badRequest('Failed to fetch recordings from Zoom');
+    }
+
+    const data: any = await response.json();
+    const files = data?.recording_files || [];
+
+    return withTransaction(async (session) => {
+      const upserted = await this.upsertZoomRecordingFiles(liveClass, data, files, session);
+      return { liveClassId, recordings: upserted };
+    });
+  }
+
+  private async upsertZoomRecordingFiles(
+    liveClass: any,
+    object: any,
+    files: any[],
+    session: mongoose.ClientSession
+  ): Promise<any[]> {
+    const results: any[] = [];
+
+    for (const file of files) {
+      if (!file.id) continue;
+      if (file.status && file.status !== 'completed' && file.status !== 'available') {
+        continue;
+      }
+
+      const recordingStart = file.recording_start ? new Date(file.recording_start) : undefined;
+      const recordingEnd = file.recording_end ? new Date(file.recording_end) : undefined;
+      const duration =
+        file.duration ??
+        (recordingStart && recordingEnd
+          ? Math.round((recordingEnd.getTime() - recordingStart.getTime()) / 60000)
+          : undefined) ??
+        object.duration ??
+        0;
+
+      const data: any = {
+        liveClass: liveClass._id,
+        course: liveClass.course,
+        instructor: liveClass.instructor,
+        title: `${liveClass.title} - Recording`,
+        description: `Recording of ${liveClass.title}`,
+        topic: object.topic || liveClass.topic || liveClass.title,
+        url: file.play_url || file.download_url || '',
+        playUrl: file.play_url || '',
+        downloadUrl: file.download_url || '',
+        password: object.password || liveClass.zoomPassword || '',
+        duration,
+        fileSize: file.file_size || 0,
+        format: file.file_type || 'mp4',
+        zoomRecordingId: file.id,
+        meetingId: object.id || file.meeting_id || liveClass.zoomMeetingId,
+        hostId: object.host_id || '',
+        recordingStart,
+        recordingEnd,
+        status:
+          file.status === 'completed' || file.status === 'available'
+            ? RECORDING_STATUS.COMPLETED
+            : RECORDING_STATUS.PROCESSING,
+        thumbnailUrl: '',
+      };
+
+      const existing = await LiveClassRecording.findOne({ zoomRecordingId: file.id }).session(session);
+      if (existing) {
+        if (existing.status === RECORDING_STATUS.DELETED) continue;
+        Object.assign(existing, data);
+        await existing.save({ session });
+        results.push(existing);
+        continue;
+      }
+
+      const created = await LiveClassRecording.create([data], { session });
+      results.push(created[0]);
+    }
+
+    return results;
+  }
+
+  // ─── Recording Detail (Instructor/Admin) ───────────────────
+  async getRecordingById(id: string, ownerId?: string) {
+    const recording = await LiveClassRecording.findById(id)
+      .populate('course', 'title thumbnail')
+      .populate('instructor', 'name avatar email')
+      .populate('liveClass', 'title topic startTime status')
+      .lean();
+    if (!recording) throw ApiError.notFound('Recording not found');
+    if (ownerId) {
+      const instructorId =
+        (recording.instructor as any)?._id?.toString?.() ??
+        (recording.instructor as any)?.toString?.() ??
+        '';
+      if (instructorId !== ownerId) {
+        throw ApiError.forbidden('You do not own this recording');
+      }
+    }
+    return recording;
+  }
+
+  // ─── Admin: List All Recordings ────────────────────────────
+  async listAllRecordings(
+    filters: { courseId?: string; instructorId?: string; status?: string; search?: string },
+    page = 1,
+    limit = 20
+  ) {
+    const filter: any = {};
+    if (filters.courseId) filter.course = filters.courseId;
+    if (filters.instructorId) filter.instructor = filters.instructorId;
+    if (filters.status) filter.status = filters.status;
+    if (filters.search) {
+      const escaped = escapeRegex(filters.search);
+      filter.$or = [
+        { title: { $regex: escaped, $options: 'i' } },
+        { topic: { $regex: escaped, $options: 'i' } },
+        { meetingId: { $regex: escaped, $options: 'i' } },
+      ];
+    }
+
+    const skip = (page - 1) * limit;
+    const [recordings, total] = await Promise.all([
+      LiveClassRecording.find(filter)
+        .populate('course', 'title thumbnail')
+        .populate('instructor', 'name avatar email')
+        .populate('liveClass', 'title startTime')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      LiveClassRecording.countDocuments(filter),
+    ]);
+
+    return { recordings, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
+  }
+
+  // ─── Admin: Delete Recording ───────────────────────────────
+  async deleteRecordingAsAdmin(id: string) {
+    const recording = await LiveClassRecording.findById(id);
+    if (!recording) throw ApiError.notFound('Recording not found');
+    await LiveClassRecording.findByIdAndDelete(id);
+    return recording;
   }
 }
 

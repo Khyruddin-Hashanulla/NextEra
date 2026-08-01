@@ -15,7 +15,7 @@ export function BackupRestorePage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-backups'],
-    queryFn: () => adminApi.listBackups(),
+    queryFn: ({ signal }) => adminApi.listBackups(signal),
    });
 
   const createMutation = useMutation({

@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { useToast } from '@/providers/ToastProvider';
 import { Heart, Trash2, BookOpen, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -80,10 +81,11 @@ export function WishlistPage() {
                 <Link to={`/courses/${item.course?._id}`}>
                   <div className="relative aspect-video w-full overflow-hidden bg-muted">
                     {item.course?.thumbnail?.url ? (
-                      <img
+                      <OptimizedImage
                         src={item.course.thumbnail.url}
                         alt={item.course.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        placeholderType="course"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     ) : (
                       <div className="flex h-full items-center justify-center">

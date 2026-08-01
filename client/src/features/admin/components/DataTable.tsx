@@ -36,9 +36,10 @@ export function DataTable<T extends Record<string, any>>({
 
   if (isLoading) {
     return (
-      <div className="rounded-lg border">
+      <div className="rounded-lg border" role="status" aria-live="polite">
         <div className="flex items-center justify-center p-12 text-muted-foreground">
-          <Loader2 className="h-6 w-6 animate-spin" />
+          <Loader2 className="h-6 w-6 animate-spin" aria-hidden="true" />
+          <span className="sr-only">Loading table data</span>
         </div>
       </div>
     );
@@ -47,7 +48,7 @@ export function DataTable<T extends Record<string, any>>({
   if (!data.length) {
     return (
       <div className="rounded-lg border">
-        <div className="p-8 text-center text-muted-foreground">{emptyMessage}</div>
+        <div className="p-8 text-center text-muted-foreground" role="status">{emptyMessage}</div>
       </div>
     );
   }
@@ -59,7 +60,7 @@ export function DataTable<T extends Record<string, any>>({
           <thead>
             <tr className="border-b bg-muted/50">
               {columns.map((col, ci) => (
-                <th key={col.key || ci} className={cn('px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider', col.className)}>
+                <th key={col.key || ci} scope="col" className={cn('px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider', col.className)}>
                   {col.header}
                 </th>
               ))}
@@ -84,11 +85,11 @@ export function DataTable<T extends Record<string, any>>({
             Page {currentPage} of {totalPages} ({pagination?.total || 0} total)
           </p>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)}>
-              <ChevronLeft className="h-4 w-4" />
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => onPageChange(currentPage - 1)} aria-label="Previous page">
+              <ChevronLeft className="h-4 w-4" aria-hidden="true" />
             </Button>
-            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)}>
-              <ChevronRight className="h-4 w-4" />
+            <Button variant="outline" size="sm" disabled={currentPage >= totalPages} onClick={() => onPageChange(currentPage + 1)} aria-label="Next page">
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </Button>
           </div>
         </div>

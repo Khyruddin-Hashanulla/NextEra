@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { FileUpload } from '@/components/ui/file-upload';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { FormSkeleton } from '@/components/skeletons/FormSkeleton';
+import { CheckCircle, Clock, XCircle } from 'lucide-react';
 
 export function ApplyPage() {
   const [form, setForm] = useState({
@@ -27,7 +28,7 @@ export function ApplyPage() {
 
   const { data: statusData, isLoading } = useQuery({
     queryKey: ['instructor', 'application-status'],
-    queryFn: () => instructorApi.getApplicationStatus().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getApplicationStatus(signal).then((r) => r.data.data),
   });
 
   const mutation = useMutation({
@@ -49,7 +50,7 @@ export function ApplyPage() {
   });
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <FormSkeleton />;
   }
 
   if (statusData?.applied) {

@@ -6,6 +6,7 @@ import { useToast } from '@/providers/ToastProvider';
 import axios from 'axios';
 import { PageTransition } from '@/components/common/PageTransition';
 import { AuthLayout } from '../components/AuthLayout';
+import { SEO } from '@/components/seo/SEO';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 export function OAuthCallbackPage() {
@@ -47,6 +48,7 @@ export function OAuthCallbackPage() {
 
   return (
     <PageTransition>
+      <SEO title="Redirecting..." description="Completing your sign in to NextEra." robots="noindex,nofollow" />
       <AuthLayout>
         <div className="flex flex-col items-center text-center py-8">
           {status === 'loading' && (

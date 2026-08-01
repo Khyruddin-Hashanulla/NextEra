@@ -16,6 +16,9 @@ import { Section, Container } from '@/components/common/Section';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { Link } from 'react-router-dom';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { breadcrumbListSchema } from '@/lib/schema';
 import type { MockCourse } from '@/mocks/types';
 
 export function CoursesPage() {
@@ -27,14 +30,14 @@ export function CoursesPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['public-courses', page, search, level, category, sort],
-    queryFn: () => studentApi.listCourses({ 
+    queryFn: ({ signal }) => studentApi.listCourses({ 
       search, 
       level: level || undefined, 
       category: category || undefined,
       sort,
       page, 
       limit: 12 
-    }).then(r => r.data.data),
+    }, signal).then(r => r.data.data),
     placeholderData: (previousData) => previousData,
   });
 
@@ -44,7 +47,7 @@ export function CoursesPage() {
 
   const { data: categoriesData } = useQuery({
     queryKey: ['course-categories'],
-    queryFn: () => studentApi.listCourses({ limit: 100 }).then(r => {
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
       const cats = new Set<string>();
       r.data.data.courses.forEach((c: any) => {
         if (c.category?.name) cats.add(c.category.name);
@@ -88,6 +91,13 @@ export function CoursesPage() {
 
   return (
     <div className="min-h-screen">
+      <SEO title="Courses" description="Browse our comprehensive catalog of web development, programming, and technology courses." canonical={ROUTES.COURSES} />
+      <StructuredData schemas={[
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Courses', path: '/courses' },
+        ]),
+      ]} />
       {/* Page Header */}
       <Section size="sm" background="gradient">
         <Container>

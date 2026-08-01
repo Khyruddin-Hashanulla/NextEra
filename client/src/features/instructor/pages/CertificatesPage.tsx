@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, Plus, Download, Award } from 'lucide-react';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
+import { Plus, Download, Award } from 'lucide-react';
 
 export function CertificatesPage() {
   const [page, setPage] = useState(1);
@@ -19,7 +20,7 @@ export function CertificatesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'certificates', page],
-    queryFn: () => instructorApi.listCertificates({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.listCertificates({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const issueMutation = useMutation({
@@ -64,7 +65,7 @@ export function CertificatesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex min-h-[40vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        <TableSkeleton />
       ) : (
         <DataTable
           columns={[

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback, DragEvent } from 'react';
 import { Upload, X, File as FileIcon, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 interface FileUploadProps {
   accept: string;
@@ -137,7 +138,7 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
         />
         {value && preview ? (
           <div className="relative">
-            <img src={preview} alt="Preview" className="max-h-40 rounded object-contain" />
+            <OptimizedImage src={preview} alt="Uploaded image preview" className="max-h-40 rounded object-contain" lazy={false} />
             {!disabled && (
               <button
                 type="button"

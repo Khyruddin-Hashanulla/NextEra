@@ -14,7 +14,7 @@ export interface StudyReminder {
 }
 
 export const studyReminderApi = {
-  list: () => axiosInstance.get<{ data: StudyReminder[] }>('/study-reminders'),
+  list: (signal?: AbortSignal) => axiosInstance.get<{ data: StudyReminder[] }>('/study-reminders', { signal }),
 
   create: (data: {
     title: string;
@@ -23,12 +23,12 @@ export const studyReminderApi = {
     dayOfWeek?: number;
     time: string;
     course?: string;
-  }) => axiosInstance.post<{ data: StudyReminder }>('/study-reminders', data),
+  }, signal?: AbortSignal) => axiosInstance.post<{ data: StudyReminder }>('/study-reminders', data, { signal }),
 
-  update: (id: string, data: Partial<StudyReminder>) =>
-    axiosInstance.put<{ data: StudyReminder }>(`/study-reminders/${id}`, data),
+  update: (id: string, data: Partial<StudyReminder>, signal?: AbortSignal) =>
+    axiosInstance.put<{ data: StudyReminder }>(`/study-reminders/${id}`, data, { signal }),
 
-  delete: (id: string) => axiosInstance.delete(`/study-reminders/${id}`),
+  delete: (id: string, signal?: AbortSignal) => axiosInstance.delete(`/study-reminders/${id}`, { signal }),
 
-  toggle: (id: string) => axiosInstance.post<{ data: StudyReminder }>(`/study-reminders/${id}/toggle`),
+  toggle: (id: string, signal?: AbortSignal) => axiosInstance.post<{ data: StudyReminder }>(`/study-reminders/${id}/toggle`, undefined, { signal }),
 };

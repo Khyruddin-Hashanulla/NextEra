@@ -3,8 +3,9 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, BookOpen, Heart, Award, FileQuestion,
   ShoppingBag, Bell, User, ChevronLeft, Menu, X, GraduationCap,
+  ClipboardList,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ElementType } from 'react';
 
@@ -19,6 +20,7 @@ const navItems: NavItem[] = [
   { href: '/student/my-courses', label: 'My Learning', icon: BookOpen },
   { href: '/student/wishlist', label: 'Wishlist', icon: Heart },
   { href: '/student/quizzes', label: 'Quiz History', icon: FileQuestion },
+  { href: '/student/assignments', label: 'Assignments', icon: ClipboardList },
   { href: '/student/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/student/certificates', label: 'Certificates', icon: Award },
   { href: '/student/notifications', label: 'Notifications', icon: Bell },
@@ -34,10 +36,31 @@ export function StudentLayout() {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mobileMenuId = useId();
 
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
+
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'Escape' && mobileOpen) {
+      setMobileOpen(false);
+    }
+  }, [mobileOpen]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [handleEscape]);
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
 
   const activeItem = navItems.find(
     (item) => location.pathname === item.href || location.pathname.startsWith(item.href + '/')
@@ -45,7 +68,6 @@ export function StudentLayout() {
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
-      {/* Mobile overlay */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -54,11 +76,11 @@ export function StudentLayout() {
             exit={{ opacity: 0 }}
             onClick={() => setMobileOpen(false)}
             className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            aria-hidden="true"
           />
         )}
       </AnimatePresence>
 
-      {/* Mobile sidebar */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.aside
@@ -67,18 +89,21 @@ export function StudentLayout() {
             animate="open"
             exit="closed"
             className="fixed left-0 top-16 z-50 h-[calc(100vh-4rem)] w-64 border-r bg-background lg:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mobile navigation menu"
           >
             <SidebarContent navItems={navItems} collapsed={false} onClose={() => setMobileOpen(false)} />
           </motion.aside>
         )}
       </AnimatePresence>
 
-      {/* Desktop sidebar */}
       <aside
         className={cn(
           'hidden border-r bg-background transition-all duration-300 lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)]',
           collapsed ? 'w-16' : 'w-60'
         )}
+        aria-label="Sidebar navigation"
       >
         <div className="flex h-full flex-col">
           <div className={cn('flex items-center border-b px-4 py-3', collapsed && 'justify-center')}>
@@ -88,15 +113,15 @@ export function StudentLayout() {
             <button
               onClick={() => setCollapsed(!collapsed)}
               className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
+                'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 collapsed && 'mx-auto'
               )}
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
+              <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} aria-hidden="true" />
             </button>
           </div>
-          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Student navigation">
             {navItems.map((item) => {
               const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
               return (
@@ -104,7 +129,7 @@ export function StudentLayout() {
                   key={item.href}
                   to={item.href}
                   className={cn(
-                    'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                    'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                     isActive
                       ? 'bg-primary/10 text-primary'
                       : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
@@ -117,36 +142,34 @@ export function StudentLayout() {
                       transition={{ type: 'spring', stiffness: 400, damping: 30 }}
                     />
                   )}
-                  <item.icon className="relative z-10 h-5 w-5 shrink-0" />
+                  <item.icon className="relative z-10 h-5 w-5 shrink-0" aria-hidden="true" />
                   {!collapsed && <span className="relative z-10">{item.label}</span>}
                 </Link>
               );
             })}
           </nav>
           <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
-            {!collapsed && (
-              <Link
-                to="/"
-                className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <GraduationCap className="h-4 w-4" />
-                Back to site
-              </Link>
-            )}
+            <Link
+              to="/"
+              className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+            >
+              <GraduationCap className="h-4 w-4" aria-hidden="true" />
+              {!collapsed && 'Back to site'}
+            </Link>
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
       <div className={cn('flex flex-1 flex-col', 'lg:pl-0')}>
-        {/* Mobile header */}
         <div className="sticky top-16 z-20 flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur-sm lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Open menu"
+            aria-expanded={mobileOpen}
+            aria-controls={mobileMenuId}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
           <div>
             <h2 className="text-sm font-semibold">{activeItem?.label || 'Dashboard'}</h2>
@@ -168,12 +191,12 @@ function SidebarContent({ navItems: items, collapsed, onClose }: { navItems: Nav
       <div className="flex items-center justify-between border-b px-4 py-3">
         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Menu</span>
         {onClose && (
-          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent" aria-label="Close menu">
-            <X className="h-4 w-4" />
+          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="Close menu">
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         )}
       </div>
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Mobile student navigation">
         {items.map((item) => {
           const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
           return (
@@ -181,11 +204,11 @@ function SidebarContent({ navItems: items, collapsed, onClose }: { navItems: Nav
               key={item.href}
               to={item.href}
               className={cn(
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                 isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
-              <item.icon className="h-5 w-5 shrink-0" />
+              <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );

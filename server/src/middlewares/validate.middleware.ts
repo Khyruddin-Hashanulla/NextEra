@@ -1,12 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema, ZodError } from 'zod';
+import { ZodSchema, ZodError, ZodObject } from 'zod';
 import { ApiError } from '../utils/ApiError';
 
-export const validate = (schema: ZodSchema, source: 'body' | 'query' | 'params' = 'body') => {
+type Source = 'body' | 'query' | 'params';
+
+export const validate = (schema: ZodSchema, source: Source = 'body') => {
   return (req: Request, _res: Response, next: NextFunction): void => {
     try {
-      const data = schema.parse(req[source]);
-      req[source] = data;
+      const shape = (schema as ZodObject<any> | undefined)?.shape;
+      const isWrapped =
+        !!shape && typeof shape === 'object' && Object.keys(shape).length === 1 && shape[source] !== undefined;
+      const data = isWrapped ? schema.parse({ [source]: req[source] }) : schema.parse(req[source]);
+      req[source] = isWrapped ? (data as any)[source] : data;
       next();
     } catch (error) {
       if (error instanceof ZodError) {

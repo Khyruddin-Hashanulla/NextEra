@@ -83,27 +83,145 @@ export interface QuizAttempt {
   completedAt: string;
 }
 
+export type AssignmentStatus =
+  | 'assigned'
+  | 'submitted'
+  | 'late_submission'
+  | 'under_review'
+  | 'graded'
+  | 'returned_for_resubmission'
+  | 'rejected'
+  | 'overdue';
+
+export interface AssignmentFile {
+  url: string;
+  publicId: string;
+  name: string;
+}
+
+export interface AssignmentRubricItem {
+  criteria: string;
+  maxPoints: number;
+  obtainedPoints: number;
+  comment?: string;
+}
+
+export interface AssignmentGradingHistoryEntry {
+  grade: number;
+  maxMarks: number;
+  percentage: number;
+  passFail: 'pass' | 'fail';
+  letterGrade: string;
+  customGradeScale?: string;
+  feedback?: string;
+  status: AssignmentStatus;
+  gradedBy: { _id: string; name: string };
+  gradedAt: string;
+}
+
 export interface AssignmentSubmission {
   _id: string;
   user: string;
   course: string;
   lecture: { _id: string; title: string; assignment: any };
   content: string;
-  files: { url: string; publicId: string; name: string }[];
-  status: 'submitted' | 'graded';
+  files: AssignmentFile[];
+  status: AssignmentStatus;
   grade?: number;
+  maxMarks?: number;
+  percentage?: number;
+  passFail?: 'pass' | 'fail';
+  letterGrade?: string;
+  customGradeScale?: string;
+  rubric?: AssignmentRubricItem[];
   feedback?: string;
+  privateNotes?: string;
+  gradedFiles?: AssignmentFile[];
+  gradedBy?: { _id: string; name: string } | string;
+  publishedAt?: string;
+  publishedBy?: { _id: string; name: string } | string;
   submittedAt: string;
+  gradedAt?: string;
+  reviewedAt?: string;
+  resubmittedAt?: string;
+  resubmissionDeadline?: string;
+  submissionVersion: number;
+  lateSubmission: boolean;
+  penaltyPercent: number;
+  penaltyApplied: boolean;
+  gradingHistory?: AssignmentGradingHistoryEntry[];
+}
+
+export interface AssignmentOverviewItem {
+  _id: string;
+  title: string;
+  course: { _id: string; title: string; thumbnail: { url: string } };
+  dueDate: string;
+  maxMarks: number;
+  status: AssignmentStatus;
+  submission: {
+    _id: string;
+    grade?: number;
+    maxMarks?: number;
+    percentage?: number;
+    passFail?: 'pass' | 'fail';
+    letterGrade?: string;
+    submittedAt: string;
+    publishedAt?: string;
+    lateSubmission: boolean;
+  } | null;
+}
+
+export interface AssignmentOverviewResponse {
+  assignments: AssignmentOverviewItem[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface AssignmentDetailResponse {
+  lecture: {
+    _id: string;
+    title: string;
+    course: { _id: string; title: string; thumbnail: { url: string }; instructor: { _id: string; name: string } };
+    assignment: {
+      title?: string;
+      description?: string;
+      totalMarks: number;
+      passingMarks: number;
+      dueDate?: string;
+      allowLateSubmission: boolean;
+      instructions?: string;
+    };
+    resources: { title: string; url: string; type: string }[];
+  };
+  status: AssignmentStatus;
+  submission: AssignmentSubmission | null;
+  canResubmit: boolean;
+  canSubmit: boolean;
 }
 
 export interface Certificate {
   _id: string;
-  user: string;
-  course: { _id: string; title: string; instructor: { _id: string; name: string } };
+  user: string | { _id: string; name: string; email: string };
+  course: { _id: string; title: string; instructor: { _id: string; name: string }; thumbnail?: string };
   certificateId: string;
   qrCodeUrl: string;
   certificateUrl: string;
+  pdfUrl?: string;
+  status: 'active' | 'revoked';
+  version: number;
+  metadata?: {
+    categoryName: string;
+    courseDuration: number;
+    courseLevel: string;
+    instructorName: string;
+  };
   issuedAt: string;
+  downloadedAt?: string;
+  verifiedAt?: string;
+  signatureValid?: boolean;
+  isRevoked?: boolean;
+  revokedAt?: string;
+  revokedReason?: string;
 }
 
 export interface Bundle {

@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Users, GraduationCap, DollarSign, Star, BookOpen, TrendingUp } from 'lucide-react';
+import FeatureGate from '@/components/instructor/FeatureGate';
 
 const container = {
   hidden: { opacity: 0 },
@@ -26,8 +27,17 @@ const statCards = [
 export function AnalyticsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'analytics'],
-    queryFn: () => instructorApi.getAnalytics().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getAnalytics(signal).then((r) => r.data.data),
   });
+
+  return (
+    <FeatureGate feature="advancedAnalytics">
+      <AnalyticsContent data={data} isLoading={isLoading} />
+    </FeatureGate>
+  );
+}
+
+function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }) {
 
   if (isLoading) {
     return (

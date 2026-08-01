@@ -2,20 +2,27 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentApi } from '@/api/endpoints/student';
+import { liveClassApi } from '@/api/endpoints/liveClass';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { FileUpload } from '@/components/ui/file-upload';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, ChevronLeft, ChevronRight, PlayCircle, CheckCircle, Bookmark, StickyNote, MessageSquare, FileQuestion, FileCheck, FileText, ArrowLeft, Download } from 'lucide-react';
+import { CoursePlayerSkeleton } from '@/components/skeletons/CourseDetailSkeleton';
+import { ResourceNotFound } from '@/components/common/ResourceNotFound';
+import { ErrorState } from '@/components/common/ErrorState';
+import { categorizeError } from '@/lib/error-utils';
+import { Loader2, ChevronLeft, ChevronRight, PlayCircle, CheckCircle, Bookmark, StickyNote, MessageSquare, FileQuestion, FileCheck, FileText, ArrowLeft, Download, Play, Video } from 'lucide-react';
 
 export function CoursePlayerPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const { addToast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['student', 'course-player', courseId],
     queryFn: () => studentApi.getCourseDetail(courseId!).then((r: any) => r.data.data),
     enabled: !!courseId,
@@ -61,7 +68,30 @@ export function CoursePlayerPage() {
   };
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <CoursePlayerSkeleton />;
+  }
+
+  if (error || !data?.course) {
+    if (!data?.course && (!error || categorizeError(error) === 'not-found')) {
+      return <ResourceNotFound resourceType="course" />;
+    }
+    const category = categorizeError(error);
+    if (category === 'network') {
+      return (
+        <ErrorState
+          title="Connection Error"
+          message="Unable to connect to the server. Please check your internet connection and try again."
+          onRetry={() => window.location.reload()}
+        />
+      );
+    }
+    return (
+      <ErrorState
+        title="Course Not Found"
+        message="This course doesn't exist or has been removed."
+        onRetry={() => window.location.reload()}
+      />
+    );
   }
 
   if (!data?.isEnrolled) {
@@ -213,6 +243,8 @@ export function CoursePlayerPage() {
             </div>
           </div>
         )}
+
+        <LiveRecordingsSection courseId={courseId!} />
       </div>
     </div>
   );
@@ -415,34 +447,92 @@ function AssignmentTab({ courseId, lectureId }: { courseId: string; lectureId: s
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const [content, setContent] = useState('');
+  const [files, setFiles] = useState<{ url: string; publicId: string; name: string }[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  const { data: submissions } = useQuery({
-    queryKey: ['student', 'assignments', lectureId],
-    queryFn: () => studentApi.getAssignments({ courseId }).then((r: any) => r.data.data),
+  const { data: detail } = useQuery({
+    queryKey: ['student', 'assignment', lectureId],
+    queryFn: () => studentApi.getAssignmentDetail(lectureId).then((r: any) => r.data.data),
+    enabled: !!lectureId,
   });
+
+  const submission = detail?.submission || null;
+  const canSubmit = detail?.canSubmit;
 
   const submitMutation = useMutation({
-    mutationFn: () => studentApi.submitAssignment({ courseId, lectureId, content }),
+    mutationFn: () => studentApi.submitAssignment({ courseId, lectureId, content, files: files.length ? files : undefined }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student', 'assignments', lectureId] });
+      queryClient.invalidateQueries({ queryKey: ['student', 'assignment', lectureId] });
+      queryClient.invalidateQueries({ queryKey: ['student', 'assignments', 'overview'] });
       setContent('');
+      setFiles([]);
       addToast({ title: 'Assignment submitted', variant: 'success' });
     },
+    onError: () => addToast({ title: 'Failed to submit assignment', variant: 'error' }),
   });
 
-  const submission = submissions?.find((s: any) => s.lecture?._id === lectureId);
+  const handleUpload = async (file: File | null) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const res = await studentApi.uploadAssignmentFile(file);
+      setFiles((prev) => [...prev.slice(-4), res.data.data]);
+      addToast({ title: 'File uploaded', variant: 'success' });
+    } catch {
+      addToast({ title: 'File upload failed', variant: 'error' });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   if (submission) {
     return (
       <Card>
         <CardContent className="space-y-3 pt-4">
-          <div className={'rounded-lg p-3 ' + (submission.status === 'graded' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700')}>
-            <p className="text-sm font-medium">Status: {submission.status}</p>
-            {submission.grade !== undefined && <p className="text-sm">Grade: {submission.grade}/100</p>}
+          <div className="rounded-lg p-3 bg-muted/40">
+            <p className="text-sm font-medium">Status: {submission.status.replace(/_/g, ' ')}</p>
+            {(submission.grade !== undefined || submission.letterGrade) && (
+              <p className="text-sm">
+                Grade: {submission.letterGrade || `${submission.grade}/${submission.maxMarks || 100}`}
+                {submission.percentage !== undefined && ` (${submission.percentage}%)`}
+              </p>
+            )}
+            {submission.passFail && (
+              <p className={`text-sm font-medium ${submission.passFail === 'pass' ? 'text-green-600' : 'text-red-600'}`}>
+                {submission.passFail === 'pass' ? 'Passed' : 'Failed'}
+              </p>
+            )}
             {submission.feedback && <p className="text-sm">Feedback: {submission.feedback}</p>}
+            {submission.lateSubmission && submission.penaltyPercent > 0 && (
+              <p className="text-xs text-orange-600">Late submission · {submission.penaltyPercent}% penalty</p>
+            )}
           </div>
-          <p className="text-sm">{submission.content}</p>
+          {submission.content && <p className="whitespace-pre-line text-sm">{submission.content}</p>}
+          {submission.files?.length > 0 && (
+            <div className="space-y-2">
+              {submission.files.map((f: any) => (
+                <div key={f.publicId} className="flex items-center justify-between rounded-lg border p-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-sm">{f.name}</span>
+                  </div>
+                  <a href={f.url} target="_blank" rel="noopener noreferrer" download>
+                    <Button variant="ghost" size="sm"><Download className="h-3 w-3" /></Button>
+                  </a>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
+      </Card>
+    );
+  }
+
+  if (!canSubmit) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center text-muted-foreground">Submission not available.</CardContent>
       </Card>
     );
   }
@@ -450,8 +540,33 @@ function AssignmentTab({ courseId, lectureId }: { courseId: string; lectureId: s
   return (
     <Card>
       <CardContent className="space-y-3 pt-4">
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your assignment submission..." rows={6} />
-        <Button onClick={() => submitMutation.mutate()} disabled={!content.trim()}>Submit Assignment</Button>
+        <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your assignment answer..." rows={6} />
+        <FileUpload
+          accept=".pdf,.doc,.docx,.zip,.rar,.txt,.md,.c,.cpp,.js,.jsx,.ts,.tsx,.py,.java,.jpeg,.jpg,.png,.webp"
+          maxSize={25 * 1024 * 1024}
+          label="Upload assignment files (max 5)"
+          value={pendingFile}
+          onChange={(f) => { setPendingFile(f); if (f) handleUpload(f); }}
+          disabled={uploading || files.length >= 5}
+        />
+        {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+        {files.length > 0 && (
+          <div className="space-y-2">
+            {files.map((f) => (
+              <div key={f.publicId} className="flex items-center justify-between rounded-lg border p-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm">{f.name}</span>
+                </div>
+                <button onClick={() => setFiles((prev) => prev.filter((x) => x.publicId !== f.publicId))} className="text-xs text-destructive hover:underline">Remove</button>
+              </div>
+            ))}
+          </div>
+        )}
+        <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || (!content.trim() && files.length === 0)}>
+          {submitMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Submit Assignment
+        </Button>
       </CardContent>
     </Card>
   );
@@ -495,6 +610,62 @@ function ResourcesTab({ courseId, lectureId }: { courseId: string; lectureId: st
         ))}
       </CardContent>
     </Card>
+  );
+}
+
+function LiveRecordingsSection({ courseId }: { courseId: string }) {
+  const { data: recordingsData, isLoading } = useQuery({
+    queryKey: ['student', 'course-recordings', courseId],
+    queryFn: ({ signal }) => liveClassApi.listStudentRecordings({ courseId, page: 1, limit: 20 }, signal).then((r) => r.data.data),
+    enabled: !!courseId,
+  });
+
+  const recordings = recordingsData?.recordings || [];
+
+  const recordView = (rec: any) => {
+    if (rec._id) liveClassApi.incrementRecordingView(rec._id).catch(() => {});
+  };
+
+  return (
+    <div className="mt-6">
+      <h3 className="mb-3 flex items-center gap-2 font-semibold">
+        <Video className="h-4 w-4 text-primary" /> Live Recordings
+      </h3>
+      {isLoading ? (
+        <Skeleton className="h-24 w-full" />
+      ) : recordings.length === 0 ? (
+        <Card>
+          <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <Video className="mx-auto mb-2 h-8 w-8" />
+            <p>No live recordings available for this course yet.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {recordings.map((rec: any) => {
+            const mins = Math.floor((rec.duration || 0) / 60);
+            const secs = (rec.duration || 0) % 60;
+            return (
+              <Card key={rec._id}>
+                <CardContent className="flex items-center justify-between gap-3 p-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{rec.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {mins}:{secs.toString().padStart(2, '0')} · {new Date(rec.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  {rec.url && (
+                    <a href={rec.url} target="_blank" rel="noreferrer" onClick={() => recordView(rec)}>
+                      <Button size="sm"><Play className="mr-1 h-3 w-3" /> Watch</Button>
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 

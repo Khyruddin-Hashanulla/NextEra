@@ -45,7 +45,7 @@ export function SettingsPage() {
 
   const { data: settings, isLoading } = useQuery({
     queryKey: ['admin', 'settings'],
-    queryFn: () => adminApi.getSettings().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getSettings(signal).then((r) => r.data.data),
   });
 
   useEffect(() => {

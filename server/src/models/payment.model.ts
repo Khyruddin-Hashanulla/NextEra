@@ -24,6 +24,8 @@ export interface IPaymentFailureDetails {
 
 export interface IPayment extends Document {
   user: mongoose.Types.ObjectId;
+  referredBy?: mongoose.Types.ObjectId;
+  affiliateCommission?: number;
   type: 'course' | 'bundle' | 'subscription';
   course?: mongoose.Types.ObjectId;
   bundle?: mongoose.Types.ObjectId;
@@ -69,6 +71,11 @@ const paymentSchema = new Schema<IPayment>(
       required: true,
       index: true,
     },
+    referredBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    affiliateCommission: { type: Number, default: 0 },
     type: {
       type: String,
       enum: ['course', 'bundle', 'subscription'],

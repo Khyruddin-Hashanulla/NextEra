@@ -11,6 +11,7 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Edit3, Trash2, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { ListSkeleton } from '@/components/skeletons/ListSkeleton';
 import { Switch } from '@/components/ui/switch';
 
 export function FAQPage() {
@@ -24,7 +25,7 @@ export function FAQPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-faq'],
-    queryFn: () => adminApi.listFaqs(),
+    queryFn: ({ signal }) => adminApi.listFaqs(signal),
    });
 
   const createMutation = useMutation({
@@ -56,7 +57,7 @@ export function FAQPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <ListSkeleton rows={6} height={20} hasHeader={false} />
       ) : (
         <div className="space-y-6">
           {categories.map((cat) => (

@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/providers/ToastProvider';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 import {
-  Loader2, Calendar, Clock, Video, ExternalLink, User, Play, Monitor,
+  Calendar, Clock, Video, ExternalLink, User, Play, Monitor,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
@@ -56,7 +57,7 @@ export function LiveClassesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <CardGridSkeleton />
       ) : classes.length === 0 ? (
         <div className="rounded-lg border p-12 text-center text-muted-foreground">
           <Video className="mx-auto h-8 w-8 mb-2" />

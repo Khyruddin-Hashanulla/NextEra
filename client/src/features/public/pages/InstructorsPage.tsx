@@ -12,6 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Filter, ChevronDown, Users, Star, Award, Code } from 'lucide-react';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { breadcrumbListSchema } from '@/lib/schema';
 import { Section, Container } from '@/components/common/Section';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/lib/utils';
@@ -37,7 +40,7 @@ export function InstructorsPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['public-instructors', page, search, specialty, sort],
-    queryFn: () => studentApi.listCourses({ limit: 100 }).then(r => {
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
       const courses = r.data.data.courses || [];
       const instructorMap = new Map();
       courses.forEach((course: any) => {
@@ -96,7 +99,7 @@ export function InstructorsPage() {
 
   const { data: specialtiesData } = useQuery({
     queryKey: ['instructor-specialties'],
-    queryFn: () => studentApi.listCourses({ limit: 100 }).then(r => {
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
       const specialties = new Set<string>();
       r.data.data.courses.forEach((course: any) => {
         course.instructor?.specialties?.forEach((s: string) => specialties.add(s));
@@ -138,6 +141,13 @@ export function InstructorsPage() {
 
   return (
     <div className="min-h-screen">
+      <SEO title="Our Instructors" description="Learn from industry professionals with real-world experience at top companies worldwide." canonical="/instructors" />
+      <StructuredData schemas={[
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Instructors', path: '/instructors' },
+        ]),
+      ]} />
       {/* Page Header */}
       <Section size="sm" background="gradient">
         <Container>

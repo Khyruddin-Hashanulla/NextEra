@@ -3,6 +3,8 @@ import { adminApi } from '@/api/endpoints/admin';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, DollarSign, TrendingUp, CreditCard, ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
+import { DashboardSkeleton } from '@/components/skeletons/DashboardSkeleton';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
 import { useState } from 'react';
 
 export function WalletPage() {
@@ -10,20 +12,16 @@ export function WalletPage() {
 
   const { data: wallet, isLoading: walletLoading } = useQuery({
     queryKey: ['admin-wallet'],
-    queryFn: () => adminApi.getWallet().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getWallet(signal).then((r) => r.data.data),
    });
 
   const { data: transactions, isLoading: txLoading } = useQuery({
     queryKey: ['admin-wallet-transactions', txPage],
-    queryFn: () => adminApi.getWalletTransactions({ page: txPage, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getWalletTransactions({ page: txPage, limit: 10 }, signal).then((r) => r.data.data),
    });
 
   if (walletLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <DashboardSkeleton statCards={5} showCharts={false} />;
   }
 
   const stats = [
@@ -64,7 +62,7 @@ export function WalletPage() {
         </CardHeader>
         <CardContent>
           {txLoading ? (
-            <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            <TableSkeleton rows={5} columns={6} hasHeader={false} />
           ) : (
             <>
               <div className="overflow-x-auto">

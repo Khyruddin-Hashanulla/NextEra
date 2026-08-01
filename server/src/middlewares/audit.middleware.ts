@@ -4,7 +4,7 @@ import { auditService } from '../services/audit.service';
 import { getIp, getUserAgent } from '../services/dataScoping.service';
 
 export interface AuditOptions {
-  action: string;
+  action: string | ((req: Request, body?: any) => string);
   resourceType: string;
   resourceId?: string | ((req: Request) => string | undefined);
   resourceName?: string | ((req: Request) => string | undefined);
@@ -55,7 +55,7 @@ export function auditMiddleware(req: Request, res: Response, next: NextFunction)
           adminId: admin.userId,
           adminName: '',
           adminEmail: admin.email,
-          action: opts.action,
+          action: typeof opts.action === 'function' ? opts.action(req, body) : opts.action,
           resourceType: opts.resourceType,
           resourceId,
           resourceName,

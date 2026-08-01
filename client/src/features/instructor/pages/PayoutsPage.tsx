@@ -35,7 +35,7 @@ export function InstructorPayoutsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['instructor-payouts', page],
-    queryFn: () => instructorApi.getMyPayouts({ page, limit: 15 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getMyPayouts({ page, limit: 15 }, signal).then((r) => r.data.data),
   });
 
   if (isLoading) {

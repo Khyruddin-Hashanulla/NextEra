@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Loader2, Shield, ShieldCheck, ShieldAlert, Save } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 import { Switch } from '@/components/ui/switch';
 
 const allModules = ['courses', 'users', 'payments', 'reviews', 'categories', 'blog', 'settings', 'banners', 'tickets', 'certificates', 'faq', 'analytics'];
@@ -25,7 +26,7 @@ export function RolePermissionsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-role-permissions'],
-    queryFn: () => adminApi.listRolePermissions(),
+    queryFn: ({ signal }) => adminApi.listRolePermissions(signal),
    });
 
   const updateMutation = useMutation({
@@ -70,7 +71,7 @@ export function RolePermissionsPage() {
       <h1 className="text-2xl font-bold">Role & Permission Management</h1>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <CardGridSkeleton cards={3} />
       ) : (
         <div className="grid gap-6 md:grid-cols-3">
           {roles.map((rp: RolePermission) => {

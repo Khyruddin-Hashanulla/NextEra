@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Star, Users, Award, BookOpen } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 interface Instructor {
   _id: string;
@@ -32,7 +33,7 @@ export function InstructorCard({ instructor, className }: InstructorCardProps) {
     >
       <div className="relative mx-auto w-20 h-20 mb-4">
         {instructor.avatar ? (
-          <img src={instructor.avatar} alt={instructor.name} className="w-full h-full rounded-full object-cover" loading="lazy" />
+          <OptimizedImage src={instructor.avatar} alt={instructor.name} placeholderType="avatar" className="rounded-full object-cover" lazy />
         ) : (
           <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
             {initials}

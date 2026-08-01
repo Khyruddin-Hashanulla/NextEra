@@ -10,10 +10,16 @@ import { ROLES } from '../constants/roles';
 import { withTransaction } from '../utils/transaction';
 import { escapeRegex } from '../utils/escapeRegex';
 import { cascadeDeleteService } from './cascadeDelete.service';
+import { subscriptionPermissionService } from './subscriptionPermission.service';
 
 export class CourseService {
   // ─── CRUD ────────────────────────────────────────────────────
   async create(instructorId: string, data: any) {
+    const isPaid = data.price > 0 || data.courseType === 'paid';
+    if (isPaid) {
+      const planInfo = await subscriptionPermissionService.getInstructorPlanInfo(instructorId);
+      await subscriptionPermissionService.requirePaidCoursePermission(instructorId, planInfo);
+    }
     return withTransaction(async (session) => {
       const [course] = await Course.create([{ ...data, instructor: instructorId }], { session });
       await User.findByIdAndUpdate(instructorId, { $inc: { totalCourses: 1 } }, { session });
@@ -45,6 +51,17 @@ export class CourseService {
       if (!protectedFields.includes(key)) acc[key] = data[key];
       return acc;
     }, {});
+
+    const existing = await Course.findById(courseId).lean();
+    if (!existing) throw ApiError.notFound('Course not found');
+
+    const price = data.price ?? existing.price;
+    const courseType = data.courseType ?? existing.courseType;
+    const isPaid = price > 0 || courseType === 'paid';
+    if (isPaid && existing.price <= 0 && existing.courseType !== 'paid') {
+      const planInfo = await subscriptionPermissionService.getInstructorPlanInfo(existing.instructor.toString());
+      await subscriptionPermissionService.requirePaidCoursePermission(existing.instructor.toString(), planInfo);
+    }
 
     const course = await Course.findByIdAndUpdate(
       courseId,
@@ -186,6 +203,15 @@ export class CourseService {
     if (course.status !== 'approved') {
       throw ApiError.badRequest('Course must be approved before publishing');
     }
+
+    const instructorId = course.instructor.toString();
+    const planInfo = await subscriptionPermissionService.getInstructorPlanInfo(instructorId);
+
+    const isPaid = course.price > 0 || course.courseType === 'paid';
+    if (isPaid) {
+      await subscriptionPermissionService.requirePaidCoursePermission(instructorId, planInfo);
+    }
+    await subscriptionPermissionService.requirePublishPermission(instructorId, planInfo);
 
     const sections = await Section.countDocuments({ course: courseId });
     if (!sections) throw ApiError.badRequest('Add at least one section before publishing');

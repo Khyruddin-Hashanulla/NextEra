@@ -20,6 +20,7 @@ import { ROLES } from '../constants/roles';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { platformSettingsService } from './platformSettings.service';
+import { affiliateService } from './affiliate.service';
 
 const RAZORPAY_KEY_ID = env.razorpayKeyId;
 const RAZORPAY_KEY_SECRET = env.razorpayKeySecret;
@@ -221,6 +222,8 @@ export class PaymentService {
         }
       }
     }
+
+    await affiliateService.processPurchaseCommission(payment._id.toString(), session);
   }
 
   // ─── Course Purchase (Updated with commission + wallet) ──
@@ -1272,6 +1275,8 @@ export class PaymentService {
           }
         }
       }
+
+      await affiliateService.reverseCommissionOnRefund(paymentId, session);
 
       await this.sendPaymentNotification(
         [payment.user.toString()],

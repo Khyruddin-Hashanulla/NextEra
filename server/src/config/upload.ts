@@ -7,6 +7,7 @@ export enum FileCategory {
   SOURCE_CODE = 'source_code',
   CERTIFICATE = 'certificate',
   PROFILE_PICTURE = 'profile_picture',
+  ASSIGNMENT_FILE = 'assignment_file',
 }
 
 export interface UploadPolicy {
@@ -85,6 +86,38 @@ export const UPLOAD_POLICIES: Record<FileCategory, UploadPolicy> = {
     maxSize: 2 * 1024 * 1024,
     cloudinaryResourceType: 'image',
     cloudinaryFolder: 'nextera/avatars',
+  },
+  [FileCategory.ASSIGNMENT_FILE]: {
+    allowedMimeTypes: [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/zip',
+      'application/x-zip-compressed',
+      'application/x-rar-compressed',
+      'image/png',
+      'image/jpeg',
+      'image/webp',
+      'text/plain',
+      'text/x-python',
+      'text/javascript',
+      'text/x-java',
+      'text/x-c',
+      'text/x-c++',
+      'text/x-typescript',
+      'text/html',
+      'text/x-markdown',
+      'application/json',
+    ] as const,
+    allowedExtensions: [
+      '.pdf', '.doc', '.docx', '.zip', '.rar',
+      '.png', '.jpg', '.jpeg', '.webp',
+      '.txt', '.py', '.js', '.ts', '.java', '.c', '.cpp', '.h',
+      '.html', '.css', '.json', '.md',
+    ] as const,
+    maxSize: 25 * 1024 * 1024,
+    cloudinaryResourceType: 'raw',
+    cloudinaryFolder: 'nextera/assignments',
   },
 };
 

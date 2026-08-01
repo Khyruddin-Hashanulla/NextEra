@@ -24,7 +24,7 @@ const statCards = [
 export function RevenuePage() {
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'revenue'],
-    queryFn: () => instructorApi.getRevenue().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getRevenue(undefined, undefined, signal).then((r) => r.data.data),
   });
 
   if (isLoading) {

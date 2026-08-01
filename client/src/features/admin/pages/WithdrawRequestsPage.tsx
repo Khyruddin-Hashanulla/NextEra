@@ -4,6 +4,7 @@ import { adminApi } from '@/api/endpoints/admin';
 import { DataTable } from '@/features/admin/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function WithdrawRequestsPage() {
   const [page, setPage] = useState(1);
@@ -11,7 +12,7 @@ export function WithdrawRequestsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-withdraw-requests', page, statusFilter],
-    queryFn: () => adminApi.listWithdrawRequests({ page, limit: 10, status: statusFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listWithdrawRequests({ page, limit: 10, status: statusFilter || undefined }, signal),
    });
 
   const payouts = data?.data?.data?.payouts || [];
@@ -21,7 +22,7 @@ export function WithdrawRequestsPage() {
     { header: 'Instructor', accessor: (p: any) => (
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
-          {p.instructor?.avatar?.url ? <img src={p.instructor.avatar.url} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xs font-medium">{p.instructor?.name?.[0]}</div>}
+          {p.instructor?.avatar?.url ? <OptimizedImage src={p.instructor.avatar.url} alt={p.instructor?.name || 'Instructor'} placeholderType="avatar" className="object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xs font-medium">{p.instructor?.name?.[0]}</div>}
         </div>
         <div>
           <p className="font-medium text-sm">{p.instructor?.name}</p>

@@ -329,3 +329,92 @@ export interface SubscriptionStatus {
   subscriptionStatus: string;
   subscriptionExpiry: string | null;
 }
+
+// ─── Assignment Grading ────────────────────────────────────────
+
+export type InstructorAssignmentStatus =
+  | 'submitted'
+  | 'late_submission'
+  | 'under_review'
+  | 'graded'
+  | 'returned_for_resubmission'
+  | 'rejected';
+
+export interface InstructorAssignmentItem {
+  _id: string;
+  title: string;
+  course: { _id: string; title: string };
+  assignment: LectureAssignment;
+  submissionCount: number;
+}
+
+export interface InstructorAssignmentDashboardResponse {
+  assignments: InstructorAssignmentItem[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface InstructorAssignmentStats {
+  totalLectures: number;
+  totalSubmissions: number;
+  pending: number;
+  graded: number;
+  returned: number;
+  rejected: number;
+  underReview: number;
+}
+
+export interface InstructorSubmissionItem {
+  _id: string;
+  user: { _id: string; name: string; email: string; avatar?: { url: string } };
+  course: string;
+  lecture: string;
+  content: string;
+  files: { url: string; publicId: string; name: string }[];
+  status: InstructorAssignmentStatus;
+  grade?: number;
+  maxMarks?: number;
+  percentage?: number;
+  passFail?: 'pass' | 'fail';
+  letterGrade?: string;
+  rubric?: { criteria: string; maxPoints: number; obtainedPoints: number; comment?: string }[];
+  feedback?: string;
+  submittedAt: string;
+  gradedAt?: string;
+  reviewedAt?: string;
+  resubmittedAt?: string;
+  submissionVersion: number;
+  lateSubmission: boolean;
+  penaltyPercent: number;
+  penaltyApplied: boolean;
+}
+
+export interface InstructorSubmissionsResponse {
+  lecture: { _id: string; title: string; assignment: LectureAssignment };
+  submissions: InstructorSubmissionItem[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
+export interface InstructorSubmissionDetail extends Omit<InstructorSubmissionItem, 'course' | 'lecture'> {
+  course: { _id: string; title: string };
+  lecture: { _id: string; title: string; assignment: LectureAssignment };
+  customGradeScale?: string;
+  gradedFiles?: { url: string; publicId: string; name: string }[];
+  gradedBy?: { _id: string; name: string };
+  publishedAt?: string;
+  publishedBy?: { _id: string; name: string };
+  resubmissionDeadline?: string;
+  gradingHistory?: {
+    grade: number;
+    maxMarks: number;
+    percentage: number;
+    passFail: 'pass' | 'fail';
+    letterGrade: string;
+    customGradeScale?: string;
+    feedback?: string;
+    status: string;
+    gradedBy: { _id: string; name: string };
+    gradedAt: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}

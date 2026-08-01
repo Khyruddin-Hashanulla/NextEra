@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Loader2, Search, Calendar, Clock, ChevronLeft, ChevronRight, Bookmark, BookOpen } from 'lucide-react';
+import { Search, Calendar, Clock, ChevronLeft, ChevronRight, Bookmark, BookOpen } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { Link } from 'react-router-dom';
 
 export function BlogListPage() {
@@ -16,17 +17,17 @@ export function BlogListPage() {
 
   const { data: blogsData, isLoading: blogsLoading } = useQuery({
     queryKey: ['public-blogs', page, search, category],
-    queryFn: () => blogApi.listPublished({ page, limit: 12, search, category: category || undefined }).then(r => r.data),
+    queryFn: ({ signal }) => blogApi.listPublished({ page, limit: 12, search, category: category || undefined }, signal).then(r => r.data),
   });
 
   const { data: categoriesData } = useQuery({
     queryKey: ['blog-categories'],
-    queryFn: () => blogApi.getCategories().then(r => r.data),
+    queryFn: ({ signal }) => blogApi.getCategories(signal).then(r => r.data),
   });
 
   const { data: featuredData } = useQuery({
     queryKey: ['blog-featured'],
-    queryFn: () => blogApi.getFeatured(3).then(r => r.data),
+    queryFn: ({ signal }) => blogApi.getFeatured(3, signal).then(r => r.data),
   });
 
   const blogs = blogsData?.blogs || [];
@@ -50,7 +51,7 @@ export function BlogListPage() {
               <Card className="h-full hover:border-primary/50 transition-colors overflow-hidden">
                 {post.featuredImage?.url && (
                   <div className="aspect-video bg-muted">
-                    <img src={post.featuredImage.url} alt={post.title} className="w-full h-full object-cover" />
+                    <OptimizedImage src={post.featuredImage.url} alt={post.title} placeholderType="blog" className="object-cover" />
                   </div>
                 )}
                 <CardContent className="p-4 space-y-2">
@@ -118,7 +119,7 @@ export function BlogListPage() {
               <Card className="h-full hover:border-primary/50 transition-colors overflow-hidden">
                 {post.featuredImage?.url && (
                   <div className="aspect-video bg-muted">
-                    <img src={post.featuredImage.url} alt={post.title} className="w-full h-full object-cover" />
+                    <OptimizedImage src={post.featuredImage.url} alt={post.title} placeholderType="blog" className="object-cover" />
                   </div>
                 )}
                 <CardContent className="p-4 space-y-2">

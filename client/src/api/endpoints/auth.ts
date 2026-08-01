@@ -11,30 +11,30 @@ import {
 } from '@/types/auth';
 
 export const authApi = {
-  register: (data: RegisterRequest) =>
-    axiosInstance.post<ApiResponse<AuthResponse['user']>>('/auth/register', data),
+  register: (data: RegisterRequest, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<AuthResponse['user']>>('/auth/register', data, { signal }),
 
-  login: (data: LoginRequest) =>
-    axiosInstance.post<ApiResponse<AuthResponse>>('/auth/login', data),
+  login: (data: LoginRequest, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<AuthResponse>>('/auth/login', data, { signal }),
 
-  googleAuth: (credential: string) =>
-    axiosInstance.post<ApiResponse<AuthResponse>>('/auth/google', { credential }),
+  googleAuth: (credential: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<AuthResponse>>('/auth/google', { credential }, { signal }),
 
-  sendOTP: (email: string) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/send-otp', { email }),
+  sendOTP: (email: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>('/auth/send-otp', { email }, { signal }),
 
-  verifyEmail: (data: VerifyEmailRequest) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/verify-email', data),
+  verifyEmail: (data: VerifyEmailRequest, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>('/auth/verify-email', data, { signal }),
 
-  refreshToken: (refreshToken: string) =>
-    axiosInstance.post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', { refreshToken }),
+  refreshToken: (refreshToken: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', { refreshToken }, { signal }),
 
-  forgotPassword: (data: ForgotPasswordRequest) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/forgot-password', data),
+  forgotPassword: (data: ForgotPasswordRequest, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>('/auth/forgot-password', data, { signal }),
 
-  resetPassword: (data: ResetPasswordRequest) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/reset-password', data),
+  resetPassword: (data: ResetPasswordRequest, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>('/auth/reset-password', data, { signal }),
 
-  logout: () =>
-    axiosInstance.post<ApiResponse<null>>('/auth/logout'),
+  logout: (signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>('/auth/logout', undefined, { signal }),
 };

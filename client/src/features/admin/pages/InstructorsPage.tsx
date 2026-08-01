@@ -22,7 +22,7 @@ export function InstructorsPage() {
 
   const { data: instructors, isLoading } = useQuery({
     queryKey: ['admin', 'instructors', 'pending'],
-    queryFn: () => adminApi.getPendingInstructors().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getPendingInstructors(signal).then((r) => r.data.data),
   });
 
   const approveMutation = useMutation({

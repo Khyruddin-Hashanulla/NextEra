@@ -6,6 +6,7 @@ import {
   BookOpen, CreditCard, Star, Image, RotateCcw, Ticket, Award,
   HelpCircle, Mail, ClipboardList, Shield, Download,
   File, ShieldCheck, DollarSign, GraduationCap, Crown, ExternalLink, TrendingUp, ToggleLeft,
+  ClipboardCheck, History, Video,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -30,6 +31,9 @@ const navItems = [
   { href: '/admin/promotions', label: 'Promotions', icon: Star },
   { href: '/admin/reviews', label: 'Reviews', icon: Star },
   { href: '/admin/tickets', label: 'Tickets', icon: Ticket },
+  { href: '/admin/assignments', label: 'Assignments', icon: ClipboardCheck },
+  { href: '/admin/assignments/grading-log', label: 'Grading Logs', icon: History },
+  { href: '/admin/recordings', label: 'Recordings', icon: Video },
   { href: '/admin/certificates', label: 'Certificates', icon: Award },
   { href: '/admin/banners', label: 'Banners', icon: Image },
   { href: '/admin/faq', label: 'FAQ', icon: HelpCircle },

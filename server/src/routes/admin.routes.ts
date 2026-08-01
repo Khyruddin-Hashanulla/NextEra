@@ -61,6 +61,7 @@ import {
   addTicketMessage,
   listCertificates,
   revokeCertificate,
+  restoreCertificate,
   listFaqs,
   createFaq,
   updateFaq,
@@ -91,6 +92,13 @@ import {
   updateFeature,
   seedFeatures,
 } from '../controllers/admin.controller';
+import {
+  listAllSubmissions,
+  getSubmissionForAdmin,
+  overrideGrade,
+  getSubmissionAnalytics,
+  getGradingLogs,
+} from '../controllers/assignment.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { validate } from '../middlewares/validate.middleware';
@@ -127,6 +135,11 @@ import {
   createRolePermissionSchema,
   updateRolePermissionSchema,
 } from '../validators/admin.validator';
+import {
+  overrideGradeSchema,
+  submissionsListQuerySchema,
+} from '../validators/assignment.validator';
+import { AssignmentSubmission } from '../models/assignmentSubmission.model';
 import { User } from '../models/user.model';
 import { Category } from '../models/category.model';
 import { Blog } from '../models/blog.model';
@@ -139,6 +152,18 @@ import { RolePermission } from '../models/rolePermission.model';
 import { Subscription } from '../models/subscription.model';
 import { PlatformSettings } from '../models/platformSettings.model';
 import { Course } from '../models/course.model';
+import { LiveClassRecording } from '../models/liveClassRecording.model';
+import {
+  listAdminRecordings,
+  getAdminRecording,
+  deleteAdminRecording,
+  syncAdminRecording,
+} from '../controllers/liveClass.controller';
+import {
+  syncRecordingSchema,
+  recordingParamsSchema,
+  recordingsQuerySchema,
+} from '../validators/liveClass.validator';
 
 const router = Router();
 
@@ -307,9 +332,12 @@ router.post('/tickets/:id/message',
 
 // Certificates Management
 router.get('/certificates', listCertificates);
-router.delete('/certificates/:id',
+router.patch('/certificates/:id/revoke',
   audit({ action: 'CERTIFICATE_REVOKED', resourceType: 'Certificate' }),
   revokeCertificate);
+router.patch('/certificates/:id/restore',
+  audit({ action: 'CERTIFICATE_RESTORED', resourceType: 'Certificate' }),
+  restoreCertificate);
 
 // FAQ
 router.get('/faq', listFaqs);
@@ -391,5 +419,33 @@ router.put('/features/:key',
 router.post('/features/seed',
   audit({ action: 'FEATURE_TOGGLE_CHANGED', resourceType: 'FeatureToggle' }),
   seedFeatures);
+
+// Assignments Management
+router.get('/assignments', validate(submissionsListQuerySchema, 'query'), listAllSubmissions);
+router.get('/assignments/analytics', getSubmissionAnalytics);
+router.get('/assignments/grading-log', getGradingLogs);
+router.get('/assignments/:id', getSubmissionForAdmin);
+router.patch('/assignments/:id/override',
+  audit({
+    action: 'ASSIGNMENT_OVERRIDE',
+    resourceType: 'AssignmentSubmission',
+    resourceId: (req) => req.params.id,
+    getPreviousData: async (req) => {
+      return (await AssignmentSubmission.findById(req.params.id).lean()) || undefined;
+    },
+  }),
+  validate(overrideGradeSchema), overrideGrade);
+
+// Live Class Recordings Management
+router.get('/recordings', validate(recordingsQuerySchema, 'query'), listAdminRecordings);
+router.get('/recordings/:id', validate(recordingParamsSchema, 'params'), getAdminRecording);
+router.post('/recordings/sync', validate(syncRecordingSchema), syncAdminRecording);
+router.delete('/recordings/:id',
+  audit({
+    action: 'RECORDING_DELETED',
+    resourceType: 'LiveClassRecording',
+    getPreviousData: previousDataLoader(LiveClassRecording),
+  }),
+  validate(recordingParamsSchema, 'params'), deleteAdminRecording);
 
 export default router;

@@ -12,7 +12,7 @@ import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
 import {
   Plus, Video, VideoOff, Play, Square, ExternalLink,
-  Clock, Calendar, Copy, Trash2, Monitor, ChevronLeft, ChevronRight,
+  Clock, Calendar, Copy, Trash2, Monitor, ChevronLeft, ChevronRight, RefreshCw,
 } from 'lucide-react';
 
 const container = {
@@ -29,6 +29,15 @@ const statusColors: Record<string, string> = {
   live: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
   ended: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
   cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+
+const recordingStatusLabels: Record<string, string> = {
+  pending: 'Pending',
+  processing: 'Processing',
+  completed: 'Ready',
+  failed: 'Failed',
+  deleted: 'Deleted',
+  available: 'Ready',
 };
 
 export function LiveClassesPage() {
@@ -50,13 +59,13 @@ export function LiveClassesPage() {
 
   const { data: classesData, isLoading: classesLoading } = useQuery({
     queryKey: ['instructor-live-classes', page, statusFilter],
-    queryFn: () => liveClassApi.listInstructorLiveClasses({ page, limit: 10, status: statusFilter || undefined }).then((r) => r.data.data),
+    queryFn: ({ signal }) => liveClassApi.listInstructorLiveClasses({ page, limit: 10, status: statusFilter || undefined }, signal).then((r) => r.data.data),
     enabled: tab === 'classes',
   });
 
   const { data: recordingsData, isLoading: recordingsLoading } = useQuery({
     queryKey: ['instructor-recordings', page],
-    queryFn: () => liveClassApi.listInstructorRecordings({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => liveClassApi.listInstructorRecordings({ page, limit: 10 }, signal).then((r) => r.data.data),
     enabled: tab === 'recordings',
   });
 
@@ -94,6 +103,12 @@ export function LiveClassesPage() {
     mutationFn: (id: string) => liveClassApi.deleteRecording(id),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['instructor-recordings'] }); addToast({ title: 'Recording deleted', variant: 'success' }); },
     onError: () => addToast({ title: 'Delete failed', variant: 'error' }),
+  });
+
+  const syncRecordingMutation = useMutation({
+    mutationFn: (liveClassId: string) => liveClassApi.syncRecordings(liveClassId),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['instructor-recordings'] }); addToast({ title: 'Recordings synced', variant: 'success' }); },
+    onError: () => addToast({ title: 'Sync failed', variant: 'error' }),
   });
 
   const openCreate = () => {
@@ -323,8 +338,8 @@ export function LiveClassesPage() {
                             <td className="px-4 py-3">{mins}:{secs.toString().padStart(2, '0')}</td>
                             <td className="px-4 py-3">{rec.views || 0}</td>
                             <td className="px-4 py-3">
-                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rec.status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
-                                {rec.status}
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${rec.status === 'completed' || rec.status === 'available' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : rec.status === 'failed' || rec.status === 'deleted' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'}`}>
+                                {recordingStatusLabels[rec.status] || rec.status}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-muted-foreground">{new Date(rec.createdAt).toLocaleDateString()}</td>
@@ -333,6 +348,17 @@ export function LiveClassesPage() {
                                 {rec.url && (
                                   <Button variant="ghost" size="sm" asChild>
                                     <a href={rec.url} target="_blank" rel="noreferrer"><Video className="h-4 w-4" /></a>
+                                  </Button>
+                                )}
+                                {rec.liveClass && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    title="Refresh from Zoom"
+                                    disabled={syncRecordingMutation.isPending}
+                                    onClick={() => syncRecordingMutation.mutate(rec.liveClass)}
+                                  >
+                                    <RefreshCw className="h-4 w-4" />
                                   </Button>
                                 )}
                                 <Button variant="ghost" size="sm" className="text-destructive" onClick={() => deleteRecordingMutation.mutate(rec._id)}>

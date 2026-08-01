@@ -17,17 +17,17 @@ const item = {
 export function AnalyticsPage() {
   const { data: revenueData, isLoading: revenueLoading } = useQuery({
     queryKey: ['admin', 'analytics', 'revenue'],
-    queryFn: () => adminApi.getRevenueAnalytics().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getRevenueAnalytics(undefined, undefined, signal).then((r) => r.data.data),
   });
 
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ['admin', 'analytics', 'users'],
-    queryFn: () => adminApi.getUserAnalytics().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getUserAnalytics(signal).then((r) => r.data.data),
   });
 
   const { data: courseData, isLoading: courseLoading } = useQuery({
     queryKey: ['admin', 'analytics', 'courses'],
-    queryFn: () => adminApi.getCourseAnalytics().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getCourseAnalytics(signal).then((r) => r.data.data),
   });
 
   const isLoading = revenueLoading || userLoading || courseLoading;

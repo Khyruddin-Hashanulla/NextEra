@@ -5,6 +5,9 @@ import { ChevronDown, Search, ChevronLeft, ChevronRight, Mail, MessageCircle } f
 import { Section, Container } from '@/components/common/Section';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { faqPageSchema } from '@/lib/schema';
 import { Input } from '@/components/ui/input';
 
 const faqs = [
@@ -136,7 +139,12 @@ export function FAQPage() {
   })).filter(cat => cat.items.length > 0);
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO title="FAQ" description="Find answers to commonly asked questions about NextEra courses, pricing, enrollment, and more." canonical="/faq" />
+      <StructuredData schemas={[
+        faqPageSchema(faqs.flatMap(c => c.items)),
+      ]} />
+      <div className="min-h-screen">
       {/* Hero */}
       <Section size="lg" background="gradient" id="hero">
         <Container>
@@ -291,5 +299,6 @@ export function FAQPage() {
         </Container>
       </Section>
     </div>
+    </>
   );
 }

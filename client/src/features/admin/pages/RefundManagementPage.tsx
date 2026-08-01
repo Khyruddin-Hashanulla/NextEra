@@ -20,7 +20,7 @@ export function RefundManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-refunds', page, statusFilter],
-    queryFn: () => adminApi.listRefundRequests({ page, limit: 10, status: statusFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listRefundRequests({ page, limit: 10, status: statusFilter || undefined }, signal),
    });
 
   const approveMutation = useMutation({

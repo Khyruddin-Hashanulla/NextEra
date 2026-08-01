@@ -66,6 +66,17 @@ export const deleteRecording = asyncHandler(async (req: Request, res: Response) 
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recording deleted', null));
 });
 
+export const syncInstructorRecordings = asyncHandler(async (req: Request, res: Response) => {
+  const { liveClassId } = req.body;
+  const data = await liveClassService.syncRecordingsForClass(liveClassId, req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recordings synced', data));
+});
+
+export const getInstructorRecording = asyncHandler(async (req: Request, res: Response) => {
+  const recording = await liveClassService.getRecordingById(req.params.id, req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recording fetched', recording));
+});
+
 // ─── Student ──────────────────────────────────────────────────
 export const listStudentLiveClasses = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
@@ -88,11 +99,45 @@ export const leaveLiveClass = asyncHandler(async (req: Request, res: Response) =
 export const listStudentRecordings = asyncHandler(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 20;
-  const data = await liveClassService.listStudentRecordings(req.currentUser!.userId, page, limit);
+  const courseId = req.query.courseId as string;
+  const data = await liveClassService.listStudentRecordings(req.currentUser!.userId, page, limit, courseId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recordings fetched', data));
 });
 
 export const incrementRecordingView = asyncHandler(async (req: Request, res: Response) => {
   await liveClassService.incrementRecordingView(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('View counted', null));
+});
+
+// ─── Recordings (Admin) ──────────────────────────────────────
+export const listAdminRecordings = asyncHandler(async (req: Request, res: Response) => {
+  const page = parseInt(req.query.page as string) || 1;
+  const limit = parseInt(req.query.limit as string) || 20;
+  const data = await liveClassService.listAllRecordings(
+    {
+      courseId: req.query.courseId as string,
+      instructorId: req.query.instructorId as string,
+      status: req.query.status as string,
+      search: req.query.search as string,
+    },
+    page,
+    limit
+  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recordings fetched', data));
+});
+
+export const getAdminRecording = asyncHandler(async (req: Request, res: Response) => {
+  const recording = await liveClassService.getRecordingById(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recording fetched', recording));
+});
+
+export const deleteAdminRecording = asyncHandler(async (req: Request, res: Response) => {
+  await liveClassService.deleteRecordingAsAdmin(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recording deleted', null));
+});
+
+export const syncAdminRecording = asyncHandler(async (req: Request, res: Response) => {
+  const { liveClassId } = req.body;
+  const data = await liveClassService.syncRecordingsForClass(liveClassId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Recordings synced', data));
 });

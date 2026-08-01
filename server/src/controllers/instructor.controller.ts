@@ -4,6 +4,7 @@ import { paymentService } from '../services/payment.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { HTTP_STATUS } from '../constants/httpStatus';
+import { quizService } from '../services/quiz.service';
 
 export const apply = asyncHandler(async (req: Request, res: Response) => {
   const data = await instructorService.apply(req.currentUser!.userId, req.body);

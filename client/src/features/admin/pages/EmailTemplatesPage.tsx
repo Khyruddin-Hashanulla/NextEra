@@ -11,6 +11,7 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Edit3, Trash2, Loader2, Eye, Code } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 import { Switch } from '@/components/ui/switch';
 
 export function EmailTemplatesPage() {
@@ -23,7 +24,7 @@ export function EmailTemplatesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-email-templates'],
-    queryFn: () => adminApi.listEmailTemplates(),
+    queryFn: ({ signal }) => adminApi.listEmailTemplates(signal),
    });
 
   const createMutation = useMutation({
@@ -54,7 +55,7 @@ export function EmailTemplatesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <CardGridSkeleton cards={6} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((t: EmailTemplate) => (

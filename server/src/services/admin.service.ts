@@ -594,7 +594,7 @@ export class AdminService {
   }
 
   // ─── Certificates Management ────────────────────────────────
-  async listCertificates(page: number, limit: number, search?: string) {
+  async listCertificates(page: number, limit: number, search?: string, status?: string) {
     const query: any = {};
     if (search) {
       const escaped = escapeRegex(search);
@@ -605,6 +605,9 @@ export class AdminService {
         ],
       }).select('_id').lean();
       query.user = { $in: users.map((u) => u._id) };
+    }
+    if (status && ['active', 'revoked'].includes(status)) {
+      query.status = status;
     }
 
     const skip = (page - 1) * limit;
@@ -620,9 +623,27 @@ export class AdminService {
     return { certificates, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
   }
 
-  async revokeCertificate(certificateId: string) {
-    const cert = await Certificate.findByIdAndDelete(certificateId);
+  async revokeCertificate(certificateId: string, reason?: string) {
+    const cert = await Certificate.findById(certificateId);
     if (!cert) throw ApiError.notFound('Certificate not found');
+    if (cert.status === 'revoked') throw ApiError.conflict('Certificate is already revoked');
+
+    cert.status = 'revoked';
+    cert.revokedAt = new Date();
+    if (reason) cert.revokedReason = reason;
+    await cert.save();
+  }
+
+  async restoreCertificate(certificateId: string) {
+    const cert = await Certificate.findById(certificateId);
+    if (!cert) throw ApiError.notFound('Certificate not found');
+    if (cert.status !== 'revoked') throw ApiError.conflict('Certificate is not revoked');
+
+    cert.status = 'active';
+    cert.restoredAt = new Date();
+    cert.revokedAt = undefined;
+    cert.revokedReason = undefined;
+    await cert.save();
   }
 
   // ─── FAQ ─────────────────────────────────────────────────────

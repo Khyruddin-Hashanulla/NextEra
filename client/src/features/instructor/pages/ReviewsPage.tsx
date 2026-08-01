@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { motion } from 'framer-motion';
 import { Star, Reply, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -27,7 +28,7 @@ export function ReviewsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'reviews', page],
-    queryFn: () => instructorApi.getReviews({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getReviews({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const replyMutation = useMutation({
@@ -87,7 +88,7 @@ export function ReviewsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {review.user?.avatar?.url && (
-                              <img src={review.user.avatar.url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                              <OptimizedImage src={review.user.avatar.url} alt={`Profile photo of ${review.user?.name || 'reviewer'}`} placeholderType="avatar" className="rounded-full object-cover" containerClassName="h-7 w-7" />
                             )}
                             <span className="font-medium">{review.user?.name}</span>
                           </div>

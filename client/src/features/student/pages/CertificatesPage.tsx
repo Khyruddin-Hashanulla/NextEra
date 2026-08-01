@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useToast } from '@/providers/ToastProvider';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { Award, Download, ExternalLink, Shield, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import type { Certificate } from '@/types/student';
 
 const container = {
   hidden: { opacity: 0 },
@@ -26,10 +28,12 @@ export function CertificatesPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
-  const { data: certificates, isLoading: certsLoading } = useQuery({
+  const { data: certResult, isLoading: certsLoading } = useQuery({
     queryKey: ['student', 'certificates'],
-    queryFn: () => studentApi.getCertificates().then((r: any) => r.data.data),
+    queryFn: () => studentApi.getCertificates().then((r) => r.data.data),
   });
+
+  const certificates = certResult?.certificates || [];
 
   const { data: courses, isLoading: coursesLoading } = useQuery({
     queryKey: ['student', 'my-courses'],
@@ -49,6 +53,22 @@ export function CertificatesPage() {
         variant: 'error',
       }),
   });
+
+  const handleDownload = async (certificateId: string) => {
+    try {
+      const response = await studentApi.downloadCertificate(certificateId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `certificate-${certificateId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      addToast({ title: 'Download failed', variant: 'error' });
+    }
+  };
 
   const isLoading = certsLoading || coursesLoading;
 
@@ -76,7 +96,7 @@ export function CertificatesPage() {
 
   const completedCourses = courses?.filter((e: any) => e.isCompleted) || [];
   const uncertifiedCompleted = completedCourses.filter(
-    (c: any) => !certificates?.some((cert: any) => cert.course?._id === c.course?._id)
+    (c: any) => !certificates?.some((cert: Certificate) => cert.course?._id === c.course?._id)
   );
 
   return (
@@ -139,7 +159,7 @@ export function CertificatesPage() {
         </motion.div>
       ) : (
         <motion.div variants={container} className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {certificates.map((cert: any) => (
+          {certificates.map((cert: Certificate) => (
             <motion.div key={cert._id} variants={item}>
               <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
                 <div className="relative flex aspect-[1.4] items-center justify-center bg-gradient-to-br from-orange-50 to-orange-100 p-6 dark:from-orange-950/30 dark:to-orange-900/20">
@@ -164,39 +184,26 @@ export function CertificatesPage() {
                       </p>
                     </div>
                     {cert.qrCodeUrl && (
-                      <img src={cert.qrCodeUrl} alt="QR Code" className="h-12 w-12 rounded-lg border" />
+                      <OptimizedImage src={cert.qrCodeUrl} alt={`QR Code for ${cert.course?.title || 'certificate'}`} placeholderType="qrcode" className="rounded-lg border" containerClassName="h-12 w-12" />
                     )}
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-2">
-                    <a
-                      href={cert.certificateUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1"
-                    >
-                      <Button variant="outline" size="sm" fullWidth>
+                    <Button variant="outline" size="sm" fullWidth asChild>
+                      <Link to={`/certificates/verify/${cert.certificateId}`} target="_blank">
                         <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                         View
-                      </Button>
-                    </a>
-                    <a
-                      href={`/api/v1/student/certificates/${cert.course?._id}/download`}
-                      download
-                    >
-                      <Button size="sm" variant="outline">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </a>
-                    <Link
-                      to={`/certificates/verify/${cert.certificateId}`}
-                      target="_blank"
-                    >
-                      <Button size="sm" variant="ghost">
+                      </Link>
+                    </Button>
+                    <Button size="sm" onClick={() => handleDownload(cert.certificateId)}>
+                      <Download className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" asChild>
+                      <Link to={`/certificates/verify/${cert.certificateId}`} target="_blank">
                         <Shield className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </Link>
+                      </Link>
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

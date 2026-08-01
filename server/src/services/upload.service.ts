@@ -24,6 +24,13 @@ export class UploadService {
     return { ...result, name: file.originalname };
   }
 
+  async uploadAssignmentFile(file: Express.Multer.File): Promise<{ url: string; publicId: string; name: string }> {
+    const policy = getPolicyForCategory(FileCategory.ASSIGNMENT_FILE);
+    validateUploadedFile(file, policy);
+    const result = await this.uploadToCloudinary(file, policy.cloudinaryFolder, { resource_type: 'raw' });
+    return { ...result, name: file.originalname };
+  }
+
   private async uploadToCloudinary(
     file: Express.Multer.File,
     folder: string,

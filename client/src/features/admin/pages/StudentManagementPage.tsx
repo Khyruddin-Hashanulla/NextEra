@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { useToast } from '@/providers/ToastProvider';
 import { Search, Trash2, Ban, CheckCircle, Loader2 } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function StudentManagementPage() {
   const { addToast } = useToast();
@@ -17,7 +18,7 @@ export function StudentManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-students', page, search],
-    queryFn: () => adminApi.listStudents({ page, limit: 10, search: search || undefined }),
+    queryFn: ({ signal }) => adminApi.listStudents({ page, limit: 10, search: search || undefined }, signal),
    });
 
   const statusMutation = useMutation({
@@ -37,7 +38,7 @@ export function StudentManagementPage() {
     { header: 'Student', accessor: (s: any) => (
       <div className="flex items-center gap-2">
         <div className="h-8 w-8 rounded-full bg-muted overflow-hidden flex-shrink-0">
-          {s.avatar?.url ? <img src={s.avatar.url} alt="" className="h-full w-full object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xs font-medium">{s.name?.[0]}</div>}
+          {s.avatar?.url ? <OptimizedImage src={s.avatar.url} alt={s.name || 'Student'} placeholderType="avatar" className="object-cover" /> : <div className="h-full w-full flex items-center justify-center text-xs font-medium">{s.name?.[0]}</div>}
         </div>
         <div>
           <p className="font-medium text-sm">{s.name}</p>

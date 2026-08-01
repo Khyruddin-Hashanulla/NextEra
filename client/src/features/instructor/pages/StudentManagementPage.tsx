@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Search, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 const container = {
   hidden: { opacity: 0 },
@@ -23,7 +24,7 @@ export function StudentManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'students', page, search],
-    queryFn: () => instructorApi.getStudents({ page, limit: 10, search }).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getStudents({ page, limit: 10, search }, signal).then((r) => r.data.data),
   });
 
   return (
@@ -80,7 +81,7 @@ export function StudentManagementPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {student.avatar?.url && (
-                              <img src={student.avatar.url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                              <OptimizedImage src={student.avatar.url} alt="" placeholderType="avatar" className="rounded-full object-cover" containerClassName="h-7 w-7" />
                             )}
                             <span className="font-medium">{student.name}</span>
                           </div>

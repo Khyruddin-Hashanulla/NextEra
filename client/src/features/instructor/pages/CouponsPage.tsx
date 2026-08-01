@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
+import FeatureGate from '@/components/instructor/FeatureGate';
 
 const container = {
   hidden: { opacity: 0 },
@@ -20,6 +21,14 @@ const item = {
 };
 
 export function CouponsPage() {
+  return (
+    <FeatureGate feature="coupons">
+      <CouponsContent />
+    </FeatureGate>
+  );
+}
+
+function CouponsContent() {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState<any>(null);
   const [open, setOpen] = useState(false);
@@ -28,7 +37,7 @@ export function CouponsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'coupons', page],
-    queryFn: () => instructorApi.listCoupons({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.listCoupons({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const deleteMutation = useMutation({

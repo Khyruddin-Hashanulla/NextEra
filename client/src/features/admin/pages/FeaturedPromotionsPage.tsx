@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/providers/ToastProvider';
 import { Loader2, Plus, Star, DollarSign, Calendar } from 'lucide-react';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
 
 export function FeaturedPromotionsPage() {
   const { addToast } = useToast();
@@ -23,12 +24,12 @@ export function FeaturedPromotionsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-promotions', page, statusFilter],
-    queryFn: () => adminApi.listFeaturedPromotions({ page, limit: 10, status: statusFilter || undefined }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listFeaturedPromotions({ page, limit: 10, status: statusFilter || undefined }, signal).then((r) => r.data.data),
   });
 
   const { data: stats } = useQuery({
     queryKey: ['admin-promotion-stats'],
-    queryFn: () => adminApi.getFeaturedPromotionStats().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getFeaturedPromotionStats(signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({
@@ -95,7 +96,7 @@ export function FeaturedPromotionsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <TableSkeleton rows={5} columns={5} hasHeader={false} />
       ) : (
         <DataTable
           columns={[

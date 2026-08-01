@@ -26,7 +26,7 @@ export function EditProfilePage() {
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['instructor', 'profile'],
-    queryFn: () => instructorApi.getProfile().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getProfile(signal).then((r) => r.data.data),
   });
 
   const [form, setForm] = useState<any>(null);

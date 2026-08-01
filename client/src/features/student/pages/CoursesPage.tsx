@@ -5,7 +5,9 @@ import { studentApi } from '@/api/endpoints/student';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Loader2, Search, Star, Users, Clock, BookOpen } from 'lucide-react';
+import { Search, Star, Users, Clock, BookOpen } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function CoursesPage() {
   const [search, setSearch] = useState('');
@@ -44,7 +46,7 @@ export function CoursesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex min-h-[40vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+        <CardGridSkeleton />
       ) : !data?.courses?.length ? (
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">No courses found. Try adjusting your search.</CardContent>
@@ -57,7 +59,7 @@ export function CoursesPage() {
                 <Link to={`/student/courses/${course._id}`}>
                   <div className="aspect-video w-full overflow-hidden bg-muted">
                     {course.thumbnail?.url ? (
-                      <img src={course.thumbnail.url} alt={course.title} className="h-full w-full object-cover" />
+                      <OptimizedImage src={course.thumbnail.url} alt={course.title} placeholderType="course" className="object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-muted-foreground"><BookOpen className="h-8 w-8" /></div>
                     )}

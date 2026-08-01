@@ -3,7 +3,8 @@ import { studentApi } from '@/api/endpoints/student';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, Trash2, ExternalLink } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
+import { Trash2, ExternalLink } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function NotesPage() {
@@ -24,7 +25,7 @@ export function NotesPage() {
   });
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <CardGridSkeleton />;
   }
 
   return (

@@ -12,9 +12,15 @@ import { Star, Users, Award, BookOpen, Code, Globe, Linkedin, Twitter, Github, G
 import { Section, Container } from '@/components/common/Section';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
+import { ResourceNotFound } from '@/components/common/ResourceNotFound';
 import { formatNumber, getInitials } from '@/lib/utils';
+import { categorizeError } from '@/lib/error-utils';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { personSchema, breadcrumbListSchema } from '@/lib/schema';
+import { buildCanonical } from '@/lib/seo';
 import { Link } from 'react-router-dom';
 
 interface InstructorProfile {
@@ -64,7 +70,7 @@ export function InstructorProfilePage() {
 
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
     queryKey: ['instructor-courses', id],
-    queryFn: () => studentApi.listCourses({ limit: 100 }).then(r => {
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
       const courses = r.data.data.courses || [];
       return courses.filter((c: any) => c.instructor?._id === id);
     }),
@@ -73,7 +79,7 @@ export function InstructorProfilePage() {
 
   const { data: instructorData, isLoading: instructorLoading, error } = useQuery({
     queryKey: ['instructor-profile', id],
-    queryFn: () => studentApi.listCourses({ limit: 100 }).then(r => {
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
       const courses = r.data.data.courses || [];
       const instructorMap = new Map();
       courses.forEach((course: any) => {
@@ -134,6 +140,19 @@ export function InstructorProfilePage() {
   }
 
   if (error || !instructor) {
+    if (!instructor && (!error || categorizeError(error) === 'not-found')) {
+      return <ResourceNotFound resourceType="instructor" />;
+    }
+    const category = categorizeError(error);
+    if (category === 'network') {
+      return (
+        <ErrorState
+          title="Connection Error"
+          message="Unable to connect to the server. Please check your internet connection and try again."
+          onRetry={() => window.location.reload()}
+        />
+      );
+    }
     return (
       <ErrorState
         title="Instructor Not Found"
@@ -151,8 +170,39 @@ export function InstructorProfilePage() {
     { icon: Code, url: instructor.socialLinks?.portfolio, label: 'Portfolio' },
   ].filter(s => s.url);
 
+  const seoTitle = instructor?.name ? `${instructor.name} - Instructor` : 'Instructor';
+
   return (
     <div className="min-h-screen">
+      <SEO
+        title={seoTitle}
+        description={instructor?.bio || `Learn from instructor ${instructor?.name || ''} on NextEra.`}
+        image={instructor?.avatar?.url || ''}
+        url={`/instructors/${id}`}
+        canonical={`/instructors/${id}`}
+        type="profile"
+      />
+      <StructuredData schemas={[
+        personSchema({
+          name: instructor.name,
+          image: instructor.avatar?.url,
+          bio: instructor.bio,
+          jobTitle: 'Instructor',
+          url: buildCanonical(`/instructors/${id}`),
+          sameAs: [
+            instructor.socialLinks?.linkedin,
+            instructor.socialLinks?.twitter,
+            instructor.socialLinks?.github,
+            instructor.socialLinks?.website,
+            instructor.socialLinks?.portfolio,
+          ].filter(Boolean),
+        }),
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Instructors', path: '/instructors' },
+          { name: instructor.name, path: `/instructors/${id}` },
+        ]),
+      ]} />
       {/* Hero Section */}
       <Section size="md" background="gradient">
         <Container>
@@ -163,7 +213,7 @@ export function InstructorProfilePage() {
           >
             <div className="relative flex-shrink-0">
               <Avatar className="h-32 w-32">
-                <AvatarImage src={instructor.avatar?.url} alt={instructor.name} />
+                <AvatarImage src={instructor.avatar?.url} alt={`Profile photo of ${instructor.name}`} />
                 <AvatarFallback className="text-4xl font-bold bg-primary/10 text-primary">
                   {getInitials(instructor.name)}
                 </AvatarFallback>

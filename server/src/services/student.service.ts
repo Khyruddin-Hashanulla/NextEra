@@ -23,7 +23,10 @@ import { ApiError } from '../utils/ApiError';
 import { sanitizePlainText } from '../utils/sanitize';
 import { escapeRegex } from '../utils/escapeRegex';
 import { env } from '../config/env';
-import { generateCertificateSignature, generateQrCodeDataUrl, verifyCertificateSignature } from '../utils/certificate';
+import { generateCertificateSignature, generateQrCodeDataUrl, verifyCertificateSignature, getVerificationUrl } from '../utils/certificate';
+import { generateCertificateId } from '../utils/certificateIdGenerator';
+import { generateCertificatePdf, getCertificateUrl, getCertificateFilePath } from '../utils/pdfGenerator';
+import fs from 'fs';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { paymentService } from './payment.service';
@@ -440,13 +443,78 @@ export class StudentService {
 
   // ─── Assignment ──────────────────────────────────────────────
   async submitAssignment(userId: string, courseId: string, lectureId: string, content?: string, files?: { url: string; publicId: string; name: string }[]) {
+    const user = await User.findById(userId).lean();
+    if (!user || !user.isActive) throw ApiError.forbidden('Account is blocked');
+
+    const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
+    if (!enrollment) throw ApiError.forbidden('You are not enrolled in this course');
+
     const lecture = await Lecture.findById(lectureId);
     if (!lecture || lecture.type !== 'assignment') {
       throw ApiError.badRequest('This lecture is not an assignment');
     }
+    if (lecture.course.toString() !== courseId) {
+      throw ApiError.badRequest('Lecture does not belong to this course');
+    }
+
+    const assignmentConfig = lecture.assignment;
+    const now = new Date();
+    const dueDate = assignmentConfig?.dueDate ? new Date(assignmentConfig.dueDate) : null;
+    const allowLateSubmission = assignmentConfig?.allowLateSubmission ?? false;
 
     const existing = await AssignmentSubmission.findOne({ user: userId, lecture: lectureId });
-    if (existing) throw ApiError.conflict('You have already submitted this assignment');
+
+    if (existing) {
+      if (existing.status === 'returned_for_resubmission') {
+        if (dueDate && now > dueDate && !allowLateSubmission) {
+          throw ApiError.badRequest('The deadline for resubmission has passed');
+        }
+
+        existing.content = content || '';
+        existing.files = files || [];
+        existing.submittedAt = new Date();
+        existing.submissionVersion = (existing.submissionVersion || 1) + 1;
+        existing.resubmittedAt = new Date();
+        existing.status = 'submitted';
+        existing.grade = undefined;
+        existing.maxMarks = undefined;
+        existing.percentage = undefined;
+        existing.passFail = undefined;
+        existing.letterGrade = undefined;
+        existing.feedback = undefined;
+        existing.gradedAt = undefined;
+        existing.gradedBy = undefined;
+        existing.publishedAt = undefined;
+        existing.publishedBy = undefined;
+        existing.rubric = [];
+
+        if (dueDate && now > dueDate && allowLateSubmission) {
+          existing.status = 'late_submission';
+          const lateHours = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60));
+          existing.penaltyPercent = Math.min(50, lateHours);
+          existing.penaltyApplied = true;
+        }
+
+        await existing.save();
+        return existing;
+      }
+
+      throw ApiError.conflict('You have already submitted this assignment');
+    }
+
+    let status: 'submitted' | 'late_submission' = 'submitted';
+    let penaltyPercent = 0;
+    let penaltyApplied = false;
+
+    if (dueDate && now > dueDate) {
+      if (!allowLateSubmission) {
+        throw ApiError.badRequest('The deadline for this assignment has passed');
+      }
+      status = 'late_submission';
+      const lateHours = Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60));
+      penaltyPercent = Math.min(50, lateHours);
+      penaltyApplied = true;
+    }
 
     const submission = await AssignmentSubmission.create({
       user: userId,
@@ -454,6 +522,11 @@ export class StudentService {
       lecture: lectureId,
       content: content || '',
       files: files || [],
+      status,
+      lateSubmission: status === 'late_submission',
+      penaltyPercent,
+      penaltyApplied,
+      submissionVersion: 1,
     });
     return submission;
   }
@@ -468,6 +541,135 @@ export class StudentService {
     return submissions;
   }
 
+  async getAssignmentsOverview(userId: string, page = 1, limit = 20, courseId?: string) {
+    const enrolledCourses = await Enrollment.find({ user: userId })
+      .select('course')
+      .lean();
+    const enrolledCourseIds = enrolledCourses.map((e) => e.course);
+
+    const lectureMatch: any = { type: 'assignment' };
+    if (courseId) {
+      if (!enrolledCourseIds.some((id) => id.toString() === courseId)) {
+        throw ApiError.forbidden('You are not enrolled in this course');
+      }
+      lectureMatch.course = courseId;
+    } else {
+      lectureMatch.course = { $in: enrolledCourseIds };
+    }
+
+    const skip = (page - 1) * limit;
+    const [lectures, total] = await Promise.all([
+      Lecture.find(lectureMatch)
+        .populate('course', 'title thumbnail')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Lecture.countDocuments(lectureMatch),
+    ]);
+
+    const lectureIds = lectures.map((l) => l._id);
+    const submissions = await AssignmentSubmission.find({
+      user: userId,
+      lecture: { $in: lectureIds },
+    })
+      .select('lecture status grade maxMarks percentage passFail letterGrade submittedAt publishedAt lateSubmission')
+      .lean();
+
+    const submissionMap = new Map(submissions.map((s) => [s.lecture.toString(), s]));
+
+    const items = lectures.map((lecture) => {
+      const submission = submissionMap.get(lecture._id.toString());
+      const assignmentConfig = lecture.assignment;
+      const dueDate = assignmentConfig?.dueDate ? new Date(assignmentConfig.dueDate) : null;
+      const now = new Date();
+      const isOverdue = dueDate ? now > dueDate : false;
+
+      let status: string;
+      if (submission) {
+        status = submission.status;
+      } else if (isOverdue) {
+        status = 'overdue';
+      } else {
+        status = 'assigned';
+      }
+
+      return {
+        _id: lecture._id,
+        title: lecture.title,
+        course: lecture.course,
+        dueDate,
+        maxMarks: assignmentConfig?.totalMarks || 100,
+        status,
+        submission: submission
+          ? {
+              _id: submission._id,
+              grade: submission.grade,
+              maxMarks: submission.maxMarks,
+              percentage: submission.percentage,
+              passFail: submission.passFail,
+              letterGrade: submission.letterGrade,
+              submittedAt: submission.submittedAt,
+              publishedAt: submission.publishedAt,
+              lateSubmission: submission.lateSubmission,
+            }
+          : null,
+      };
+    });
+
+    return {
+      assignments: items,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    };
+  }
+
+  async getAssignmentDetail(userId: string, lectureId: string) {
+    const lecture = await Lecture.findById(lectureId)
+      .populate('course', 'title thumbnail instructor')
+      .lean();
+
+    if (!lecture || lecture.type !== 'assignment') {
+      throw ApiError.notFound('Assignment not found');
+    }
+
+    const courseId = lecture.course._id?.toString() || lecture.course.toString();
+    const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
+    if (!enrollment) throw ApiError.forbidden('You are not enrolled in this course');
+
+    const submission = await AssignmentSubmission.findOne({ user: userId, lecture: lectureId })
+      .populate('gradedBy', 'name')
+      .populate('publishedBy', 'name')
+      .lean();
+
+    const assignmentConfig = lecture.assignment;
+    const dueDate = assignmentConfig?.dueDate ? new Date(assignmentConfig.dueDate) : null;
+    const now = new Date();
+    const isOverdue = dueDate ? now > dueDate : false;
+
+    let status: string;
+    if (submission) {
+      status = submission.status;
+    } else if (isOverdue) {
+      status = 'overdue';
+    } else {
+      status = 'assigned';
+    }
+
+    return {
+      lecture: {
+        _id: lecture._id,
+        title: lecture.title,
+        course: lecture.course,
+        assignment: assignmentConfig,
+        resources: lecture.resources,
+      },
+      status,
+      submission,
+      canResubmit: submission?.status === 'returned_for_resubmission',
+      canSubmit: !submission || submission.status === 'returned_for_resubmission',
+    };
+  }
+
   // ─── Certificate ─────────────────────────────────────────────
   async generateCertificate(userId: string, courseId: string): Promise<any> {
     const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
@@ -477,23 +679,47 @@ export class StudentService {
     const existingCert = await Certificate.findOne({ user: userId, course: courseId });
     if (existingCert) return existingCert;
 
-    const user = await User.findById(userId);
-    const course = await Course.findById(courseId);
+    const user = await User.findById(userId).lean();
+    const course = await Course.findById(courseId)
+      .populate('instructor', 'name')
+      .populate('category', 'name')
+      .lean();
     if (!user || !course) throw ApiError.notFound('User or Course not found');
+    if (!course.isApproved) throw ApiError.badRequest('Course is not approved');
+    if (course.status !== 'published') throw ApiError.badRequest('Course is not published');
 
-    const certificateId = `CERT-${Date.now()}-${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
-    const verifyUrl = `${env.clientUrl}/certificates/verify/${certificateId}`;
+    const certificateId = await generateCertificateId((course as any).category?.name || '');
+    const issuedAt = new Date();
+    const issuedAtStr = issuedAt.toISOString();
 
     const digitalSignature = generateCertificateSignature({
       certificateId,
       userId,
       courseId,
-      issuedAt: new Date().toISOString(),
+      issuedAt: issuedAtStr,
+      version: 1,
     });
 
-    const qrCodeUrl = generateQrCodeDataUrl(verifyUrl);
+    const verifyUrl = getVerificationUrl(certificateId);
+    const qrCodeUrl = await generateQrCodeDataUrl(verifyUrl);
 
-    const certificateUrl = `${env.clientUrl}/certificates/${certificateId}?signature=${digitalSignature.slice(0, 16)}`;
+    const instructorName = ((course as any).instructor as any)?.name || 'Instructor';
+    const categoryName = ((course as any).category as any)?.name || '';
+    const courseLevel = course.level || '';
+    const courseDuration = course.totalDuration || 0;
+
+    const pdfPath = await generateCertificatePdf({
+      studentName: user.name,
+      courseTitle: course.title,
+      instructorName,
+      certificateId,
+      issuedAt,
+      qrCodeDataUrl: qrCodeUrl,
+    });
+
+    const pdfFilename = `certificate-${certificateId}.pdf`;
+    const pdfUrl = getCertificateUrl(pdfFilename);
+    const certificateUrl = `${env.clientUrl}/certificate/${certificateId}`;
 
     try {
       return await withTransaction(async (session) => {
@@ -504,12 +730,26 @@ export class StudentService {
           certificateId,
           qrCodeUrl,
           certificateUrl,
+          pdfUrl,
           digitalSignature,
+          status: 'active',
+          version: 1,
+          metadata: {
+            categoryName,
+            courseDuration,
+            courseLevel,
+            instructorName,
+          },
+          issuedAt,
         }], { session });
 
-        await Enrollment.findByIdAndUpdate(enrollment._id, { certificateUrl }, { session });
+        await Enrollment.findByIdAndUpdate(enrollment._id, { certificateUrl: pdfUrl }, { session });
 
-        return certificate;
+        const populated = await Certificate.findById(certificate._id)
+          .populate('course', 'title')
+          .lean();
+
+        return populated;
       });
     } catch (error: any) {
       if (error?.code === 11000) {
@@ -520,12 +760,18 @@ export class StudentService {
     }
   }
 
-  async getCertificates(userId: string): Promise<any> {
-    const certs = await Certificate.find({ user: userId })
-      .populate('course', 'title instructor')
-      .sort({ issuedAt: -1 })
-      .lean();
-    return certs;
+  async getCertificates(userId: string, page = 1, limit = 12): Promise<any> {
+    const skip = (page - 1) * limit;
+    const [certificates, total] = await Promise.all([
+      Certificate.find({ user: userId, status: 'active' })
+        .populate('course', 'title thumbnail instructor')
+        .sort({ issuedAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Certificate.countDocuments({ user: userId, status: 'active' }),
+    ]);
+    return { certificates, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   async verifyCertificate(certificateId: string): Promise<any> {
@@ -538,14 +784,62 @@ export class StudentService {
     const signatureValid = verifyCertificateSignature(
       {
         certificateId: cert.certificateId,
-        userId: cert.user._id.toString(),
-        courseId: cert.course._id.toString(),
+        userId: (cert.user as any)._id.toString(),
+        courseId: (cert.course as any)._id.toString(),
         issuedAt: cert.issuedAt.toISOString(),
+        version: cert.version || 1,
       },
       cert.digitalSignature,
     );
 
-    return { ...cert, signatureValid };
+    const isRevoked = cert.status === 'revoked';
+
+    await Certificate.updateOne({ _id: cert._id }, { $set: { verifiedAt: new Date() } });
+
+    return {
+      ...cert,
+      signatureValid: signatureValid && !isRevoked,
+      isRevoked,
+      revokedAt: cert.revokedAt,
+      revokedReason: cert.revokedReason,
+    };
+  }
+
+  async downloadCertificate(userId: string, certificateId: string): Promise<{ filePath: string; filename: string; contentType: string }> {
+    const cert = await Certificate.findOne({ certificateId }).lean();
+    if (!cert) throw ApiError.notFound('Certificate not found');
+    if (cert.user.toString() !== userId) throw ApiError.forbidden('Not your certificate');
+    if (cert.status === 'revoked') throw ApiError.badRequest('Certificate has been revoked');
+
+    await Certificate.updateOne({ _id: cert._id }, { $set: { downloadedAt: new Date() } });
+
+    if (cert.pdfUrl) {
+      const filename = `certificate-${certificateId}.pdf`;
+      const filePath = getCertificateFilePath(filename);
+      if (fs.existsSync(filePath)) {
+        return { filePath, filename, contentType: 'application/pdf' };
+      }
+    }
+
+    const [user, course] = await Promise.all([
+      User.findById(cert.user).lean(),
+      Course.findById(cert.course).populate('instructor', 'name').lean(),
+    ]);
+
+    const qrCodeDataUrl = cert.qrCodeUrl || undefined;
+    const instructorName = (cert.metadata?.instructorName) || (course as any)?.instructor?.name || 'Instructor';
+
+    const pdfPath = await generateCertificatePdf({
+      studentName: user?.name || 'Student',
+      courseTitle: (course as any)?.title || 'Course',
+      instructorName,
+      certificateId: cert.certificateId,
+      issuedAt: cert.issuedAt,
+      qrCodeDataUrl,
+    });
+
+    const pdfFilename = `certificate-${certificateId}.pdf`;
+    return { filePath: pdfPath, filename: pdfFilename, contentType: 'application/pdf' };
   }
 
   // ─── Wishlist ─────────────────────────────────────────────────

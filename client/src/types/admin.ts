@@ -114,10 +114,24 @@ export interface CertificateItem {
   certificateId: string;
   qrCodeUrl: string;
   certificateUrl: string;
+  pdfUrl?: string;
   digitalSignature: string;
+  status: 'active' | 'revoked';
+  version: number;
+  metadata?: {
+    categoryName: string;
+    courseDuration: number;
+    courseLevel: string;
+    instructorName: string;
+  };
   user: { _id: string; name: string; email: string };
   course: { _id: string; title: string };
   issuedAt: string;
+  downloadedAt?: string;
+  verifiedAt?: string;
+  revokedAt?: string;
+  revokedReason?: string;
+  restoredAt?: string;
 }
 
 export interface PaymentItem {
@@ -221,3 +235,85 @@ export interface Backup extends Record<string, any> {}
 export interface CmsPage extends Record<string, any> {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface RolePermission extends Record<string, any> {}
+
+export interface AdminAssignmentSubmission {
+  _id: string;
+  user: { _id: string; name: string; email: string; avatar?: { url: string } };
+  course: { _id: string; title: string };
+  lecture: { _id: string; title: string; assignment?: any };
+  content: string;
+  files: { url: string; publicId: string; name: string }[];
+  status: 'assigned' | 'submitted' | 'late_submission' | 'under_review' | 'graded' | 'returned_for_resubmission' | 'rejected';
+  grade?: number;
+  maxMarks?: number;
+  percentage?: number;
+  passFail?: 'pass' | 'fail';
+  letterGrade?: string;
+  customGradeScale?: string;
+  rubric?: { criteria: string; maxPoints: number; obtainedPoints: number; comment?: string }[];
+  feedback?: string;
+  privateNotes?: string;
+  gradedFiles?: { url: string; publicId: string; name: string }[];
+  gradedBy?: { _id: string; name: string };
+  publishedAt?: string;
+  publishedBy?: { _id: string; name: string };
+  submittedAt: string;
+  gradedAt?: string;
+  reviewedAt?: string;
+  resubmittedAt?: string;
+  resubmissionDeadline?: string;
+  submissionVersion: number;
+  lateSubmission: boolean;
+  penaltyPercent: number;
+  penaltyApplied: boolean;
+  gradingHistory?: {
+    grade: number;
+    maxMarks: number;
+    percentage: number;
+    passFail: 'pass' | 'fail';
+    letterGrade: string;
+    customGradeScale?: string;
+    feedback?: string;
+    status: string;
+    gradedBy: { _id: string; name: string };
+    gradedAt: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminAssignmentsAnalytics {
+  total: number;
+  byStatus: {
+    submitted: number;
+    lateSubmission: number;
+    underReview: number;
+    graded: number;
+    returnedForResubmission: number;
+    rejected: number;
+  };
+  gradingStats: {
+    averageGrade: number;
+    averagePercentage: number;
+    passCount: number;
+    failCount: number;
+    passRate: number;
+  };
+}
+
+export interface GradingLogEntry {
+  submissionId: string;
+  user: { _id: string; name: string; email: string };
+  course: { _id: string; title: string };
+  lecture: { _id: string; title: string };
+  grade: number;
+  maxMarks: number;
+  percentage: number;
+  passFail: 'pass' | 'fail';
+  letterGrade: string;
+  customGradeScale?: string;
+  feedback?: string;
+  status: string;
+  gradedBy: { _id: string; name: string };
+  gradedAt: string;
+}

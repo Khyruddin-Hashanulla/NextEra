@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/providers/ToastProvider';
 import { CodeEditor } from '@/features/student/components/CodeEditor';
+import { CodingProblemSkeleton } from '@/components/skeletons/BlogDetailSkeleton';
 import { Loader2, CheckCircle2, XCircle, Clock, Zap, ChevronLeft } from 'lucide-react';
 import type { Difficulty, ProgrammingLanguage, TestResult } from '@/types/coding';
 
@@ -65,7 +66,7 @@ export function CodingProblemSolvePage() {
   });
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <CodingProblemSkeleton />;
   }
 
   if (!problemData) {

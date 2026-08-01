@@ -13,6 +13,8 @@ import codingRoutes from './coding.routes';
 import blogRoutes from './blog.routes';
 import studyReminderRoutes from './studyReminder.routes';
 import aiRoutes from './ai.routes';
+import affiliateRoutes from './affiliate.routes';
+import quizRoutes from './quiz.routes';
 
 const router = Router();
 
@@ -30,5 +32,7 @@ router.use('/coding', codingRoutes);
 router.use('/', blogRoutes);
 router.use('/study-reminders', studyReminderRoutes);
 router.use('/ai', aiRoutes);
+router.use('/affiliate', affiliateRoutes);
+router.use('/quiz', quizRoutes);
 
 export default router;

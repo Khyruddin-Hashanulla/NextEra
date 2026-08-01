@@ -364,13 +364,20 @@ export const listCertificates = asyncHandler(async (req: Request, res: Response)
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
   const search = req.query.search as string;
-  const data = await adminService.listCertificates(page, limit, search);
+  const status = req.query.status as string;
+  const data = await adminService.listCertificates(page, limit, search, status);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Certificates fetched', data));
 });
 
 export const revokeCertificate = asyncHandler(async (req: Request, res: Response) => {
-  await adminService.revokeCertificate(req.params.id);
+  const reason = req.body.reason as string | undefined;
+  await adminService.revokeCertificate(req.params.id, reason);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Certificate revoked', null));
+});
+
+export const restoreCertificate = asyncHandler(async (req: Request, res: Response) => {
+  await adminService.restoreCertificate(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Certificate restored', null));
 });
 
 // ─── FAQ ──────────────────────────────────────────────────────

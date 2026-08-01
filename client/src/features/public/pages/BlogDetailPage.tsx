@@ -10,10 +10,14 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Section, Container } from '@/components/common/Section';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
+import { ResourceNotFound } from '@/components/common/ResourceNotFound';
 import { PageTransition } from '@/components/common/PageTransition';
+import { categorizeError } from '@/lib/error-utils';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { cn, formatDate, getInitials } from '@/lib/utils';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
+import { BlogDetailSkeleton } from '@/components/skeletons/BlogDetailSkeleton';
 import {
   Loader2,
   Calendar,
@@ -28,6 +32,9 @@ import {
   ArrowRight,
   BookOpen,
 } from 'lucide-react';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { articleSchema, breadcrumbListSchema } from '@/lib/schema';
 import type { BlogPost, BlogComment } from '@/types/blog';
 
 export function BlogDetailPage() {
@@ -40,7 +47,7 @@ export function BlogDetailPage() {
 
   const { data: blogData, isLoading, error, refetch } = useQuery({
     queryKey: ['blog-detail', slug],
-    queryFn: () => blogApi.getBySlug(slug!).then((r) => r.data.data),
+    queryFn: ({ signal }) => blogApi.getBySlug(slug!, signal).then((r) => r.data.data),
     enabled: !!slug,
   });
 
@@ -50,7 +57,7 @@ export function BlogDetailPage() {
 
   const { data: commentsData, isLoading: commentsLoading } = useQuery({
     queryKey: ['blog-comments', blog?._id],
-    queryFn: () => blogApi.getComments(blog!._id).then((r) => r.data.comments),
+    queryFn: ({ signal }) => blogApi.getComments(blog!._id, undefined, signal).then((r) => r.data.comments),
     enabled: !!blog?._id,
   });
 
@@ -100,14 +107,25 @@ export function BlogDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <BlogDetailSkeleton />;
   }
 
   if (error || !blog) {
+    if (!blog && (!error || categorizeError(error) === 'not-found')) {
+      return <ResourceNotFound resourceType="blog" />;
+    }
+    const category = categorizeError(error);
+    if (category === 'network') {
+      return (
+        <PageTransition>
+          <ErrorState
+            title="Connection Error"
+            message="Unable to connect to the server. Please check your internet connection and try again."
+            onRetry={() => refetch()}
+          />
+        </PageTransition>
+      );
+    }
     return (
       <PageTransition>
         <ErrorState
@@ -120,9 +138,31 @@ export function BlogDetailPage() {
   }
 
   const contentParagraphs = blog.content.split('\n').filter(Boolean);
+  const blogTitle = blog?.seo?.metaTitle || blog?.title || '';
+  const blogDescription = blog?.seo?.metaDescription || blog?.excerpt || '';
+  const blogImage = blog?.seo?.ogImage || blog?.featuredImage?.url || '';
+  const blogCanonical = blog?.seo?.canonicalUrl || `/blog/${slug}`;
 
   return (
     <PageTransition>
+      <SEO
+        title={blogTitle}
+        description={blogDescription}
+        image={blogImage}
+        url={`/blog/${slug}`}
+        canonical={blogCanonical}
+        type="article"
+        publishedTime={blog?.publishedAt}
+        author={blog?.author?.name}
+      />
+      <StructuredData schemas={[
+        articleSchema(blog),
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Blog', path: '/blog' },
+          { name: blog.title, path: `/blog/${blog.slug}` },
+        ]),
+      ]} />
       <div className="min-h-screen">
         <Section size="sm" className="bg-gradient-to-br from-primary/10 via-background to-background">
           <Container>
@@ -137,10 +177,11 @@ export function BlogDetailPage() {
 
               <div className="w-full h-64 sm:h-96 rounded-2xl overflow-hidden shadow-lg mb-8">
                 {blog.featuredImage?.url ? (
-                  <img
-                    src={blog.featuredImage.url}
-                    alt={blog.title}
-                    className="w-full h-full object-cover"
+                  <OptimizedImage
+                    src={blog.featuredImage?.url}
+                    alt={`${blog.title} featured image`}
+                    placeholderType="blog"
+                    className="object-cover"
                   />
                 ) : (
                   <div className="w-full h-full bg-muted flex items-center justify-center">
@@ -161,11 +202,13 @@ export function BlogDetailPage() {
 
               <div className="flex flex-wrap items-center gap-4 mt-6 text-sm">
                 <div className="flex items-center gap-2">
-                  {blog.author?.avatar?.url ? (
-                    <img
+                    {blog.author?.avatar?.url ? (
+                    <OptimizedImage
                       src={blog.author.avatar.url}
-                      alt={blog.author.name}
-                      className="h-10 w-10 rounded-full object-cover"
+                      alt={`Profile photo of ${blog.author.name}`}
+                      placeholderType="avatar"
+                      className="rounded-full object-cover"
+                      containerClassName="h-10 w-10"
                     />
                   ) : (
                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium text-muted-foreground">
@@ -337,7 +380,7 @@ export function BlogDetailPage() {
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10">
                             {comment.user?.avatar?.url ? (
-                              <AvatarImage src={comment.user.avatar.url} alt={comment.user.name} />
+                              <AvatarImage src={comment.user.avatar.url} alt={`Profile photo of ${comment.user.name}`} />
                             ) : (
                               <AvatarFallback>{getInitials(comment.user?.name || 'U')}</AvatarFallback>
                             )}
@@ -400,11 +443,12 @@ export function BlogDetailPage() {
                       <Link to={`/blog/${related.slug}`}>
                         <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full">
                           <div className="h-48 overflow-hidden">
-                            <img
-                              src={related.featuredImage?.url || '/placeholder-blog.jpg'}
-                              alt={related.title}
-                              className="w-full h-full object-cover"
-                            />
+                              <OptimizedImage
+                                src={related.featuredImage?.url || '/placeholder-blog.jpg'}
+                                alt={`${related.title} featured image`}
+                                placeholderType="blog"
+                                className="object-cover"
+                              />
                           </div>
                           <div className="p-5">
                             <span className="text-xs text-muted-foreground/70">{formatDate(related.publishedAt || related.createdAt)}</span>

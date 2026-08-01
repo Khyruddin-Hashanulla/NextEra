@@ -53,9 +53,11 @@ export function Footer() {
                     key={social.label}
                     href={social.path}
                     aria-label={social.label}
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-gray-400 hover:bg-primary hover:text-white transition-all duration-200"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-gray-400 hover:bg-primary hover:text-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                   >
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true" focusable="false">
                       <path d={social.icon} />
                     </svg>
                   </a>
@@ -63,44 +65,44 @@ export function Footer() {
               </div>
             </div>
 
-            <div>
+            <nav aria-label="Product links">
               <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">Product</h4>
               <ul className="space-y-3">
                 {productLinks.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
 
-            <div>
+            <nav aria-label="Company links">
               <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">Company</h4>
               <ul className="space-y-3">
                 {companyLinks.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
 
-            <div>
+            <nav aria-label="Support links">
               <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">Support</h4>
               <ul className="space-y-3">
                 {supportLinks.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200">
+                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">
                       {link.label}
                     </Link>
                   </li>
                 ))}
               </ul>
-            </div>
+            </nav>
           </div>
         </div>
 
@@ -108,11 +110,11 @@ export function Footer() {
           <p className="text-sm text-gray-500">
             &copy; {new Date().getFullYear()} NextEra LMS. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            <Link to="/privacy" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">Terms of Service</Link>
-            <Link to="/faq" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">FAQ</Link>
-          </div>
+          <nav aria-label="Legal links" className="flex items-center gap-6">
+            <Link to="/privacy" className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">Privacy Policy</Link>
+            <Link to="/terms" className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">Terms of Service</Link>
+            <Link to="/faq" className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">FAQ</Link>
+          </nav>
         </div>
       </div>
     </footer>

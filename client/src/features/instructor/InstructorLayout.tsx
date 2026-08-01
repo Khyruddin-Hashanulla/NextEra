@@ -3,11 +3,12 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, BookOpen, PlusCircle, ChevronLeft, Menu, X,
   BarChart3, Users, DollarSign, Banknote, Tag, Star, Megaphone,
-  UserCircle, Video, GraduationCap,
+  UserCircle, Video, GraduationCap, ShieldCheck, ClipboardList,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ElementType } from 'react';
+import SubscriptionBadge from '@/components/instructor/SubscriptionBadge';
 
 interface NavItem {
   href: string;
@@ -22,11 +23,13 @@ const navItems: NavItem[] = [
   { href: '/instructor/live-classes', label: 'Live Classes', icon: Video },
   { href: '/instructor/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/instructor/students', label: 'Students', icon: Users },
+  { href: '/instructor/assignments', label: 'Assignments', icon: ClipboardList },
   { href: '/instructor/revenue', label: 'Revenue', icon: DollarSign },
   { href: '/instructor/payouts', label: 'Withdraw', icon: Banknote },
   { href: '/instructor/coupons', label: 'Coupons', icon: Tag },
   { href: '/instructor/reviews', label: 'Reviews', icon: Star },
   { href: '/instructor/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/instructor/subscription', label: 'Subscription', icon: ShieldCheck },
   { href: '/instructor/profile', label: 'Profile', icon: UserCircle },
 ];
 
@@ -123,6 +126,18 @@ export function InstructorLayout() {
               );
             })}
           </nav>
+          {!collapsed && (
+            <div className="border-t px-3 py-2">
+              <Link
+                to="/instructor/subscription"
+                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              >
+                <ShieldCheck className="h-3.5 w-3.5" />
+                <span>Subscription</span>
+                <span className="ml-auto"><SubscriptionBadge /></span>
+              </Link>
+            </div>
+          )}
           <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
             <Link
               to="/"

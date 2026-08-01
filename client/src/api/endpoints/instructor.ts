@@ -5,156 +5,179 @@ import {
   InstructorPayoutsResponse, InstructorAnalytics, InstructorStudent,
   InstructorCoupon, InstructorReview, Announcement, InstructorProfile,
   InstructorCertificate, SubscriptionStatus,
+  InstructorAssignmentDashboardResponse, InstructorAssignmentStats,
+  InstructorSubmissionsResponse, InstructorSubmissionDetail,
+  InstructorAssignmentStatus,
 } from '@/types/instructor';
 import { InstructorRevenueDetail, InstructorSubscription } from '@/types/revenue';
 
 export const instructorApi = {
-  apply: (data: Record<string, any>) =>
-    axiosInstance.post<ApiResponse<any>>('/instructor/apply', data),
+  apply: (data: Record<string, any>, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<any>>('/instructor/apply', data, { signal }),
 
-  getApplicationStatus: () =>
-    axiosInstance.get<ApiResponse<{ applied: boolean; status?: string; application?: any }>>('/instructor/application-status'),
+  getApplicationStatus: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ applied: boolean; status?: string; application?: any }>>('/instructor/application-status', { signal }),
 
-  getDashboard: () =>
-    axiosInstance.get<ApiResponse<InstructorDashboard>>('/instructor/dashboard'),
+  getDashboard: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorDashboard>>('/instructor/dashboard', { signal }),
 
-  getRevenue: (startDate?: string, endDate?: string) =>
-    axiosInstance.get<ApiResponse<InstructorRevenue>>('/instructor/revenue', { params: { startDate, endDate } }),
+  getRevenue: (startDate?: string, endDate?: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorRevenue>>('/instructor/revenue', { params: { startDate, endDate }, signal }),
 
-  getAnalytics: () =>
-    axiosInstance.get<ApiResponse<InstructorAnalytics>>('/instructor/analytics'),
+  getAnalytics: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorAnalytics>>('/instructor/analytics', { signal }),
 
-  getMyPayouts: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<ApiResponse<InstructorPayoutsResponse>>('/instructor/payouts', { params }),
+  getMyPayouts: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorPayoutsResponse>>('/instructor/payouts', { params, signal }),
 
-  // Courses
-  listMyCourses: (status?: string) =>
-    axiosInstance.get<ApiResponse<Course[]>>('/courses/instructor', { params: { status } }),
+  listMyCourses: (status?: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<Course[]>>('/courses/instructor', { params: { status }, signal }),
 
-  getCourse: (id: string) =>
-    axiosInstance.get<ApiResponse<Course>>(`/courses/${id}`),
+  getCourse: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<Course>>(`/courses/${id}`, { signal }),
 
-  createCourse: (data: Partial<Course>) =>
-    axiosInstance.post<ApiResponse<Course>>('/courses', data),
+  createCourse: (data: Partial<Course>, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>('/courses', data, { signal }),
 
-  updateCourse: (id: string, data: Partial<Course>) =>
-    axiosInstance.put<ApiResponse<Course>>(`/courses/${id}`, data),
+  updateCourse: (id: string, data: Partial<Course>, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<Course>>(`/courses/${id}`, data, { signal }),
 
-  deleteCourse: (id: string) =>
-    axiosInstance.delete<ApiResponse<null>>(`/courses/${id}`),
+  deleteCourse: (id: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<null>>(`/courses/${id}`, { signal }),
 
-  duplicateCourse: (id: string) =>
-    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/duplicate`),
+  duplicateCourse: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/duplicate`, undefined, { signal }),
 
-  submitForReview: (id: string) =>
-    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/submit`),
+  submitForReview: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/submit`, undefined, { signal }),
 
-  publish: (id: string) =>
-    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/publish`),
+  publish: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/publish`, undefined, { signal }),
 
-  unpublishCourse: (id: string) =>
-    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/unpublish`),
+  unpublishCourse: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/unpublish`, undefined, { signal }),
 
-  archive: (id: string) =>
-    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/archive`),
+  archive: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/archive`, undefined, { signal }),
 
-  // Curriculum
-  getCurriculum: (id: string) =>
-    axiosInstance.get<ApiResponse<Section[]>>(`/courses/${id}/curriculum`),
+  getCurriculum: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<Section[]>>(`/courses/${id}/curriculum`, { signal }),
 
-  getSection: (courseId: string, sectionId: string) =>
-    axiosInstance.get<ApiResponse<Section>>(`/courses/${courseId}/sections/${sectionId}`),
+  getSection: (courseId: string, sectionId: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<Section>>(`/courses/${courseId}/sections/${sectionId}`, { signal }),
 
-  createSection: (courseId: string, data: { title: string; description?: string; objective?: string }) =>
-    axiosInstance.post<ApiResponse<Section>>(`/courses/${courseId}/sections`, data),
+  createSection: (courseId: string, data: { title: string; description?: string; objective?: string }, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Section>>(`/courses/${courseId}/sections`, data, { signal }),
 
-  updateSection: (courseId: string, sectionId: string, data: Record<string, any>) =>
-    axiosInstance.put<ApiResponse<Section>>(`/courses/${courseId}/sections/${sectionId}`, data),
+  updateSection: (courseId: string, sectionId: string, data: Record<string, any>, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<Section>>(`/courses/${courseId}/sections/${sectionId}`, data, { signal }),
 
-  deleteSection: (courseId: string, sectionId: string) =>
-    axiosInstance.delete<ApiResponse<null>>(`/courses/${courseId}/sections/${sectionId}`),
+  deleteSection: (courseId: string, sectionId: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<null>>(`/courses/${courseId}/sections/${sectionId}`, { signal }),
 
-  reorderSections: (courseId: string, sectionOrder: { sectionId: string; order: number }[]) =>
-    axiosInstance.put<ApiResponse<null>>(`/courses/${courseId}/sections/reorder`, { sectionOrder }),
+  reorderSections: (courseId: string, sectionOrder: { sectionId: string; order: number }[], signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<null>>(`/courses/${courseId}/sections/reorder`, { sectionOrder }, { signal }),
 
-  createLecture: (courseId: string, sectionId: string, data: Record<string, any>) =>
-    axiosInstance.post<ApiResponse<Lecture>>(`/courses/${courseId}/sections/${sectionId}/lectures`, data),
+  createLecture: (courseId: string, sectionId: string, data: Record<string, any>, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Lecture>>(`/courses/${courseId}/sections/${sectionId}/lectures`, data, { signal }),
 
-  updateLecture: (courseId: string, lectureId: string, data: Record<string, any>) =>
-    axiosInstance.put<ApiResponse<Lecture>>(`/courses/${courseId}/lectures/${lectureId}`, data),
+  updateLecture: (courseId: string, lectureId: string, data: Record<string, any>, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<Lecture>>(`/courses/${courseId}/lectures/${lectureId}`, data, { signal }),
 
-  deleteLecture: (courseId: string, lectureId: string) =>
-    axiosInstance.delete<ApiResponse<null>>(`/courses/${courseId}/lectures/${lectureId}`),
+  deleteLecture: (courseId: string, lectureId: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<null>>(`/courses/${courseId}/lectures/${lectureId}`, { signal }),
 
-  reorderLectures: (courseId: string, sectionId: string, lectureOrder: { lectureId: string; order: number }[]) =>
-    axiosInstance.put<ApiResponse<null>>(`/courses/${courseId}/sections/${sectionId}/lectures/reorder`, { lectureOrder }),
+  reorderLectures: (courseId: string, sectionId: string, lectureOrder: { lectureId: string; order: number }[], signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<null>>(`/courses/${courseId}/sections/${sectionId}/lectures/reorder`, { lectureOrder }, { signal }),
 
-  getLecture: (courseId: string, lectureId: string) =>
-    axiosInstance.get<ApiResponse<Lecture>>(`/courses/${courseId}/lectures/${lectureId}`),
+  getLecture: (courseId: string, lectureId: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<Lecture>>(`/courses/${courseId}/lectures/${lectureId}`, { signal }),
 
-  // Students
-  getStudents: (params?: { page?: number; limit?: number; search?: string }) =>
-    axiosInstance.get<ApiResponse<{ students: InstructorStudent[]; pagination: any }>>('/instructor/students', { params }),
+  getStudents: (params?: { page?: number; limit?: number; search?: string }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ students: InstructorStudent[]; pagination: any }>>('/instructor/students', { params, signal }),
 
-  // Coupons
-  listCoupons: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<ApiResponse<{ coupons: InstructorCoupon[]; pagination: any }>>('/instructor/coupons', { params }),
+  listCoupons: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ coupons: InstructorCoupon[]; pagination: any }>>('/instructor/coupons', { params, signal }),
 
-  createCoupon: (data: Partial<InstructorCoupon>) =>
-    axiosInstance.post<ApiResponse<InstructorCoupon>>('/instructor/coupons', data),
+  createCoupon: (data: Partial<InstructorCoupon>, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<InstructorCoupon>>('/instructor/coupons', data, { signal }),
 
-  updateCoupon: (id: string, data: Partial<InstructorCoupon>) =>
-    axiosInstance.put<ApiResponse<InstructorCoupon>>(`/instructor/coupons/${id}`, data),
+  updateCoupon: (id: string, data: Partial<InstructorCoupon>, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<InstructorCoupon>>(`/instructor/coupons/${id}`, data, { signal }),
 
-  deleteCoupon: (id: string) =>
-    axiosInstance.delete<ApiResponse<null>>(`/instructor/coupons/${id}`),
+  deleteCoupon: (id: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<null>>(`/instructor/coupons/${id}`, { signal }),
 
-  // Reviews
-  getReviews: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<ApiResponse<{ reviews: InstructorReview[]; pagination: any }>>('/instructor/reviews', { params }),
+  getReviews: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ reviews: InstructorReview[]; pagination: any }>>('/instructor/reviews', { params, signal }),
 
-  replyToReview: (reviewId: string, reply: string) =>
-    axiosInstance.post<ApiResponse<InstructorReview>>(`/instructor/reviews/${reviewId}/reply`, { reply }),
+  replyToReview: (reviewId: string, reply: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<InstructorReview>>(`/instructor/reviews/${reviewId}/reply`, { reply }, { signal }),
 
-  // Announcements
-  listAnnouncements: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<ApiResponse<{ announcements: Announcement[]; pagination: any }>>('/instructor/announcements', { params }),
+  listAnnouncements: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ announcements: Announcement[]; pagination: any }>>('/instructor/announcements', { params, signal }),
 
-  createAnnouncement: (data: { course: string; title: string; message: string; sendEmail?: boolean }) =>
-    axiosInstance.post<ApiResponse<Announcement>>('/instructor/announcements', data),
+  createAnnouncement: (data: { course: string; title: string; message: string; sendEmail?: boolean }, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Announcement>>('/instructor/announcements', data, { signal }),
 
-  deleteAnnouncement: (id: string) =>
-    axiosInstance.delete<ApiResponse<null>>(`/instructor/announcements/${id}`),
+  deleteAnnouncement: (id: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<null>>(`/instructor/announcements/${id}`, { signal }),
 
-  // Profile
-  getProfile: () =>
-    axiosInstance.get<ApiResponse<InstructorProfile>>('/instructor/profile'),
+  getProfile: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorProfile>>('/instructor/profile', { signal }),
 
-  updateProfile: (data: Partial<InstructorProfile>) =>
-    axiosInstance.put<ApiResponse<InstructorProfile>>('/instructor/profile', data),
+  updateProfile: (data: Partial<InstructorProfile>, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<InstructorProfile>>('/instructor/profile', data, { signal }),
 
-  // Subscription
-  getSubscriptionStatus: () =>
-    axiosInstance.get<ApiResponse<SubscriptionStatus>>('/instructor/subscription'),
+  getSubscriptionStatus: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<SubscriptionStatus>>('/instructor/subscription', { signal }),
 
-  // Certificates
-  listCertificates: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<ApiResponse<{ certificates: InstructorCertificate[]; pagination: any }>>('/instructor/certificates', { params }),
+  listCertificates: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ certificates: InstructorCertificate[]; pagination: any }>>('/instructor/certificates', { params, signal }),
 
-  issueCertificate: (data: { user: string; course: string }) =>
-    axiosInstance.post<ApiResponse<InstructorCertificate>>('/instructor/certificates', data),
+  issueCertificate: (data: { user: string; course: string }, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<InstructorCertificate>>('/instructor/certificates', data, { signal }),
 
-  // Revenue Detail
-  getRevenueDetail: () =>
-    axiosInstance.get<ApiResponse<InstructorRevenueDetail>>('/instructor/revenue/detail'),
+  getRevenueDetail: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorRevenueDetail>>('/instructor/revenue/detail', { signal }),
 
-  // Instructor Subscription (Self-Service)
-  getMyInstructorSubscription: () =>
-    axiosInstance.get<ApiResponse<InstructorSubscription>>('/instructor/my-subscription'),
+  getMyInstructorSubscription: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorSubscription>>('/instructor/my-subscription', { signal }),
 
-  purchaseInstructorSubscription: (planId: string) =>
-    axiosInstance.post<ApiResponse<any>>('/instructor/my-subscription/purchase', { planId }),
+  purchaseInstructorSubscription: (planId: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<any>>('/instructor/my-subscription/purchase', { planId }, { signal }),
 
-  cancelInstructorSubscription: () =>
-    axiosInstance.post<ApiResponse<any>>('/instructor/my-subscription/cancel'),
+  cancelInstructorSubscription: (signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<any>>('/instructor/my-subscription/cancel', undefined, { signal }),
+
+  getAssignments: (params?: { page?: number; limit?: number; search?: string; status?: string }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorAssignmentDashboardResponse>>('/instructor/assignments', { params, signal }),
+
+  getAssignmentStats: (signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorAssignmentStats>>('/instructor/assignments/stats', { signal }),
+
+  getLectureSubmissions: (lectureId: string, params?: { page?: number; limit?: number; status?: string; search?: string; sort?: string }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorSubmissionsResponse>>(`/instructor/assignments/${lectureId}/submissions`, { params, signal }),
+
+  getSubmissionDetail: (submissionId: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorSubmissionDetail>>(`/instructor/assignments/submissions/${submissionId}`, { signal }),
+
+  updateSubmissionStatus: (submissionId: string, data: { status: 'under_review' | 'rejected'; privateNotes?: string }, signal?: AbortSignal) =>
+    axiosInstance.patch<ApiResponse<InstructorSubmissionDetail>>(`/instructor/assignments/submissions/${submissionId}/status`, data, { signal }),
+
+  gradeSubmission: (submissionId: string, data: {
+    grade: number;
+    maxMarks?: number;
+    feedback?: string;
+    privateNotes?: string;
+    letterGrade?: string;
+    customGradeScale?: string;
+    rubric?: { criteria: string; maxPoints: number; obtainedPoints: number; comment?: string }[];
+    gradedFiles?: { url: string; publicId: string; name: string }[];
+    publish?: boolean;
+  }, signal?: AbortSignal) =>
+    axiosInstance.patch<ApiResponse<InstructorSubmissionDetail>>(`/instructor/assignments/submissions/${submissionId}/grade`, data, { signal }),
+
+  returnForResubmission: (submissionId: string, data: { feedback?: string; privateNotes?: string; resubmissionDeadline?: string }, signal?: AbortSignal) =>
+    axiosInstance.patch<ApiResponse<InstructorSubmissionDetail>>(`/instructor/assignments/submissions/${submissionId}/return`, data, { signal }),
 };

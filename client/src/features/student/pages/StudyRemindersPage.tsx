@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/providers/ToastProvider';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 import { Loader2, Bell, Plus, Trash2, Clock, Repeat, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -119,7 +120,7 @@ export function StudyRemindersPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <CardGridSkeleton />
       ) : reminders.length === 0 ? (
         <div className="rounded-lg border p-12 text-center text-muted-foreground">
           <Bell className="mx-auto h-8 w-8 mb-2" />

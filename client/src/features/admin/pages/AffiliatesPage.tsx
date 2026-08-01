@@ -10,7 +10,9 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useToast } from '@/providers/ToastProvider';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { Loader2, Plus, Search, Users, MousePointerClick, ShoppingCart, DollarSign } from 'lucide-react';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
 
 export function AffiliatesPage() {
   const { addToast } = useToast();
@@ -22,12 +24,12 @@ export function AffiliatesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-affiliates', page, search],
-    queryFn: () => adminApi.listAffiliates({ page, limit: 10, search }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listAffiliates({ page, limit: 10, search }, signal).then((r) => r.data.data),
   });
 
   const { data: stats } = useQuery({
     queryKey: ['admin-affiliate-stats'],
-    queryFn: () => adminApi.getAffiliateStats().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getAffiliateStats(signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({
@@ -91,13 +93,13 @@ export function AffiliatesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <TableSkeleton rows={5} columns={5} hasHeader={false} />
       ) : (
         <DataTable
           columns={[
             { key: 'user', header: 'User', render: (item: any) => (
               <div className="flex items-center gap-2">
-                {item.user?.avatar?.url ? <img src={item.user.avatar.url} alt="" className="h-7 w-7 rounded-full object-cover" /> : null}
+                {item.user?.avatar?.url ? <OptimizedImage src={item.user.avatar.url} alt={item.user?.name || 'User'} placeholderType="avatar" className="rounded-full object-cover" containerClassName="h-7 w-7" /> : null}
                 <span className="font-medium">{item.user?.name || 'N/A'}</span>
               </div>
             )},

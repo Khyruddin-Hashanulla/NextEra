@@ -76,6 +76,16 @@ export const submitAssignmentSchema = z.object({
     courseId: z.string().min(1).max(FIELD_SIZES.URL),
     lectureId: z.string().min(1).max(FIELD_SIZES.URL),
     content: z.string().max(FIELD_SIZES.NOTE).optional(),
+    files: z
+      .array(
+        z.object({
+          url: z.string().min(1).max(FIELD_SIZES.URL),
+          publicId: z.string().min(1).max(FIELD_SIZES.URL),
+          name: z.string().min(1).max(FIELD_SIZES.TITLE),
+        })
+      )
+      .max(5)
+      .optional(),
   }),
 });
 

@@ -31,7 +31,7 @@ export function BlogPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'blog', page],
-    queryFn: () => adminApi.listBlogs({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listBlogs({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({

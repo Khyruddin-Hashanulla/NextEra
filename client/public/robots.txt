@@ -1,0 +1,34 @@
+User-agent: *
+Allow: /
+
+# ── Private & Auth Pages ──────────────────────────────
+Disallow: /auth/
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+Disallow: /oauth/
+
+# ── Protected Dashboards ──────────────────────────────
+Disallow: /student/
+Disallow: /instructor/
+Disallow: /admin/
+Disallow: /dashboard/
+
+# ── Financial & Account Pages ─────────────────────────
+Disallow: /checkout/
+Disallow: /payment/
+Disallow: /wallet/
+Disallow: /orders/
+
+# ── Settings & Notifications ──────────────────────────
+Disallow: /settings/
+Disallow: /notifications/
+
+# ── API & Backend Routes ──────────────────────────────
+Disallow: /api/
+Disallow: /ai/
+Disallow: /coding/
+
+Sitemap: https://nextera.com/sitemap.xml

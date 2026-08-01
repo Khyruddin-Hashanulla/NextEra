@@ -28,7 +28,7 @@ export function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'users', page, search, roleFilter],
-    queryFn: () => adminApi.listUsers({ page, limit: 10, search, role: roleFilter }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listUsers({ page, limit: 10, search, role: roleFilter }, signal).then((r) => r.data.data),
   });
 
   const deleteMutation = useMutation({

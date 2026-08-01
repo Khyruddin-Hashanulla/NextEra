@@ -1,4 +1,7 @@
 import { motion } from 'framer-motion';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { organizationSchema, webPageSchema, breadcrumbListSchema } from '@/lib/schema';
 import { Section, Container } from '@/components/common/Section';
 import { FeatureGrid } from '../components/FeatureGrid';
 import { StatsBar } from '../components/StatsBar';
@@ -87,7 +90,16 @@ const milestones = [
 
 export function AboutPage() {
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO title="About Us" description="Learn about NextEra's mission, vision, and the team behind our learning platform." canonical="/about" />
+      <StructuredData schemas={[
+        webPageSchema({ name: 'About Us', description: 'Learn about NextEra\'s mission, vision, and the team behind our learning platform.', path: '/about' }),
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'About', path: '/about' },
+        ]),
+      ]} />
+      <div className="min-h-screen">
       {/* Hero */}
       <Section size="xl" background="gradient" id="hero">
         <Container>
@@ -341,5 +353,6 @@ export function AboutPage() {
         background="gradient"
       />
     </div>
+    </>
   );
 }

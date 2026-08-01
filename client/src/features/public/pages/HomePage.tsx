@@ -7,6 +7,7 @@ import {
   BookOpen, Users,
 } from 'lucide-react';
 
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { PageTransition } from '@/components/common/PageTransition';
 import { Section, Container } from '@/components/common/Section';
 import { ROUTES } from '@/lib/constants';
@@ -20,6 +21,8 @@ import { InstructorShowcase } from '../components/InstructorShowcase';
 import { TestimonialCarousel } from '../components/TestimonialCarousel';
 import { CTASection } from '../components/CTASection';
 import { NewsletterForm } from '../components/NewsletterForm';
+import { SEO } from '@/components/seo/SEO';
+import { SEO_DEFAULTS } from '@/lib/seo';
 
 import { studentApi } from '@/api/endpoints/student';
 import { blogApi } from '@/api/endpoints/blog';
@@ -100,17 +103,17 @@ const testimonials = [
 export function HomePage() {
   const { data: coursesRes, isLoading } = useQuery({
     queryKey: ['featured-courses'],
-    queryFn: () => studentApi.listCourses({ featured: 'true', limit: 6 }),
+    queryFn: ({ signal }) => studentApi.listCourses({ featured: 'true', limit: 6 }, signal),
   });
 
   const { data: allCoursesRes } = useQuery({
     queryKey: ['all-courses-instructors'],
-    queryFn: () => studentApi.listCourses({ limit: 50 }),
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 50 }, signal),
   });
 
   const { data: blogsRes } = useQuery({
     queryKey: ['featured-blogs'],
-    queryFn: () => blogApi.getFeatured(3),
+    queryFn: ({ signal }) => blogApi.getFeatured(3, signal),
   });
 
   const featuredCourses = coursesRes?.data?.data?.courses || [];
@@ -146,6 +149,11 @@ export function HomePage() {
 
   return (
     <PageTransition>
+      <SEO
+        title={SEO_DEFAULTS.DEFAULT_TITLE}
+        description="Join NextEra and master web development, programming, and technology skills with expert-led courses."
+        canonical="/"
+      />
       <div className="min-h-screen">
         <Hero />
 
@@ -257,10 +265,12 @@ export function HomePage() {
                   <Link to={`/blog/${firstBlog.slug}`} className="block group h-full">
                     <div className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full flex flex-col">
                       <div className="relative overflow-hidden">
-                        <img
+                        <OptimizedImage
                           src={firstBlog.featuredImage?.url}
-                          alt={firstBlog.title}
-                          className="h-56 w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          alt={`${firstBlog.title} featured image`}
+                          placeholderType="blog"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          containerClassName="h-56 w-full"
                         />
                       </div>
                       <div className="p-6 flex flex-col flex-1">
@@ -299,10 +309,12 @@ export function HomePage() {
                       <Link to={`/blog/${blog.slug}`} className="block group h-full">
                         <div className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full flex sm:flex-row">
                           <div className="sm:w-2/5 relative overflow-hidden">
-                            <img
+                            <OptimizedImage
                               src={blog.featuredImage?.url}
-                              alt={blog.title}
-                              className="h-28 sm:h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              alt={`${blog.title} featured image`}
+                              placeholderType="blog"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
+                              containerClassName="h-28 sm:h-full w-full"
                             />
                           </div>
                           <div className="p-4 sm:w-3/5 flex flex-col justify-center">

@@ -5,11 +5,13 @@ import { MESSAGES } from '../constants/messages';
 import { TokenPayload } from '../interfaces/IUser';
 import { User as UserModel } from '../models/user.model';
 import { RevokedToken } from '../models/revokedToken.model';
+import type { InstructorPlanInfo } from '../services/subscriptionPermission.service';
 
 declare global {
   namespace Express {
     interface Request {
       currentUser?: TokenPayload;
+      instructorPlan?: InstructorPlanInfo;
     }
   }
 }

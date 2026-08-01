@@ -38,6 +38,7 @@ export const ROUTES = {
   STUDENT_LIVE_CLASSES: '/student/live-classes',
   STUDENT_QUIZZES: '/student/quizzes',
   STUDENT_ASSIGNMENTS: '/student/assignments',
+  STUDENT_ASSIGNMENT_DETAIL: (lectureId: string) => `/student/assignments/${lectureId}`,
   STUDENT_CERTIFICATES: '/student/certificates',
   STUDENT_NOTES: '/student/notes',
   STUDENT_WISHLIST: '/student/wishlist',
@@ -67,6 +68,9 @@ export const ROUTES = {
   INSTRUCTOR_CERTIFICATES: '/instructor/certificates',
   INSTRUCTOR_SUBSCRIPTION: '/instructor/subscription',
   INSTRUCTOR_PROFILE: '/instructor/profile',
+  INSTRUCTOR_ASSIGNMENTS: '/instructor/assignments',
+  INSTRUCTOR_ASSIGNMENT_SUBMISSIONS: (lectureId: string) => `/instructor/assignments/${lectureId}/submissions`,
+  INSTRUCTOR_ASSIGNMENT_SUBMISSION_DETAIL: (submissionId: string) => `/instructor/assignments/submissions/${submissionId}`,
 
   // Admin
   ADMIN_DASHBOARD: '/admin',
@@ -84,6 +88,9 @@ export const ROUTES = {
   ADMIN_REVIEWS: '/admin/reviews',
   ADMIN_TICKETS: '/admin/tickets',
   ADMIN_CERTIFICATES: '/admin/certificates',
+  ADMIN_ASSIGNMENTS: '/admin/assignments',
+  ADMIN_ASSIGNMENT_DETAIL: (id: string) => `/admin/assignments/${id}`,
+  ADMIN_RECORDINGS: '/admin/recordings',
   ADMIN_BANNERS: '/admin/banners',
   ADMIN_FAQ: '/admin/faq',
   ADMIN_EMAIL_TEMPLATES: '/admin/email-templates',

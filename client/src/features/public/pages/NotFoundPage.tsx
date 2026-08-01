@@ -2,11 +2,13 @@ import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { PageTransition } from '@/components/common/PageTransition';
+import { SEO } from '@/components/seo/SEO';
 import { ROUTES } from '@/lib/constants';
 
 export function NotFoundPage() {
   return (
     <PageTransition>
+      <SEO title="Page Not Found" description="The page you are looking for does not exist or has been moved." robots="noindex,nofollow" />
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4 py-16">
           <motion.div

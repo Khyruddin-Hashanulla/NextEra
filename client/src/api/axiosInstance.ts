@@ -7,9 +7,9 @@ let csrfToken: string | null = null;
 
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
-export async function fetchCsrfToken(): Promise<void> {
+export async function fetchCsrfToken(signal?: AbortSignal): Promise<void> {
   try {
-    const { data } = await axiosInstance.get('/csrf-token');
+    const { data } = await axiosInstance.get('/csrf-token', { signal });
     csrfToken = data.data?.csrfToken ?? null;
   } catch {
     csrfToken = null;
@@ -119,6 +119,10 @@ axiosInstance.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
     }
 
     const errorData = error.response?.data as { message?: string } | undefined;

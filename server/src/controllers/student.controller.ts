@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { studentService } from '../services/student.service';
+import { quizService } from '../services/quiz.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { HTTP_STATUS } from '../constants/httpStatus';
@@ -143,16 +144,38 @@ export const getQuizAttempts = asyncHandler(async (req: Request, res: Response) 
 });
 
 // ─── Assignment ────────────────────────────────────────────────
-export const submitAssignment = asyncHandler(async (req: Request, res: Response) => {
-  const { courseId, lectureId, content } = req.body;
-  const data = await studentService.submitAssignment(req.currentUser!.userId, courseId, lectureId, content);
-  res.status(HTTP_STATUS.CREATED).json(ApiResponse.success('Assignment submitted', data));
-});
-
 export const getAssignments = asyncHandler(async (req: Request, res: Response) => {
   const { courseId } = req.query as any;
   const data = await studentService.getAssignmentSubmissions(req.currentUser!.userId, courseId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Assignments fetched', data));
+});
+
+export const getAssignmentsOverview = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit, courseId } = req.query as any;
+  const data = await studentService.getAssignmentsOverview(
+    req.currentUser!.userId,
+    Number(page) || 1,
+    Number(limit) || 20,
+    courseId
+  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Assignments overview fetched', data));
+});
+
+export const getAssignmentDetail = asyncHandler(async (req: Request, res: Response) => {
+  const data = await studentService.getAssignmentDetail(req.currentUser!.userId, req.params.lectureId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Assignment details fetched', data));
+});
+
+export const submitAssignment = asyncHandler(async (req: Request, res: Response) => {
+  const { courseId, lectureId, content, files } = req.body;
+  const data = await studentService.submitAssignment(
+    req.currentUser!.userId,
+    courseId,
+    lectureId,
+    content,
+    files
+  );
+  res.status(HTTP_STATUS.CREATED).json(ApiResponse.success('Assignment submitted', data));
 });
 
 // ─── Certificate ───────────────────────────────────────────────
@@ -169,6 +192,15 @@ export const getCertificates = asyncHandler(async (req: Request, res: Response) 
 export const verifyCertificate = asyncHandler(async (req: Request, res: Response) => {
   const data = await studentService.verifyCertificate(req.params.certificateId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Certificate verified', data));
+});
+
+export const downloadCertificate = asyncHandler(async (req: Request, res: Response) => {
+  const { filePath, filename, contentType } = await studentService.downloadCertificate(
+    req.currentUser!.userId, req.params.certificateId
+  );
+  res.setHeader('Content-Type', contentType);
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.status(HTTP_STATUS.OK).sendFile(filePath);
 });
 
 // ─── Wishlist ─────────────────────────────────────────────────

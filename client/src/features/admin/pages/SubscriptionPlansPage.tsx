@@ -32,7 +32,7 @@ export function SubscriptionPlansPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-subscription-plans'],
-    queryFn: () => adminApi.listSubscriptionPlans(),
+    queryFn: ({ signal }) => adminApi.listSubscriptionPlans(signal),
   });
 
   const createMutation = useMutation({

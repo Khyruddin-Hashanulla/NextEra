@@ -25,7 +25,7 @@ const statCards = [
 export function DashboardPage() {
   const { data: stats, isLoading } = useQuery({
     queryKey: ['admin', 'dashboard'],
-    queryFn: () => adminApi.getDashboard().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getDashboard(signal).then((r) => r.data.data),
   });
 
   if (isLoading) {

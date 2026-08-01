@@ -10,6 +10,8 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Edit3, Trash2, Loader2, GripVertical } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { ListSkeleton } from '@/components/skeletons/ListSkeleton';
 import { Switch } from '@/components/ui/switch';
 
 export function BannerManagementPage() {
@@ -22,7 +24,7 @@ export function BannerManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-banners'],
-    queryFn: () => adminApi.listBanners(),
+    queryFn: ({ signal }) => adminApi.listBanners(signal),
    });
 
   const createMutation = useMutation({
@@ -53,7 +55,7 @@ export function BannerManagementPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <ListSkeleton rows={4} height={24} hasHeader={false} />
       ) : (
         <div className="space-y-3">
           {banners.map((banner: Banner) => (
@@ -61,7 +63,7 @@ export function BannerManagementPage() {
               <CardContent className="flex items-center gap-4 p-4">
                 <GripVertical className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                 <div className="h-20 w-36 rounded bg-muted overflow-hidden flex-shrink-0">
-                  {banner.image?.url && <img src={banner.image.url} alt={banner.title} className="h-full w-full object-cover" />}
+                  {banner.image?.url && <OptimizedImage src={banner.image.url} alt={banner.title} placeholderType="general" className="object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium truncate">{banner.title}</p>

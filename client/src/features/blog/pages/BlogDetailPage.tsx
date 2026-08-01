@@ -8,7 +8,9 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/providers/ToastProvider';
+import { BlogDetailSkeleton } from '@/components/skeletons/BlogDetailSkeleton';
 import { Loader2, Calendar, Clock, Bookmark, Heart, MessageCircle, Share2, ChevronLeft, Eye, ThumbsUp } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { useAuth } from '@/providers/AuthProvider';
 
 export function BlogDetailPage() {
@@ -22,13 +24,13 @@ export function BlogDetailPage() {
 
   const { data: blogData, isLoading } = useQuery({
     queryKey: ['blog', slug],
-    queryFn: () => blogApi.getBySlug(slug!).then(r => r.data.data),
+    queryFn: ({ signal }) => blogApi.getBySlug(slug!, signal).then(r => r.data.data),
     enabled: !!slug,
   });
 
   const { data: commentsData } = useQuery({
     queryKey: ['blog-comments', blogData?._id],
-    queryFn: () => blogApi.getComments(blogData!._id).then(r => r.data),
+    queryFn: ({ signal }) => blogApi.getComments(blogData!._id, undefined, signal).then(r => r.data),
     enabled: !!blogData?._id,
   });
 
@@ -70,7 +72,7 @@ export function BlogDetailPage() {
   });
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <BlogDetailSkeleton />;
   }
 
   if (!blogData) {
@@ -93,7 +95,7 @@ export function BlogDetailPage() {
       <article className="space-y-6">
         {blogData.featuredImage?.url && (
           <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-            <img src={blogData.featuredImage.url} alt={blogData.title} className="w-full h-full object-cover" />
+            <OptimizedImage src={blogData.featuredImage.url} alt={blogData.title} placeholderType="blog" className="object-cover" />
           </div>
         )}
 
@@ -112,7 +114,7 @@ export function BlogDetailPage() {
           <div className="flex items-center gap-4 text-sm text-muted-foreground flex-wrap">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={blogData.author?.avatar?.url} />
+                <AvatarImage src={blogData.author?.avatar?.url} alt={blogData.author?.name || ''} />
                 <AvatarFallback>{blogData.author?.name?.charAt(0)}</AvatarFallback>
               </Avatar>
               <span>{blogData.author?.name}</span>
@@ -187,7 +189,7 @@ export function BlogDetailPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Avatar className="h-7 w-7">
-                      <AvatarImage src={comment.user?.avatar?.url} />
+                      <AvatarImage src={comment.user?.avatar?.url} alt={comment.user?.name || ''} />
                       <AvatarFallback className="text-xs">{comment.user?.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium">{comment.user?.name}</span>
@@ -217,7 +219,7 @@ export function BlogDetailPage() {
                       <div key={reply._id} className="space-y-1">
                         <div className="flex items-center gap-2">
                           <Avatar className="h-6 w-6">
-                            <AvatarImage src={reply.user?.avatar?.url} />
+                            <AvatarImage src={reply.user?.avatar?.url} alt={reply.user?.name || ''} />
                             <AvatarFallback className="text-xs">{reply.user?.name?.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium">{reply.user?.name}</span>
@@ -243,7 +245,7 @@ export function BlogDetailPage() {
                 <Card className="h-full hover:border-primary/50 transition-colors">
                   {post.featuredImage?.url && (
                     <div className="aspect-video bg-muted">
-                      <img src={post.featuredImage.url} alt={post.title} className="w-full h-full object-cover" />
+                      <OptimizedImage src={post.featuredImage.url} alt={post.title} placeholderType="blog" className="object-cover" />
                     </div>
                   )}
                   <CardContent className="p-3 space-y-1">

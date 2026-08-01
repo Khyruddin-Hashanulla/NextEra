@@ -18,7 +18,11 @@ export const {
   ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
   getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'] as string | undefined,
   skipCsrfProtection: (req) => {
-    return req.path === '/payments/webhook/razorpay' || req.path === '/auth/refresh';
+    return (
+      req.path === '/payments/webhook/razorpay' ||
+      req.path === '/live-classes/webhook/zoom' ||
+      req.path === '/auth/refresh'
+    );
   },
   errorConfig: {
     statusCode: 403,

@@ -31,12 +31,12 @@ export function SupportTicketsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-tickets', page, statusFilter],
-    queryFn: () => adminApi.listSupportTickets({ page, limit: 10, status: statusFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listSupportTickets({ page, limit: 10, status: statusFilter || undefined }, signal),
    });
 
   const { data: ticketDetail, isLoading: detailLoading } = useQuery({
     queryKey: ['admin-ticket', selectedTicket?._id],
-    queryFn: () => adminApi.getSupportTicket(selectedTicket._id),
+    queryFn: ({ signal }) => adminApi.getSupportTicket(selectedTicket._id, signal),
     enabled: !!selectedTicket,
    });
 

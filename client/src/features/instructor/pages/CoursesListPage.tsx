@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import {
   Plus, Pencil, Trash2, Eye, Send, BookOpen, Users, DollarSign,
   ChevronRight,
@@ -30,7 +31,7 @@ export function CoursesListPage() {
 
   const { data: courses, isLoading } = useQuery({
     queryKey: ['instructor', 'courses'],
-    queryFn: () => instructorApi.listMyCourses().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.listMyCourses(undefined, signal).then((r) => r.data.data),
   });
 
   const deleteMutation = useMutation({
@@ -92,7 +93,7 @@ export function CoursesListPage() {
                 <Link to={`/instructor/courses/${course._id}/edit`}>
                   <div className="relative aspect-video w-full overflow-hidden bg-gradient-to-br from-primary/10 to-primary/5">
                     {course.thumbnail?.url ? (
-                      <img src={course.thumbnail.url} alt={course.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                      <OptimizedImage src={course.thumbnail.url} alt={course.title} placeholderType="course" className="object-cover transition-transform duration-300 group-hover:scale-105" />
                     ) : (
                       <div className="flex h-full items-center justify-center">
                         <BookOpen className="h-12 w-12 text-primary/30" />

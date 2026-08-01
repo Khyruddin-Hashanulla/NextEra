@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { Avatar } from '@/components/ui/avatar';
 import { Linkedin, Twitter } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 interface TeamMemberProps {
   name: string;
@@ -24,7 +25,7 @@ export function TeamMember({ name, role, bio, avatar, twitter, linkedin, classNa
       <div className="mx-auto h-20 w-20 mb-4">
         <Avatar className="w-full h-full rounded-full">
           {avatar ? (
-            <img src={avatar} alt={name} className="w-full h-full object-cover" />
+            <OptimizedImage src={avatar} alt={`Profile photo of ${name}`} placeholderType="avatar" className="object-cover" />
           ) : (
             <div className="flex items-center justify-center w-full h-full bg-primary/10 text-lg font-bold text-primary">
               {initials}

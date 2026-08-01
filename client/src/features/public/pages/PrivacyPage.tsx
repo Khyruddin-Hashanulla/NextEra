@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import { Section, Container } from '@/components/common/Section';
 import { PageTransition } from '@/components/common/PageTransition';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { webPageSchema, breadcrumbListSchema } from '@/lib/schema';
 
 const sections: { title: string; content: string }[] = [
   {
@@ -68,6 +71,14 @@ const sections: { title: string; content: string }[] = [
 export function PrivacyPage() {
   return (
     <PageTransition>
+      <SEO title="Privacy Policy" description="Read NextEra's privacy policy to understand how we collect, use, and protect your personal information." canonical="/privacy" robots="index,follow" />
+      <StructuredData schemas={[
+        webPageSchema({ name: 'Privacy Policy', description: 'Read NextEra\'s privacy policy to understand how we collect, use, and protect your personal information.', path: '/privacy' }),
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Privacy Policy', path: '/privacy' },
+        ]),
+      ]} />
       <div className="min-h-screen">
         <section className="bg-gradient-to-br from-primary/10 via-background to-background py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">

@@ -43,7 +43,7 @@ export function PaymentManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-payments', page, statusFilter],
-    queryFn: () => adminApi.listAllPayments({ page, limit: 10, status: statusFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listAllPayments({ page, limit: 10, status: statusFilter || undefined }, signal),
   });
 
   const refundMutation = useMutation({

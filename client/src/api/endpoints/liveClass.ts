@@ -3,50 +3,54 @@ import { ApiResponse } from '@/types/api';
 import { LiveClass, LiveClassRecording, LiveClassJoinData } from '@/types/liveClass';
 
 export const liveClassApi = {
-  // ─── Instructor ─────────────────────────────────────────────
-  listInstructorLiveClasses: (params?: { page?: number; limit?: number; courseId?: string; status?: string }) =>
-    axiosInstance.get<ApiResponse<{ classes: LiveClass[]; pagination: any }>>('/live-classes/instructor', { params }),
+  listInstructorLiveClasses: (params?: { page?: number; limit?: number; courseId?: string; status?: string }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ classes: LiveClass[]; pagination: any }>>('/live-classes/instructor', { params, signal }),
 
-  listInstructorRecordings: (params?: { page?: number; limit?: number; courseId?: string }) =>
-    axiosInstance.get<ApiResponse<{ recordings: LiveClassRecording[]; pagination: any }>>('/live-classes/instructor/recordings', { params }),
+  listInstructorRecordings: (params?: { page?: number; limit?: number; courseId?: string }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ recordings: LiveClassRecording[]; pagination: any }>>('/live-classes/instructor/recordings', { params, signal }),
 
-  createLiveClass: (data: Partial<LiveClass>) =>
-    axiosInstance.post<ApiResponse<LiveClass>>('/live-classes', data),
+  createLiveClass: (data: Partial<LiveClass>, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<LiveClass>>('/live-classes', data, { signal }),
 
-  updateLiveClass: (id: string, data: Partial<LiveClass>) =>
-    axiosInstance.put<ApiResponse<LiveClass>>(`/live-classes/${id}`, data),
+  updateLiveClass: (id: string, data: Partial<LiveClass>, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<LiveClass>>(`/live-classes/${id}`, data, { signal }),
 
-  getLiveClass: (id: string) =>
-    axiosInstance.get<ApiResponse<LiveClass>>(`/live-classes/${id}`),
+  getLiveClass: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<LiveClass>>(`/live-classes/${id}`, { signal }),
 
-  cancelLiveClass: (id: string) =>
-    axiosInstance.post<ApiResponse<LiveClass>>(`/live-classes/${id}/cancel`),
+  cancelLiveClass: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<LiveClass>>(`/live-classes/${id}/cancel`, undefined, { signal }),
 
-  startLiveClass: (id: string) =>
-    axiosInstance.post<ApiResponse<LiveClass>>(`/live-classes/${id}/start`),
+  startLiveClass: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<LiveClass>>(`/live-classes/${id}/start`, undefined, { signal }),
 
-  endLiveClass: (id: string) =>
-    axiosInstance.post<ApiResponse<LiveClass>>(`/live-classes/${id}/end`),
+  endLiveClass: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<LiveClass>>(`/live-classes/${id}/end`, undefined, { signal }),
 
-  addRecording: (data: { liveClass: string; course: string; title: string; url: string; password?: string; duration?: number; format?: string; thumbnailUrl?: string }) =>
-    axiosInstance.post<ApiResponse<LiveClassRecording>>('/live-classes/instructor/recordings', data),
+  addRecording: (data: { liveClass: string; course: string; title: string; url: string; password?: string; duration?: number; format?: string; thumbnailUrl?: string }, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<LiveClassRecording>>('/live-classes/instructor/recordings', data, { signal }),
 
-  deleteRecording: (id: string) =>
-    axiosInstance.delete<ApiResponse<null>>(`/live-classes/instructor/recordings/${id}`),
+  deleteRecording: (id: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<null>>(`/live-classes/instructor/recordings/${id}`, { signal }),
 
-  // ─── Student ────────────────────────────────────────────────
-  listStudentLiveClasses: (params?: { page?: number; limit?: number; filter?: 'upcoming' | 'past' | 'all' }) =>
-    axiosInstance.get<ApiResponse<{ classes: LiveClass[]; pagination: any }>>('/live-classes/student', { params }),
+  syncRecordings: (liveClassId: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<{ liveClassId: string; recordings: LiveClassRecording[] }>>('/live-classes/instructor/recordings/sync', { liveClassId }, { signal }),
 
-  listStudentRecordings: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<ApiResponse<{ recordings: LiveClassRecording[]; pagination: any }>>('/live-classes/student/recordings', { params }),
+  getInstructorRecording: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<LiveClassRecording>>(`/live-classes/instructor/recordings/${id}`, { signal }),
 
-  joinLiveClass: (id: string) =>
-    axiosInstance.post<ApiResponse<LiveClassJoinData>>(`/live-classes/${id}/join`),
+  listStudentLiveClasses: (params?: { page?: number; limit?: number; filter?: 'upcoming' | 'past' | 'all' }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ classes: LiveClass[]; pagination: any }>>('/live-classes/student', { params, signal }),
 
-  leaveLiveClass: (id: string) =>
-    axiosInstance.post<ApiResponse<null>>(`/live-classes/${id}/leave`),
+  listStudentRecordings: (params?: { page?: number; limit?: number; courseId?: string }, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<{ recordings: LiveClassRecording[]; pagination: any }>>('/live-classes/student/recordings', { params, signal }),
 
-  incrementRecordingView: (id: string) =>
-    axiosInstance.post<ApiResponse<null>>(`/live-classes/recordings/${id}/view`),
+  joinLiveClass: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<LiveClassJoinData>>(`/live-classes/${id}/join`, undefined, { signal }),
+
+  leaveLiveClass: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>(`/live-classes/${id}/leave`, undefined, { signal }),
+
+  incrementRecordingView: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<null>>(`/live-classes/recordings/${id}/view`, undefined, { signal }),
 };

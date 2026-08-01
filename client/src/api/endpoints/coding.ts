@@ -8,36 +8,36 @@ import type {
 } from '@/types/coding';
 
 export const codingApi = {
-  listProblems: (params?: Record<string, any>) =>
-    axiosInstance.get<{ problems: CodingProblemListItem[]; pagination: any }>('/coding/problems', { params }),
+  listProblems: (params?: Record<string, any>, signal?: AbortSignal) =>
+    axiosInstance.get<{ problems: CodingProblemListItem[]; pagination: any }>('/coding/problems', { params, signal }),
 
-  getProblemById: (id: string) =>
-    axiosInstance.get<{ data: CodingProblemDetail }>(`/coding/problems/${id}`),
+  getProblemById: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<{ data: CodingProblemDetail }>(`/coding/problems/${id}`, { signal }),
 
-  getProblemBySlug: (slug: string) =>
-    axiosInstance.get<{ data: CodingProblemDetail }>(`/coding/problems/slug/${slug}`),
+  getProblemBySlug: (slug: string, signal?: AbortSignal) =>
+    axiosInstance.get<{ data: CodingProblemDetail }>(`/coding/problems/slug/${slug}`, { signal }),
 
-  createProblem: (data: CreateCodingProblemPayload) =>
-    axiosInstance.post<{ data: CodingProblemDetail }>('/coding/problems', data),
+  createProblem: (data: CreateCodingProblemPayload, signal?: AbortSignal) =>
+    axiosInstance.post<{ data: CodingProblemDetail }>('/coding/problems', data, { signal }),
 
-  updateProblem: (id: string, data: Partial<CreateCodingProblemPayload>) =>
-    axiosInstance.put<{ data: CodingProblemDetail }>(`/coding/problems/${id}`, data),
+  updateProblem: (id: string, data: Partial<CreateCodingProblemPayload>, signal?: AbortSignal) =>
+    axiosInstance.put<{ data: CodingProblemDetail }>(`/coding/problems/${id}`, data, { signal }),
 
-  deleteProblem: (id: string) =>
-    axiosInstance.delete(`/coding/problems/${id}`),
+  deleteProblem: (id: string, signal?: AbortSignal) =>
+    axiosInstance.delete(`/coding/problems/${id}`, { signal }),
 
-  listInstructorProblems: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<{ problems: CodingProblemListItem[]; pagination: any }>('/coding/my-problems', { params }),
+  listInstructorProblems: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<{ problems: CodingProblemListItem[]; pagination: any }>('/coding/my-problems', { params, signal }),
 
-  submitCode: (problemId: string, data: SubmitCodePayload) =>
-    axiosInstance.post<{ data: CodingSubmission }>(`/coding/problems/${problemId}/submit`, data),
+  submitCode: (problemId: string, data: SubmitCodePayload, signal?: AbortSignal) =>
+    axiosInstance.post<{ data: CodingSubmission }>(`/coding/problems/${problemId}/submit`, data, { signal }),
 
-  getSubmissionById: (submissionId: string) =>
-    axiosInstance.get<{ data: CodingSubmission }>(`/coding/submissions/${submissionId}`),
+  getSubmissionById: (submissionId: string, signal?: AbortSignal) =>
+    axiosInstance.get<{ data: CodingSubmission }>(`/coding/submissions/${submissionId}`, { signal }),
 
-  getUserSubmissions: (problemId: string, params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<{ submissions: CodingSubmission[]; pagination: any }>(`/coding/problems/${problemId}/submissions`, { params }),
+  getUserSubmissions: (problemId: string, params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<{ submissions: CodingSubmission[]; pagination: any }>(`/coding/problems/${problemId}/submissions`, { params, signal }),
 
-  getAllUserSubmissions: (params?: { page?: number; limit?: number }) =>
-    axiosInstance.get<{ submissions: CodingSubmission[]; pagination: any }>('/coding/submissions', { params }),
+  getAllUserSubmissions: (params?: { page?: number; limit?: number }, signal?: AbortSignal) =>
+    axiosInstance.get<{ submissions: CodingSubmission[]; pagination: any }>('/coding/submissions', { params, signal }),
 };

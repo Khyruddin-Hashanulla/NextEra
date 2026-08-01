@@ -29,7 +29,7 @@ export function AnnouncementsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'announcements', page],
-    queryFn: () => instructorApi.listAnnouncements({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.listAnnouncements({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({

@@ -13,6 +13,7 @@ import { ConfirmDialog } from '@/features/admin/components/ConfirmDialog';
 import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Loader2, Plus, Edit3, Trash2, Crown } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 
 const defaultFeatures = {
   freeCoursesLimit: 2,
@@ -50,12 +51,12 @@ export function InstructorSubscriptionPlansPage() {
 
   const { data: plans, isLoading } = useQuery({
     queryKey: ['admin-instructor-plans'],
-    queryFn: () => adminApi.listInstructorSubscriptionPlans().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listInstructorSubscriptionPlans(signal).then((r) => r.data.data),
   });
 
   const { data: statsData } = useQuery({
     queryKey: ['admin-instructor-plan-stats'],
-    queryFn: () => adminApi.getInstructorSubscriptionStats().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getInstructorSubscriptionStats(signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({
@@ -120,7 +121,7 @@ export function InstructorSubscriptionPlansPage() {
       )}
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <CardGridSkeleton cards={6} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {(plans || []).map((plan: InstructorSubscriptionPlan) => (

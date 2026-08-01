@@ -4,6 +4,7 @@ import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Users, BookOpen, Award, Clock, ChevronDown } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 interface HeroProps {
   className?: string;
@@ -15,7 +16,7 @@ export function Hero({ className }: HeroProps) {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
         <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
-        <svg className="absolute left-0 bottom-0 w-full h-auto opacity-5" viewBox="0 0 1440 320" preserveAspectRatio="none">
+        <svg className="absolute left-0 bottom-0 w-full h-auto opacity-5" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
           <path fill="hsl(var(--primary))" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,234.7C960,224,1056,192,1152,170.7C1248,149,1344,139,1392,133.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
         </svg>
       </div>
@@ -86,11 +87,12 @@ export function Hero({ className }: HeroProps) {
             <div className="relative mx-auto w-full max-w-lg">
               <div className="aspect-square rounded-full border-2 border-primary/30 p-4">
                 <div className="w-full h-full rounded-full border-2 border-primary/20 p-4 overflow-hidden bg-muted/50">
-                  <img
+                  <OptimizedImage
                     src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=600&fit=crop"
-                    alt="Students learning together"
-                    className="w-full h-full object-cover rounded-full"
-                    loading="eager"
+                    alt="Group of students collaborating on a project in a modern classroom"
+                    className="rounded-full object-cover"
+                    lazy={false}
+                    fetchPriority="high"
                   />
                 </div>
               </div>
@@ -138,7 +140,7 @@ export function Hero({ className }: HeroProps) {
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
                     {[1,2,3,4,5].map((star) => (
-                      <svg key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
+                      <svg key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
                     ))}
                   </div>
                   <span className="text-xs font-medium text-muted-foreground">4.9/5 Rating</span>

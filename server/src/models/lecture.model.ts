@@ -35,14 +35,26 @@ export interface ILectureQuiz {
   maxAttempts: number;
   showResults: boolean;
   randomizeQuestions: boolean;
+  negativeMarking: boolean;
+  partialMarking: boolean;
+  attemptCooldownMinutes: number;
+  allowResume: boolean;
+  shuffleOptions: boolean;
+  scoringPolicy: 'best' | 'latest' | 'average' | 'highest';
   questions: {
     question: string;
     options: string[];
     correctAnswer: string;
     explanation: string;
     marks: number;
+    type: QuestionType;
+    negativeMarks: number;
+    isBonus: boolean;
+    weight: number;
   }[];
 }
+
+export type QuestionType = 'single' | 'multiple' | 'boolean' | 'fill_blank' | 'matching' | 'coding' | 'essay';
 
 export interface ILecture extends Document {
   section: mongoose.Types.ObjectId;
@@ -161,6 +173,12 @@ const lectureSchema = new Schema<ILecture>(
       maxAttempts: { type: Number, default: 3 },
       showResults: { type: Boolean, default: true },
       randomizeQuestions: { type: Boolean, default: false },
+      negativeMarking: { type: Boolean, default: false },
+      partialMarking: { type: Boolean, default: false },
+      attemptCooldownMinutes: { type: Number, default: 0 },
+      allowResume: { type: Boolean, default: true },
+      shuffleOptions: { type: Boolean, default: false },
+      scoringPolicy: { type: String, enum: ['best', 'latest', 'average', 'highest'], default: 'best' },
       questions: [
         {
           question: { type: String },
@@ -168,6 +186,10 @@ const lectureSchema = new Schema<ILecture>(
           correctAnswer: { type: String },
           explanation: { type: String, default: '' },
           marks: { type: Number, default: 1 },
+          type: { type: String, enum: ['single', 'multiple', 'boolean', 'fill_blank', 'matching', 'coding', 'essay'], default: 'single' },
+          negativeMarks: { type: Number, default: 0 },
+          isBonus: { type: Boolean, default: false },
+          weight: { type: Number, default: 1 },
         },
       ],
     },

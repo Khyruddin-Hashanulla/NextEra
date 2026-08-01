@@ -41,6 +41,7 @@ const envSchema = z.object({
   ZOOM_ACCOUNT_ID: z.string().default(''),
   ZOOM_CLIENT_ID: z.string().default(''),
   ZOOM_CLIENT_SECRET: z.string().default(''),
+  ZOOM_WEBHOOK_SECRET: z.string().default(''),
 
   CERTIFICATE_SECRET: z.string().min(1, 'CERTIFICATE_SECRET is required'),
 
@@ -114,6 +115,7 @@ export const env = {
   zoomAccountId: raw.ZOOM_ACCOUNT_ID,
   zoomClientId: raw.ZOOM_CLIENT_ID,
   zoomClientSecret: raw.ZOOM_CLIENT_SECRET,
+  zoomWebhookSecret: raw.ZOOM_WEBHOOK_SECRET,
 
   certificateSecret: raw.CERTIFICATE_SECRET,
 

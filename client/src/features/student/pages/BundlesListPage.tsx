@@ -4,7 +4,9 @@ import { studentApi } from '@/api/endpoints/student';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Package, BookOpen, Clock, ChevronRight } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
+import { Package, BookOpen, Clock, ChevronRight } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function BundlesListPage() {
   const { data, isLoading } = useQuery({
@@ -13,11 +15,7 @@ export function BundlesListPage() {
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <CardGridSkeleton />;
   }
 
   const bundles = data?.bundles || [];
@@ -50,7 +48,7 @@ export function BundlesListPage() {
             <Card key={bundle._id} className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
               {bundle.thumbnail?.url && (
                 <div className="h-40 overflow-hidden">
-                  <img src={bundle.thumbnail.url} alt={bundle.title} className="h-full w-full object-cover" />
+                  <OptimizedImage src={bundle.thumbnail.url} alt={bundle.title} placeholderType="course" className="object-cover" />
                 </div>
               )}
               <CardHeader>

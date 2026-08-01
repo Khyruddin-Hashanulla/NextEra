@@ -76,6 +76,12 @@ const userSchema = new Schema<IUser>(
     tokenVersion: { type: Number, default: 0 },
     resetPasswordToken: String,
     resetPasswordExpire: Date,
+    referredBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      index: true,
+    },
+    referredAt: { type: Date },
     instructorProfile: {
       qualification: { type: String, default: '' },
       experience: { type: String, default: '' },

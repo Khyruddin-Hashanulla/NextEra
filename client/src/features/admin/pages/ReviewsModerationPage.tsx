@@ -16,7 +16,7 @@ export function ReviewsModerationPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-reviews', page, statusFilter],
-    queryFn: () => adminApi.listReviews({ page, limit: 10, status: statusFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listReviews({ page, limit: 10, status: statusFilter || undefined }, signal),
    });
 
   const moderateMutation = useMutation({

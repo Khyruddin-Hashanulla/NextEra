@@ -30,7 +30,7 @@ export function CouponsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'coupons', page],
-    queryFn: () => adminApi.listCoupons({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listCoupons({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({

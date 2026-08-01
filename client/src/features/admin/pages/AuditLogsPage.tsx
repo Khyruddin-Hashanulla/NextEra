@@ -17,6 +17,7 @@ import type { AuditLogItem } from '@/types/admin';
 import {
   Search, Download, FileJson, X, Filter, ArrowUpDown, ShieldAlert,
 } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 function actionColor(action: string): string {
   if (action.includes('DELETE') || action.includes('REJECT') || action.includes('REVOKE')) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
@@ -145,18 +146,18 @@ export function AuditLogsPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-audit-logs', queryParams],
-    queryFn: () => adminApi.listAuditLogs(queryParams),
+    queryFn: ({ signal }) => adminApi.listAuditLogs(queryParams, signal),
   });
 
   const { data: actionsData } = useQuery({
     queryKey: ['admin-audit-actions'],
-    queryFn: () => adminApi.listAuditActions(),
+    queryFn: ({ signal }) => adminApi.listAuditActions(signal),
     staleTime: 60000,
   });
 
   const { data: resourceTypesData } = useQuery({
     queryKey: ['admin-audit-resource-types'],
-    queryFn: () => adminApi.listAuditResourceTypes(),
+    queryFn: ({ signal }) => adminApi.listAuditResourceTypes(signal),
     staleTime: 60000,
   });
 
@@ -172,7 +173,7 @@ export function AuditLogsPage() {
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium overflow-hidden">
             {l.adminId?.avatar?.url
-              ? <img src={l.adminId.avatar.url} alt="" className="h-full w-full object-cover" />
+              ? <OptimizedImage src={l.adminId.avatar.url} alt={l.adminName || 'Admin'} placeholderType="avatar" className="object-cover" />
               : l.adminName?.charAt(0)?.toUpperCase() || '?'}
           </div>
           <span className="font-medium">{l.adminName || l.adminEmail || 'System'}</span>

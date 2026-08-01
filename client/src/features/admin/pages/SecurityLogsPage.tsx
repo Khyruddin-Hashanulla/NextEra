@@ -18,7 +18,7 @@ export function SecurityLogsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-security-logs', page, severityFilter, eventFilter],
-    queryFn: () => adminApi.listSecurityLogs({ page, limit: 20, severity: severityFilter || undefined, event: eventFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listSecurityLogs({ page, limit: 20, severity: severityFilter || undefined, event: eventFilter || undefined }, signal),
    });
 
   const logs = data?.data?.data?.logs || [];

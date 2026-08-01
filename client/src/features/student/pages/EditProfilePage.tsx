@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { studentApi } from '@/api/endpoints/student';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { userApi } from '@/api/endpoints/user';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
-import { User, Mail, Lock, Globe, Youtube, Twitter, Linkedin, Github, Save, Camera, Loader2 } from 'lucide-react';
+import { useTheme } from '@/providers/ThemeProvider';
+import { ThemeSwitcher } from '@/components/theme/ThemeSwitcher';
+import { QUERY_KEYS } from '@/lib/constants';
+import { User, Mail, Lock, Globe, Youtube, Twitter, Linkedin, Github, Save, Camera, Loader2, Palette } from 'lucide-react';
 import { motion } from 'framer-motion';
-import axiosInstance from '@/api/axiosInstance';
 
 const container = {
   hidden: { opacity: 0 },
@@ -26,10 +28,11 @@ const sectionItem = {
 
 export function EditProfilePage() {
   const { addToast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: profile, isLoading } = useQuery({
     queryKey: ['user', 'profile'],
-    queryFn: () => axiosInstance.get<{ data: any }>('/users/me').then((r: any) => r.data.data),
+    queryFn: ({ signal }) => userApi.getMe(signal).then((r) => r.data.data),
   });
 
   const [form, setForm] = useState({
@@ -54,9 +57,10 @@ export function EditProfilePage() {
   }, [profile]);
 
   const updateMutation = useMutation({
-    mutationFn: () => axiosInstance.put('/users/me', form),
+    mutationFn: () => userApi.updateProfile(form),
     onSuccess: () => {
       addToast({ title: 'Profile updated', variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.user });
     },
     onError: () => {
       addToast({ title: 'Update failed', variant: 'error' });
@@ -64,7 +68,7 @@ export function EditProfilePage() {
   });
 
   const passwordMutation = useMutation({
-    mutationFn: () => axiosInstance.put('/users/me/password', passwordForm),
+    mutationFn: () => userApi.changePassword({ currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword }),
     onSuccess: () => {
       addToast({ title: 'Password changed', variant: 'success' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
@@ -205,6 +209,24 @@ export function EditProfilePage() {
             >
               Save Changes
             </Button>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      <motion.div variants={sectionItem}>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Palette className="h-5 w-5 text-primary" />
+              Appearance
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Theme Preference</label>
+              <p className="text-sm text-muted-foreground">Choose between light, dark, or system theme.</p>
+              <ThemeSwitcher />
+            </div>
           </CardContent>
         </Card>
       </motion.div>

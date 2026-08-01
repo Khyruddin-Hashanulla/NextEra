@@ -32,12 +32,12 @@ export function NotificationsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'notifications', page],
-    queryFn: () => adminApi.listNotifications({ page, limit: 10 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listNotifications({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
   const { data: users } = useQuery({
     queryKey: ['admin', 'users', 'all'],
-    queryFn: () => adminApi.listUsers({ limit: 100 }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listUsers({ limit: 100 }, signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({

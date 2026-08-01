@@ -10,6 +10,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Mail, MapPin, Phone, MessageCircle, Send, Loader2, CheckCircle2 } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { organizationSchema, webPageSchema, breadcrumbListSchema } from '@/lib/schema';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 
@@ -57,7 +60,16 @@ export function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <>
+      <SEO title="Contact Us" description="Get in touch with the NextEra team. We're here to help with any questions about our courses and platform." canonical="/contact" />
+      <StructuredData schemas={[
+        webPageSchema({ name: 'Contact Us', description: 'Get in touch with the NextEra team.', path: '/contact' }),
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Contact', path: '/contact' },
+        ]),
+      ]} />
+      <div className="min-h-screen">
       <Section size="sm" background="gradient">
         <Container>
           <div className="max-w-3xl mx-auto text-center">
@@ -256,5 +268,6 @@ export function ContactPage() {
         </Container>
       </Section>
     </div>
+    </>
   );
 }

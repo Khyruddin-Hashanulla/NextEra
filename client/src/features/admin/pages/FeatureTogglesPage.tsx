@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/providers/ToastProvider';
 import { Loader2, RotateCcw, Settings2 } from 'lucide-react';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
 import type { FeatureToggle } from '@/types/admin';
 
 const categoryColors: Record<string, string> = {
@@ -24,7 +25,7 @@ export function FeatureTogglesPage() {
 
   const { data: featuresRes, isLoading } = useQuery({
     queryKey: ['admin', 'features'],
-    queryFn: () => adminApi.getFeatures().then(r => r.data),
+    queryFn: ({ signal }) => adminApi.getFeatures(signal).then(r => r.data),
   });
 
   const updateMutation = useMutation({
@@ -53,7 +54,7 @@ export function FeatureTogglesPage() {
   }, {}) || {};
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <TableSkeleton rows={8} columns={4} />;
   }
 
   return (

@@ -7,10 +7,37 @@ jest.mock('../models/section.model');
 jest.mock('../models/lecture.model');
 jest.mock('../models/user.model');
 
+jest.mock('../services/subscriptionPermission.service', () => ({
+  subscriptionPermissionService: {
+    getInstructorPlanInfo: jest.fn(),
+    requirePaidCoursePermission: jest.fn().mockResolvedValue(undefined),
+    requirePublishPermission: jest.fn().mockResolvedValue(undefined),
+  },
+}));
+
+import { subscriptionPermissionService } from '../services/subscriptionPermission.service';
+
 const mockModels = {
   Course: jest.requireMock('../models/course.model').Course,
   Section: jest.requireMock('../models/section.model').Section,
   Lecture: jest.requireMock('../models/lecture.model').Lecture,
+};
+
+const ACTIVE_PRO_PLAN = {
+  status: 'active',
+  planName: 'Pro',
+  features: {
+    freeCoursesLimit: 10,
+    unlimitedCourses: true,
+    storageLimitMB: 5000,
+    advancedAnalytics: true,
+    coupons: true,
+    liveClasses: true,
+    featuredInstructor: false,
+    prioritySupport: true,
+    unlimitedStorage: false,
+    premiumMarketing: false,
+  },
 };
 
 const OWNER = new mongoose.Types.ObjectId().toString();
@@ -48,6 +75,7 @@ beforeEach(() => {
     lean: jest.fn().mockResolvedValue(val),
   });
   mockModels.Course.findByIdAndUpdate.mockReturnValue(chainResult(makeCourse()));
+  (subscriptionPermissionService.getInstructorPlanInfo as jest.Mock).mockResolvedValue(ACTIVE_PRO_PLAN);
 });
 
 describe('Course State Machine', () => {
@@ -368,6 +396,7 @@ describe('Course State Machine', () => {
       });
       const mockUpdate = jest.fn().mockReturnValue(chainResult(makeCourse({ status: 'draft' })));
       mockModels.Course.findByIdAndUpdate = mockUpdate;
+      mockModels.Course.findById.mockReturnValue(chainResult(makeCourse({ status: 'draft' })));
 
       const { courseService } = await import('../services/course.service');
       await courseService.update(COURSE_ID, { title: 'New Title', status: 'published', isApproved: true });

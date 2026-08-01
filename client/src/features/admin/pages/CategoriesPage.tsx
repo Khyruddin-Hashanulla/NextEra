@@ -29,7 +29,7 @@ export function CategoriesPage() {
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['admin', 'categories'],
-    queryFn: () => adminApi.listCategories().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.listCategories(signal).then((r) => r.data.data),
   });
 
   const createMutation = useMutation({

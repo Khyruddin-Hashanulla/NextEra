@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FIELD_SIZES } from '../utils/validation';
+import { FIELD_SIZES, paginationSchema } from '../utils/validation';
 
 export const createLiveClassSchema = z.object({
   body: z.object({
@@ -62,5 +62,26 @@ export const addRecordingSchema = z.object({
     duration: z.number().int().max(86400).optional(),
     format: z.string().max(FIELD_SIZES.NAME).optional(),
     thumbnailUrl: z.string().max(FIELD_SIZES.URL).optional(),
+  }),
+});
+
+export const syncRecordingSchema = z.object({
+  body: z.object({
+    liveClassId: z.string().min(1, 'Live class ID is required').max(FIELD_SIZES.URL),
+  }),
+});
+
+export const recordingParamsSchema = z.object({
+  params: z.object({
+    id: z.string().min(1, 'Recording ID is required').max(FIELD_SIZES.URL),
+  }),
+});
+
+export const recordingsQuerySchema = z.object({
+  query: paginationSchema.extend({
+    courseId: z.string().max(FIELD_SIZES.URL).optional(),
+    instructorId: z.string().max(FIELD_SIZES.URL).optional(),
+    status: z.string().max(FIELD_SIZES.NAME).optional(),
+    search: z.string().max(FIELD_SIZES.TITLE).optional(),
   }),
 });

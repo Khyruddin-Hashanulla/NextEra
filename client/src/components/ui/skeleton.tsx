@@ -4,6 +4,7 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
   return (
     <div
       className={cn('animate-pulse rounded-lg bg-muted', className)}
+      aria-hidden="true"
       {...props}
     />
   );
@@ -11,7 +12,7 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
 
 export function SkeletonCard({ className }: { className?: string }) {
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-4', className)} aria-hidden="true">
       <Skeleton className="aspect-video w-full rounded-lg" />
       <div className="space-y-2">
         <Skeleton className="h-5 w-3/4" />
@@ -27,7 +28,7 @@ export function SkeletonCard({ className }: { className?: string }) {
 
 export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; columns?: number }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" aria-hidden="true">
       <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
         {Array.from({ length: columns }).map((_, i) => (
           <Skeleton key={i} className="h-4 w-full" />
@@ -46,7 +47,7 @@ export function SkeletonTable({ rows = 5, columns = 4 }: { rows?: number; column
 
 export function SkeletonList({ items = 5, height = 80 }: { items?: number; height?: number }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" aria-hidden="true">
       {Array.from({ length: items }).map((_, i) => (
         <Skeleton key={i} className="rounded-lg" style={{ height }} />
       ))}
@@ -56,7 +57,7 @@ export function SkeletonList({ items = 5, height = 80 }: { items?: number; heigh
 
 export function SkeletonText({ lines = 3, className }: { lines?: number; className?: string }) {
   return (
-    <div className={cn('space-y-2', className)}>
+    <div className={cn('space-y-2', className)} aria-hidden="true">
       {Array.from({ length: lines }).map((_, i) => (
         <Skeleton key={i} className="h-4 w-full" style={{ width: i === lines - 1 ? '60%' : '100%' }} />
       ))}

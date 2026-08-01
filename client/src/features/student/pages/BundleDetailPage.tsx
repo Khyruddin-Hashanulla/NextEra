@@ -5,31 +5,46 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, Clock, BookOpen, Star, User, ArrowLeft, Zap } from 'lucide-react';
+import { CourseDetailSkeleton } from '@/components/skeletons/CourseDetailSkeleton';
+import { ResourceNotFound } from '@/components/common/ResourceNotFound';
+import { ErrorState } from '@/components/common/ErrorState';
+import { categorizeError } from '@/lib/error-utils';
+import { Clock, BookOpen, Star, User, ArrowLeft, Zap } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 export function BundleDetailPage() {
   const { id } = useParams<{ id: string }>();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['bundle', id],
     queryFn: () => studentApi.getBundleById(id!).then((r) => r.data.data),
     enabled: !!id,
   });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <CourseDetailSkeleton />;
   }
 
-  if (!data) {
+  if (error || !data) {
+    if (!data && (!error || categorizeError(error) === 'not-found')) {
+      return <ResourceNotFound resourceType="bundle" />;
+    }
+    const category = categorizeError(error);
+    if (category === 'network') {
+      return (
+        <ErrorState
+          title="Connection Error"
+          message="Unable to connect to the server. Please check your internet connection and try again."
+          onRetry={() => window.location.reload()}
+        />
+      );
+    }
     return (
-      <div className="py-20 text-center">
-        <p className="text-muted-foreground">Bundle not found.</p>
-        <Link to="/courses" className="mt-4 inline-block text-primary hover:underline">Back to courses</Link>
-      </div>
+      <ErrorState
+        title="Bundle Not Found"
+        message="This bundle doesn't exist or has been removed."
+        onRetry={() => window.location.reload()}
+      />
     );
   }
 
@@ -68,7 +83,7 @@ export function BundleDetailPage() {
                 <Link key={course._id} to={`/courses/${course._id}`} className="flex items-start gap-4 rounded-lg border p-4 transition-colors hover:bg-accent">
                   <div className="h-16 w-24 flex-shrink-0 overflow-hidden rounded-md bg-muted">
                     {course.thumbnail?.url ? (
-                      <img src={course.thumbnail.url} alt={course.title} className="h-full w-full object-cover" />
+                      <OptimizedImage src={course.thumbnail.url} alt={course.title} placeholderType="course" className="object-cover" />
                     ) : (
                       <div className="flex h-full items-center justify-center text-muted-foreground"><BookOpen className="h-6 w-6" /></div>
                     )}
@@ -104,7 +119,7 @@ export function BundleDetailPage() {
             <CardContent className="p-6 space-y-4">
               {bundle.thumbnail?.url && (
                 <div className="overflow-hidden rounded-lg">
-                  <img src={bundle.thumbnail.url} alt={bundle.title} className="w-full object-cover" />
+                  <OptimizedImage src={bundle.thumbnail.url} alt={bundle.title} placeholderType="course" className="object-cover w-full" />
                 </div>
               )}
 

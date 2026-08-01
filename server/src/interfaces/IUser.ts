@@ -32,6 +32,8 @@ export interface IUser extends Document {
   tokenVersion: number;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
+  referredBy?: mongoose.Types.ObjectId;
+  referredAt?: Date;
   instructorProfile?: {
     qualification: string;
     experience: string;

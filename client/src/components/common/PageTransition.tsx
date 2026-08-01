@@ -1,17 +1,23 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactNode } from 'react';
 
+const prefersReducedMotion = typeof window !== 'undefined'
+  ? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  : false;
+
 const pageVariants = {
-  initial: { opacity: 0, y: 20 },
+  initial: { opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : 20 },
   animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -20 },
+  exit: { opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : -20 },
 };
 
-const pageTransition = {
-  type: 'tween' as const,
-  ease: 'anticipate' as const,
-  duration: 0.3,
-};
+const pageTransition = prefersReducedMotion
+  ? { duration: 0 }
+  : {
+      type: 'tween' as const,
+      ease: 'anticipate' as const,
+      duration: 0.3,
+    };
 
 export function PageTransition({ children }: { children: ReactNode }) {
   return (
@@ -32,6 +38,8 @@ export function PageTransition({ children }: { children: ReactNode }) {
 }
 
 export function StaggerContainer({ children, delay = 0.1 }: { children: ReactNode; delay?: number }) {
+  if (prefersReducedMotion) return <>{children}</>;
+
   return (
     <motion.div
       initial="hidden"
@@ -50,6 +58,8 @@ export function StaggerContainer({ children, delay = 0.1 }: { children: ReactNod
 }
 
 export function StaggerItem({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
+  if (prefersReducedMotion) return <>{children}</>;
+
   return (
     <motion.div
       variants={{

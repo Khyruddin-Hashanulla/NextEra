@@ -37,3 +37,14 @@ export const uploadDocument = asyncHandler(async (req: Request, res: Response) =
   const data = await uploadService.uploadDocument(file);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Document uploaded', data));
 });
+
+export const uploadAssignment = asyncHandler(async (req: Request, res: Response) => {
+  const file = req.file;
+  if (!file) {
+    res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.success('No file provided', null));
+    return;
+  }
+  file.originalname = sanitizeFilename(file.originalname);
+  const data = await uploadService.uploadAssignmentFile(file);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Assignment file uploaded', data));
+});

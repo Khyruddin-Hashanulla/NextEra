@@ -18,6 +18,10 @@ import {
 } from '@/components/ui/select';
 import { Section, Container } from '@/components/common/Section';
 import { PageTransition } from '@/components/common/PageTransition';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { breadcrumbListSchema } from '@/lib/schema';
 import {
   Search,
   Calendar,
@@ -44,18 +48,18 @@ export function BlogListPage() {
 
   const { data: featuredData, isLoading: featuredLoading } = useQuery({
     queryKey: ['blog-featured'],
-    queryFn: () => blogApi.getFeatured(3).then((r) => r.data.blogs),
+    queryFn: ({ signal }) => blogApi.getFeatured(3, signal).then((r) => r.data.blogs),
   });
 
   const { data: blogsData, isLoading: blogsLoading, error, refetch } = useQuery({
     queryKey: ['blog-list', page, search, category, sort],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       blogApi.listPublished({
         page,
         limit: 6,
         search: search || undefined,
         category: category === 'All' ? undefined : category,
-      } as Parameters<typeof blogApi.listPublished>[0] & Record<string, unknown>).then((r) => r.data),
+      } as Parameters<typeof blogApi.listPublished>[0] & Record<string, unknown>, signal).then((r) => r.data),
     placeholderData: (prev) => prev,
   });
 
@@ -94,6 +98,13 @@ export function BlogListPage() {
 
   return (
     <PageTransition>
+      <SEO title="Blog" description="Insights, tutorials, and stories from the NextEra learning community." canonical="/blog" />
+      <StructuredData schemas={[
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Blog', path: '/blog' },
+        ]),
+      ]} />
       <div className="min-h-screen">
         <Section size="sm" className="bg-gradient-to-br from-primary/10 via-background to-background">
           <Container>
@@ -126,10 +137,11 @@ export function BlogListPage() {
                     <Link to={`/blog/${bigFeatured.slug}`}>
                       <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full">
                         <div className="h-64 overflow-hidden">
-                          <img
+                          <OptimizedImage
                             src={bigFeatured.featuredImage?.url || '/placeholder-blog.jpg'}
-                            alt={bigFeatured.title}
-                            className="w-full h-full object-cover"
+                            alt={`${bigFeatured.title} featured image`}
+                            placeholderType="blog"
+                            className="object-cover"
                           />
                         </div>
                         <div className="p-5">
@@ -162,10 +174,11 @@ export function BlogListPage() {
                       <Link key={blog._id} to={`/blog/${blog.slug}`}>
                         <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex-1">
                           <div className="h-40 overflow-hidden">
-                            <img
+                            <OptimizedImage
                               src={blog.featuredImage?.url || '/placeholder-blog.jpg'}
-                              alt={blog.title}
-                              className="w-full h-full object-cover"
+                              alt={`${blog.title} featured image`}
+                              placeholderType="blog"
+                              className="object-cover"
                             />
                           </div>
                           <div className="p-5">
@@ -307,10 +320,11 @@ export function BlogListPage() {
                             <Link to={`/blog/${blog.slug}`}>
                               <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full">
                                 <div className="h-48 overflow-hidden">
-                                  <img
+                                  <OptimizedImage
                                     src={blog.featuredImage?.url || '/placeholder-blog.jpg'}
-                                    alt={blog.title}
-                                    className="w-full h-full object-cover"
+                                    alt={`${blog.title} featured image`}
+                                    placeholderType="blog"
+                                    className="object-cover"
                                   />
                                 </div>
                                 <div className="p-5">
@@ -333,10 +347,12 @@ export function BlogListPage() {
                                   </p>
                                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
                                     {blog.author?.avatar?.url ? (
-                                      <img
+                                      <OptimizedImage
                                         src={blog.author.avatar.url}
-                                        alt={blog.author.name}
-                                        className="h-6 w-6 rounded-full object-cover"
+                                        alt={`Profile photo of ${blog.author.name}`}
+                                        placeholderType="avatar"
+                                        className="rounded-full object-cover"
+                                        containerClassName="h-6 w-6"
                                       />
                                     ) : (
                                       <div className="h-6 w-6 rounded-full bg-muted" />

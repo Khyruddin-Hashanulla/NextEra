@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { useState } from 'react';
 
@@ -29,7 +31,7 @@ export function PayoutsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-payouts', page, statusFilter],
-    queryFn: () => adminApi.getAllPayouts({ page, limit: 15, status: statusFilter || undefined }).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getAllPayouts({ page, limit: 15, status: statusFilter || undefined }, signal).then((r) => r.data.data),
    });
 
   const processMutation = useMutation({
@@ -50,11 +52,7 @@ export function PayoutsPage() {
    });
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <TableSkeleton rows={8} columns={5} />;
   }
 
   const summary = data?.summary;
@@ -112,7 +110,7 @@ export function PayoutsPage() {
                       <td className="py-3">
                         <div className="flex items-center gap-2">
                           {payout.instructor?.avatar?.url ? (
-                            <img src={payout.instructor.avatar.url} alt="" className="h-6 w-6 rounded-full" />
+                            <OptimizedImage src={payout.instructor.avatar.url} alt={payout.instructor?.name || 'Instructor'} placeholderType="avatar" className="rounded-full" containerClassName="h-6 w-6" />
                           ) : (
                             <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                               {payout.instructor?.name?.charAt(0) || '?'}

@@ -12,6 +12,7 @@ import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Plus, Edit3, Trash2, Loader2, ExternalLink } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 
 export function CMSPagesPage() {
   const { addToast } = useToast();
@@ -23,7 +24,7 @@ export function CMSPagesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-cms-pages'],
-    queryFn: () => adminApi.listCmsPages(),
+    queryFn: ({ signal }) => adminApi.listCmsPages(signal),
    });
 
   const createMutation = useMutation({
@@ -54,7 +55,7 @@ export function CMSPagesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <CardGridSkeleton cards={6} />
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {pages.map((page: CmsPage) => (

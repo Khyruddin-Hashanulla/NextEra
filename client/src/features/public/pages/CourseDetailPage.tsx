@@ -10,17 +10,23 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { Star, Users, Clock, BookOpen, CheckCircle2, Share2, Heart, Bookmark, AlertCircle, PlayCircle, ArrowRight, Award } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
+import { ResourceNotFound } from '@/components/common/ResourceNotFound';
 import { formatCurrency, formatDate, formatNumber, getInitials } from '@/lib/utils';
+import { categorizeError } from '@/lib/error-utils';
 import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { CourseShowcase } from '../components/CourseShowcase';
+import { SEO } from '@/components/seo/SEO';
+import { StructuredData } from '@/components/seo/StructuredData';
+import { courseSchema, breadcrumbListSchema } from '@/lib/schema';
 
 interface CourseDetail {
   course: {
@@ -76,7 +82,7 @@ export function CourseDetailPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['course-detail', slug],
-    queryFn: () => studentApi.getCourseDetail(slug!).then(r => r.data.data),
+    queryFn: ({ signal }) => studentApi.getCourseDetail(slug!, signal).then(r => r.data.data),
     enabled: !!slug,
     retry: 1,
   });
@@ -120,6 +126,19 @@ export function CourseDetailPage() {
   }
 
   if (error || !course) {
+    if (!course && (!error || categorizeError(error) === 'not-found')) {
+      return <ResourceNotFound resourceType="course" />;
+    }
+    const category = categorizeError(error);
+    if (category === 'network') {
+      return (
+        <ErrorState
+          title="Connection Error"
+          message="Unable to connect to the server. Please check your internet connection and try again."
+          onRetry={() => window.location.reload()}
+        />
+      );
+    }
     return (
       <ErrorState
         title="Course Not Found"
@@ -132,8 +151,45 @@ export function CourseDetailPage() {
   const totalSections = curriculum.length;
   const totalLectures = curriculum.reduce((acc, section) => acc + (section.lectures?.length || 0), 0);
 
+  const seoTitle = course?.meta?.seoTitle || course?.title || 'Course';
+  const seoDescription = course?.meta?.seoDescription || course?.shortDescription || '';
+  const seoKeywords = course?.meta?.seoKeywords?.join(', ') || '';
+
   return (
     <div className="min-h-screen">
+      <SEO
+        title={seoTitle}
+        description={seoDescription}
+        keywords={seoKeywords}
+        image={course?.thumbnail?.url || ''}
+        url={`/courses/${slug}`}
+        canonical={`/courses/${slug}`}
+        type="article"
+        author={course?.instructor?.name}
+      />
+      <StructuredData schemas={[
+        courseSchema({
+          title: course.title,
+          description: course.shortDescription || course.description,
+          slug: course.slug,
+          thumbnail: course.thumbnail,
+          instructor: course.instructor,
+          category: course.category,
+          level: course.level,
+          price: course.price,
+          averageRating: course.averageRating,
+          totalReviews: course.totalReviews,
+          language: course.language,
+          whatYouWillLearn: course.whatYouWillLearn,
+          prerequisites: course.prerequisites,
+          updatedAt: course.updatedAt,
+        }),
+        breadcrumbListSchema([
+          { name: 'Home', path: '/' },
+          { name: 'Courses', path: '/courses' },
+          { name: course.title, path: `/courses/${course.slug}` },
+        ]),
+      ]} />
       {/* Hero Section */}
       <Section size="sm" className="relative overflow-hidden">
         <Container>
@@ -145,10 +201,13 @@ export function CourseDetailPage() {
             >
               <div className="aspect-video rounded-2xl overflow-hidden bg-muted relative">
                 {course.thumbnail?.url && (
-                  <img 
+                  <OptimizedImage 
                     src={course.thumbnail.url} 
                     alt={course.title} 
-                    className="h-full w-full object-cover" 
+                    placeholderType="course"
+                    className="object-cover" 
+                    lazy={false}
+                    fetchPriority="high"
                   />
                 )}
                 {course.introVideo?.url && (
@@ -186,7 +245,7 @@ export function CourseDetailPage() {
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={course.instructor?.avatar?.url} />
+                    <AvatarImage src={course.instructor?.avatar?.url} alt={course.instructor?.name || ''} />
                     <AvatarFallback>{getInitials(course.instructor?.name)}</AvatarFallback>
                   </Avatar>
                   <span>{course.instructor?.name}</span>
@@ -472,7 +531,7 @@ export function CourseDetailPage() {
                 <div className="lg:col-span-2 space-y-8">
                   <div className="flex items-start gap-6">
                     <Avatar className="h-24 w-24">
-                      <AvatarImage src={course.instructor?.avatar?.url} />
+                      <AvatarImage src={course.instructor?.avatar?.url} alt={course.instructor?.name || ''} />
                       <AvatarFallback className="text-3xl font-bold">{getInitials(course.instructor?.name)}</AvatarFallback>
                     </Avatar>
                     <div>

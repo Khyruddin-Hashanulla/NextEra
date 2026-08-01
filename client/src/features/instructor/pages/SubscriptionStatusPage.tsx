@@ -2,16 +2,17 @@ import { useQuery } from '@tanstack/react-query';
 import { instructorApi } from '@/api/endpoints/instructor';
 import { AdminHeader } from '@/features/admin/components/AdminHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Crown, Calendar, AlertCircle } from 'lucide-react';
+import { SettingsSkeleton } from '@/components/skeletons/FormSkeleton';
+import { Crown, Calendar, AlertCircle } from 'lucide-react';
 
 export function SubscriptionStatusPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['instructor', 'subscription'],
-    queryFn: () => instructorApi.getSubscriptionStatus().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getSubscriptionStatus(signal).then((r) => r.data.data),
   });
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <SettingsSkeleton />;
   }
 
   const isActive = data?.subscriptionStatus === 'active';

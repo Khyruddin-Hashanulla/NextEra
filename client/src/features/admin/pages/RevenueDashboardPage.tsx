@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DollarSign, TrendingUp, CreditCard, Wallet, Crown, Star } from 'lucide-react';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,7 +34,7 @@ const secondaryCards = [
 export function RevenueDashboardPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-revenue-dashboard'],
-    queryFn: () => adminApi.getRevenueDashboard().then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getRevenueDashboard(signal).then((r) => r.data.data),
   });
 
   if (isLoading) {
@@ -175,7 +176,7 @@ export function RevenueDashboardPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {inst.instructor?.avatar?.url ? (
-                              <img src={inst.instructor.avatar.url} alt="" className="h-7 w-7 rounded-full object-cover" />
+                              <OptimizedImage src={inst.instructor.avatar.url} alt={inst.instructor?.name || 'Instructor'} placeholderType="avatar" className="rounded-full object-cover" containerClassName="h-7 w-7" />
                             ) : (
                               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                                 {inst.instructor?.name?.charAt(0)}

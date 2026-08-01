@@ -10,6 +10,11 @@ import { Coupon } from '../models/coupon.model';
 import { ApiError } from '../utils/ApiError';
 import { ROLES } from '../constants/roles';
 import { escapeRegex } from '../utils/escapeRegex';
+import { env } from '../config/env';
+import { generateCertificateId } from '../utils/certificateIdGenerator';
+import { generateCertificateSignature, generateQrCodeDataUrl, getVerificationUrl } from '../utils/certificate';
+import { generateCertificatePdf, getCertificateUrl } from '../utils/pdfGenerator';
+import { subscriptionPermissionService } from './subscriptionPermission.service';
 
 export class InstructorService {
   async apply(
@@ -121,6 +126,7 @@ export class InstructorService {
   }
 
   async getAnalytics(instructorId: string) {
+    await subscriptionPermissionService.requireAdvancedAnalyticsPermission(instructorId);
     const courseIds = (await Course.find({ instructor: instructorId }).select('_id').lean()).map((c: any) => c._id);
 
     const [enrollmentTrend, revenueTrend, studentGrowth, topCourses] = await Promise.all([
@@ -231,6 +237,7 @@ export class InstructorService {
       isActive?: boolean;
     }
   ) {
+    await subscriptionPermissionService.requireCouponPermission(instructorId);
     return Coupon.create({ ...data, createdBy: instructorId });
   }
 
@@ -409,9 +416,11 @@ export class InstructorService {
 
   async issueCertificate(
     instructorId: string,
-    data: { userId: string; courseId: string; enrollmentId: string; qrCodeUrl?: string; certificateUrl?: string }
+    data: { userId: string; courseId: string; enrollmentId: string }
   ) {
-    const course = await Course.findOne({ _id: data.courseId, instructor: instructorId });
+    const course = await Course.findOne({ _id: data.courseId, instructor: instructorId })
+      .populate('category', 'name')
+      .lean();
     if (!course) throw ApiError.notFound('Course not found or not owned by you');
 
     const enrollment = await Enrollment.findOne({ _id: data.enrollmentId, user: data.userId, course: data.courseId });
@@ -420,7 +429,43 @@ export class InstructorService {
     const existing = await Certificate.findOne({ enrollment: data.enrollmentId });
     if (existing) throw ApiError.conflict('Certificate already issued for this enrollment');
 
-    const certificateId = Date.now().toString(36) + Math.random().toString(36).substring(2, 11).toUpperCase();
+    const [user, instructor] = await Promise.all([
+      User.findById(data.userId).lean(),
+      User.findById(instructorId).select('name').lean(),
+    ]);
+    if (!user) throw ApiError.notFound('User not found');
+    const instructorName = instructor?.name || 'Instructor';
+    const categoryName = (course as any).category?.name || '';
+    const courseLevel = course.level || '';
+    const courseDuration = course.totalDuration || 0;
+
+    const certificateId = await generateCertificateId(categoryName);
+    const issuedAt = new Date();
+    const issuedAtStr = issuedAt.toISOString();
+
+    const digitalSignature = generateCertificateSignature({
+      certificateId,
+      userId: data.userId,
+      courseId: data.courseId,
+      issuedAt: issuedAtStr,
+      version: 1,
+    });
+
+    const verifyUrl = getVerificationUrl(certificateId);
+    const qrCodeUrl = await generateQrCodeDataUrl(verifyUrl);
+
+    const pdfPath = await generateCertificatePdf({
+      studentName: user.name,
+      courseTitle: course.title,
+      instructorName,
+      certificateId,
+      issuedAt,
+      qrCodeDataUrl: qrCodeUrl,
+    });
+
+    const pdfFilename = `certificate-${certificateId}.pdf`;
+    const pdfUrl = getCertificateUrl(pdfFilename);
+    const certificateUrl = `${env.clientUrl}/certificate/${certificateId}`;
 
     try {
       return await Certificate.create({
@@ -428,8 +473,19 @@ export class InstructorService {
         course: data.courseId,
         enrollment: data.enrollmentId,
         certificateId,
-        qrCodeUrl: data.qrCodeUrl || '',
-        certificateUrl: data.certificateUrl || '',
+        qrCodeUrl,
+        certificateUrl,
+        pdfUrl,
+        digitalSignature,
+        status: 'active',
+        version: 1,
+        metadata: {
+          categoryName,
+          courseDuration,
+          courseLevel,
+          instructorName,
+        },
+        issuedAt,
       });
     } catch (error: any) {
       if (error?.code === 11000) {

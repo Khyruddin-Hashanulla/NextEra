@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { uploadImage, uploadVideo, uploadDocument } from '../controllers/upload.controller';
+import { uploadImage, uploadVideo, uploadDocument, uploadAssignment } from '../controllers/upload.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { ROLES } from '../constants/roles';
@@ -9,9 +9,9 @@ import { handleMulterError } from '../middlewares/upload.middleware';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize(ROLES.INSTRUCTOR, ROLES.ADMIN));
 
-router.post('/image', (req, res, next) => {
+// Instructor/Admin only upload endpoints
+router.post('/image', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), (req, res, next) => {
   const upload = createUploadMiddleware(FileCategory.IMAGE);
   upload.single('file')(req, res, (err) => {
     if (err) {
@@ -22,7 +22,7 @@ router.post('/image', (req, res, next) => {
   });
 }, uploadImage);
 
-router.post('/video', (req, res, next) => {
+router.post('/video', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), (req, res, next) => {
   const upload = createUploadMiddleware(FileCategory.VIDEO);
   upload.single('file')(req, res, (err) => {
     if (err) {
@@ -33,7 +33,7 @@ router.post('/video', (req, res, next) => {
   });
 }, uploadVideo);
 
-router.post('/document', (req, res, next) => {
+router.post('/document', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), (req, res, next) => {
   const upload = createUploadMiddleware(FileCategory.DOCUMENT);
   upload.single('file')(req, res, (err) => {
     if (err) {
@@ -43,5 +43,17 @@ router.post('/document', (req, res, next) => {
     next();
   });
 }, uploadDocument);
+
+// Assignment file upload - any authenticated user (students + instructors + admins)
+router.post('/assignment', (req, res, next) => {
+  const upload = createUploadMiddleware(FileCategory.ASSIGNMENT_FILE);
+  upload.single('file')(req, res, (err) => {
+    if (err) {
+      res.status(400).json({ success: false, message: handleMulterError(err), data: null });
+      return;
+    }
+    next();
+  });
+}, uploadAssignment);
 
 export default router;

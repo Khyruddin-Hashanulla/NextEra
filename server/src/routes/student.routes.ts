@@ -7,9 +7,8 @@ import {
   toggleBookmark, listBookmarks,
   createDiscussion, listDiscussions, replyToDiscussion,
   createReview, updateReview, listReviews,
-  submitQuiz, getQuizAttempts,
-  submitAssignment, getAssignments,
-  generateCertificate, getCertificates, verifyCertificate,
+  submitAssignment, getAssignments, getAssignmentsOverview, getAssignmentDetail,
+  generateCertificate, getCertificates, verifyCertificate, downloadCertificate,
   toggleWishlist, listWishlist,
   listMyPayments, getPaymentById, generateInvoice,
   getLectureResources,
@@ -17,8 +16,12 @@ import {
   listBundles, getBundleById, initiateBundlePayment, verifyBundlePayment,
   listSubscriptionPlans, getMySubscription, initiateSubscriptionPayment, verifySubscriptionPayment,
 } from '../controllers/student.controller';
+import {
+  submitQuiz, getStudentQuizAttempts, startQuiz, getAttemptDetails, resumeQuiz, autoSubmitQuiz,
+} from '../controllers/quiz.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validate.middleware';
+import { audit, auditMiddleware } from '../middlewares/audit.middleware';
 import {
   verifyNoteOwnership,
   verifyReviewOwnership,
@@ -29,6 +32,11 @@ import {
   createDiscussionSchema, replyToDiscussionSchema, createReviewSchema,
   submitQuizSchema, submitAssignmentSchema,
 } from '../validators/student.validator';
+import { assignmentsOverviewQuerySchema } from '../validators/assignment.validator';
+import {
+  startQuizSchema,
+  resumeQuizSchema,
+} from '../validators/quiz.validator';
 import { z } from 'zod';
 
 const router = Router();
@@ -74,17 +82,37 @@ router.post('/reviews', validate(createReviewSchema), createReview);
 router.put('/reviews/:id', verifyReviewOwnership, validate(createReviewSchema), updateReview);
 router.get('/reviews/:courseId', listReviews);
 
-// Quiz
-router.post('/quiz', validate(submitQuizSchema), submitQuiz);
-router.get('/quiz/:lectureId/attempts', getQuizAttempts);
-
 // Assignment
-router.post('/assignments', validate(submitAssignmentSchema), submitAssignment);
+router.post('/assignments',
+  audit({
+    action: (req, body) => {
+      const version = body?.data?.data?.submissionVersion ?? body?.data?.submissionVersion ?? 1;
+      return version > 1 ? 'ASSIGNMENT_UPDATED' : 'ASSIGNMENT_SUBMITTED';
+    },
+    resourceType: 'AssignmentSubmission',
+    resourceName: (req) => req.body.lectureId,
+    getNewData: (_req, result) => result?.data?.data || result?.data || undefined,
+  }),
+  auditMiddleware,
+  validate(submitAssignmentSchema),
+  submitAssignment
+);
 router.get('/assignments', getAssignments);
+router.get('/assignments/overview', validate(assignmentsOverviewQuerySchema, 'query'), getAssignmentsOverview);
+router.get('/assignments/:lectureId', getAssignmentDetail);
+
+// Quiz
+router.post('/quiz/start', validate(startQuizSchema), startQuiz);
+router.post('/quiz', validate(submitQuizSchema), submitQuiz);
+router.post('/quiz/resume', validate(resumeQuizSchema), resumeQuiz);
+router.get('/quiz/:lectureId/attempts', getStudentQuizAttempts);
+router.get('/quiz/:attemptId/details', getAttemptDetails);
+router.post('/quiz/auto-submit', validate(submitQuizSchema), autoSubmitQuiz);
 
 // Certificates
 router.post('/certificates/:courseId', generateCertificate);
 router.get('/certificates', getCertificates);
+router.get('/certificates/download/:certificateId', downloadCertificate);
 
 // Wishlist
 router.post('/wishlist', validate(z.object({ body: z.object({ courseId: z.string().min(1) }) })), toggleWishlist);

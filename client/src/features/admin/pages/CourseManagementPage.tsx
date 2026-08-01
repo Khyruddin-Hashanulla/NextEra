@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { motion } from 'framer-motion';
 import { Eye, CheckCircle, XCircle, Search, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -37,7 +38,7 @@ export function CourseManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-courses', page, search, statusFilter],
-    queryFn: () => adminApi.listCourses({ page, limit: 10, search, status: statusFilter || undefined }),
+    queryFn: ({ signal }) => adminApi.listCourses({ page, limit: 10, search, status: statusFilter || undefined }, signal),
   });
 
   const approveMutation = useMutation({
@@ -114,7 +115,7 @@ export function CourseManagementPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="h-10 w-16 shrink-0 overflow-hidden rounded bg-muted">
-                              {c.thumbnail?.url && <img src={c.thumbnail.url} alt="" className="h-full w-full object-cover" />}
+                              {c.thumbnail?.url && <OptimizedImage src={c.thumbnail.url} alt={c.title || 'Course thumbnail'} placeholderType="course" className="object-cover" />}
                             </div>
                             <div className="min-w-0">
                               <p className="max-w-[200px] truncate font-medium">{c.title}</p>

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, Crown, Calendar, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { SettingsSkeleton } from '@/components/skeletons/FormSkeleton';
+import { Crown, Calendar, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 export function InstructorSubscriptionPage() {
   const { addToast } = useToast();
@@ -13,12 +14,12 @@ export function InstructorSubscriptionPage() {
 
   const { data: subscription, isLoading } = useQuery({
     queryKey: ['instructor-my-subscription'],
-    queryFn: () => instructorApi.getMyInstructorSubscription().then((r) => r.data.data),
+    queryFn: ({ signal }) => instructorApi.getMyInstructorSubscription(signal).then((r) => r.data.data),
   });
 
   const { data: plansData } = useQuery({
     queryKey: ['instructor-plans-list'],
-    queryFn: () => instructorApi.getMyInstructorSubscription().then(() => {
+    queryFn: ({ signal }) => instructorApi.getMyInstructorSubscription(signal).then(() => {
       // Plans info comes from admin, but instructors need a way to see available plans
       return null;
     }),
@@ -35,7 +36,7 @@ export function InstructorSubscriptionPage() {
   });
 
   if (isLoading) {
-    return <div className="flex min-h-[60vh] items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+    return <SettingsSkeleton />;
   }
 
   if (!subscription) {

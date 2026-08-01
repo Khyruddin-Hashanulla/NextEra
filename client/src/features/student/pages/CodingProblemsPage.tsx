@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Code2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
+import { Search, Code2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { Difficulty } from '@/types/coding';
 
@@ -58,7 +59,7 @@ export function CodingProblemsPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        <TableSkeleton />
       ) : problems.length === 0 ? (
         <div className="rounded-lg border p-12 text-center text-muted-foreground">
           <Code2 className="mx-auto h-8 w-8 mb-2" />
