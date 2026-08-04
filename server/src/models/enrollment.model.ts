@@ -39,5 +39,6 @@ const enrollmentSchema = new Schema<IEnrollment>(
 );
 
 enrollmentSchema.index({ user: 1, course: 1 }, { unique: true });
+enrollmentSchema.index({ course: 1, user: 1 });
 
 export const Enrollment = mongoose.model<IEnrollment>('Enrollment', enrollmentSchema);

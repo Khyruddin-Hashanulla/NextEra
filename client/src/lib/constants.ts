@@ -116,6 +116,17 @@ export const ROLES = {
   ADMIN: 'admin',
 } as const;
 
+export function getDashboardRoute(role?: string): string {
+  switch (role) {
+    case ROLES.ADMIN:
+      return ROUTES.ADMIN_DASHBOARD;
+    case ROLES.INSTRUCTOR:
+      return ROUTES.INSTRUCTOR_DASHBOARD;
+    default:
+      return ROUTES.STUDENT_DASHBOARD;
+  }
+}
+
 export const COURSE_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 export const COURSE_STATUS = ['draft', 'published', 'archived'] as const;
 

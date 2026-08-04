@@ -3,6 +3,8 @@ import { BlogComment } from '../models/blogComment.model';
 import { BlogBookmark } from '../models/blogBookmark.model';
 import { ApiError } from '../utils/ApiError';
 import { escapeRegex } from '../utils/escapeRegex';
+import { cacheService } from '../cache/cache.service';
+import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
 
 function calculateReadingTime(content: string): number {
   const wordsPerMinute = 200;
@@ -18,55 +20,75 @@ export const listPublishedBlogs = async (options: {
   search?: string;
   userId?: string;
 }): Promise<any> => {
-  const query: Record<string, any> = { status: 'published' };
-  if (options.category) query.categories = options.category;
-  if (options.tag) query.tags = options.tag;
-  if (options.search) {
-    const escaped = escapeRegex(options.search);
-    query.$or = [
-      { title: { $regex: escaped, $options: 'i' } },
-      { excerpt: { $regex: escaped, $options: 'i' } },
-      { content: { $regex: escaped, $options: 'i' } },
-    ];
-  }
+  // Search results are highly unique and user-specific; skip caching for them.
+  // Authenticated requests add per-user bookmark state, so only the anonymous
+  // response is safe to cache and share.
+  const cacheable = !options.search && !options.userId;
 
-  const total = await Blog.countDocuments(query);
-  const blogs = await Blog.find(query)
-    .populate('author', 'name avatar')
-    .select('-content')
-    .sort({ publishedAt: -1 })
-    .skip((options.page - 1) * options.limit)
-    .limit(options.limit)
-    .lean();
+  return cacheService.remember(
+    cacheKeys.blogList({ page: options.page, limit: options.limit, category: options.category, tag: options.tag }),
+    { ttl: CACHE_TTL.BLOG_LIST },
+    async () => {
+      const query: Record<string, any> = { status: 'published' };
+      if (options.category) query.categories = options.category;
+      if (options.tag) query.tags = options.tag;
+      if (options.search) {
+        const escaped = escapeRegex(options.search);
+        query.$or = [
+          { title: { $regex: escaped, $options: 'i' } },
+          { excerpt: { $regex: escaped, $options: 'i' } },
+          { content: { $regex: escaped, $options: 'i' } },
+        ];
+      }
 
-  let bookmarkedIds: string[] = [];
-  if (options.userId) {
-    const bookmarks = await BlogBookmark.find({ user: options.userId }).select('blog').lean();
-    bookmarkedIds = bookmarks.map(b => b.blog.toString());
-  }
+      const total = await Blog.countDocuments(query);
+      const blogs = await Blog.find(query)
+        .populate('author', 'name avatar')
+        .select('-content')
+        .sort({ publishedAt: -1 })
+        .skip((options.page - 1) * options.limit)
+        .limit(options.limit)
+        .lean();
 
-  const blogsWithMeta = blogs.map(blog => ({
-    ...blog,
-    isBookmarked: bookmarkedIds.includes(blog._id.toString()),
-  }));
+      let bookmarkedIds: string[] = [];
+      if (options.userId) {
+        const bookmarks = await BlogBookmark.find({ user: options.userId }).select('blog').lean();
+        bookmarkedIds = bookmarks.map(b => b.blog.toString());
+      }
 
-  return {
-    blogs: blogsWithMeta,
-    pagination: { page: options.page, limit: options.limit, total, pages: Math.ceil(total / options.limit) },
-  };
+      const blogsWithMeta = blogs.map(blog => ({
+        ...blog,
+        isBookmarked: bookmarkedIds.includes(blog._id.toString()),
+      }));
+
+      return {
+        blogs: blogsWithMeta,
+        pagination: { page: options.page, limit: options.limit, total, pages: Math.ceil(total / options.limit) },
+      };
+    },
+    cacheable
+  );
 };
 
 export const getFeaturedBlogs = async (limit = 6) => {
-  const blogs = await Blog.find({ status: 'published', isFeatured: true })
-    .populate('author', 'name avatar')
-    .select('-content')
-    .sort({ publishedAt: -1 })
-    .limit(limit)
-    .lean();
-  return blogs;
+  return cacheService.remember(
+    cacheKeys.blogFeatured(limit),
+    { ttl: CACHE_TTL.BLOG_FEATURED },
+    async () => {
+      const blogs = await Blog.find({ status: 'published', isFeatured: true })
+        .populate('author', 'name avatar')
+        .select('-content')
+        .sort({ publishedAt: -1 })
+        .limit(limit)
+        .lean();
+      return blogs;
+    }
+  );
 };
 
 export const getBlogBySlug = async (slug: string, userId?: string): Promise<any> => {
+  // NOT cached: every read increments readCount and bookmark state depends on the
+  // authenticated user. Caching would break read analytics and per-user data.
   const blog = await Blog.findOneAndUpdate(
     { slug, status: 'published' },
     { $inc: { readCount: 1 } },
@@ -100,39 +122,51 @@ export const getBlogBySlug = async (slug: string, userId?: string): Promise<any>
 };
 
 export const getBlogCategories = async () => {
-  const categories = await Blog.distinct('categories', { status: 'published' });
-  const result = await Promise.all(
-    categories.map(async (cat) => {
-      const count = await Blog.countDocuments({ status: 'published', categories: cat });
-      return { name: cat, count };
-    }),
+  return cacheService.remember(
+    cacheKeys.blogCategories(),
+    { ttl: CACHE_TTL.BLOG_CATEGORIES },
+    async () => {
+      const categories = await Blog.distinct('categories', { status: 'published' });
+      const result = await Promise.all(
+        categories.map(async (cat) => {
+          const count = await Blog.countDocuments({ status: 'published', categories: cat });
+          return { name: cat, count };
+        }),
+      );
+      return result.sort((a, b) => b.count - a.count);
+    }
   );
-  return result.sort((a, b) => b.count - a.count);
 };
 
 export const getBlogComments = async (blogId: string, page: number, limit: number): Promise<any> => {
-  const total = await BlogComment.countDocuments({ blog: blogId, isApproved: true, parent: null });
-  const comments = await BlogComment.find({ blog: blogId, isApproved: true, parent: null })
-    .populate('user', 'name avatar')
-    .sort({ createdAt: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .lean();
-
-  const commentsWithReplies = await Promise.all(
-    comments.map(async (comment) => {
-      const replies = await BlogComment.find({ parent: comment._id, isApproved: true })
+  return cacheService.remember(
+    cacheKeys.blogComments(blogId, page, limit),
+    { ttl: CACHE_TTL.BLOG_COMMENTS },
+    async () => {
+      const total = await BlogComment.countDocuments({ blog: blogId, isApproved: true, parent: null });
+      const comments = await BlogComment.find({ blog: blogId, isApproved: true, parent: null })
         .populate('user', 'name avatar')
-        .sort({ createdAt: 1 })
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
         .lean();
-      return { ...comment, replies };
-    }),
-  );
 
-  return {
-    comments: commentsWithReplies,
-    pagination: { page, limit, total, pages: Math.ceil(total / limit) },
-  };
+      const commentsWithReplies = await Promise.all(
+        comments.map(async (comment) => {
+          const replies = await BlogComment.find({ parent: comment._id, isApproved: true })
+            .populate('user', 'name avatar')
+            .sort({ createdAt: 1 })
+            .lean();
+          return { ...comment, replies };
+        }),
+      );
+
+      return {
+        comments: commentsWithReplies,
+        pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      };
+    }
+  );
 };
 
 export const createComment = async (blogId: string, userId: string, content: string, parentId?: string) => {

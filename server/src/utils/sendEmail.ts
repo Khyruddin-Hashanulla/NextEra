@@ -9,25 +9,50 @@ interface EmailOptions {
   html?: string;
 }
 
-export const sendEmail = async (options: EmailOptions): Promise<void> => {
-  try {
-    const mailOptions = {
-      from: `"NextEra LMS" <${env.emailFrom}>`,
-      to: options.to,
-      subject: options.subject,
-      text: options.text,
-      html: options.html,
-    };
+const buildFrom = (): string => {
+  if (env.emailFrom.includes('<') && env.emailFrom.includes('>')) {
+    return env.emailFrom;
+  }
+  return `"NextEra LMS" <${env.emailFrom}>`;
+};
 
-    await transporter.sendMail(mailOptions);
-    logger.info(`Email sent to ${options.to}`);
+export const sendEmail = async (options: EmailOptions): Promise<void> => {
+  const mailOptions = {
+    from: buildFrom(),
+    to: options.to,
+    subject: options.subject,
+    text: options.text,
+    html: options.html,
+  };
+
+  logger.info(`[Email] Sending to=${options.to} subject="${options.subject}" from=${env.emailFrom}`);
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    logger.info(
+      `[Email] Accepted to=${options.to} subject="${options.subject}" ` +
+        `accepted=${JSON.stringify(info.accepted)} rejected=${JSON.stringify(info.rejected)} ` +
+        `response="${info.response}" messageId=${info.messageId}`,
+    );
   } catch (error) {
-    logger.error('Failed to send email:', error);
+    logger.error(
+      `[Email] Failed to=${options.to} subject="${options.subject}" ` +
+        `code=${(error as any)?.code} command=${(error as any)?.command} ` +
+        `response=${JSON.stringify((error as any)?.response)} message=${(error as any)?.message}`,
+    );
     throw error;
   }
 };
 
 export const sendVerificationOTPEmail = async (email: string, otp: string): Promise<void> => {
+  const text = [
+    'NextEra LMS - Email Verification',
+    '',
+    `Your email verification OTP is: ${otp}`,
+    'This OTP will expire in 10 minutes.',
+    'If you did not request this, please ignore this email.',
+  ].join('\n');
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #f97316;">NextEra LMS - Email Verification</h2>
@@ -45,12 +70,22 @@ export const sendVerificationOTPEmail = async (email: string, otp: string): Prom
   await sendEmail({
     to: email,
     subject: 'NextEra LMS - Email Verification',
+    text,
     html,
   });
 };
 
 export const sendPasswordResetEmail = async (email: string, resetToken: string): Promise<void> => {
   const resetUrl = `${env.clientUrl}/auth/reset-password?token=${resetToken}`;
+
+  const text = [
+    'NextEra LMS - Password Reset',
+    '',
+    `You requested a password reset. Click the link below to reset your password:`,
+    resetUrl,
+    'This link will expire in 15 minutes.',
+    'If you did not request this, please ignore this email.',
+  ].join('\n');
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -72,6 +107,7 @@ export const sendPasswordResetEmail = async (email: string, resetToken: string):
   await sendEmail({
     to: email,
     subject: 'NextEra LMS - Password Reset',
+    text,
     html,
   });
 };

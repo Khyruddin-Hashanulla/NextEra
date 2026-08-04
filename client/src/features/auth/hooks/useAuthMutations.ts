@@ -3,7 +3,7 @@ import { authApi } from '@/api/endpoints/auth';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, getDashboardRoute } from '@/lib/constants';
 import { AxiosError } from 'axios';
 import { ApiError } from '@/types/api';
 
@@ -39,7 +39,7 @@ export function useRegisterMutation() {
     onSuccess: () => {
       addToast({
         title: 'Registration successful',
-        description: 'Please check your email to verify your account',
+        description: 'Verify your email to activate your account',
         variant: 'success',
       });
       navigate(ROUTES.VERIFY_EMAIL);
@@ -73,14 +73,15 @@ export function useSendOTPMutation() {
 }
 
 export function useVerifyEmailMutation() {
+  const { verifyEmail } = useAuth();
   const { addToast } = useToast();
   const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: ({ email, otp }: { email: string; otp: string }) => authApi.verifyEmail({ email, otp }),
-    onSuccess: () => {
+    mutationFn: ({ email, otp }: { email: string; otp: string }) => verifyEmail(email, otp),
+    onSuccess: (user) => {
       addToast({ title: 'Email verified successfully', variant: 'success' });
-      navigate(ROUTES.LOGIN);
+      navigate(getDashboardRoute(user.role), { replace: true });
     },
     onError: (error: AxiosError<ApiError>) => {
       addToast({

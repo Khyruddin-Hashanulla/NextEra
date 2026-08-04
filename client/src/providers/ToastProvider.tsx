@@ -13,7 +13,7 @@ interface ToastContextValue {
   removeToast: (id: string) => void;
 }
 
-const ToastContext = createContext<ToastContextValue | undefined>(undefined);
+export const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 
 const variantStyles = {
   success: 'bg-green-600 text-white',

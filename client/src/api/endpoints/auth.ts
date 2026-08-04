@@ -24,7 +24,7 @@ export const authApi = {
     axiosInstance.post<ApiResponse<null>>('/auth/send-otp', { email }, { signal }),
 
   verifyEmail: (data: VerifyEmailRequest, signal?: AbortSignal) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/verify-email', data, { signal }),
+    axiosInstance.post<ApiResponse<AuthResponse>>('/auth/verify-email', data, { signal }),
 
   refreshToken: (refreshToken: string, signal?: AbortSignal) =>
     axiosInstance.post<ApiResponse<RefreshTokenResponse>>('/auth/refresh', { refreshToken }, { signal }),

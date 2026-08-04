@@ -35,18 +35,6 @@ export class AuthService {
     }
 
     const user = await User.create({ name, email: email.toLowerCase(), password });
-    const otp = generateOTP();
-
-    await OTPStore.create({
-      email: email.toLowerCase(),
-      otp,
-      purpose: 'email_verification',
-      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    });
-
-    emailService.sendVerificationOTP(email, otp).catch((err) => {
-      logger.error(`Failed to send verification email to ${email}:`, err);
-    });
 
     return { user: this.sanitizeUser(user) };
   }
@@ -72,7 +60,11 @@ export class AuthService {
     });
   }
 
-  async verifyEmail(email: string, otp: string): Promise<void> {
+  async verifyEmail(
+    email: string,
+    otp: string,
+    deviceInfo: DeviceInfo,
+  ): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     const otpRecord = await OTPStore.findOne({
       email: email.toLowerCase(),
       otp,
@@ -84,8 +76,34 @@ export class AuthService {
       throw ApiError.badRequest(MESSAGES.ERROR.INVALID_OTP);
     }
 
-    await User.findOneAndUpdate({ email: email.toLowerCase() }, { isEmailVerified: true });
+    const user = await User.findOneAndUpdate(
+      { email: email.toLowerCase() },
+      { isEmailVerified: true },
+      { new: true },
+    );
+
+    if (!user) {
+      throw ApiError.badRequest(MESSAGES.ERROR.INVALID_OTP);
+    }
+
+    if (!user.isActive) {
+      throw ApiError.forbidden(MESSAGES.ERROR.ACCOUNT_DISABLED);
+    }
+
     await OTPStore.deleteMany({ email: email.toLowerCase(), purpose: 'email_verification' });
+
+    const tokens = await tokenService.generateTokens(
+      user._id.toString(),
+      user.email,
+      user.role,
+      deviceInfo,
+    );
+
+    return {
+      user: this.sanitizeUser(user),
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 
   async login(

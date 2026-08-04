@@ -31,46 +31,64 @@ import { withTransaction } from '../utils/transaction';
 import { paymentService } from './payment.service';
 import { logger } from '../utils/logger';
 import { cascadeDeleteService } from './cascadeDelete.service';
+import { cacheService } from '../cache/cache.service';
+import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
+import { cacheManager } from '../cache/cacheManager';
 
 export class AdminService {
   async getDashboardStats() {
-    const [
-      totalUsers,
-      totalStudents,
-      totalInstructors,
-      totalAdmins,
-      totalCourses,
-      publishedCourses,
-      pendingCourses,
-      totalEnrollments,
-      totalRevenue,
-      recentUsers,
-      recentPayments,
-    ] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: ROLES.STUDENT }),
-      User.countDocuments({ role: ROLES.INSTRUCTOR }),
-      User.countDocuments({ role: ROLES.ADMIN }),
-      Course.countDocuments(),
-      Course.countDocuments({ status: 'published' }),
-      Course.countDocuments({ status: 'review' }),
-      Enrollment.countDocuments(),
-      Payment.aggregate([
-        { $match: { status: 'success' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      User.find().sort({ createdAt: -1 }).limit(5).lean(),
-      Payment.find({ status: 'success' }).sort({ createdAt: -1 }).limit(5).populate('user', 'name email').lean(),
-    ]);
+    return cacheService.remember(
+      cacheKeys.adminDashboard(),
+      { ttl: CACHE_TTL.ADMIN_DASHBOARD },
+      async () => {
+        const [userAgg, courseAgg, totalEnrollments, totalRevenue, recentUsers, recentPayments] = await Promise.all([
+          User.aggregate([
+            {
+              $facet: {
+                roles: [{ $group: { _id: '$role', count: { $sum: 1 } } }],
+                total: [{ $count: 'count' }],
+              },
+            },
+          ]),
+          Course.aggregate([
+            {
+              $facet: {
+                byStatus: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+                total: [{ $count: 'count' }],
+              },
+            },
+          ]),
+          Enrollment.countDocuments(),
+          Payment.aggregate([
+            { $match: { status: 'success' } },
+            { $group: { _id: null, total: { $sum: '$amount' } } },
+          ]),
+          User.find().sort({ createdAt: -1 }).limit(5).select('name email avatar role createdAt').lean(),
+          Payment.find({ status: 'success' }).sort({ createdAt: -1 }).limit(5).populate('user', 'name email').lean(),
+        ]);
 
-    return {
-      users: { total: totalUsers, students: totalStudents, instructors: totalInstructors, admins: totalAdmins },
-      courses: { total: totalCourses, published: publishedCourses, pending: pendingCourses },
-      enrollments: totalEnrollments,
-      revenue: totalRevenue[0]?.total || 0,
-      recentUsers,
-      recentPayments,
-    };
+        const roleCounts = new Map((userAgg[0]?.roles ?? []).map((r: any) => [r._id, r.count]));
+        const statusCounts = new Map((courseAgg[0]?.byStatus ?? []).map((s: any) => [s._id, s.count]));
+
+        return {
+          users: {
+            total: userAgg[0]?.total?.[0]?.count ?? 0,
+            students: roleCounts.get(ROLES.STUDENT) ?? 0,
+            instructors: roleCounts.get(ROLES.INSTRUCTOR) ?? 0,
+            admins: roleCounts.get(ROLES.ADMIN) ?? 0,
+          },
+          courses: {
+            total: courseAgg[0]?.total?.[0]?.count ?? 0,
+            published: statusCounts.get('published') ?? 0,
+            pending: statusCounts.get('review') ?? 0,
+          },
+          enrollments: totalEnrollments,
+          revenue: totalRevenue[0]?.total || 0,
+          recentUsers,
+          recentPayments,
+        };
+      }
+    );
   }
 
   async getRevenueAnalytics(startDate?: string, endDate?: string) {
@@ -98,40 +116,55 @@ export class AdminService {
   }
 
   async getUserAnalytics() {
-    const userGrowth = await User.aggregate([
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+    return cacheService.remember(
+      cacheKeys.adminUserAnalytics(),
+      { ttl: CACHE_TTL.ADMIN_ANALYTICS },
+      async () => {
+        const [result] = await User.aggregate([
+          {
+            $facet: {
+              userGrowth: [
+                {
+                  $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    count: { $sum: 1 },
+                  },
+                },
+                { $sort: { _id: 1 } },
+              ],
+              roleDistribution: [{ $group: { _id: '$role', count: { $sum: 1 } } }],
+            },
+          },
+        ]);
 
-    const roleDistribution = await User.aggregate([
-      { $group: { _id: '$role', count: { $sum: 1 } } },
-    ]);
-
-    return { userGrowth, roleDistribution };
+        return { userGrowth: result?.userGrowth ?? [], roleDistribution: result?.roleDistribution ?? [] };
+      }
+    );
   }
 
   async getCourseAnalytics() {
-    const courseStats = await Course.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-        },
-      },
-    ]);
+    return cacheService.remember(
+      cacheKeys.adminCourseAnalytics(),
+      { ttl: CACHE_TTL.ADMIN_ANALYTICS },
+      async () => {
+        const courseStats = await Course.aggregate([
+          {
+            $group: {
+              _id: '$status',
+              count: { $sum: 1 },
+            },
+          },
+        ]);
 
-    const topCourses = await Course.find({ status: 'published' })
-      .sort({ totalEnrollments: -1 })
-      .limit(10)
-      .populate('instructor', 'name')
-      .lean();
+        const topCourses = await Course.find({ status: 'published' })
+          .sort({ totalEnrollments: -1 })
+          .limit(10)
+          .populate('instructor', 'name')
+          .lean();
 
-    return { courseStats, topCourses };
+        return { courseStats, topCourses };
+      }
+    );
   }
 
   async listUsers(page: number, limit: number, search?: string, role?: string) {
@@ -170,12 +203,14 @@ export class AdminService {
   async updateUserRole(userId: string, role: string) {
     const user = await User.findByIdAndUpdate(userId, { role }, { new: true }).lean();
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
+    await cacheManager.invalidateAdminCache();
     return user;
   }
 
   async updateUserStatus(userId: string, isActive: boolean) {
     const user = await User.findByIdAndUpdate(userId, { isActive }, { new: true }).lean();
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
+    await cacheManager.invalidateAdminCache();
     return user;
   }
 
@@ -188,6 +223,7 @@ export class AdminService {
     await withTransaction(async (session) => {
       await cascadeDeleteService.deleteUser(userId, adminId, session);
     });
+    await cacheManager.invalidateAdminCache();
   }
 
   async getPendingInstructors() {
@@ -199,6 +235,7 @@ export class AdminService {
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
     user.isActive = true;
     await user.save();
+    await cacheManager.invalidateAdminCache();
     return user;
   }
 
@@ -208,6 +245,7 @@ export class AdminService {
     await withTransaction(async (session) => {
       await cascadeDeleteService.deleteUser(userId, adminId, session);
     });
+    await cacheManager.invalidateAdminCache();
   }
 
   async listCategories() {
@@ -216,7 +254,9 @@ export class AdminService {
 
   async createCategory(data: { name: string; description?: string; icon?: string }) {
     const slug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-    return Category.create({ ...data, slug });
+    const category = await Category.create({ ...data, slug });
+    await cacheManager.invalidateCourseCache();
+    return category;
   }
 
   async updateCategory(id: string, data: { name?: string; description?: string; icon?: string; isActive?: boolean }) {
@@ -226,12 +266,14 @@ export class AdminService {
     }
     const category = await Category.findByIdAndUpdate(id, { $set: update }, { new: true }).lean();
     if (!category) throw ApiError.notFound('Category not found');
+    await cacheManager.invalidateCourseCache();
     return category;
   }
 
   async deleteCategory(id: string) {
     const category = await Category.findByIdAndDelete(id);
     if (!category) throw ApiError.notFound('Category not found');
+    await cacheManager.invalidateCourseCache();
   }
 
   async listBlogs(page: number, limit: number) {
@@ -250,7 +292,10 @@ export class AdminService {
     const slug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     const blogData: any = { ...data, slug };
     if (data.status === 'published') blogData.publishedAt = new Date();
-    return Blog.create(blogData);
+    const blog = await Blog.create(blogData);
+    await cacheManager.invalidateBlogCache(slug);
+    await cacheManager.invalidateAdminCache();
+    return blog;
   }
 
   async updateBlog(id: string, data: any) {
@@ -262,12 +307,16 @@ export class AdminService {
     }
     const blog = await Blog.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true }).lean();
     if (!blog) throw ApiError.notFound('Blog not found');
+    await cacheManager.invalidateBlogCache(blog.slug);
+    await cacheManager.invalidateAdminCache();
     return blog;
   }
 
   async deleteBlog(id: string) {
     const blog = await Blog.findByIdAndDelete(id);
     if (!blog) throw ApiError.notFound('Blog not found');
+    await cacheManager.invalidateBlogCache(blog.slug);
+    await cacheManager.invalidateAdminCache();
   }
 
   async listCoupons(page: number, limit: number) {
@@ -840,12 +889,17 @@ export class AdminService {
       User.countDocuments(query),
     ]);
 
-    const enriched = await Promise.all(
-      students.map(async (s) => {
-        const enrollments = await Enrollment.countDocuments({ user: s._id });
-        return { ...s, totalEnrollments: enrollments };
-      })
-    );
+    const studentIds = students.map((s) => s._id);
+    const enrollmentCounts = await Enrollment.aggregate([
+      { $match: { user: { $in: studentIds } } },
+      { $group: { _id: '$user', count: { $sum: 1 } } },
+    ]);
+    const enrollmentMap = new Map(enrollmentCounts.map((e) => [e._id.toString(), e.count]));
+
+    const enriched = students.map((s) => ({
+      ...s,
+      totalEnrollments: enrollmentMap.get(s._id.toString()) ?? 0,
+    }));
 
     return {
       students: enriched,

@@ -281,44 +281,60 @@ export class AffiliateService {
     const settings = await this.getSettings();
 
     const [
-      totalClicks,
-      uniqueClicks,
-      referrals,
-      conversions,
-      pendingCommission,
-      approvedCommission,
-      reversedCommission,
-      monthlyStats,
+      clickResult,
+      referralResult,
+      transactionResult,
       transactions,
       recentClicks,
     ] = await Promise.all([
-      ReferralClick.countDocuments({ code: affiliate.code }),
-      ReferralClick.distinct('ip', { code: affiliate.code }).then((ips) => ips.length),
-      Referral.countDocuments({ referrer: affiliate.user }),
-      Referral.countDocuments({ referrer: affiliate.user, status: 'converted' }),
-      ReferralTransaction.aggregate([
-        { $match: { affiliate: new mongoose.Types.ObjectId(affiliateId), type: 'commission', status: 'pending' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      ReferralTransaction.aggregate([
-        { $match: { affiliate: new mongoose.Types.ObjectId(affiliateId), type: 'commission', status: 'approved' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      ReferralTransaction.aggregate([
-        { $match: { affiliate: new mongoose.Types.ObjectId(affiliateId), type: 'reversal', status: 'approved' } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
-      ]),
-      ReferralTransaction.aggregate([
-        { $match: { affiliate: new mongoose.Types.ObjectId(affiliateId), type: 'commission' } },
+      ReferralClick.aggregate([
+        { $match: { code: affiliate.code } },
         {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
-            commission: { $sum: '$amount' },
-            count: { $sum: 1 },
+          $facet: {
+            total: [{ $count: 'count' }],
+            ips: [{ $group: { _id: '$ip' } }],
           },
         },
-        { $sort: { _id: 1 } },
-        { $limit: 12 },
+      ]),
+      Referral.aggregate([
+        { $match: { referrer: affiliate.user } },
+        {
+          $facet: {
+            all: [{ $count: 'count' }],
+            converted: [{ $match: { status: 'converted' } }, { $count: 'count' }],
+          },
+        },
+      ]),
+      ReferralTransaction.aggregate([
+        { $match: { affiliate: new mongoose.Types.ObjectId(affiliateId) } },
+        {
+          $facet: {
+            pending: [
+              { $match: { type: 'commission', status: 'pending' } },
+              { $group: { _id: null, total: { $sum: '$amount' } } },
+            ],
+            approved: [
+              { $match: { type: 'commission', status: 'approved' } },
+              { $group: { _id: null, total: { $sum: '$amount' } } },
+            ],
+            reversed: [
+              { $match: { type: 'reversal', status: 'approved' } },
+              { $group: { _id: null, total: { $sum: '$amount' } } },
+            ],
+            monthly: [
+              { $match: { type: 'commission' } },
+              {
+                $group: {
+                  _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+                  commission: { $sum: '$amount' },
+                  count: { $sum: 1 },
+                },
+              },
+              { $sort: { _id: 1 } },
+              { $limit: 12 },
+            ],
+          },
+        },
       ]),
       ReferralTransaction.find({ affiliate: affiliateId, type: 'commission' })
         .sort({ createdAt: -1 })
@@ -335,10 +351,20 @@ export class AffiliateService {
       ReferralClick.find({ code: affiliate.code }).sort({ clickedAt: -1 }).limit(10).lean(),
     ]);
 
+    const clickFacet = clickResult?.[0] ?? {};
+    const referralFacet = referralResult?.[0] ?? {};
+    const transactionFacet = transactionResult?.[0] ?? {};
+
+    const totalClicks = clickFacet.total?.[0]?.count ?? 0;
+    const uniqueClicks = (clickFacet.ips ?? []).length;
+    const referrals = referralFacet.all?.[0]?.count ?? 0;
+    const conversions = referralFacet.converted?.[0]?.count ?? 0;
+    const monthlyStats = transactionFacet.monthly ?? [];
+
     const totalEarnings = affiliate.totalEarnings || 0;
-    const pendingTotal = pendingCommission[0]?.total || 0;
-    const approvedTotal = approvedCommission[0]?.total || 0;
-    const reversedTotal = reversedCommission[0]?.total || 0;
+    const pendingTotal = transactionFacet.pending?.[0]?.total || 0;
+    const approvedTotal = transactionFacet.approved?.[0]?.total || 0;
+    const reversedTotal = transactionFacet.reversed?.[0]?.total || 0;
     const withdrawable = approvedTotal;
 
     const referralLink = this.generateReferralLink(affiliate.code);

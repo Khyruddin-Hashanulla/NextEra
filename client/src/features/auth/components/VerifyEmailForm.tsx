@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -8,8 +8,10 @@ import { useAuth } from '@/providers/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Link } from 'react-router-dom';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, getDashboardRoute } from '@/lib/constants';
 import { Mail, ArrowLeft, KeyRound, CheckCircle2 } from 'lucide-react';
+
+const RESEND_COOLDOWN_SECONDS = 30;
 
 const stagger = {
   hidden: { opacity: 0 },
@@ -28,12 +30,15 @@ export function VerifyEmailForm() {
   const { user } = useAuth();
   const [step, setStep] = useState<'email' | 'otp'>('email');
   const [verified, setVerified] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const sendingRef = useRef(false);
   const verifyEmailMutation = useVerifyEmailMutation();
   const sendOTPMutation = useSendOTPMutation();
 
   const {
     register,
     handleSubmit,
+    trigger,
     watch,
     formState: { errors },
   } = useForm<VerifyEmailFormData>({
@@ -44,10 +49,32 @@ export function VerifyEmailForm() {
   });
 
   const email = watch('email');
+  const isSending = sendOTPMutation.isPending || sendingRef.current;
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const id = setInterval(() => {
+      setResendCooldown((seconds) => (seconds > 1 ? seconds - 1 : 0));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [resendCooldown > 0]);
 
   const handleSendOTP = async () => {
-    if (email) {
-      await sendOTPMutation.mutateAsync(email).then(() => setStep('otp'));
+    if (isSending || resendCooldown > 0) return;
+
+    const isValid = await trigger('email');
+    if (!isValid) return;
+
+    const normalizedEmail = (watch('email') || '').trim().toLowerCase();
+    if (!normalizedEmail) return;
+
+    sendingRef.current = true;
+    try {
+      await sendOTPMutation.mutateAsync(normalizedEmail);
+      setStep('otp');
+      setResendCooldown(RESEND_COOLDOWN_SECONDS);
+    } finally {
+      sendingRef.current = false;
     }
   };
 
@@ -69,10 +96,10 @@ export function VerifyEmailForm() {
         </div>
         <h1 className="text-xl font-bold tracking-tight">Email verified!</h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Your email has been verified successfully. You can now sign in.
+          You're signed in. Redirecting to your dashboard...
         </p>
         <Button asChild className="mt-6">
-          <Link to={ROUTES.LOGIN}>Sign in</Link>
+          <Link to={getDashboardRoute(user?.role)}>Continue to dashboard</Link>
         </Button>
       </motion.div>
     );
@@ -138,9 +165,10 @@ export function VerifyEmailForm() {
               fullWidth
               size="lg"
               onClick={handleSendOTP}
-              loading={sendOTPMutation.isPending}
+              loading={isSending}
+              disabled={resendCooldown > 0}
             >
-              Send OTP
+              {resendCooldown > 0 ? `Send OTP (${resendCooldown}s)` : 'Send OTP'}
             </Button>
           ) : (
             <Button
@@ -159,9 +187,10 @@ export function VerifyEmailForm() {
             <button
               type="button"
               onClick={handleSendOTP}
-              className="w-full text-center text-sm font-medium text-primary transition-colors hover:text-primary/80"
+              disabled={isSending || resendCooldown > 0}
+              className="w-full text-center text-sm font-medium text-primary transition-colors hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Resend code
+              {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
             </button>
           </motion.div>
         )}

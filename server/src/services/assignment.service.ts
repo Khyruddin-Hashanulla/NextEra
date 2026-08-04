@@ -67,15 +67,39 @@ export class AssignmentService {
     }
 
     const skip = (page - 1) * limit;
-    const [lectures, total] = await Promise.all([
-      Lecture.find(matchQuery)
-        .populate('course', 'title')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Lecture.countDocuments(matchQuery),
+    const [lectureResult] = await Lecture.aggregate([
+      { $match: matchQuery },
+      {
+        $facet: {
+          items: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            { $lookup: { from: 'courses', localField: 'course', foreignField: '_id', as: 'course' } },
+            {
+              $addFields: {
+                course: {
+                  $let: {
+                    vars: { c: { $arrayElemAt: ['$course', 0] } },
+                    in: {
+                      $cond: [
+                        { $eq: ['$$c', null] },
+                        null,
+                        { _id: '$$c._id', title: '$$c.title' },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          ],
+          total: [{ $count: 'count' }],
+        },
+      },
     ]);
+
+    const lectures: any[] = (lectureResult?.items ?? []) as any[];
+    const total = lectureResult?.total?.[0]?.count ?? 0;
 
     const lectureIds = lectures.map((l) => l._id);
 

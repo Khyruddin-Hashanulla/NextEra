@@ -33,6 +33,7 @@ const envSchema = z.object({
   SMTP_USER: z.string().default(''),
   SMTP_PASS: z.string().default(''),
   EMAIL_FROM: z.string().default('noreply@nextera.com'),
+  SMTP_DEBUG: z.string().default('false'),
 
   CLIENT_URL: z.string().default('http://localhost:5173'),
   SERVER_URL: z.string().optional(),
@@ -50,6 +51,17 @@ const envSchema = z.object({
 
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(900000),
   RATE_LIMIT_MAX: z.coerce.number().default(100),
+
+  REDIS_URL: z.string().default('redis://localhost:6379'),
+  REDIS_PASSWORD: z.string().default(''),
+  REDIS_DB: z.coerce.number().default(0),
+  REDIS_TLS: z.string().default('false'),
+  REDIS_KEY_PREFIX: z.string().default('nextera:'),
+  REDIS_CACHE_ENABLED: z.string().default('true'),
+  REDIS_CONNECT_TIMEOUT_MS: z.coerce.number().default(5000),
+  REDIS_MAX_RETRIES_PER_REQUEST: z.coerce.number().default(1),
+  REDIS_COMPRESSION_ENABLED: z.string().default('true'),
+  REDIS_COMPRESSION_THRESHOLD_BYTES: z.coerce.number().default(2048),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -107,6 +119,7 @@ export const env = {
   smtpUser: raw.SMTP_USER,
   smtpPass: raw.SMTP_PASS,
   emailFrom: raw.EMAIL_FROM,
+  smtpDebug: raw.SMTP_DEBUG === 'true',
 
   clientUrl: raw.CLIENT_URL,
   serverUrl: raw.SERVER_URL,
@@ -124,4 +137,15 @@ export const env = {
 
   rateLimitWindowMs: raw.RATE_LIMIT_WINDOW_MS,
   rateLimitMax: raw.RATE_LIMIT_MAX,
+
+  redisUrl: raw.REDIS_URL,
+  redisPassword: raw.REDIS_PASSWORD,
+  redisDb: raw.REDIS_DB,
+  redisTls: raw.REDIS_TLS === 'true',
+  redisKeyPrefix: raw.REDIS_KEY_PREFIX,
+  redisCacheEnabled: raw.REDIS_CACHE_ENABLED !== 'false',
+  redisConnectTimeoutMs: raw.REDIS_CONNECT_TIMEOUT_MS,
+  redisMaxRetriesPerRequest: raw.REDIS_MAX_RETRIES_PER_REQUEST,
+  redisCompressionEnabled: raw.REDIS_COMPRESSION_ENABLED !== 'false',
+  redisCompressionThresholdBytes: raw.REDIS_COMPRESSION_THRESHOLD_BYTES,
 };

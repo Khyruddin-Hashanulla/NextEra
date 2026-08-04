@@ -15,6 +15,51 @@ import { generateCertificateId } from '../utils/certificateIdGenerator';
 import { generateCertificateSignature, generateQrCodeDataUrl, getVerificationUrl } from '../utils/certificate';
 import { generateCertificatePdf, getCertificateUrl } from '../utils/pdfGenerator';
 import { subscriptionPermissionService } from './subscriptionPermission.service';
+import { Types } from 'mongoose';
+import { cacheService } from '../cache/cache.service';
+import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
+import { cacheManager } from '../cache/cacheManager';
+
+export interface InstructorDashboardData {
+  totalCourses: number;
+  publishedCourses: number;
+  totalEnrollments: number;
+  totalStudents: number;
+  totalRevenue: number;
+  totalDuration: number;
+  recentCourses: any[];
+}
+
+interface CourseFacetStats {
+  totalCourses: number;
+  publishedCourses: number;
+  totalDuration: number;
+}
+
+interface CourseFacetResult {
+  stats: CourseFacetStats[];
+  courseIds: { _id: Types.ObjectId }[];
+  recentCourses: any[];
+}
+
+interface EnrollmentStatsResult {
+  _id: null;
+  total: number;
+  students: Types.ObjectId[];
+}
+
+interface RevenueStatsResult {
+  _id: null;
+  total: number;
+}
+
+export function clearInstructorDashboardCache(userId: string): void {
+  void cacheService.del(cacheKeys.instructorDashboard(userId));
+}
+
+export function clearInstructorCache(userId: string): void {
+  void cacheManager.invalidateInstructorCache(userId);
+}
 
 export class InstructorService {
   async apply(
@@ -63,110 +108,185 @@ export class InstructorService {
     return { applied: true, status: app.status, application: app };
   }
 
-  async getDashboard(userId: string) {
-    const [courses, totalEnrollments, totalStudents, totalRevenue] = await Promise.all([
-      Course.find({ instructor: userId }).sort({ createdAt: -1 }).lean(),
-      Enrollment.countDocuments({ course: { $in: (await Course.find({ instructor: userId }).select('_id').lean()).map((c: any) => c._id) } }),
-      Enrollment.distinct('user', { course: { $in: (await Course.find({ instructor: userId }).select('_id').lean()).map((c: any) => c._id) } }),
-      Payment.aggregate([
-        { $match: { status: 'success', course: { $in: (await Course.find({ instructor: userId }).select('_id').lean()).map((c: any) => c._id) } } },
+  async getDashboard(userId: string): Promise<InstructorDashboardData> {
+    return cacheService.remember(
+      cacheKeys.instructorDashboard(userId),
+      { ttl: CACHE_TTL.INSTRUCTOR_DASHBOARD },
+      () => this.buildDashboard(userId)
+    );
+  }
+
+  private async buildDashboard(userId: string): Promise<InstructorDashboardData> {
+    const instructorId = new Types.ObjectId(userId);
+
+    const [courseResult] = await Course.aggregate<CourseFacetResult>([
+      { $match: { instructor: instructorId } },
+      {
+        $facet: {
+          stats: [
+            {
+              $group: {
+                _id: null,
+                totalCourses: { $sum: 1 },
+                publishedCourses: { $sum: { $cond: [{ $eq: ['$status', 'published'] }, 1, 0] } },
+                totalDuration: { $sum: { $ifNull: ['$totalDuration', 0] } },
+              },
+            },
+          ],
+          courseIds: [{ $project: { _id: 1 } }],
+          recentCourses: [{ $sort: { createdAt: -1 } }, { $limit: 5 }],
+        },
+      },
+    ]);
+
+    const stats = courseResult?.stats?.[0];
+    const courseIds = (courseResult?.courseIds ?? []).map((c) => c._id);
+
+    const [enrollmentResult, revenueResult] = await Promise.all([
+      Enrollment.aggregate<EnrollmentStatsResult>([
+        { $match: { course: { $in: courseIds } } },
+        { $group: { _id: null, total: { $sum: 1 }, students: { $addToSet: '$user' } } },
+      ]),
+      Payment.aggregate<RevenueStatsResult>([
+        { $match: { status: 'success', course: { $in: courseIds } } },
         { $group: { _id: null, total: { $sum: '$amount' } } },
       ]),
     ]);
 
-    const published = courses.filter((c) => c.status === 'published').length;
-    const totalDuration = courses.reduce((sum, c: any) => sum + (c.totalDuration || 0), 0);
-
     return {
-      totalCourses: courses.length,
-      publishedCourses: published,
-      totalEnrollments,
-      totalStudents: totalStudents.length,
-      totalRevenue: totalRevenue[0]?.total || 0,
-      totalDuration,
-      recentCourses: courses.slice(0, 5),
+      totalCourses: stats?.totalCourses ?? 0,
+      publishedCourses: stats?.publishedCourses ?? 0,
+      totalEnrollments: enrollmentResult[0]?.total ?? 0,
+      totalStudents: enrollmentResult[0]?.students?.length ?? 0,
+      totalRevenue: revenueResult[0]?.total ?? 0,
+      totalDuration: stats?.totalDuration ?? 0,
+      recentCourses: courseResult?.recentCourses ?? [],
     };
   }
 
   async getRevenue(instructorId: string, startDate?: string, endDate?: string) {
-    const courses = await Course.find({ instructor: instructorId }).select('_id title').lean();
-    const courseIds = courses.map((c: any) => c._id);
+    return cacheService.remember(
+      cacheKeys.instructorRevenue(instructorId, startDate, endDate),
+      { ttl: CACHE_TTL.INSTRUCTOR_REVENUE },
+      async () => {
+        const courses = await Course.find({ instructor: instructorId }).select('_id title').lean();
+        const courseIds = courses.map((c: any) => c._id);
 
-    const match: any = { status: 'success', course: { $in: courseIds } };
-    if (startDate || endDate) {
-      match.createdAt = {};
-      if (startDate) match.createdAt.$gte = new Date(startDate);
-      if (endDate) match.createdAt.$lte = new Date(endDate);
-    }
+        const match: any = { status: 'success', course: { $in: courseIds } };
+        if (startDate || endDate) {
+          match.createdAt = {};
+          if (startDate) match.createdAt.$gte = new Date(startDate);
+          if (endDate) match.createdAt.$lte = new Date(endDate);
+        }
 
-    const revenue = await Payment.aggregate([
-      { $match: match },
-      {
-        $group: {
-          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-          amount: { $sum: '$amount' },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+        const [result] = await Payment.aggregate([
+          {
+            $facet: {
+              daily: [
+                { $match: match },
+                {
+                  $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    amount: { $sum: '$amount' },
+                    count: { $sum: 1 },
+                  },
+                },
+                { $sort: { _id: 1 } },
+              ],
+              perCourse: [
+                { $match: match },
+                { $group: { _id: '$course', amount: { $sum: '$amount' }, count: { $sum: 1 } } },
+              ],
+            },
+          },
+        ]);
 
-    const perCourse = await Payment.aggregate([
-      { $match: { status: 'success', course: { $in: courseIds } } },
-      { $group: { _id: '$course', amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-    ]);
+        const revenue = result?.daily ?? [];
+        const perCourse = result?.perCourse ?? [];
 
-    const courseRevenue = perCourse.map((p: any) => {
-      const course = courses.find((c: any) => c._id.toString() === p._id.toString());
-      return { courseTitle: course?.title || 'Unknown', amount: p.amount, enrollments: p.count };
-    });
+        const courseRevenue = perCourse.map((p: any) => {
+          const course = courses.find((c: any) => c._id.toString() === p._id.toString());
+          return { courseTitle: course?.title || 'Unknown', amount: p.amount, enrollments: p.count };
+        });
 
-    const total = revenue.reduce((sum: number, r: any) => sum + r.amount, 0);
-    return { daily: revenue, total, perCourse: courseRevenue };
+        const total = revenue.reduce((sum: number, r: any) => sum + r.amount, 0);
+        return { daily: revenue, total, perCourse: courseRevenue };
+      }
+    );
   }
 
   async getAnalytics(instructorId: string) {
-    await subscriptionPermissionService.requireAdvancedAnalyticsPermission(instructorId);
-    const courseIds = (await Course.find({ instructor: instructorId }).select('_id').lean()).map((c: any) => c._id);
+    return cacheService.remember(
+      cacheKeys.instructorAnalytics(instructorId),
+      { ttl: CACHE_TTL.INSTRUCTOR_ANALYTICS },
+      async () => {
+        await subscriptionPermissionService.requireAdvancedAnalyticsPermission(instructorId);
+        const courseIds = (await Course.find({ instructor: instructorId }).select('_id').lean()).map((c: any) => c._id);
 
-    const [enrollmentTrend, revenueTrend, studentGrowth, topCourses] = await Promise.all([
-      Enrollment.aggregate([
-        { $match: { course: { $in: courseIds } } },
-        { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$enrolledAt' } }, count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success', course: { $in: courseIds } } },
-        { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-      ]),
-      Enrollment.aggregate([
-        { $match: { course: { $in: courseIds } } },
-        { $group: { _id: { $dateToString: { format: '%Y-%m', date: '$enrolledAt' } }, newStudents: { $addToSet: '$user' } } },
-        { $sort: { _id: 1 } },
-      ]),
-      Course.find({ instructor: instructorId })
-        .sort({ totalEnrollments: -1 })
-        .limit(10)
-        .select('title totalEnrollments averageRating price totalRevenue')
-        .lean(),
-    ]);
+        const [enrollmentResult, revenueTrend, topCourses] = await Promise.all([
+          Enrollment.aggregate([
+            { $match: { course: { $in: courseIds } } },
+            {
+              $facet: {
+                enrollmentTrend: [
+                  {
+                    $group: {
+                      _id: { $dateToString: { format: '%Y-%m', date: '$enrolledAt' } },
+                      count: { $sum: 1 },
+                    },
+                  },
+                  { $sort: { _id: 1 } },
+                ],
+                studentGrowth: [
+                  {
+                    $group: {
+                      _id: { $dateToString: { format: '%Y-%m', date: '$enrolledAt' } },
+                      newStudents: { $addToSet: '$user' },
+                    },
+                  },
+                  { $sort: { _id: 1 } },
+                ],
+              },
+            },
+          ]),
+          Payment.aggregate([
+            { $match: { status: 'success', course: { $in: courseIds } } },
+            {
+              $group: {
+                _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+                amount: { $sum: '$amount' },
+                count: { $sum: 1 },
+              },
+            },
+            { $sort: { _id: 1 } },
+          ]),
+          Course.find({ instructor: instructorId })
+            .sort({ totalEnrollments: -1 })
+            .limit(10)
+            .select('title totalEnrollments averageRating price totalRevenue')
+            .lean(),
+        ]);
 
-    let cumulativeStudents = 0;
-    const growth = studentGrowth.map((s: any) => {
-      cumulativeStudents += s.newStudents.length;
-      return { month: s._id, newStudents: s.newStudents.length, totalStudents: cumulativeStudents };
-    });
+        const enrollmentTrend = enrollmentResult[0]?.enrollmentTrend ?? [];
+        const studentGrowth = enrollmentResult[0]?.studentGrowth ?? [];
 
-    const totalViews = topCourses.reduce((sum: number, c: any) => sum + (c.totalEnrollments || 0), 0);
+        let cumulativeStudents = 0;
+        const growth = studentGrowth.map((s: any) => {
+          cumulativeStudents += s.newStudents.length;
+          return { month: s._id, newStudents: s.newStudents.length, totalStudents: cumulativeStudents };
+        });
 
-    return {
-      totalViews,
-      enrollmentTrend,
-      revenueTrend,
-      studentGrowth: growth,
-      topPerformingCourses: topCourses,
-    };
+        const totalViews = topCourses.reduce((sum: number, c: any) => sum + (c.totalEnrollments || 0), 0);
+
+        return {
+          totalViews,
+          enrollmentTrend,
+          revenueTrend,
+          studentGrowth: growth,
+          topPerformingCourses: topCourses,
+        };
+      }
+    );
   }
 
   async getStudents(

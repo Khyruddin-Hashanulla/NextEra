@@ -11,8 +11,15 @@ import { withTransaction } from '../utils/transaction';
 import { escapeRegex } from '../utils/escapeRegex';
 import { cascadeDeleteService } from './cascadeDelete.service';
 import { subscriptionPermissionService } from './subscriptionPermission.service';
+import { cacheService } from '../cache/cache.service';
+import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
+import { cacheManager } from '../cache/cacheManager';
 
 export class CourseService {
+  private async invalidateCourseCaches(courseId?: string, slug?: string): Promise<void> {
+    await cacheManager.invalidateCourseCache(courseId, slug);
+  }
+
   // ─── CRUD ────────────────────────────────────────────────────
   async create(instructorId: string, data: any) {
     const isPaid = data.price > 0 || data.courseType === 'paid';
@@ -23,26 +30,39 @@ export class CourseService {
     return withTransaction(async (session) => {
       const [course] = await Course.create([{ ...data, instructor: instructorId }], { session });
       await User.findByIdAndUpdate(instructorId, { $inc: { totalCourses: 1 } }, { session });
+      await this.invalidateCourseCaches();
       return course;
     });
   }
 
   async getById(courseId: string) {
-    const course = await Course.findById(courseId)
-      .populate('category', 'name slug')
-      .populate('instructor', 'name email avatar bio')
-      .lean();
-    if (!course) throw ApiError.notFound('Course not found');
-    return course;
+    return cacheService.remember(
+      cacheKeys.courseById(courseId),
+      { ttl: CACHE_TTL.COURSE_DETAIL },
+      async () => {
+        const course = await Course.findById(courseId)
+          .populate('category', 'name slug')
+          .populate('instructor', 'name email avatar bio')
+          .lean();
+        if (!course) throw ApiError.notFound('Course not found');
+        return course;
+      }
+    );
   }
 
   async getBySlug(slug: string) {
-    const course = await Course.findOne({ slug })
-      .populate('category', 'name slug')
-      .populate('instructor', 'name email avatar bio')
-      .lean();
-    if (!course) throw ApiError.notFound('Course not found');
-    return course;
+    return cacheService.remember(
+      cacheKeys.courseBySlug(slug),
+      { ttl: CACHE_TTL.COURSE_DETAIL },
+      async () => {
+        const course = await Course.findOne({ slug })
+          .populate('category', 'name slug')
+          .populate('instructor', 'name email avatar bio')
+          .lean();
+        if (!course) throw ApiError.notFound('Course not found');
+        return course;
+      }
+    );
   }
 
   async update(courseId: string, data: any) {
@@ -69,6 +89,7 @@ export class CourseService {
       { new: true, runValidators: true }
     ).populate('category', 'name').lean();
     if (!course) throw ApiError.notFound('Course not found');
+    await this.invalidateCourseCaches(courseId, existing.slug);
     return course;
   }
 
@@ -78,6 +99,7 @@ export class CourseService {
       if (!course) throw ApiError.notFound('Course not found');
       await cascadeDeleteService.deleteCourse(courseId, session);
       await User.findByIdAndUpdate(course.instructor, { $inc: { totalCourses: -1 } }, { session });
+      await this.invalidateCourseCaches(courseId, course.slug);
       return { deleted: true };
     });
   }
@@ -127,29 +149,37 @@ export class CourseService {
   }
 
   async listAll(filters: { search?: string; category?: string; level?: string; status?: string; page?: number; limit?: number; sort?: string; featured?: boolean }) {
-    const query: any = {};
-    if (filters.search) query.title = { $regex: escapeRegex(filters.search), $options: 'i' };
-    if (filters.category) query.category = filters.category;
-    if (filters.level) query.level = filters.level;
-    if (filters.status) query.status = filters.status;
-    else query.status = 'published';
-    if (filters.featured) query.featured = true;
+    // Search results are unique and low hit-rate; only cache unfiltered browsing.
+    return cacheService.remember(
+      cacheKeys.courseList(filters),
+      { ttl: CACHE_TTL.COURSE_LIST },
+      async () => {
+        const query: any = {};
+        if (filters.search) query.title = { $regex: escapeRegex(filters.search), $options: 'i' };
+        if (filters.category) query.category = filters.category;
+        if (filters.level) query.level = filters.level;
+        if (filters.status) query.status = filters.status;
+        else query.status = 'published';
+        if (filters.featured) query.featured = true;
 
-    const { page = 1, limit = 12, sort = '-createdAt' } = filters;
-    const skip = (page - 1) * limit;
+        const { page = 1, limit = 12, sort = '-createdAt' } = filters;
+        const skip = (page - 1) * limit;
 
-    const [courses, total] = await Promise.all([
-      Course.find(query)
-        .populate('category', 'name')
-        .populate('instructor', 'name avatar')
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Course.countDocuments(query),
-    ]);
+        const [courses, total] = await Promise.all([
+          Course.find(query)
+            .populate('category', 'name')
+            .populate('instructor', 'name avatar')
+            .sort(sort)
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+          Course.countDocuments(query),
+        ]);
 
-    return { courses, total, page, limit, totalPages: Math.ceil(total / limit) };
+        return { courses, total, page, limit, totalPages: Math.ceil(total / limit) };
+      },
+      !filters.search
+    );
   }
 
   // ─── Publishing Workflow ─────────────────────────────────────
@@ -173,6 +203,7 @@ export class CourseService {
     course.rejectionReason = '';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
     return course;
   }
 
@@ -183,6 +214,7 @@ export class CourseService {
     course.status = 'approved';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
     return course;
   }
 
@@ -194,6 +226,7 @@ export class CourseService {
     course.rejectionReason = reason || '';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
     return course;
   }
 
@@ -222,6 +255,8 @@ export class CourseService {
     course.courseType = course.price > 0 ? 'paid' : 'free';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
+    await cacheManager.invalidateStudentCourseList();
     return course;
   }
 
@@ -234,6 +269,8 @@ export class CourseService {
     course.status = 'draft';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
+    await cacheManager.invalidateStudentCourseList();
     return course;
   }
 
@@ -246,6 +283,8 @@ export class CourseService {
     course.status = 'archived';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
+    await cacheManager.invalidateStudentCourseList();
     return course;
   }
 
@@ -258,6 +297,8 @@ export class CourseService {
     course.status = 'draft';
     course.lastActivity = new Date();
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
+    await cacheManager.invalidateStudentCourseList();
     return course;
   }
 
@@ -266,6 +307,8 @@ export class CourseService {
     if (!course) throw ApiError.notFound('Course not found');
     course.featured = !course.featured;
     await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
+    await cacheManager.invalidateStudentCourseList();
     return course;
   }
 
@@ -319,6 +362,7 @@ export class CourseService {
     return withTransaction(async (session) => {
       const [section] = await Section.create([{ course: courseId, ...data, order }], { session });
       await Course.findByIdAndUpdate(courseId, { $inc: { totalSections: 1 }, lastActivity: new Date() }, { session });
+      await this.invalidateCourseCaches(courseId);
       return section;
     });
   }
@@ -331,6 +375,7 @@ export class CourseService {
       { new: true, runValidators: true }
     );
     if (!section) throw ApiError.notFound('Section not found');
+    await this.invalidateCourseCaches(courseId);
     return section;
   }
 
@@ -346,6 +391,7 @@ export class CourseService {
         $inc: { totalSections: -1, totalLectures: -deletedLectures },
         lastActivity: new Date(),
       }, { session });
+      await this.invalidateCourseCaches(courseId);
     });
   }
 
@@ -354,6 +400,7 @@ export class CourseService {
     const updates = sectionOrder.map((s) => Section.findByIdAndUpdate(s.sectionId, { order: s.order }));
     await Promise.all(updates);
     await Course.findByIdAndUpdate(courseId, { lastActivity: new Date() });
+    await this.invalidateCourseCaches(courseId);
   }
 
   async getSection(sectionId: string) {
@@ -374,6 +421,7 @@ export class CourseService {
     const lecture = await Lecture.create({ section: sectionId, course: courseId, ...data, order });
     await this.recalculateSection(sectionId);
     await this.recalculateCourseTotals(courseId);
+    await this.invalidateCourseCaches(courseId);
     return lecture;
   }
 
@@ -388,6 +436,7 @@ export class CourseService {
 
     await this.recalculateSection(lecture.section.toString());
     await this.recalculateCourseTotals(courseId);
+    await this.invalidateCourseCaches(courseId);
     return lecture;
   }
 
@@ -400,6 +449,7 @@ export class CourseService {
       await cascadeDeleteService.deleteLecture(lectureId, courseId, session);
       await this.recalculateSection(lecture.section.toString());
       await this.recalculateCourseTotals(courseId);
+      await this.invalidateCourseCaches(courseId);
     });
   }
 
@@ -408,6 +458,7 @@ export class CourseService {
     const updates = lectureOrder.map((l) => Lecture.findByIdAndUpdate(l.lectureId, { order: l.order }));
     await Promise.all(updates);
     await Course.findByIdAndUpdate(courseId, { lastActivity: new Date() });
+    await this.invalidateCourseCaches(courseId);
   }
 
   async getLecture(lectureId: string, courseId: string, userId?: string): Promise<any> {

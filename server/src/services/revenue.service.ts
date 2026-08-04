@@ -10,6 +10,9 @@ import { Course } from '../models/course.model';
 import { ApiError } from '../utils/ApiError';
 import { escapeRegex } from '../utils/escapeRegex';
 import { logger } from '../utils/logger';
+import { cacheService } from '../cache/cache.service';
+import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
+import { cacheManager } from '../cache/cacheManager';
 
 export class RevenueService {
   // ─── Platform Wallet ─────────────────────────────────────────
@@ -26,73 +29,85 @@ export class RevenueService {
 
   // ─── Revenue Dashboard (Admin) ───────────────────────────────
   async getRevenueDashboard() {
-    const wallet = await this.getPlatformWallet();
+    return cacheService.remember(
+      cacheKeys.revenueDashboard(),
+      { ttl: CACHE_TTL.REVENUE_DASHBOARD },
+      async () => {
+        const wallet = await this.getPlatformWallet();
 
-    const [dailyRevenue, revenueBySource, monthlyTrend, activePlans, activePromotions, topInstructors] = await Promise.all([
-      Payment.aggregate([
-        { $match: { status: 'success', createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } },
-        { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success' } },
-        { $group: { _id: '$type', amount: { $sum: '$amount' }, count: { $sum: 1 }, commission: { $sum: '$totalCommissionAmount' } } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success' } },
-        {
-          $group: {
-            _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
-            amount: { $sum: '$amount' },
-            commission: { $sum: '$totalCommissionAmount' },
-            instructorShare: { $sum: '$totalInstructorShare' },
+        const [paymentResult, topInstructors, activePlans, activePromotions] = await Promise.all([
+          Payment.aggregate([
+            {
+              $facet: {
+                dailyRevenue: [
+                  { $match: { status: 'success', createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } },
+                  { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
+                  { $sort: { _id: 1 } },
+                ],
+                revenueBySource: [
+                  { $match: { status: 'success' } },
+                  { $group: { _id: '$type', amount: { $sum: '$amount' }, count: { $sum: 1 }, commission: { $sum: '$totalCommissionAmount' } } },
+                ],
+                monthlyTrend: [
+                  { $match: { status: 'success' } },
+                  {
+                    $group: {
+                      _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
+                      amount: { $sum: '$amount' },
+                      commission: { $sum: '$totalCommissionAmount' },
+                      instructorShare: { $sum: '$totalInstructorShare' },
+                    },
+                  },
+                  { $sort: { _id: 1 } },
+                  { $limit: 12 },
+                ],
+                instructorSubscriptionRevenue: [
+                  { $match: { status: 'success', type: 'instructor_subscription' } },
+                  { $group: { _id: null, amount: { $sum: '$amount' } } },
+                ],
+                featuredPromotionRevenue: [
+                  { $match: { status: 'success', type: 'featured_promotion' } },
+                  { $group: { _id: null, amount: { $sum: '$amount' } } },
+                ],
+              },
+            },
+          ]),
+          Payout.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: '$instructor', totalPaid: { $sum: '$amount' } } },
+            { $sort: { totalPaid: -1 } },
+            { $limit: 10 },
+            {
+              $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'instructor' },
+            },
+            { $unwind: '$instructor' },
+            { $project: { 'instructor.name': 1, 'instructor.email': 1, 'instructor.avatar': 1, totalPaid: 1 } },
+          ]),
+          InstructorSubscription.countDocuments({ status: 'active' }),
+          FeaturedPromotion.countDocuments({ status: 'active' }),
+        ]);
+
+        const paymentFacet = paymentResult?.[0] ?? {};
+
+        return {
+          wallet: {
+            totalRevenue: wallet.totalRevenue,
+            totalCommissionCollected: wallet.totalCommissionCollected,
+            totalPayoutsMade: wallet.totalPayoutsMade,
+            currentBalance: wallet.currentBalance,
+            pendingPayouts: wallet.pendingPayouts,
           },
-        },
-        { $sort: { _id: 1 } },
-        { $limit: 12 },
-      ]),
-      InstructorSubscription.countDocuments({ status: 'active' }),
-      FeaturedPromotion.countDocuments({ status: 'active' }),
-      Payout.aggregate([
-        { $match: { status: 'completed' } },
-        { $group: { _id: '$instructor', totalPaid: { $sum: '$amount' } } },
-        { $sort: { totalPaid: -1 } },
-        { $limit: 10 },
-        {
-          $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'instructor' },
-        },
-        { $unwind: '$instructor' },
-        { $project: { 'instructor.name': 1, 'instructor.email': 1, 'instructor.avatar': 1, totalPaid: 1 } },
-      ]),
-    ]);
-
-    const instructorSubRevenue = await Payment.aggregate([
-      { $match: { status: 'success', type: 'instructor_subscription' } },
-      { $group: { _id: null, amount: { $sum: '$amount' } } },
-    ]);
-
-    const featuredRevenue = await Payment.aggregate([
-      { $match: { status: 'success', type: 'featured_promotion' } },
-      { $group: { _id: null, amount: { $sum: '$amount' } } },
-    ]);
-
-    return {
-      wallet: {
-        totalRevenue: wallet.totalRevenue,
-        totalCommissionCollected: wallet.totalCommissionCollected,
-        totalPayoutsMade: wallet.totalPayoutsMade,
-        currentBalance: wallet.currentBalance,
-        pendingPayouts: wallet.pendingPayouts,
-      },
-      dailyRevenue,
-      revenueBySource,
-      monthlyTrend,
-      activeInstructorSubscriptions: activePlans,
-      activePromotions,
-      topInstructors,
-      instructorSubscriptionRevenue: instructorSubRevenue[0]?.amount || 0,
-      featuredPromotionRevenue: featuredRevenue[0]?.amount || 0,
-    };
+          dailyRevenue: paymentFacet.dailyRevenue ?? [],
+          revenueBySource: paymentFacet.revenueBySource ?? [],
+          monthlyTrend: paymentFacet.monthlyTrend ?? [],
+          activeInstructorSubscriptions: activePlans,
+          activePromotions,
+          topInstructors,
+          instructorSubscriptionRevenue: paymentFacet.instructorSubscriptionRevenue?.[0]?.amount || 0,
+          featuredPromotionRevenue: paymentFacet.featuredPromotionRevenue?.[0]?.amount || 0,
+        };
+      }
+    );
   }
 
   // ─── Instructor Subscription Plan Management (Admin) ─────────
@@ -199,7 +214,7 @@ export class RevenueService {
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + plan.durationDays);
 
-    return InstructorSubscription.create({
+    const subscription = await InstructorSubscription.create({
       instructor: instructorId,
       plan: planId,
       payment: paymentId,
@@ -207,6 +222,9 @@ export class RevenueService {
       endDate,
       status: 'active',
     });
+    await cacheManager.invalidateRevenueCache();
+    await cacheManager.invalidateInstructorCache(instructorId);
+    return subscription;
   }
 
   async cancelInstructorSubscription(instructorId: string) {
@@ -214,34 +232,53 @@ export class RevenueService {
     if (!subscription) throw ApiError.notFound('No active subscription found');
     subscription.status = 'cancelled';
     await subscription.save();
+    await cacheManager.invalidateRevenueCache();
+    await cacheManager.invalidateInstructorCache(instructorId);
     return subscription;
   }
 
   // ─── Instructor Subscription Stats (Admin) ───────────────────
   async getInstructorSubscriptionStats() {
-    const [total, active, byPlan, revenue] = await Promise.all([
-      InstructorSubscription.countDocuments(),
-      InstructorSubscription.countDocuments({ status: 'active' }),
-      InstructorSubscription.aggregate([
-        { $group: { _id: '$plan', count: { $sum: 1 } } },
-        {
-          $lookup: {
-            from: 'instructorsubscriptionplans',
-            localField: '_id',
-            foreignField: '_id',
-            as: 'plan',
-          },
-        },
-        { $unwind: { path: '$plan', preserveNullAndEmptyArrays: true } },
-        { $project: { 'plan.name': 1, count: 1 } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success', type: 'instructor_subscription' } },
-        { $group: { _id: null, amount: { $sum: '$amount' } } },
-      ]),
-    ]);
+    return cacheService.remember(
+      cacheKeys.instructorSubscriptionStats(),
+      { ttl: CACHE_TTL.INSTRUCTOR_SUBSCRIPTION_STATS },
+      async () => {
+        const [subscriptionResult, revenue] = await Promise.all([
+          InstructorSubscription.aggregate([
+            {
+              $facet: {
+                total: [{ $count: 'count' }],
+                active: [{ $match: { status: 'active' } }, { $count: 'count' }],
+                byPlan: [
+                  { $group: { _id: '$plan', count: { $sum: 1 } } },
+                  {
+                    $lookup: {
+                      from: 'instructorsubscriptionplans',
+                      localField: '_id',
+                      foreignField: '_id',
+                      as: 'plan',
+                    },
+                  },
+                  { $unwind: { path: '$plan', preserveNullAndEmptyArrays: true } },
+                  { $project: { 'plan.name': 1, count: 1 } },
+                ],
+              },
+            },
+          ]),
+          Payment.aggregate([
+            { $match: { status: 'success', type: 'instructor_subscription' } },
+            { $group: { _id: null, amount: { $sum: '$amount' } } },
+          ]),
+        ]);
 
-    return { total, active, byPlan, revenue: revenue[0]?.amount || 0 };
+        return {
+          total: subscriptionResult?.[0]?.total?.[0]?.count ?? 0,
+          active: subscriptionResult?.[0]?.active?.[0]?.count ?? 0,
+          byPlan: subscriptionResult?.[0]?.byPlan ?? [],
+          revenue: revenue[0]?.amount || 0,
+        };
+      }
+    );
   }
 
   // ─── Affiliate Management ────────────────────────────────────
@@ -423,83 +460,110 @@ export class RevenueService {
 
   // ─── Instructor-Specific Revenue ────────────────────────────
   async getInstructorRevenueDetail(instructorId: string): Promise<any> {
-    const [payouts, totalEarned, courseEarnings, subscriptionInfo] = await Promise.all([
-      Payout.find({ instructor: instructorId, status: 'completed' })
-        .sort({ createdAt: -1 })
-        .limit(50)
-        .lean(),
-      Payout.aggregate([
-        { $match: { instructor: instructorId as any, status: 'completed' } },
-        { $group: { _id: null, amount: { $sum: '$amount' } } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success', 'commissionSplits.instructor': instructorId as any } },
-        { $unwind: '$commissionSplits' },
-        { $match: { 'commissionSplits.instructor': instructorId as any } },
-        {
-          $group: {
-            _id: '$course',
-            totalSales: { $sum: '$commissionSplits.baseAmount' },
-            instructorShare: { $sum: '$commissionSplits.instructorShare' },
-            count: { $sum: 1 },
-          },
-        },
-        {
-          $lookup: { from: 'courses', localField: '_id', foreignField: '_id', as: 'course' },
-        },
-        { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
-        { $project: { courseTitle: '$course.title', totalSales: 1, instructorShare: 1, count: 1 } },
-        { $sort: { instructorShare: -1 } },
-      ]),
-      this.getInstructorSubscription(instructorId),
-    ]);
+    return cacheService.remember(
+      cacheKeys.instructorRevenueDetail(instructorId),
+      { ttl: CACHE_TTL.REVENUE_DASHBOARD },
+      async () => {
+        const [payouts, payoutStats, courseEarnings, subscriptionInfo] = await Promise.all([
+          Payout.find({ instructor: instructorId, status: 'completed' })
+            .sort({ createdAt: -1 })
+            .limit(50)
+            .lean(),
+          Payout.aggregate([
+            {
+              $facet: {
+                totalEarned: [
+                  { $match: { instructor: instructorId as any, status: 'completed' } },
+                  { $group: { _id: null, amount: { $sum: '$amount' } } },
+                ],
+                pending: [
+                  { $match: { instructor: instructorId as any, status: { $in: ['pending', 'processing'] } } },
+                  { $group: { _id: null, amount: { $sum: '$amount' } } },
+                ],
+              },
+            },
+          ]),
+          Payment.aggregate([
+            { $match: { status: 'success', 'commissionSplits.instructor': instructorId as any } },
+            { $unwind: '$commissionSplits' },
+            { $match: { 'commissionSplits.instructor': instructorId as any } },
+            {
+              $group: {
+                _id: '$course',
+                totalSales: { $sum: '$commissionSplits.baseAmount' },
+                instructorShare: { $sum: '$commissionSplits.instructorShare' },
+                count: { $sum: 1 },
+              },
+            },
+            {
+              $lookup: { from: 'courses', localField: '_id', foreignField: '_id', as: 'course' },
+            },
+            { $unwind: { path: '$course', preserveNullAndEmptyArrays: true } },
+            { $project: { courseTitle: '$course.title', totalSales: 1, instructorShare: 1, count: 1 } },
+            { $sort: { instructorShare: -1 } },
+          ]),
+          this.getInstructorSubscription(instructorId),
+        ]);
 
-    const pendingPayouts = await Payout.aggregate([
-      { $match: { instructor: instructorId as any, status: { $in: ['pending', 'processing'] } } },
-      { $group: { _id: null, amount: { $sum: '$amount' } } },
-    ]);
+        const stats = payoutStats?.[0] ?? {};
 
-    return {
-      totalEarned: totalEarned[0]?.amount || 0,
-      pendingPayouts: pendingPayouts[0]?.amount || 0,
-      recentPayouts: payouts,
-      courseEarnings,
-      subscription: subscriptionInfo,
-    };
+        return {
+          totalEarned: stats.totalEarned?.[0]?.amount || 0,
+          pendingPayouts: stats.pending?.[0]?.amount || 0,
+          recentPayouts: payouts,
+          courseEarnings,
+          subscription: subscriptionInfo,
+        };
+      }
+    );
   }
 
   async getRevenueSummary() {
-    const [totalRevenue, totalCommissions, totalPayouts, totalInstructorSubs, totalPromotions] = await Promise.all([
-      Payment.aggregate([
-        { $match: { status: 'success' } },
-        { $group: { _id: null, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success' } },
-        { $group: { _id: null, amount: { $sum: '$totalCommissionAmount' } } },
-      ]),
-      Payout.aggregate([
-        { $match: { status: 'completed' } },
-        { $group: { _id: null, amount: { $sum: '$amount' } } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success', type: 'instructor_subscription' } },
-        { $group: { _id: null, amount: { $sum: '$amount' } } },
-      ]),
-      Payment.aggregate([
-        { $match: { status: 'success', type: 'featured_promotion' } },
-        { $group: { _id: null, amount: { $sum: '$amount' } } },
-      ]),
-    ]);
+    return cacheService.remember(
+      cacheKeys.revenueSummary(),
+      { ttl: CACHE_TTL.REVENUE_SUMMARY },
+      async () => {
+        const [paymentResult, totalPayouts] = await Promise.all([
+          Payment.aggregate([
+            {
+              $facet: {
+                totalRevenue: [
+                  { $match: { status: 'success' } },
+                  { $group: { _id: null, amount: { $sum: '$amount' }, count: { $sum: 1 } } },
+                ],
+                totalCommissions: [
+                  { $match: { status: 'success' } },
+                  { $group: { _id: null, amount: { $sum: '$totalCommissionAmount' } } },
+                ],
+                instructorSubscriptions: [
+                  { $match: { status: 'success', type: 'instructor_subscription' } },
+                  { $group: { _id: null, amount: { $sum: '$amount' } } },
+                ],
+                featuredPromotions: [
+                  { $match: { status: 'success', type: 'featured_promotion' } },
+                  { $group: { _id: null, amount: { $sum: '$amount' } } },
+                ],
+              },
+            },
+          ]),
+          Payout.aggregate([
+            { $match: { status: 'completed' } },
+            { $group: { _id: null, amount: { $sum: '$amount' } } },
+          ]),
+        ]);
 
-    return {
-      totalRevenue: totalRevenue[0]?.amount || 0,
-      totalTransactions: totalRevenue[0]?.count || 0,
-      totalCommissions: totalCommissions[0]?.amount || 0,
-      totalPayouts: totalPayouts[0]?.amount || 0,
-      instructorSubscriptionRevenue: totalInstructorSubs[0]?.amount || 0,
-      featuredPromotionRevenue: totalPromotions[0]?.amount || 0,
-    };
+        const paymentFacet = paymentResult?.[0] ?? {};
+
+        return {
+          totalRevenue: paymentFacet.totalRevenue?.[0]?.amount || 0,
+          totalTransactions: paymentFacet.totalRevenue?.[0]?.count || 0,
+          totalCommissions: paymentFacet.totalCommissions?.[0]?.amount || 0,
+          totalPayouts: totalPayouts[0]?.amount || 0,
+          instructorSubscriptionRevenue: paymentFacet.instructorSubscriptions?.[0]?.amount || 0,
+          featuredPromotionRevenue: paymentFacet.featuredPromotions?.[0]?.amount || 0,
+        };
+      }
+    );
   }
 }
 

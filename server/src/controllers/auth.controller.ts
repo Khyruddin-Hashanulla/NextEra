@@ -64,9 +64,17 @@ export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
   const { email, otp } = req.body;
-  await authService.verifyEmail(email, otp);
+  const deviceInfo = extractDeviceInfo(req);
+  const { user, accessToken, refreshToken } = await authService.verifyEmail(email, otp, deviceInfo);
+
+  setRefreshTokenCookie(res, refreshToken);
+
   res.status(HTTP_STATUS.OK).json(
-    ApiResponse.success(MESSAGES.AUTH.EMAIL_VERIFIED, null)
+    ApiResponse.success(MESSAGES.AUTH.EMAIL_VERIFIED, {
+      user,
+      accessToken,
+      refreshToken,
+    })
   );
 });
 

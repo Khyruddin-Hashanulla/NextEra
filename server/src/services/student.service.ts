@@ -30,6 +30,9 @@ import fs from 'fs';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { paymentService } from './payment.service';
+import { cacheService } from '../cache/cache.service';
+import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
+import { cacheManager } from '../cache/cacheManager';
 
 const RAZORPAY_KEY_ID = env.razorpayKeyId;
 const RAZORPAY_KEY_SECRET = env.razorpayKeySecret;
@@ -37,42 +40,86 @@ const RAZORPAY_KEY_SECRET = env.razorpayKeySecret;
 export class StudentService {
   // ─── Dashboard ───────────────────────────────────────────────
   async getDashboard(userId: string) {
-    const enrollments = await Enrollment.find({ user: userId })
-      .populate('course', 'title thumbnail price level totalLectures totalDuration')
-      .sort({ enrolledAt: -1 })
-      .lean();
+    return cacheService.remember(
+      cacheKeys.studentDashboard(userId),
+      { ttl: CACHE_TTL.STUDENT_DASHBOARD },
+      async () => {
+        const [enrollmentResult, certificates] = await Promise.all([
+          Enrollment.aggregate([
+            { $match: { user: new mongoose.Types.ObjectId(userId) } },
+            { $sort: { enrolledAt: -1 } },
+            {
+              $lookup: { from: 'courses', localField: 'course', foreignField: '_id', as: 'course' },
+            },
+            {
+              $addFields: {
+                course: {
+                  $let: {
+                    vars: { c: { $arrayElemAt: ['$course', 0] } },
+                    in: {
+                      $cond: [
+                        { $eq: ['$$c', null] },
+                        null,
+                        {
+                          _id: '$$c._id',
+                          title: '$$c.title',
+                          thumbnail: '$$c.thumbnail',
+                          price: '$$c.price',
+                          level: '$$c.level',
+                          totalLectures: '$$c.totalLectures',
+                          totalDuration: '$$c.totalDuration',
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          ]),
+          Certificate.countDocuments({ user: userId }),
+        ]);
 
-    const totalCourses = enrollments.length;
-    const completedCourses = enrollments.filter((e) => e.isCompleted).length;
-    const inProgress = enrollments.filter((e) => !e.isCompleted && e.completionPercentage > 0).length;
+        const enrollments = enrollmentResult ?? [];
+        const totalCourses = enrollments.length;
+        const completedCourses = enrollments.filter((e) => e.isCompleted).length;
+        const inProgress = enrollments.filter((e) => !e.isCompleted && e.completionPercentage > 0).length;
 
-    const certificates = await Certificate.find({ user: userId }).countDocuments();
+        const recentCourses = enrollments.slice(0, 5);
 
-    const recentCourses = enrollments.slice(0, 5);
-
-    return { totalCourses, completedCourses, inProgress, certificates, recentCourses, enrollments };
+        return { totalCourses, completedCourses, inProgress, certificates, recentCourses, enrollments };
+      }
+    );
   }
 
   // ─── Course Catalog ──────────────────────────────────────────
   async listCourses(search?: string, category?: string, level?: string, page = 1, limit = 12) {
-    const filter: any = { status: 'published', isApproved: true };
-    if (search) filter.title = { $regex: escapeRegex(search), $options: 'i' };
-    if (category) filter.category = category;
-    if (level) filter.level = level;
+    // Search queries are unique per user and low hit-rate; only cache unfiltered
+    // catalog browsing (homepage, category/level listing).
+    return cacheService.remember(
+      cacheKeys.studentCourseList({ search, category, level, page, limit }),
+      { ttl: CACHE_TTL.STUDENT_COURSE_LIST },
+      async () => {
+        const filter: any = { status: 'published', isApproved: true };
+        if (search) filter.title = { $regex: escapeRegex(search), $options: 'i' };
+        if (category) filter.category = category;
+        if (level) filter.level = level;
 
-    const skip = (page - 1) * limit;
-    const [courses, total] = await Promise.all([
-      Course.find(filter)
-        .populate('category', 'name')
-        .populate('instructor', 'name avatar')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Course.countDocuments(filter),
-    ]);
+        const skip = (page - 1) * limit;
+        const [courses, total] = await Promise.all([
+          Course.find(filter)
+            .populate('category', 'name')
+            .populate('instructor', 'name avatar')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+          Course.countDocuments(filter),
+        ]);
 
-    return { courses, total, page, limit, totalPages: Math.ceil(total / limit) };
+        return { courses, total, page, limit, totalPages: Math.ceil(total / limit) };
+      },
+      !search
+    );
   }
 
   // ─── Enrollment ──────────────────────────────────────────────
@@ -227,6 +274,7 @@ export class StudentService {
     }
 
     await enrollment.save();
+    await cacheService.del(cacheKeys.studentDashboard(userId));
     return enrollment;
   }
 
@@ -850,22 +898,30 @@ export class StudentService {
     const existing = await Wishlist.findOne({ user: userId, course: courseId });
     if (existing) {
       await existing.deleteOne();
+      await cacheService.del(cacheKeys.wishlist(userId));
       return { wishlisted: false };
     }
     await Wishlist.create({ user: userId, course: courseId });
+    await cacheService.del(cacheKeys.wishlist(userId));
     return { wishlisted: true };
   }
 
   async listWishlist(userId: string) {
-    const items = await Wishlist.find({ user: userId })
-      .populate({
-        path: 'course',
-        select: 'title thumbnail price level instructor totalDuration averageRating totalReviews',
-        populate: { path: 'instructor', select: 'name avatar' },
-      })
-      .sort({ createdAt: -1 })
-      .lean();
-    return items;
+    return cacheService.remember(
+      cacheKeys.wishlist(userId),
+      { ttl: CACHE_TTL.WISHLIST },
+      async () => {
+        const items = await Wishlist.find({ user: userId })
+          .populate({
+            path: 'course',
+            select: 'title thumbnail price level instructor totalDuration averageRating totalReviews',
+            populate: { path: 'instructor', select: 'name avatar' },
+          })
+          .sort({ createdAt: -1 })
+          .lean();
+        return items;
+      }
+    );
   }
 
   // ─── Order History ────────────────────────────────────────────

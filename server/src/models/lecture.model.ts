@@ -203,5 +203,6 @@ const lectureSchema = new Schema<ILecture>(
 
 lectureSchema.index({ section: 1, order: 1 });
 lectureSchema.index({ course: 1, order: 1 });
+lectureSchema.index({ course: 1, type: 1 });
 
 export const Lecture = mongoose.model<ILecture>('Lecture', lectureSchema);

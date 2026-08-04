@@ -9,6 +9,8 @@ export const transporter = nodemailer.createTransport({
     user: env.smtpUser,
     pass: env.smtpPass,
   },
+  logger: env.smtpDebug,
+  debug: env.smtpDebug,
 });
 
 export const verifyTransporter = async (): Promise<void> => {

@@ -21,11 +21,29 @@ import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { platformSettingsService } from './platformSettings.service';
 import { affiliateService } from './affiliate.service';
+import { cacheManager } from '../cache/cacheManager';
 
 const RAZORPAY_KEY_ID = env.razorpayKeyId;
 const RAZORPAY_KEY_SECRET = env.razorpayKeySecret;
 
 export class PaymentService {
+  // ─── Cache Invalidation ─────────────────────────────────────
+  private async invalidateAfterPurchase(userId: string, courseIds: string[]): Promise<void> {
+    await Promise.allSettled([
+      cacheManager.invalidateStudentCache(userId),
+      cacheManager.invalidateAdminCache(),
+      cacheManager.invalidateRevenueCache(),
+      cacheManager.invalidateCourseCache(),
+      cacheManager.invalidateStudentCourseList(),
+      (async () => {
+        const courses = await Course.find({ _id: { $in: courseIds } }).select('instructor').lean();
+        const instructorIds = new Set(courses.map((c) => c.instructor.toString()));
+        for (const instructorId of instructorIds) {
+          await cacheManager.invalidateInstructorCache(instructorId);
+        }
+      })(),
+    ]);
+  }
   // ─── Razorpay Instance ──────────────────────────────────────
   private async getRazorpay() {
     if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
@@ -249,11 +267,13 @@ export class PaymentService {
     }
 
     if (amount === 0) {
-      return withTransaction(async (session) => {
+      const result = await withTransaction(async (session) => {
         const enrollment = await Enrollment.create([{ user: userId, course: courseId }], { session });
         await Course.findByIdAndUpdate(courseId, { $inc: { totalEnrollments: 1 } }, { session });
         return { free: true, enrollment: enrollment[0] };
       });
+      await this.invalidateAfterPurchase(userId, [courseId]);
+      return result;
     }
 
     const commissionPercent = await platformSettingsService.getCommissionPercentage();
@@ -330,6 +350,8 @@ export class PaymentService {
       await this.createPaymentSideEffects(claimed, session);
       await this.creditWallet(claimed._id.toString(), session);
       await session.commitTransaction();
+      const courseIds = claimed.course ? [claimed.course.toString()] : [];
+      await this.invalidateAfterPurchase(claimed.user.toString(), courseIds);
       return { success: true, paymentId: claimed._id };
     } catch (error) {
       await session.abortTransaction();
@@ -465,6 +487,12 @@ export class PaymentService {
       await this.createPaymentSideEffects(claimed, session);
       await this.creditWallet(claimed._id.toString(), session);
       await session.commitTransaction();
+      let courseIds: string[] = [];
+      if (claimed.bundle) {
+        const bundle = await Bundle.findById(claimed.bundle).select('courses').lean();
+        courseIds = (bundle?.courses ?? []).map((c) => c.toString());
+      }
+      await this.invalidateAfterPurchase(claimed.user.toString(), courseIds);
       return { success: true, paymentId: claimed._id };
     } catch (error) {
       await session.abortTransaction();
@@ -498,7 +526,7 @@ export class PaymentService {
     }
 
     if (amount === 0) {
-      return withTransaction(async (session) => {
+      const result = await withTransaction(async (session) => {
         const startDate = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + plan.durationDays);
@@ -513,6 +541,8 @@ export class PaymentService {
         await Subscription.findByIdAndUpdate(subscriptionId, { $inc: { totalSubscribers: 1 } }, { session });
         return { free: true, subscriptionEnrollment: subEnrollment };
       });
+      await this.invalidateAfterPurchase(userId, []);
+      return result;
     }
 
     const commissionPercent = await platformSettingsService.getCommissionPercentage();
@@ -582,6 +612,7 @@ export class PaymentService {
       await this.createPaymentSideEffects(claimed, session);
       await this.creditWallet(claimed._id.toString(), session);
       await session.commitTransaction();
+      await this.invalidateAfterPurchase(claimed.user.toString(), []);
       return { success: true, paymentId: claimed._id, subscriptionEnrollment: claimed.subscriptionEnrollment };
     } catch (error) {
       await session.abortTransaction();
@@ -1092,6 +1123,12 @@ export class PaymentService {
           { session }
         );
 
+        return updatedPayout;
+      }).then(async (updatedPayout) => {
+        await Promise.allSettled([
+          cacheManager.invalidateRevenueCache(),
+          cacheManager.invalidateInstructorCache(payout.instructor.toString()),
+        ]);
         return updatedPayout;
       });
     } catch (error: any) {

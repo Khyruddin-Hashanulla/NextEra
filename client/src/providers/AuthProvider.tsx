@@ -13,11 +13,12 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  verifyEmail: (email: string, otp: string) => Promise<User>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
 }
 
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
@@ -42,13 +43,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnReconnect: true,
   });
 
+  const applySession = useCallback(
+    (authData: { user: User; accessToken: string; refreshToken: string }) => {
+      localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, authData.accessToken);
+      localStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, authData.refreshToken);
+      queryClient.setQueryData(QUERY_KEYS.auth.user, authData.user);
+    },
+    [queryClient],
+  );
+
   const login = useCallback(async (email: string, password: string) => {
     const { data } = await authApi.login({ email, password });
-    const { user: userData, accessToken, refreshToken } = data.data;
-    localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
-    localStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, refreshToken);
-    queryClient.setQueryData(QUERY_KEYS.auth.user, userData);
-  }, [queryClient]);
+    applySession(data.data);
+  }, [applySession]);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
     const { data } = await authApi.register({ name, email, password });
@@ -57,11 +64,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const googleLogin = useCallback(async (credential: string) => {
     const { data } = await authApi.googleAuth(credential);
+    applySession(data.data);
+  }, [applySession]);
+
+  const verifyEmail = useCallback(async (email: string, otp: string): Promise<User> => {
+    const { data } = await authApi.verifyEmail({ email, otp });
     const { user: userData, accessToken, refreshToken } = data.data;
-    localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, accessToken);
-    localStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, refreshToken);
-    queryClient.setQueryData(QUERY_KEYS.auth.user, userData);
-  }, [queryClient]);
+    applySession({ user: userData, accessToken, refreshToken });
+    return userData;
+  }, [applySession]);
 
   const logout = useCallback(async () => {
     try {
@@ -93,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         googleLogin,
+        verifyEmail,
         logout,
         setUser,
       }}

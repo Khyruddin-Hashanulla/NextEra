@@ -14,7 +14,7 @@ const page = <T>(items: T[], query: Query = {}) => {
   return { items: items.slice(start, start + limit), pagination: { page: current, limit, total: items.length, totalPages: Math.ceil(items.length / limit), pages: Math.ceil(items.length / limit) } };
 };
 const queryOf = (config: AxiosRequestConfig): Query => (config.params as Query | undefined) ?? {};
-const requestUrl = (config: AxiosRequestConfig) => config.url?.split('?')[0] ?? '';
+const requestUrl = (config: AxiosRequestConfig) => (config.url?.split('?')[0] ?? '').replace(/^\/api\/v1/, '');
 const scenarioOf = (config: AxiosRequestConfig): MockScenario => (queryOf(config).__mockScenario as MockScenario | undefined) ?? mockConfig.scenario;
 
 const coursesFor = (query: Query) => {

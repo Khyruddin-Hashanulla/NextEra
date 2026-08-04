@@ -23,7 +23,6 @@ const referralSchema = new Schema<IReferral>(
       ref: 'User',
       required: true,
       unique: true,
-      index: true,
     },
     code: {
       type: String,
@@ -44,6 +43,5 @@ const referralSchema = new Schema<IReferral>(
 );
 
 referralSchema.index({ referrer: 1, status: 1 });
-referralSchema.index({ referred: 1 }, { unique: true });
 
 export const Referral = mongoose.model<IReferral>('Referral', referralSchema);

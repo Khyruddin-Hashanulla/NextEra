@@ -67,6 +67,7 @@ const referralTransactionSchema = new Schema<IReferralTransaction>(
 );
 
 referralTransactionSchema.index({ affiliate: 1, createdAt: -1 });
+referralTransactionSchema.index({ affiliate: 1, type: 1, status: 1 });
 referralTransactionSchema.index({ payment: 1 }, { unique: true });
 referralTransactionSchema.index({ referral: 1 });
 

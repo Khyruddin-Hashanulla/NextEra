@@ -207,6 +207,7 @@ courseSchema.pre('save', function (next) {
 courseSchema.index({ slug: 1 }, { unique: true, sparse: true });
 courseSchema.index({ status: 1, isApproved: 1 });
 courseSchema.index({ instructor: 1, status: 1 });
+courseSchema.index({ instructor: 1, createdAt: -1 });
 courseSchema.index({ featured: 1, status: 1 });
 
 export const Course = mongoose.model<ICourse>('Course', courseSchema);

@@ -7,6 +7,7 @@ import passport from 'passport';
 import { corsOptions } from './config/cors';
 import { env } from './config/env';
 import { connectDB } from './config/db';
+import { connectRedis } from './config/redis';
 import { verifyTransporter } from './config/nodemailer';
 import './config/passport';
 import { globalRateLimiter } from './middlewares/rateLimiter.middleware';
@@ -27,12 +28,14 @@ import { sanitizeRequestBody } from './utils/sanitize';
 import path from 'path';
 import fs from 'fs';
 import { handleSitemap, handleSitemapType } from './services/sitemap.service';
+import { cacheService } from './cache/cache.service';
 
 const app = createApp();
 
 const startServer = async (): Promise<void> => {
   try {
     await connectDB();
+    await connectRedis();
     await verifyTransporter();
     await bulkSeedFeatures();
     startScheduler();
@@ -116,8 +119,15 @@ export function createApp(): express.Application {
 
   app.use('/api/v1', routes);
 
-  app.get('/health', (_req, res) => {
-    res.status(200).json({ success: true, message: 'Server is running', timestamp: new Date().toISOString() });
+  app.get('/health', async (_req, res) => {
+    const cacheHealth = await cacheService.healthCheck();
+    const cacheStats = cacheService.getStats();
+    res.status(200).json({
+      success: true,
+      message: 'Server is running',
+      timestamp: new Date().toISOString(),
+      cache: { ...cacheHealth, ...cacheStats },
+    });
   });
 
   app.use(errorHandler);
