@@ -65,6 +65,10 @@ const config: Config = {
           DEFAULT: 'hsl(var(--warning))',
           foreground: 'hsl(var(--warning-foreground))',
         },
+        aura: {
+          primary: 'hsl(var(--aura-primary))',
+          secondary: 'hsl(var(--aura-secondary))',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',

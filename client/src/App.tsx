@@ -5,6 +5,7 @@ import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { SEO_DEFAULTS } from '@/lib/seo';
 import { organizationSchema, websiteSchema } from '@/lib/schema';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 const defaultSEO = {
   title: SEO_DEFAULTS.DEFAULT_TITLE,
@@ -19,7 +20,9 @@ export function AppLayout() {
       <StructuredData schemas={[organizationSchema(), websiteSchema()]} />
       <Navbar />
       <main className="flex-1">
-        <Outlet />
+        <PageContainer variant="subtle">
+          <Outlet />
+        </PageContainer>
       </main>
       <Footer />
     </div>

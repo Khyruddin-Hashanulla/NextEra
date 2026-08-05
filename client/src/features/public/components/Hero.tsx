@@ -8,6 +8,7 @@ import { ArrowRight, BookOpen, GraduationCap, Sparkles, Users } from 'lucide-rea
 import { formatCompactCount } from '@/features/public/components/home/AnimatedNumber';
 import { HeroShowcase } from '@/features/public/components/home/HeroShowcase';
 import type { HomeStats } from '@/features/public/components/home/useHomePageData';
+import { PageBackground } from '@/components/layout/PageBackground';
 
 interface HeroProps {
   className?: string;
@@ -41,22 +42,7 @@ export function Hero({ className, stats }: HeroProps) {
       )}
     >
       {/* Background layers */}
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-background to-background" />
-        <div
-          className="absolute inset-0 opacity-[0.4] dark:opacity-[0.25]"
-          style={{
-            backgroundImage:
-              'linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)',
-            backgroundSize: '56px 56px',
-            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%)',
-            WebkitMaskImage:
-              'radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%)',
-          }}
-        />
-        <div className="absolute -top-40 right-[-10%] h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
-        <div className="absolute bottom-0 left-[-5%] h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
-      </div>
+      <PageBackground variant="hero" className="absolute inset-0 -z-10" />
 
       <div className="container-custom relative z-10">
         <div className="grid items-center gap-14 py-16 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:py-24">

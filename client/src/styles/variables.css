@@ -25,6 +25,10 @@
   --ring: 24 96% 53%;
   --radius: 0.75rem;
 
+  /* Decorative background glows */
+  --aura-primary: 24 96% 53%;
+  --aura-secondary: 262 83% 58%;
+
   /* Typography */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;

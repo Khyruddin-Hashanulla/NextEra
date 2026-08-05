@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ElementType } from 'react';
 import { SidebarLogoutButton } from '@/components/layout/SidebarLogoutButton';
 import { ROUTES } from '@/lib/constants';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 interface NavItem {
   href: string;
@@ -69,19 +70,20 @@ export function StudentLayout() {
   );
 
   return (
-    <div className="flex min-h-screen">
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => setMobileOpen(false)}
-            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-            aria-hidden="true"
-          />
-        )}
-      </AnimatePresence>
+    <PageContainer variant="dashboard">
+      <div className="flex min-h-screen">
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+              aria-hidden="true"
+            />
+          )}
+        </AnimatePresence>
 
       <AnimatePresence>
         {mobileOpen && (
@@ -187,7 +189,8 @@ export function StudentLayout() {
           <Outlet />
         </div>
       </div>
-    </div>
+      </div>
+    </PageContainer>
   );
 }
 

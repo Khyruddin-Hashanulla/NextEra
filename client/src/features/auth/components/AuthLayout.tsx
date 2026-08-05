@@ -4,6 +4,7 @@ import { GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { PageBackground } from '@/components/layout/PageBackground';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -12,12 +13,8 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, className }: AuthLayoutProps) {
   return (
-    <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden bg-gradient-to-b from-background via-muted/30 to-background px-4 py-12 sm:py-16 lg:py-20">
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 h-80 w-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/5 blur-3xl" />
-      </div>
+    <div className="relative isolate flex min-h-[calc(100vh-4rem)] items-center justify-center overflow-hidden px-4 py-12 sm:py-16 lg:py-20">
+      <PageBackground variant="auth" className="absolute inset-0 -z-10" />
 
       <motion.div
         initial={{ opacity: 0, y: 24 }}
