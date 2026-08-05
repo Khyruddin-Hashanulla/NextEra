@@ -17,7 +17,7 @@ const studentUser: User = {
   role: 'student',
   avatar: { url: '', publicId: '' },
   bio: '',
-  socialLinks: { youtube: '', twitter: '', linkedin: '', github: '' },
+  socialLinks: { youtube: '', twitter: '', linkedin: '', github: '', portfolio: '', website: '' },
   isEmailVerified: true,
   createdAt: '2024-01-01T00:00:00.000Z',
 };

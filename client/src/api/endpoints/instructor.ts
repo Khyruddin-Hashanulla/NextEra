@@ -129,6 +129,12 @@ export const instructorApi = {
   updateProfile: (data: Partial<InstructorProfile>, signal?: AbortSignal) =>
     axiosInstance.put<ApiResponse<InstructorProfile>>('/instructor/profile', data, { signal }),
 
+  uploadAvatar: (formData: FormData, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<{ url: string; publicId: string }>>('/instructor/profile/avatar', formData, {
+      signal,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
   getSubscriptionStatus: (signal?: AbortSignal) =>
     axiosInstance.get<ApiResponse<SubscriptionStatus>>('/instructor/subscription', { signal }),
 

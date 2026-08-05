@@ -10,6 +10,8 @@ export const updateProfileSchema = z.object({
       twitter: z.string().url().max(FIELD_SIZES.URL).or(z.literal('')).optional(),
       linkedin: z.string().url().max(FIELD_SIZES.URL).or(z.literal('')).optional(),
       github: z.string().url().max(FIELD_SIZES.URL).or(z.literal('')).optional(),
+      portfolio: z.string().url().max(FIELD_SIZES.URL).or(z.literal('')).optional(),
+      website: z.string().url().max(FIELD_SIZES.URL).or(z.literal('')).optional(),
     })
     .optional(),
   avatar: z

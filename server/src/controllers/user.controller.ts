@@ -14,6 +14,17 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Profile updated successfully', user));
 });
 
+export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.currentUser!.userId;
+  const file = req.file;
+  if (!file) {
+    res.status(HTTP_STATUS.BAD_REQUEST).json(ApiResponse.success('No file provided', null));
+    return;
+  }
+  const { url, publicId } = await userService.uploadAvatar(userId, file);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Avatar uploaded successfully', { url, publicId }));
+});
+
 export const changePassword = asyncHandler(async (req: Request, res: Response) => {
   const { currentPassword, newPassword } = req.body;
   await userService.changePassword(req.currentUser!.userId, currentPassword, newPassword);

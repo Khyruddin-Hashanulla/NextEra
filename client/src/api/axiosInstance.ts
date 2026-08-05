@@ -4,20 +4,37 @@ import { mockAdapter } from '@/mocks/adapter';
 import { isMockingEnabled } from '@/mocks/config';
 
 let csrfToken: string | null = null;
+let csrfFetchPromise: Promise<void> | null = null;
 
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS'];
 
-export async function fetchCsrfToken(signal?: AbortSignal): Promise<void> {
-  try {
-    const { data } = await axiosInstance.get('/csrf-token', { signal });
-    csrfToken = data.data?.csrfToken ?? null;
-  } catch {
-    csrfToken = null;
+export function fetchCsrfToken(signal?: AbortSignal): Promise<void> {
+  if (csrfFetchPromise) {
+    return csrfFetchPromise;
   }
+
+  csrfFetchPromise = (async () => {
+    try {
+      const { data } = await axiosInstance.get('/csrf-token', { signal });
+      csrfToken = data.data?.csrfToken ?? null;
+    } catch {
+      csrfToken = null;
+    } finally {
+      csrfFetchPromise = null;
+    }
+  })();
+
+  return csrfFetchPromise;
 }
 
 export function getCsrfToken(): string | null {
   return csrfToken;
+}
+
+function setCsrfHeader(config: InternalAxiosRequestConfig, token: string | null): void {
+  if (config.headers && token) {
+    config.headers['X-CSRF-Token'] = token;
+  }
 }
 
 const axiosInstance = axios.create({
@@ -33,7 +50,7 @@ if (isMockingEnabled()) {
 }
 
 axiosInstance.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN);
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -42,10 +59,12 @@ axiosInstance.interceptors.request.use(
     if (
       config.method &&
       !SAFE_METHODS.includes(config.method.toUpperCase()) &&
-      csrfToken &&
       config.headers
     ) {
-      config.headers['X-CSRF-Token'] = csrfToken;
+      if (!csrfToken) {
+        await fetchCsrfToken();
+      }
+      setCsrfHeader(config, csrfToken);
     }
 
     return config;
@@ -127,7 +146,15 @@ axiosInstance.interceptors.response.use(
 
     const errorData = error.response?.data as { message?: string } | undefined;
     if (error.response?.status === 403 && errorData?.message?.toLowerCase().includes('csrf')) {
-      await fetchCsrfToken();
+      const csrfRetried = (originalRequest as { _csrfRetry?: boolean })._csrfRetry;
+      if (!csrfRetried) {
+        (originalRequest as { _csrfRetry?: boolean })._csrfRetry = true;
+        await fetchCsrfToken();
+        if (csrfToken) {
+          setCsrfHeader(originalRequest, csrfToken);
+          return axiosInstance(originalRequest);
+        }
+      }
     }
 
     return Promise.reject(error);

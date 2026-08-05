@@ -13,6 +13,8 @@ export interface User {
     twitter: string;
     linkedin: string;
     github: string;
+    portfolio: string;
+    website: string;
   };
   isEmailVerified: boolean;
   createdAt: string;
@@ -26,6 +28,8 @@ export interface UpdateProfileRequest {
     twitter?: string;
     linkedin?: string;
     github?: string;
+    portfolio?: string;
+    website?: string;
   };
   avatar?: {
     url: string;

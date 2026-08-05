@@ -504,6 +504,18 @@ export class InstructorService {
     return user;
   }
 
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
+    const { uploadService } = await import('../services/upload.service');
+    const result = await uploadService.uploadImage(file);
+    
+    // Persist the avatar URL to the user document
+    await User.findByIdAndUpdate(userId, { 
+      $set: { avatar: { url: result.url, publicId: result.publicId } } 
+    }, { new: true });
+    
+    return result;
+  }
+
   async getSubscriptionStatus(userId: string) {
     const user = await User.findById(userId).select('instructorProfile.subscriptionStatus instructorProfile.subscriptionExpiry').lean();
     if (!user) throw ApiError.notFound('User not found');

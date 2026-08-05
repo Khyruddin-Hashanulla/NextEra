@@ -37,6 +37,17 @@ export class UserService {
     return this.sanitizeUser(user);
   }
 
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
+    const { uploadService } = await import('../services/upload.service');
+    const result = await uploadService.uploadImage(file);
+
+    await User.findByIdAndUpdate(userId, {
+      $set: { avatar: { url: result.url, publicId: result.publicId } },
+    }, { new: true });
+
+    return result;
+  }
+
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
     const user = await User.findById(userId).select('+password');
     if (!user) {

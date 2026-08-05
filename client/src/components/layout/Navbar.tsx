@@ -190,8 +190,12 @@ export function Navbar() {
                   to="/dashboard"
                   className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all"
                 >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                    {user?.name?.charAt(0).toUpperCase()}
+                  <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+                    {user?.avatar?.url ? (
+                      <img src={user.avatar.url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      user?.name?.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <span className="hidden lg:inline">{user?.name}</span>
                 </Link>
@@ -277,8 +281,12 @@ export function Navbar() {
           {isAuthenticated ? (
             <div className="border-t border-border px-4 py-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-semibold">
-                  {user?.name?.charAt(0).toUpperCase()}
+                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                  {user?.avatar?.url ? (
+                    <img src={user.avatar.url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    user?.name?.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <span className="text-sm font-medium text-foreground">{user?.name}</span>
               </div>

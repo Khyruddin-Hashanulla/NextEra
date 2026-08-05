@@ -215,22 +215,27 @@ describe('fetchCsrfToken', () => {
 });
 
 describe('axiosInstance csrf recovery', () => {
-  it('fetches a fresh CSRF token on a 403 csrf error', async () => {
+  it('refetches the CSRF token and retries once on a 403 csrf error', async () => {
     localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, 'my-token');
-    let csrfRefetched = 0;
+    let csrfAttempts = 0;
     server.use(
-      http.get('/api/v1/csrf-check', () => {
-        csrfRefetched += 1;
-        return HttpResponse.json({ message: 'Invalid CSRF token' }, { status: 403 });
+      http.post('/api/v1/csrf-check', ({ request }) => {
+        csrfAttempts += 1;
+        if (csrfAttempts === 1) {
+          return HttpResponse.json({ message: 'Invalid CSRF token' }, { status: 403 });
+        }
+        return HttpResponse.json({ data: { ok: true, csrf: request.headers.get('x-csrf-token') } });
       }),
       http.get('/api/v1/csrf-token', () =>
         HttpResponse.json({ data: { csrfToken: 'rotated-token' } }),
       ),
     );
 
-    await expect(axiosInstance.get('/csrf-check')).rejects.toThrow();
-    expect(csrfRefetched).toBe(1);
+    const { data } = await axiosInstance.post('/csrf-check', {});
+    expect(csrfAttempts).toBe(2);
     expect(getCsrfToken()).toBe('rotated-token');
+    expect(data.data.ok).toBe(true);
+    expect(data.data.csrf).toBe('rotated-token');
   });
 
   it('rejects queued 401s when the refresh itself fails', async () => {

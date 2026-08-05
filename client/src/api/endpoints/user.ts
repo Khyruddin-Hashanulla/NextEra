@@ -9,6 +9,12 @@ export const userApi = {
   updateProfile: (data: UpdateProfileRequest, signal?: AbortSignal) =>
     axiosInstance.put<ApiResponse<User>>('/users/me', data, { signal }),
 
+  uploadAvatar: (formData: FormData, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<{ url: string; publicId: string }>>('/users/me/avatar', formData, {
+      signal,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
   changePassword: (data: ChangePasswordRequest, signal?: AbortSignal) =>
     axiosInstance.put<ApiResponse<null>>('/users/me/password', data, { signal }),
 };

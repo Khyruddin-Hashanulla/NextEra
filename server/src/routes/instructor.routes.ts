@@ -3,7 +3,7 @@ import {
   apply, getApplicationStatus, getDashboard, getRevenue, getMyPayouts,
   getAnalytics, getStudents, listCoupons, createCoupon, updateCoupon,
   deleteCoupon, getReviews, replyToReview, listAnnouncements, createAnnouncement,
-  deleteAnnouncement, getProfile, updateProfile, getSubscriptionStatus,
+  deleteAnnouncement, getProfile, uploadAvatar, updateProfile, getSubscriptionStatus,
   listCertificates, issueCertificate,
 } from '../controllers/instructor.controller';
 import {
@@ -44,6 +44,7 @@ import {
   submissionsListQuerySchema,
 } from '../validators/assignment.validator';
 import { purchaseInstructorSubscriptionSchema } from '../validators/revenue.validator';
+import { createUploadMiddleware, FileCategory, handleMulterError } from '../middlewares/upload.middleware';
 
 const router = Router();
 
@@ -90,6 +91,16 @@ router.delete('/announcements/:id', verifyAnnouncementOwnership, deleteAnnouncem
 
 // Profile
 router.get('/profile', getProfile);
+router.post('/profile/avatar', (req, res, next) => {
+  const upload = createUploadMiddleware(FileCategory.PROFILE_PICTURE);
+  upload.single('avatar')(req, res, (err) => {
+    if (err) {
+      res.status(400).json({ success: false, message: handleMulterError(err), data: null });
+      return;
+    }
+    next();
+  });
+}, uploadAvatar);
 router.put('/profile', validate(updateProfileSchema), updateProfile);
 
 // Subscription (instructor's own platform subscription)

@@ -16,6 +16,8 @@ export function buildUser(overrides: Partial<User> = {}): User {
       twitter: '',
       linkedin: '',
       github: '',
+      portfolio: '',
+      website: '',
     },
     isEmailVerified: true,
     createdAt: '2026-01-01T00:00:00.000Z',
