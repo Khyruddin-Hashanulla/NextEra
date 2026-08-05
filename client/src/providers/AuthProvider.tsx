@@ -82,6 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       localStorage.removeItem(TOKEN_KEYS.ACCESS_TOKEN);
       localStorage.removeItem(TOKEN_KEYS.REFRESH_TOKEN);
+      // Push null explicitly so mounted observers (e.g. the Navbar) re-render
+      // immediately. removeQueries/clear alone empty the cache but leave
+      // already-mounted useQuery observers holding their previous snapshot.
+      queryClient.cancelQueries({ queryKey: QUERY_KEYS.auth.user });
+      queryClient.setQueryData(QUERY_KEYS.auth.user, null);
       queryClient.removeQueries({ queryKey: QUERY_KEYS.auth.user });
       queryClient.clear();
     }
@@ -91,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       queryClient.setQueryData(QUERY_KEYS.auth.user, user);
     } else {
+      queryClient.setQueryData(QUERY_KEYS.auth.user, null);
       queryClient.removeQueries({ queryKey: QUERY_KEYS.auth.user });
     }
   }, [queryClient]);

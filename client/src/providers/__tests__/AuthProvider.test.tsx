@@ -123,6 +123,25 @@ describe('AuthProvider', () => {
     expect(result.current.user).toBeNull();
   });
 
+  it('logout immediately nulls the user without a manual re-render', async () => {
+    localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, 'token');
+    const { result, queryClient } = renderAuth();
+    const user = buildUserWithRole('student', { _id: 'student-1' });
+
+    await act(async () => {
+      queryClient.setQueryData(QUERY_KEYS.auth.user, user);
+    });
+    await waitFor(() => expect(result.current.user?._id).toBe('student-1'));
+
+    await act(async () => {
+      await result.current.logout();
+    });
+
+    await waitFor(() => expect(result.current.user).toBeNull());
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(queryClient.getQueryData(QUERY_KEYS.auth.user)).toBeUndefined();
+  });
+
   it('setUser stores a user and clears on null', async () => {
     const { result, rerender } = renderAuth();
     const user = buildUserWithRole('instructor', { _id: 'i-1' });
