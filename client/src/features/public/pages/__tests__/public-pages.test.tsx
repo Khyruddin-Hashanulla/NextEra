@@ -49,14 +49,17 @@ function renderPage(
 }
 
 describe('HomePage', () => {
-  it('renders the hero, features, stats, courses, instructors, testimonials, blog, CTA, newsletter', async () => {
+  it('renders hero, categories, courses, stats, testimonials, blog and newsletter sections', async () => {
     renderPage(<HomePage />, '/', '*');
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Master In-Demand Skills with NextEra Learning/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
-    expect(screen.getByText(/Everything You Need to Succeed/i)).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Trusted by Learners Worldwide/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
-    await waitFor(() => expect(screen.getByText(/Ready to Start Your Learning Journey?/i)).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
-    const stayUpdated = await waitFor(() => screen.getAllByRole('heading', { name: /Stay Updated/i }), { timeout: LONG_TIMEOUT });
-    expect(stayUpdated.length).toBeGreaterThan(0);
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Explore top categories/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Featured courses to level up/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    expect(screen.getByRole('heading', { name: /Everything you need to succeed/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Share your expertise. Inspire thousands./i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /A learning platform you can trust/i })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Success stories from our community/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    expect(screen.getByRole('heading', { name: /Learning insights & industry trends/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Get learning tips in your inbox/i })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('button', { name: /Subscribe/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
   });
 });

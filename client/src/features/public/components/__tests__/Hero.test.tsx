@@ -38,18 +38,18 @@ describe('Hero CTA', () => {
     expect(screen.getByRole('link', { name: /Explore Courses/ })).toHaveAttribute('href', '/courses');
   });
 
-  it('routes Start Free Trial to the register page when logged out', () => {
+  it('routes Start Teaching to the instructor apply page when logged out', () => {
     renderHero();
-    const trial = screen.getByRole('link', { name: /Start Free Trial/ });
-    expect(trial).toHaveAttribute('href', '/auth/register');
+    const teaching = screen.getByRole('link', { name: /Start Teaching/ });
+    expect(teaching).toHaveAttribute('href', '/instructor/apply');
     expect(screen.queryByRole('link', { name: /Go to Dashboard/ })).not.toBeInTheDocument();
   });
 
-  it('routes the secondary CTA to the dashboard instead of register when logged in', () => {
+  it('routes the secondary CTA to the dashboard instead of the apply page when logged in', () => {
     renderHero(studentUser);
     const dashboard = screen.getByRole('link', { name: /Go to Dashboard/ });
     expect(dashboard).toHaveAttribute('href', '/student');
-    expect(screen.queryByRole('link', { name: /Start Free Trial/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Start Teaching/ })).not.toBeInTheDocument();
   });
 
   it('still routes Explore Courses to the courses listing when logged in', () => {

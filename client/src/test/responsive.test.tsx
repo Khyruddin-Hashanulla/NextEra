@@ -55,19 +55,19 @@ describe('Responsive behavior', () => {
     it('renders at mobile viewport', async () => {
       setViewport(BREAKPOINTS.mobile);
       wrap(<HomePage />, { route: '/' });
-      expect(screen.getByRole('heading', { name: /Master In-Demand Skills with NextEra Learning/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })).toBeInTheDocument();
     });
 
     it('renders at tablet viewport', async () => {
       setViewport(BREAKPOINTS.tablet);
       wrap(<HomePage />, { route: '/' });
-      expect(screen.getByRole('heading', { name: /Master In-Demand Skills with NextEra Learning/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })).toBeInTheDocument();
     });
 
     it('renders at desktop viewport', async () => {
       setViewport(BREAKPOINTS.desktop);
       wrap(<HomePage />, { route: '/' });
-      expect(screen.getByRole('heading', { name: /Master In-Demand Skills with NextEra Learning/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })).toBeInTheDocument();
     });
   });
 

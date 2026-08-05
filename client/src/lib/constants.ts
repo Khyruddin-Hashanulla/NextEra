@@ -53,6 +53,7 @@ export const ROUTES = {
   STUDENT_PROFILE: '/student/profile',
 
   // Instructor
+  INSTRUCTOR_APPLY: '/instructor/apply',
   INSTRUCTOR_DASHBOARD: '/instructor',
   INSTRUCTOR_COURSES: '/instructor/courses',
   INSTRUCTOR_CREATE_COURSE: '/instructor/courses/create',

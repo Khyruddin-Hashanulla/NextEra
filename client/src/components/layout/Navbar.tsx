@@ -38,6 +38,7 @@ export function Navbar() {
       links.push({ label: 'Dashboard', path: getDashboardRoute(user?.role) });
     }
     links.push(
+      { label: 'Blog', path: ROUTES.BLOG },
       { label: 'About', path: ROUTES.ABOUT },
       { label: 'Contact', path: ROUTES.CONTACT },
       { label: 'FAQ', path: ROUTES.FAQ },
@@ -93,22 +94,24 @@ export function Navbar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b border-border">
+    <nav className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
-          <Link to={ROUTES.HOME} className="flex items-center gap-2 flex-shrink-0">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground text-sm font-bold">N</div>
-            <span className="text-xl font-bold tracking-tight">
-              <span className="text-primary">Next</span>
+          <Link to={ROUTES.HOME} className="flex items-center gap-2.5 flex-shrink-0" aria-label="NextEra home">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-600 text-sm font-bold text-white shadow-md shadow-primary/25">
+              N
+            </div>
+            <span className="text-xl font-bold tracking-tight font-display">
+              <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">Next</span>
               <span className="text-foreground">Era</span>
             </span>
           </Link>
 
-          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
+          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-0.5 rounded-full border border-border bg-muted/40 p-1">
             <div className="relative" ref={exploreRef}>
               <button
                 onClick={() => setExploreOpen(!exploreOpen)}
-                className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all"
+                className="flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 aria-expanded={exploreOpen}
                 aria-controls={exploreMenuId}
                 aria-haspopup="true"
@@ -119,12 +122,12 @@ export function Navbar() {
                 <div
                   id={exploreMenuId}
                   role="menu"
-                  className="absolute top-full left-0 mt-1 w-48 bg-popover rounded-xl shadow-lg border border-border py-2 animate-in fade-in slide-in-from-top-2"
+                  className="absolute top-full left-0 mt-2 w-48 bg-popover rounded-2xl shadow-xl shadow-black/5 border border-border py-2 animate-in fade-in slide-in-from-top-2"
                 >
                   <Link
                     to={ROUTES.COURSES}
                     role="menuitem"
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent"
                     onClick={() => setExploreOpen(false)}
                   >
                     <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" /> All Courses
@@ -132,7 +135,7 @@ export function Navbar() {
                   <Link
                     to="/instructors"
                     role="menuitem"
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent"
                     onClick={() => setExploreOpen(false)}
                   >
                     <GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" /> Instructors
@@ -145,10 +148,10 @@ export function Navbar() {
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  'px-3 py-2 text-sm font-medium rounded-lg transition-all',
+                  'rounded-full px-3.5 py-2 text-sm font-medium transition-all',
                   isActive(link.path)
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background'
                 )}
               >
                 {link.label}
@@ -156,7 +159,7 @@ export function Navbar() {
             ))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <div className="relative hidden sm:block" ref={searchRef}>
               {searchOpen ? (
                 <form onSubmit={handleSearch} className="flex items-center" role="search">
@@ -174,7 +177,7 @@ export function Navbar() {
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground rounded-full hover:bg-accent transition-all"
                   aria-label="Open search"
                   aria-expanded={searchOpen}
                 >
@@ -187,7 +190,7 @@ export function Navbar() {
 
             <button
               onClick={toggleTheme}
-              className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="p-2 text-muted-foreground hover:text-foreground rounded-full hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               aria-label={`Switch to ${mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'} theme`}
             >
               <ThemeIcon className="h-4 w-4" aria-hidden="true" />
@@ -198,7 +201,7 @@ export function Navbar() {
                 <UserMenu />
               </div>
             ) : (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden md:flex items-center gap-1.5">
                 <Button
                   variant="ghost"
                   onClick={() => navigate(ROUTES.LOGIN)}
@@ -208,7 +211,7 @@ export function Navbar() {
                 </Button>
                 <Button
                   onClick={() => navigate(ROUTES.REGISTER)}
-                  className="text-sm font-medium rounded-full px-5"
+                  className="text-sm font-medium rounded-full px-5 shadow-md shadow-primary/25"
                 >
                   Create Free Account
                 </Button>
@@ -216,7 +219,7 @@ export function Navbar() {
             )}
 
             <button
-              className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-controls={mobileMenuId}
@@ -254,7 +257,7 @@ export function Navbar() {
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'px-3 py-2.5 text-sm font-medium rounded-lg transition-all',
+                    'px-3 py-2.5 text-sm font-medium rounded-xl transition-all',
                     isActive(link.path)
                       ? 'text-primary bg-primary/10'
                       : 'text-muted-foreground hover:text-foreground hover:bg-accent'
@@ -263,7 +266,7 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link to="/instructors" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg">
+              <Link to="/instructors" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl">
                 Instructors
               </Link>
             </nav>
@@ -275,7 +278,7 @@ export function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary to-violet-600 text-primary-foreground text-sm font-semibold">
                   {user?.avatar?.url ? (
                     <img src={user.avatar.url} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -287,12 +290,12 @@ export function Navbar() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={toggleTheme}
-                  className="p-2 text-muted-foreground hover:text-foreground rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="p-2 text-muted-foreground hover:text-foreground rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label={`Switch to ${mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'} theme`}
                 >
                   <ThemeIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
-                <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-destructive rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="Sign out">
+                <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-destructive rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="Sign out">
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>

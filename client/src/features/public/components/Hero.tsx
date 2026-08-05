@@ -4,179 +4,147 @@ import { useAuth } from '@/providers/AuthProvider';
 import { getDashboardRoute, ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ArrowRight, CheckCircle2, Users, BookOpen, Award, Clock, ChevronDown } from 'lucide-react';
-import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { ArrowRight, BookOpen, GraduationCap, Sparkles, Users } from 'lucide-react';
+import { formatCompactCount } from '@/features/public/components/home/AnimatedNumber';
+import { HeroShowcase } from '@/features/public/components/home/HeroShowcase';
+import type { HomeStats } from '@/features/public/components/home/useHomePageData';
 
 interface HeroProps {
   className?: string;
+  stats?: HomeStats;
 }
 
-export function Hero({ className }: HeroProps) {
+const easeOut = [0.22, 1, 0.36, 1] as const;
+
+export function Hero({ className, stats }: HeroProps) {
   const { isAuthenticated, user } = useAuth();
 
   const secondaryCta = isAuthenticated
     ? { label: 'Go to Dashboard', to: getDashboardRoute(user?.role) }
-    : { label: 'Start Free Trial', to: ROUTES.REGISTER };
+    : { label: 'Start Teaching', to: ROUTES.INSTRUCTOR_APPLY };
+
+  const hasStats = Boolean(stats && stats.courses + stats.students + stats.instructors > 0);
+
+  const heroStats = hasStats
+    ? [
+        { icon: BookOpen, label: 'Courses', value: stats!.courses },
+        { icon: Users, label: 'Learners', value: stats!.students },
+        { icon: GraduationCap, label: 'Instructors', value: stats!.instructors },
+      ]
+    : [];
 
   return (
-    <section className={cn('relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-background', className)}>
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-primary/5 blur-3xl" />
-        <svg className="absolute left-0 bottom-0 w-full h-auto opacity-5" viewBox="0 0 1440 320" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-          <path fill="hsl(var(--primary))" d="M0,224L48,213.3C96,203,192,181,288,181.3C384,181,480,203,576,218.7C672,235,768,245,864,234.7C960,224,1056,192,1152,170.7C1248,149,1344,139,1392,133.3L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z" />
-        </svg>
+    <section
+      className={cn(
+        'relative overflow-hidden bg-background',
+        className,
+      )}
+    >
+      {/* Background layers */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.07] via-background to-background" />
+        <div
+          className="absolute inset-0 opacity-[0.4] dark:opacity-[0.25]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)',
+            backgroundSize: '56px 56px',
+            maskImage: 'radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%)',
+            WebkitMaskImage:
+              'radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 100%)',
+          }}
+        />
+        <div className="absolute -top-40 right-[-10%] h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+        <div className="absolute bottom-0 left-[-5%] h-80 w-80 rounded-full bg-violet-500/10 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16 py-16 lg:py-24">
-          <motion.div
-            className="flex-1 text-center lg:text-left"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.div
-              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-sm font-medium text-primary mb-6"
-              initial={{ opacity: 0, y: 10 }}
+      <div className="container-custom relative z-10">
+        <div className="grid items-center gap-14 py-16 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:py-24">
+          {/* Copy */}
+          <div className="text-center lg:text-left">
+            <motion.span
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2, duration: 0.4 }}
+              transition={{ duration: 0.5, ease: easeOut }}
+              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary"
             >
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              New: AI-Powered Learning Assistant Now Available
-            </motion.div>
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Master in-demand skills with NextEra
+            </motion.span>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-tight">
-              Master In-Demand Skills with{' '}
-              <span className="text-primary">NextEra</span>{' '}
-              Learning
-            </h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1, ease: easeOut }}
+              className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl font-display"
+            >
+              Learn from industry experts and{' '}
+              <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
+                build your career
+              </span>
+            </motion.h1>
 
-            <p className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-2xl lg:mx-0 mx-auto leading-relaxed">
-              Learn from industry experts, build real-world projects, and earn verified certificates.
-              Join over 50,000 learners already upgrading their careers.
-            </p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2, ease: easeOut }}
+              className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0"
+            >
+              Gain job-ready skills through expert-led courses, hands-on projects, and
+              recognized certificates — at your own pace, on any device.
+            </motion.p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 mt-8 justify-center lg:justify-start">
-              <Button asChild size="lg" className="rounded-full bg-primary hover:bg-primary-700 text-white px-8 h-12 text-base font-semibold shadow-md shadow-primary/30">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3, ease: easeOut }}
+              className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
+            >
+              <Button asChild size="lg" className="h-12 w-full rounded-full px-8 text-base font-semibold shadow-lg shadow-primary/25 sm:w-auto">
                 <Link to={ROUTES.COURSES}>
-                  Explore Courses <ArrowRight className="ml-2 h-4 w-4" />
+                  Explore Courses <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="rounded-full px-8 h-12 text-base border-2 border-border hover:border-foreground/20 text-foreground/80">
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="h-12 w-full rounded-full border-2 px-8 text-base font-semibold sm:w-auto"
+              >
                 <Link to={secondaryCta.to}>{secondaryCta.label}</Link>
               </Button>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-wrap items-center gap-6 mt-10 justify-center lg:justify-start">
-              {[
-                { icon: BookOpen, label: '500+ Courses' },
-                { icon: Users, label: '50K+ Students' },
-                { icon: Award, label: 'Certificates' },
-                { icon: Clock, label: 'Lifetime Access' },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <item.icon className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            className="flex-1 relative"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
-          >
-            <div className="relative mx-auto w-full max-w-lg">
-              <div className="aspect-square rounded-full border-2 border-primary/30 p-4">
-                <div className="w-full h-full rounded-full border-2 border-primary/20 p-4 overflow-hidden bg-muted/50">
-                  <OptimizedImage
-                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&h=600&fit=crop"
-                    alt="Group of students collaborating on a project in a modern classroom"
-                    className="rounded-full object-cover"
-                    lazy={false}
-                    fetchPriority="high"
-                  />
-                </div>
-              </div>
-
-              <motion.div
-                className="absolute top-8 right-0 bg-background rounded-xl shadow-lg border border-border p-4"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-foreground">5K+</p>
-                    <p className="text-xs text-muted-foreground">Online Courses</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="absolute bottom-12 -left-4 bg-background rounded-xl shadow-lg border border-border p-4"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50">
-                    <Users className="h-5 w-5 text-yellow-600" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-foreground">50K+</p>
-                    <p className="text-xs text-muted-foreground">Active Students</p>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                className="absolute bottom-4 right-8 bg-background rounded-xl shadow-lg border border-border p-3"
+            {heroStats.length > 0 && (
+              <motion.dl
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.0, duration: 0.5 }}
+                transition={{ duration: 0.6, delay: 0.4, ease: easeOut }}
+                className="mt-10 grid grid-cols-3 gap-6 border-t border-border/70 pt-8"
               >
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    {[1,2,3,4,5].map((star) => (
-                      <svg key={star} className="w-3 h-3 fill-yellow-400 text-yellow-400" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>
-                    ))}
+                {heroStats.map((stat) => (
+                  <div key={stat.label} className="text-center lg:text-left">
+                    <dt className="sr-only">{stat.label}</dt>
+                    <dd className="flex items-center justify-center gap-1.5 text-2xl font-bold text-foreground lg:justify-start">
+                      <stat.icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                      {formatCompactCount(stat.value)}+
+                    </dd>
+                    <dd className="mt-1 text-sm text-muted-foreground">{stat.label}</dd>
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground">4.9/5 Rating</span>
-                </div>
-              </motion.div>
-            </div>
+                ))}
+              </motion.dl>
+            )}
+          </div>
+
+          {/* Learning topics showcase */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.94, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.25, ease: easeOut }}
+          >
+            <HeroShowcase />
           </motion.div>
         </div>
-
-        <motion.div
-          className="flex flex-col items-center pb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.5 }}
-        >
-          <span className="text-sm text-muted-foreground/70 mb-2">Trusted by learners at</span>
-          <div className="flex items-center gap-8 sm:gap-12 opacity-40">
-            {['Google', 'Microsoft', 'Amazon', 'Meta', 'Netflix'].map((company) => (
-              <span key={company} className="text-lg sm:text-xl font-bold text-muted-foreground/70 tracking-tight">{company}</span>
-            ))}
-          </div>
-        </motion.div>
-      </div>
-
-      <div className="flex justify-center pb-8">
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <ChevronDown className="h-6 w-6 text-muted-foreground/50" />
-        </motion.div>
       </div>
     </section>
   );

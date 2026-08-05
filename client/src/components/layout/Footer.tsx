@@ -32,19 +32,26 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-100">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+    <footer className="relative overflow-hidden bg-slate-950 text-slate-200">
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="absolute -top-32 right-[10%] h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-24 left-[5%] h-64 w-64 rounded-full bg-violet-600/20 blur-3xl" />
+      </div>
+
+      <div className="relative mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="py-16 lg:py-20">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-            <div className="space-y-4">
-              <Link to="/" className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white text-sm font-bold">N</div>
-                <span className="text-xl font-bold tracking-tight">
-                  <span className="text-primary">Next</span>
+            <div className="space-y-5">
+              <Link to="/" className="flex items-center gap-2.5" aria-label="NextEra home">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-600 text-sm font-bold text-white shadow-md shadow-primary/30">
+                  N
+                </div>
+                <span className="text-xl font-bold tracking-tight font-display">
+                  <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">Next</span>
                   <span className="text-white">Era</span>
                 </span>
               </Link>
-              <p className="text-sm leading-relaxed text-gray-400 max-w-xs">
+              <p className="text-sm leading-relaxed text-slate-400 max-w-xs">
                 Empowering learners worldwide with industry-focused courses, expert instructors, and hands-on projects.
               </p>
               <div className="flex items-center gap-3">
@@ -55,7 +62,7 @@ export function Footer() {
                     aria-label={social.label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-gray-400 hover:bg-primary hover:text-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-primary hover:text-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
                   >
                     <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4" aria-hidden="true" focusable="false">
                       <path d={social.icon} />
@@ -66,11 +73,11 @@ export function Footer() {
             </div>
 
             <nav aria-label="Product links">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">Product</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">Product</h4>
               <ul className="space-y-3">
                 {productLinks.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">
+                    <Link to={link.path} className="text-sm text-slate-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded">
                       {link.label}
                     </Link>
                   </li>
@@ -79,11 +86,11 @@ export function Footer() {
             </nav>
 
             <nav aria-label="Company links">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">Company</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">Company</h4>
               <ul className="space-y-3">
                 {companyLinks.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">
+                    <Link to={link.path} className="text-sm text-slate-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded">
                       {link.label}
                     </Link>
                   </li>
@@ -92,11 +99,11 @@ export function Footer() {
             </nav>
 
             <nav aria-label="Support links">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-gray-300 mb-4">Support</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">Support</h4>
               <ul className="space-y-3">
                 {supportLinks.map((link) => (
                   <li key={link.label}>
-                    <Link to={link.path} className="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">
+                    <Link to={link.path} className="text-sm text-slate-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded">
                       {link.label}
                     </Link>
                   </li>
@@ -107,13 +114,13 @@ export function Footer() {
         </div>
 
         <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-slate-500">
             &copy; {new Date().getFullYear()} NextEra LMS. All rights reserved.
           </p>
           <nav aria-label="Legal links" className="flex items-center gap-6">
-            <Link to="/privacy" className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">Privacy Policy</Link>
-            <Link to="/terms" className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">Terms of Service</Link>
-            <Link to="/faq" className="text-sm text-gray-500 hover:text-gray-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 rounded">FAQ</Link>
+            <Link to="/privacy" className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded">Privacy Policy</Link>
+            <Link to="/terms" className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded">Terms of Service</Link>
+            <Link to="/faq" className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded">FAQ</Link>
           </nav>
         </div>
       </div>
