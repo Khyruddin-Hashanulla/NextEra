@@ -22,6 +22,7 @@ const STATUS_STYLES: Record<AssignmentStatus, { label: string; className: string
 
 function StatusBadge({ status }: { status: AssignmentStatus }) {
   const s = STATUS_STYLES[status];
+  if (!s) return null;
   return <Badge className={s.className}>{s.label}</Badge>;
 }
 
@@ -94,17 +95,20 @@ export function AssignmentsPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {['all', 'assigned', 'submitted', 'under_review', 'graded', 'returned_for_resubmission', 'rejected', 'overdue'].map((s) => (
-          <button
-            key={s}
-            onClick={() => { setStatusFilter(s); setPage(1); }}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              statusFilter === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
-            }`}
-          >
-            {STATUS_STYLES[s as AssignmentStatus].label}
-          </button>
-        ))}
+        {['all', 'assigned', 'submitted', 'under_review', 'graded', 'returned_for_resubmission', 'rejected', 'overdue'].map((s) => {
+          const label = STATUS_STYLES[s as AssignmentStatus]?.label ?? (s === 'all' ? 'All' : s);
+          return (
+            <button
+              key={s}
+              onClick={() => { setStatusFilter(s); setPage(1); }}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                statusFilter === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {!items.length ? (

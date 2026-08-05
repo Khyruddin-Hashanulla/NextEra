@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { FIELD_SIZES } from '../utils/validation';
-import { ASSIGNMENT_STATUSES } from '../utils/grading';
+import { ASSIGNMENT_FILTER_STATUSES, ASSIGNMENT_STATUSES } from '../utils/grading';
 
 const assignmentFileSchema = z.object({
   url: z.string().min(1).max(FIELD_SIZES.URL),
@@ -71,7 +71,7 @@ export const assignmentsOverviewQuerySchema = z.object({
     page: z.coerce.number().int().positive().default(1).catch(1),
     limit: z.coerce.number().int().min(1).max(100).default(20).catch(20),
     courseId: z.string().optional(),
-    status: z.enum(ASSIGNMENT_STATUSES).optional(),
+    status: z.enum(ASSIGNMENT_FILTER_STATUSES).optional(),
   }),
 });
 

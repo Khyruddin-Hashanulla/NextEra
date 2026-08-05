@@ -146,6 +146,10 @@ describe('assignmentsOverviewQuerySchema', () => {
     expect(assignmentsOverviewQuerySchema.safeParse({ query: { status: 'graded' } }).success).toBe(true);
   });
 
+  it('accepts the computed "overdue" status filter', () => {
+    expect(assignmentsOverviewQuerySchema.safeParse({ query: { status: 'overdue' } }).success).toBe(true);
+  });
+
   it('rejects unknown status', () => {
     expect(assignmentsOverviewQuerySchema.safeParse({ query: { status: 'nope' } }).success).toBe(false);
   });

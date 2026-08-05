@@ -3,11 +3,13 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, BookOpen, Heart, Award, FileQuestion,
   ShoppingBag, Bell, User, ChevronLeft, Menu, X, GraduationCap,
-  ClipboardList,
+  ClipboardList, ArrowLeft,
 } from 'lucide-react';
 import { useState, useEffect, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ElementType } from 'react';
+import { SidebarLogoutButton } from '@/components/layout/SidebarLogoutButton';
+import { ROUTES } from '@/lib/constants';
 
 interface NavItem {
   href: string;
@@ -67,7 +69,7 @@ export function StudentLayout() {
   );
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)]">
+    <div className="flex min-h-screen">
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -88,7 +90,8 @@ export function StudentLayout() {
             initial="closed"
             animate="open"
             exit="closed"
-            className="fixed left-0 top-16 z-50 h-[calc(100vh-4rem)] w-64 border-r bg-background lg:hidden"
+            id={mobileMenuId}
+            className="fixed left-0 top-0 z-50 h-screen w-64 border-r bg-background lg:hidden"
             role="dialog"
             aria-modal="true"
             aria-label="Mobile navigation menu"
@@ -100,7 +103,7 @@ export function StudentLayout() {
 
       <aside
         className={cn(
-          'hidden border-r bg-background transition-all duration-300 lg:sticky lg:top-16 lg:block lg:h-[calc(100vh-4rem)]',
+          'hidden border-r bg-background transition-all duration-300 lg:sticky lg:top-0 lg:block lg:h-screen',
           collapsed ? 'w-16' : 'w-60'
         )}
         aria-label="Sidebar navigation"
@@ -157,22 +160,26 @@ export function StudentLayout() {
               {!collapsed && 'Back to site'}
             </Link>
           </div>
+          <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
+            <SidebarLogoutButton collapsed={collapsed} />
+          </div>
         </div>
       </aside>
 
       <div className={cn('flex flex-1 flex-col', 'lg:pl-0')}>
-        <div className="sticky top-16 z-20 flex items-center gap-3 border-b bg-background/80 px-4 py-3 backdrop-blur-sm lg:hidden">
+        <div className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-sm lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label="Open menu"
             aria-expanded={mobileOpen}
             aria-controls={mobileMenuId}
+            aria-haspopup="dialog"
           >
             <Menu className="h-5 w-5" aria-hidden="true" />
           </button>
-          <div>
-            <h2 className="text-sm font-semibold">{activeItem?.label || 'Dashboard'}</h2>
+          <div className="min-w-0 flex-1">
+            <h2 className="truncate text-sm font-semibold leading-none">{activeItem?.label || 'Dashboard'}</h2>
           </div>
         </div>
 
@@ -187,12 +194,12 @@ export function StudentLayout() {
 function SidebarContent({ navItems: items, collapsed, onClose }: { navItems: NavItem[]; collapsed: boolean; onClose?: () => void }) {
   const location = useLocation();
   return (
-    <>
+    <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b px-4 py-3">
         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Menu</span>
         {onClose && (
-          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="Close menu">
-            <X className="h-4 w-4" aria-hidden="true" />
+          <button onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="Close menu">
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
         )}
       </div>
@@ -214,6 +221,17 @@ function SidebarContent({ navItems: items, collapsed, onClose }: { navItems: Nav
           );
         })}
       </nav>
-    </>
+      <div className="space-y-1 border-t p-3">
+        <Link
+          to={ROUTES.HOME}
+          onClick={onClose}
+          className="flex items-center gap-2 rounded-md px-2 py-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Back to Website
+        </Link>
+        <SidebarLogoutButton collapsed={collapsed} />
+      </div>
+    </div>
   );
 }

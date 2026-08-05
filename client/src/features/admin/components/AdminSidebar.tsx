@@ -9,6 +9,7 @@ import {
   ClipboardCheck, History, Video,
 } from 'lucide-react';
 import { useState } from 'react';
+import { SidebarLogoutButton } from '@/components/layout/SidebarLogoutButton';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -56,18 +57,18 @@ export function AdminSidebar() {
   return (
     <aside
       className={cn(
-        'fixed left-0 top-16 z-30 h-[calc(100vh-4rem)] border-r bg-background transition-all duration-300',
+        'fixed left-0 top-0 z-30 flex h-screen flex-col border-r bg-background transition-all duration-300',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm"
+        className="absolute -right-3 top-4 flex h-6 w-6 items-center justify-center rounded-full border bg-background shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       >
         <ChevronLeft className={cn('h-3 w-3 transition-transform', collapsed && 'rotate-180')} />
       </button>
 
-      <nav className="flex flex-col gap-1 p-3 pt-6">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3 pt-6">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
           return (
@@ -88,6 +89,10 @@ export function AdminSidebar() {
           );
         })}
       </nav>
+
+      <div className="border-t p-3">
+        <SidebarLogoutButton collapsed={collapsed} />
+      </div>
     </aside>
   );
 }

@@ -151,12 +151,13 @@ export const getAssignments = asyncHandler(async (req: Request, res: Response) =
 });
 
 export const getAssignmentsOverview = asyncHandler(async (req: Request, res: Response) => {
-  const { page, limit, courseId } = req.query as any;
+  const { page, limit, courseId, status } = req.query as any;
   const data = await studentService.getAssignmentsOverview(
     req.currentUser!.userId,
     Number(page) || 1,
     Number(limit) || 20,
-    courseId
+    courseId,
+    status
   );
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Assignments overview fetched', data));
 });

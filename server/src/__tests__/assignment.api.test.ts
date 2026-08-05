@@ -276,7 +276,15 @@ describe('GET /api/v1/student/assignments/overview', () => {
     mockStudentService.getAssignmentsOverview.mockResolvedValue({ assignments: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } });
     const res = await request(buildApp()).get('/api/v1/student/assignments/overview');
     expect(res.status).toBe(200);
-    expect(mockStudentService.getAssignmentsOverview).toHaveBeenCalledWith(STUDENT_ID, 1, 20, undefined);
+    expect(mockStudentService.getAssignmentsOverview).toHaveBeenCalledWith(STUDENT_ID, 1, 20, undefined, undefined);
+  });
+
+  it('accepts and forwards the "overdue" status filter', async () => {
+    asUser(ROLES.STUDENT, STUDENT_ID);
+    mockStudentService.getAssignmentsOverview.mockResolvedValue({ assignments: [], pagination: { page: 1, limit: 12, total: 0, pages: 0 } });
+    const res = await request(buildApp()).get('/api/v1/student/assignments/overview?page=1&limit=12&status=overdue');
+    expect(res.status).toBe(200);
+    expect(mockStudentService.getAssignmentsOverview).toHaveBeenCalledWith(STUDENT_ID, 1, 12, undefined, 'overdue');
   });
 
   it('rejects invalid status filter with 400', async () => {

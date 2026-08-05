@@ -199,12 +199,65 @@ describe('StudentService.getAssignmentsOverview', () => {
       { _id: '6a6c5515bf5829ee772c2ce4', title: 'Future', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: futureDue.toISOString() } },
     ];
     (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
-    (Lecture.countDocuments as jest.Mock).mockResolvedValue(2);
     (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([]));
 
     const overview = await service.getAssignmentsOverview(USER_ID, 1, 20);
 
     expect(overview.assignments[0].status).toBe('overdue');
     expect(overview.assignments[1].status).toBe('assigned');
+  });
+
+  it('filters by the computed "overdue" status', async () => {
+    (Enrollment.find as jest.Mock).mockReturnValue(chainable([{ course: COURSE_ID }]));
+    const pastDue = new Date(Date.now() - 86400000);
+    const futureDue = new Date(Date.now() + 86400000);
+    const lectures = [
+      { _id: LECTURE_ID, title: 'Past', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: pastDue.toISOString() } },
+      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Future', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: futureDue.toISOString() } },
+    ];
+    (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
+    (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([]));
+
+    const overview = await service.getAssignmentsOverview(USER_ID, 1, 20, undefined, 'overdue');
+
+    expect(overview.assignments).toHaveLength(1);
+    expect(overview.assignments[0].title).toBe('Past');
+    expect(overview.pagination.total).toBe(1);
+  });
+
+  it('filters by the computed "assigned" status', async () => {
+    (Enrollment.find as jest.Mock).mockReturnValue(chainable([{ course: COURSE_ID }]));
+    const pastDue = new Date(Date.now() - 86400000);
+    const futureDue = new Date(Date.now() + 86400000);
+    const lectures = [
+      { _id: LECTURE_ID, title: 'Past', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: pastDue.toISOString() } },
+      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Future', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: futureDue.toISOString() } },
+    ];
+    (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
+    (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([]));
+
+    const overview = await service.getAssignmentsOverview(USER_ID, 1, 20, undefined, 'assigned');
+
+    expect(overview.assignments).toHaveLength(1);
+    expect(overview.assignments[0].title).toBe('Future');
+    expect(overview.pagination.total).toBe(1);
+  });
+
+  it('filters by a stored submission status', async () => {
+    (Enrollment.find as jest.Mock).mockReturnValue(chainable([{ course: COURSE_ID }]));
+    const lectures = [
+      { _id: LECTURE_ID, title: 'Graded', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: null } },
+      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Pending', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: null } },
+    ];
+    (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
+    (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([
+      { _id: '5f9c7f9c7f9c7f9c7f9c7f9c', lecture: LECTURE_ID, status: 'graded' },
+    ]));
+
+    const overview = await service.getAssignmentsOverview(USER_ID, 1, 20, undefined, 'graded');
+
+    expect(overview.assignments).toHaveLength(1);
+    expect(overview.assignments[0].title).toBe('Graded');
+    expect(overview.assignments[0].status).toBe('graded');
   });
 });

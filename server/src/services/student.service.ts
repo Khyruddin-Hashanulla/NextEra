@@ -589,7 +589,7 @@ export class StudentService {
     return submissions;
   }
 
-  async getAssignmentsOverview(userId: string, page = 1, limit = 20, courseId?: string) {
+  async getAssignmentsOverview(userId: string, page = 1, limit = 20, courseId?: string, status?: string) {
     const enrolledCourses = await Enrollment.find({ user: userId })
       .select('course')
       .lean();
@@ -605,16 +605,10 @@ export class StudentService {
       lectureMatch.course = { $in: enrolledCourseIds };
     }
 
-    const skip = (page - 1) * limit;
-    const [lectures, total] = await Promise.all([
-      Lecture.find(lectureMatch)
-        .populate('course', 'title thumbnail')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Lecture.countDocuments(lectureMatch),
-    ]);
+    const lectures = await Lecture.find(lectureMatch)
+      .populate('course', 'title thumbnail')
+      .sort({ createdAt: -1 })
+      .lean();
 
     const lectureIds = lectures.map((l) => l._id);
     const submissions = await AssignmentSubmission.find({
@@ -633,13 +627,13 @@ export class StudentService {
       const now = new Date();
       const isOverdue = dueDate ? now > dueDate : false;
 
-      let status: string;
+      let computedStatus: string;
       if (submission) {
-        status = submission.status;
+        computedStatus = submission.status;
       } else if (isOverdue) {
-        status = 'overdue';
+        computedStatus = 'overdue';
       } else {
-        status = 'assigned';
+        computedStatus = 'assigned';
       }
 
       return {
@@ -648,7 +642,7 @@ export class StudentService {
         course: lecture.course,
         dueDate,
         maxMarks: assignmentConfig?.totalMarks || 100,
-        status,
+        status: computedStatus,
         submission: submission
           ? {
               _id: submission._id,
@@ -665,8 +659,12 @@ export class StudentService {
       };
     });
 
+    const filtered = status ? items.filter((item) => item.status === status) : items;
+    const total = filtered.length;
+    const skip = (page - 1) * limit;
+
     return {
-      assignments: items,
+      assignments: filtered.slice(skip, skip + limit),
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
     };
   }

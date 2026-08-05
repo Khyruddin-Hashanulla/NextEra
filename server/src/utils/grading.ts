@@ -13,6 +13,13 @@ export const ASSIGNMENT_STATUSES = [
 export type AssignmentStatus = (typeof ASSIGNMENT_STATUSES)[number];
 
 /**
+ * Statuses accepted by the assignment overview filter. 'overdue' is a computed
+ * status derived at query time (not stored on any document), so it must be
+ * whitelisted separately from ASSIGNMENT_STATUSES.
+ */
+export const ASSIGNMENT_FILTER_STATUSES = [...ASSIGNMENT_STATUSES, 'overdue'] as const;
+
+/**
  * Statuses on which an instructor/admin may apply grading data.
  * 'assigned' has no submission document, 'returned_for_resubmission' resets
  * grading when the student resubmits.
