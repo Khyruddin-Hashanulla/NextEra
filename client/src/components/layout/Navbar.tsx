@@ -3,19 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/providers/AuthProvider';
 import { useTheme } from '@/providers/ThemeProvider';
-import { ROUTES } from '@/lib/constants';
+import { getDashboardRoute, getProfileRoute, ROUTES } from '@/lib/constants';
 import { useToast } from '@/providers/ToastProvider';
+import { UserMenu } from '@/components/layout/UserMenu';
 import { Menu, X, Search, ChevronDown, LogOut, BookOpen, GraduationCap, Sun, Moon, Monitor } from 'lucide-react';
-import { useState, useRef, useEffect, useId } from 'react';
+import { useState, useRef, useEffect, useId, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-
-const navLinks = [
-  { label: 'Home', path: ROUTES.HOME },
-  { label: 'Courses', path: ROUTES.COURSES },
-  { label: 'About', path: ROUTES.ABOUT },
-  { label: 'Contact', path: ROUTES.CONTACT },
-  { label: 'FAQ', path: ROUTES.FAQ },
-];
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -35,6 +28,22 @@ export function Navbar() {
 
   const themeIcon = mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
   const ThemeIcon = themeIcon;
+
+  const navLinks = useMemo<{ label: string; path: string }[]>(() => {
+    const links: { label: string; path: string }[] = [
+      { label: 'Home', path: ROUTES.HOME },
+      { label: 'Courses', path: ROUTES.COURSES },
+    ];
+    if (isAuthenticated) {
+      links.push({ label: 'Dashboard', path: getDashboardRoute(user?.role) });
+    }
+    links.push(
+      { label: 'About', path: ROUTES.ABOUT },
+      { label: 'Contact', path: ROUTES.CONTACT },
+      { label: 'FAQ', path: ROUTES.FAQ },
+    );
+    return links;
+  }, [isAuthenticated, user?.role]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -186,26 +195,7 @@ export function Navbar() {
 
             {isAuthenticated ? (
               <div className="hidden md:flex items-center gap-2">
-                <Link
-                  to="/dashboard"
-                  className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all"
-                >
-                  <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-                    {user?.avatar?.url ? (
-                      <img src={user.avatar.url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      user?.name?.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <span className="hidden lg:inline">{user?.name}</span>
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 text-muted-foreground hover:text-foreground rounded-lg hover:bg-accent transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="h-4 w-4" aria-hidden="true" />
-                </button>
+                <UserMenu />
               </div>
             ) : (
               <div className="hidden md:flex items-center gap-2">
@@ -280,16 +270,20 @@ export function Navbar() {
           </div>
           {isAuthenticated ? (
             <div className="border-t border-border px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-sm font-semibold">
+              <Link
+                to={getProfileRoute(user?.role)}
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex min-w-0 items-center gap-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-primary-foreground text-sm font-semibold">
                   {user?.avatar?.url ? (
                     <img src={user.avatar.url} alt="" className="h-full w-full object-cover" />
                   ) : (
                     user?.name?.charAt(0).toUpperCase()
                   )}
                 </div>
-                <span className="text-sm font-medium text-foreground">{user?.name}</span>
-              </div>
+                <span className="truncate text-sm font-medium text-foreground">{user?.name}</span>
+              </Link>
               <div className="flex items-center gap-1">
                 <button
                   onClick={toggleTheme}

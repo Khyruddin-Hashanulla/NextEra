@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ROUTES } from '@/lib/constants';
+import { useAuth } from '@/providers/AuthProvider';
+import { getDashboardRoute, ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Users, BookOpen, Award, Clock, ChevronDown } from 'lucide-react';
@@ -11,6 +12,12 @@ interface HeroProps {
 }
 
 export function Hero({ className }: HeroProps) {
+  const { isAuthenticated, user } = useAuth();
+
+  const secondaryCta = isAuthenticated
+    ? { label: 'Go to Dashboard', to: getDashboardRoute(user?.role) }
+    : { label: 'Start Free Trial', to: ROUTES.REGISTER };
+
   return (
     <section className={cn('relative overflow-hidden bg-gradient-to-br from-primary/10 via-background to-background', className)}>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -57,9 +64,7 @@ export function Hero({ className }: HeroProps) {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="rounded-full px-8 h-12 text-base border-2 border-border hover:border-foreground/20 text-foreground/80">
-                <Link to={ROUTES.REGISTER}>
-                  Start Free Trial
-                </Link>
+                <Link to={secondaryCta.to}>{secondaryCta.label}</Link>
               </Button>
             </div>
 

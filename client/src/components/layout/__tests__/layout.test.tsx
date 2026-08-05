@@ -160,13 +160,20 @@ describe('Navbar', () => {
     expect(screen.getByRole('button', { name: 'Create Free Account' })).toBeInTheDocument();
   });
 
-  it('shows the user name and sign out when authenticated', () => {
+  it('shows the account menu with dashboard links when authenticated', async () => {
+    const user = userEvent.setup();
     renderWithProviders(<Navbar />, {
       route: '/',
       mockAuth: createAuthValue({ user: studentUser, isAuthenticated: true }),
     });
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/student');
     expect(screen.getByText('Alice')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Account menu for Alice' }));
+    expect(screen.getByRole('menuitem', { name: /Profile/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Dashboard/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /My Courses/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Settings/ })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /Logout/ })).toBeInTheDocument();
   });
 
   it('opens the Explore dropdown', async () => {
@@ -232,7 +239,7 @@ describe('Navbar', () => {
     expect(screen.getByTestId('location')).toHaveTextContent('/contact');
   });
 
-  it('signs out and shows a toast', async () => {
+  it('signs out from the account menu and shows a toast', async () => {
     const user = userEvent.setup();
     const logout = vi.fn(async () => {});
     renderWithProviders(
@@ -245,8 +252,10 @@ describe('Navbar', () => {
         mockAuth: createAuthValue({ user: studentUser, isAuthenticated: true, logout }),
       },
     );
-    await user.click(screen.getByRole('button', { name: 'Sign out' }));
+    await user.click(screen.getByRole('button', { name: 'Account menu for Alice' }));
+    await user.click(screen.getByRole('menuitem', { name: /Logout/ }));
     expect(logout).toHaveBeenCalled();
     expect(await screen.findByText('Logged out successfully')).toBeInTheDocument();
+    expect(screen.getByTestId('location')).toHaveTextContent('/auth/login');
   });
 });

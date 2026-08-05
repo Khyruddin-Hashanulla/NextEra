@@ -127,6 +127,39 @@ export function getDashboardRoute(role?: string): string {
   }
 }
 
+export function getProfileRoute(role?: string): string {
+  switch (role) {
+    case ROLES.ADMIN:
+      return ROUTES.ADMIN_SETTINGS;
+    case ROLES.INSTRUCTOR:
+      return ROUTES.INSTRUCTOR_PROFILE;
+    default:
+      return ROUTES.STUDENT_PROFILE;
+  }
+}
+
+export function getSettingsRoute(role?: string): string {
+  switch (role) {
+    case ROLES.ADMIN:
+      return ROUTES.ADMIN_SETTINGS;
+    case ROLES.INSTRUCTOR:
+      return ROUTES.INSTRUCTOR_PROFILE;
+    default:
+      return ROUTES.STUDENT_PROFILE;
+  }
+}
+
+export function getMyCoursesRoute(role?: string): string {
+  switch (role) {
+    case ROLES.ADMIN:
+      return ROUTES.ADMIN_COURSES;
+    case ROLES.INSTRUCTOR:
+      return ROUTES.INSTRUCTOR_COURSES;
+    default:
+      return ROUTES.STUDENT_COURSES;
+  }
+}
+
 export const COURSE_LEVELS = ['beginner', 'intermediate', 'advanced'] as const;
 export const COURSE_STATUS = ['draft', 'published', 'archived'] as const;
 

@@ -4,6 +4,10 @@ import {
   TOKEN_KEYS,
   ROUTES,
   ROLES,
+  getDashboardRoute,
+  getProfileRoute,
+  getSettingsRoute,
+  getMyCoursesRoute,
   COURSE_LEVELS,
   COURSE_STATUS,
   ENROLLMENT_STATUS,
@@ -52,6 +56,34 @@ describe('constants', () => {
     expect(ROLES.STUDENT).toBe('student');
     expect(ROLES.INSTRUCTOR).toBe('instructor');
     expect(ROLES.ADMIN).toBe('admin');
+  });
+
+  it('maps roles to dashboard routes', () => {
+    expect(getDashboardRoute(ROLES.ADMIN)).toBe('/admin');
+    expect(getDashboardRoute(ROLES.INSTRUCTOR)).toBe('/instructor');
+    expect(getDashboardRoute(ROLES.STUDENT)).toBe('/student');
+    expect(getDashboardRoute(undefined)).toBe('/student');
+  });
+
+  it('maps roles to profile routes', () => {
+    expect(getProfileRoute(ROLES.ADMIN)).toBe(ROUTES.ADMIN_SETTINGS);
+    expect(getProfileRoute(ROLES.INSTRUCTOR)).toBe('/instructor/profile');
+    expect(getProfileRoute(ROLES.STUDENT)).toBe('/student/profile');
+    expect(getProfileRoute(undefined)).toBe('/student/profile');
+  });
+
+  it('maps roles to settings routes', () => {
+    expect(getSettingsRoute(ROLES.ADMIN)).toBe(ROUTES.ADMIN_SETTINGS);
+    expect(getSettingsRoute(ROLES.INSTRUCTOR)).toBe('/instructor/profile');
+    expect(getSettingsRoute(ROLES.STUDENT)).toBe('/student/profile');
+    expect(getSettingsRoute(undefined)).toBe('/student/profile');
+  });
+
+  it('maps roles to my courses routes', () => {
+    expect(getMyCoursesRoute(ROLES.ADMIN)).toBe(ROUTES.ADMIN_COURSES);
+    expect(getMyCoursesRoute(ROLES.INSTRUCTOR)).toBe('/instructor/courses');
+    expect(getMyCoursesRoute(ROLES.STUDENT)).toBe('/student/my-courses');
+    expect(getMyCoursesRoute(undefined)).toBe('/student/my-courses');
   });
 
   it('defines levels and statuses', () => {
