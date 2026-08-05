@@ -4,7 +4,7 @@ import {
   getAnalytics, getStudents, listCoupons, createCoupon, updateCoupon,
   deleteCoupon, getReviews, replyToReview, listAnnouncements, createAnnouncement,
   deleteAnnouncement, getProfile, uploadAvatar, updateProfile, getSubscriptionStatus,
-  listCertificates, issueCertificate,
+  listCertificates, issueCertificate, prepareApplyPayload,
 } from '../controllers/instructor.controller';
 import {
   getInstructorRevenueDetail,
@@ -44,13 +44,32 @@ import {
   submissionsListQuerySchema,
 } from '../validators/assignment.validator';
 import { purchaseInstructorSubscriptionSchema } from '../validators/revenue.validator';
-import { createUploadMiddleware, FileCategory, handleMulterError } from '../middlewares/upload.middleware';
+import { createUploadMiddleware, createFieldUploadMiddleware, FileCategory, handleMulterError } from '../middlewares/upload.middleware';
+import { UPLOAD_POLICIES } from '../config/upload';
 
 const router = Router();
 
 router.use(authenticate);
 
-router.post('/apply', validate(applySchema), apply);
+router.post('/apply', (req, res, next) => {
+  if (!req.is('multipart/form-data')) return next();
+  const upload = createFieldUploadMiddleware(
+    [
+      { name: 'photo', category: FileCategory.IMAGE, maxCount: 1 },
+      { name: 'resume', category: FileCategory.DOCUMENT, maxCount: 1 },
+      { name: 'demoVideo', category: FileCategory.VIDEO, maxCount: 1 },
+      { name: 'identityProof', category: FileCategory.CERTIFICATE, maxCount: 1 },
+    ],
+    { fileSize: UPLOAD_POLICIES[FileCategory.VIDEO].maxSize }
+  );
+  upload(req, res, (err) => {
+    if (err) {
+      res.status(400).json({ success: false, message: handleMulterError(err), data: null });
+      return;
+    }
+    next();
+  });
+}, prepareApplyPayload, validate(applySchema), apply);
 router.get('/application-status', getApplicationStatus);
 
 // Instructor-only routes

@@ -1,10 +1,50 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { instructorService } from '../services/instructor.service';
 import { paymentService } from '../services/payment.service';
+import { uploadService } from '../services/upload.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
+import { ApiError } from '../utils/ApiError';
 import { HTTP_STATUS } from '../constants/httpStatus';
 import { quizService } from '../services/quiz.service';
+import { FileCategory } from '../config/upload';
+import { sanitizeRequestBody } from '../utils/sanitize';
+
+const APPLY_JSON_FIELDS = ['teachingCategories', 'taxDetails', 'bankDetails'] as const;
+
+const APPLY_FILE_FIELDS: Record<string, FileCategory> = {
+  photo: FileCategory.IMAGE,
+  resume: FileCategory.DOCUMENT,
+  demoVideo: FileCategory.VIDEO,
+  identityProof: FileCategory.CERTIFICATE,
+};
+
+export const prepareApplyPayload = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
+  const body: Record<string, unknown> = { ...req.body };
+
+  for (const key of APPLY_JSON_FIELDS) {
+    const value = body[key];
+    if (typeof value === 'string' && value.trim() !== '') {
+      try {
+        body[key] = JSON.parse(value);
+      } catch {
+        return next(ApiError.badRequest(`${key} must be valid JSON`));
+      }
+    }
+  }
+
+  const files = (req.files as Record<string, Express.Multer.File[]> | undefined) ?? {};
+  for (const [field, category] of Object.entries(APPLY_FILE_FIELDS)) {
+    const file = files[field]?.[0];
+    if (file) {
+      const { url, publicId } = await uploadService.uploadFile(file, category);
+      body[field] = { url, publicId };
+    }
+  }
+
+  req.body = body;
+  sanitizeRequestBody(req, _res, next);
+});
 
 export const apply = asyncHandler(async (req: Request, res: Response) => {
   const data = await instructorService.apply(req.currentUser!.userId, req.body);

@@ -56,7 +56,7 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
     if (file.name.length > MAX_FILENAME_LENGTH) {
       return 'Filename is too long';
     }
-    if (!isValidExtension(file.name, accept) || !isValidMimeType(file, accept)) {
+    if (!isValidExtension(file.name, accept) && !isValidMimeType(file, accept)) {
       return `Invalid file type. Accepted: ${accept}`;
     }
     if (file.size > maxSize) {

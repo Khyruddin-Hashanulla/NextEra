@@ -20,8 +20,8 @@ export interface UploadPolicy {
 
 export const UPLOAD_POLICIES: Record<FileCategory, UploadPolicy> = {
   [FileCategory.IMAGE]: {
-    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const,
-    allowedExtensions: ['.jpg', '.jpeg', '.png', '.webp', '.gif'] as const,
+    allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/heic', 'image/heif', 'image/avif'] as const,
+    allowedExtensions: ['.jpg', '.jpeg', '.jfif', '.png', '.webp', '.gif', '.heic', '.heif', '.avif'] as const,
     maxSize: 5 * 1024 * 1024,
     cloudinaryResourceType: 'image',
     cloudinaryFolder: 'nextera/images',
@@ -74,8 +74,8 @@ export const UPLOAD_POLICIES: Record<FileCategory, UploadPolicy> = {
     cloudinaryFolder: 'nextera/source-code',
   },
   [FileCategory.CERTIFICATE]: {
-    allowedMimeTypes: ['application/pdf', 'image/png', 'image/jpeg'] as const,
-    allowedExtensions: ['.pdf', '.png', '.jpg', '.jpeg'] as const,
+    allowedMimeTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/heic', 'image/heif', 'image/avif'] as const,
+    allowedExtensions: ['.pdf', '.png', '.jpg', '.jpeg', '.heic', '.heif', '.avif'] as const,
     maxSize: 10 * 1024 * 1024,
     cloudinaryResourceType: 'raw',
     cloudinaryFolder: 'nextera/certificates',

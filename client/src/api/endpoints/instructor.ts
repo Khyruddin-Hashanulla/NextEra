@@ -13,7 +13,10 @@ import { InstructorRevenueDetail, InstructorSubscription } from '@/types/revenue
 
 export const instructorApi = {
   apply: (data: Record<string, any>, signal?: AbortSignal) =>
-    axiosInstance.post<ApiResponse<any>>('/instructor/apply', data, { signal }),
+    axiosInstance.post<ApiResponse<any>>('/instructor/apply', data, {
+      signal,
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 
   getApplicationStatus: (signal?: AbortSignal) =>
     axiosInstance.get<ApiResponse<{ applied: boolean; status?: string; application?: any }>>('/instructor/application-status', { signal }),

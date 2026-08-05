@@ -52,7 +52,10 @@ export function createMultiUploadMiddleware(category: FileCategory, maxFiles = 5
   });
 }
 
-export function createFieldUploadMiddleware(fields: { name: string; category: FileCategory; maxCount?: number }[]) {
+export function createFieldUploadMiddleware(
+  fields: { name: string; category: FileCategory; maxCount?: number }[],
+  limits?: multer.Options['limits']
+) {
   const storage = multer.memoryStorage();
   const fieldConfigs: multer.Field[] = fields.map((f) => ({
     name: f.name,
@@ -88,7 +91,10 @@ export function createFieldUploadMiddleware(fields: { name: string; category: Fi
 
   return multer({
     storage,
-    limits: { files: fields.reduce((sum, f) => sum + (f.maxCount || 1), 0) },
+    limits: {
+      files: fields.reduce((sum, f) => sum + (f.maxCount || 1), 0),
+      ...limits,
+    },
     fileFilter,
   }).fields(fieldConfigs);
 }
