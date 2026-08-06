@@ -568,7 +568,7 @@ export function ApplicationForm() {
         >
           {mutation.isPending ? 'Submitting...' : (
             <>
-              Submit Application <Send className="ml-2 h-4 w-4" aria-hidden="true" />
+              Submit Application <Send className="h-4 w-4" aria-hidden="true" />
             </>
           )}
         </Button>

@@ -219,7 +219,7 @@ export function CodingProblemSolvePage() {
 
           <div className="flex gap-2">
             <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || !code.trim()} className="flex-1">
-              {submitMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Running...</> : 'Submit'}
+              {submitMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Running...</> : 'Submit'}
             </Button>
           </div>
         </div>

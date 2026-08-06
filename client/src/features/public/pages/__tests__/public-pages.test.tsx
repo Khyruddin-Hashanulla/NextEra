@@ -191,10 +191,13 @@ describe('Static public pages', () => {
     await waitFor(() => expect(screen.getAllByText(/Instructor User/i).length).toBeGreaterThan(0), { timeout: LONG_TIMEOUT });
     expect(screen.getByText(/Areas of Expertise/i)).toBeInTheDocument();
     expect(screen.getAllByText(/MSc Computer Science/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Professional Background/i)).toBeInTheDocument();
+    expect(screen.getByText(/Professional Information/i)).toBeInTheDocument();
     expect(screen.getByText(/Contact Information/i)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /View Resume/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Watch Intro Video/i })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Recent Courses/i)).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    await waitFor(() => expect(screen.getByText(/Student Reviews/i)).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    await waitFor(() => expect(screen.getByText(/Related Instructors/i)).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
   });
 
   it('InstructorProfilePage shows Instructor Not Found for an invalid id', async () => {

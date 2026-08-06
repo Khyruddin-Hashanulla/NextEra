@@ -23,12 +23,18 @@ export function BlogCardSkeleton() {
 
 export function InstructorCardSkeleton() {
   return (
-    <div className="flex flex-col items-center text-center p-6 space-y-4">
-      <Skeleton className="h-20 w-20 rounded-full" />
-      <div className="space-y-2 w-full max-w-xs">
-        <Skeleton className="h-6 w-3/4 mx-auto" />
-        <Skeleton className="h-4 w-1/2 mx-auto" />
-        <Skeleton className="h-4 w-full" />
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="relative h-24 bg-gradient-to-br from-primary/30 to-aura-primary/20" aria-hidden="true" />
+      <div className="-mt-10 flex justify-center px-6">
+        <Skeleton className="h-20 w-20 rounded-full ring-4 ring-card" />
+      </div>
+      <div className="flex flex-1 flex-col items-center px-6 pb-6 pt-3 text-center">
+        <Skeleton className="h-5 w-1/2" />
+        <Skeleton className="mt-2 h-4 w-3/4" />
+        <Skeleton className="mt-2 h-4 w-full" />
+        <div className="mt-4 w-full border-t border-border pt-4">
+          <Skeleton className="mx-auto h-9 w-full rounded-xl" />
+        </div>
       </div>
     </div>
   );
@@ -56,7 +62,7 @@ export function BlogGridSkeleton({ count = 6 }: { count?: number }) {
 
 export function InstructorGridSkeleton({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
         <InstructorCardSkeleton key={i} />
       ))}

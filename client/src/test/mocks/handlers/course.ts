@@ -14,6 +14,7 @@ export const courseHandlers = [
         avatar: instructorUser.avatar?.url ?? '',
         bio: instructorUser.bio ?? '',
         title: '',
+        experience: '5 years',
         specialties: [],
         rating: 0,
         coursesCount: 0,

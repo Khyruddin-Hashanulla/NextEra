@@ -26,6 +26,7 @@ interface Instructor {
   avatar?: string;
   bio?: string;
   title?: string;
+  experience?: string;
   specialties?: string[];
   rating?: number;
   studentsCount?: number;
@@ -198,7 +199,7 @@ export function InstructorsPage() {
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {
                     setSearch(''); setSpecialty(''); setSort('popular'); setPage(1);
                   }}>
-                    <Filter className="h-4 w-4 mr-2" />
+                    <Filter className="h-4 w-4" />
                     Clear All Filters
                   </Button>
                 )}
@@ -236,10 +237,10 @@ export function InstructorsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4"
+                    className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
                   >
                     {instructors.map((instructor: Instructor, index: number) => (
-                      <motion.div key={instructor._id} variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { delay: index * 0.05, duration: 0.3 } } }}>
+                      <motion.div key={instructor._id} className="h-full" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { delay: index * 0.05, duration: 0.3 } } }}>
                         <InstructorCard instructor={instructor} />
                       </motion.div>
                     ))}

@@ -118,7 +118,7 @@ export function HomeBlogSection({ blogs, isLoading, isError, onRetry, className 
         <div className="mt-10 text-center">
           <Button asChild variant="outline" className="rounded-full px-6">
             <Link to={ROUTES.BLOG}>
-              View all articles <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              View all articles <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
         </div>

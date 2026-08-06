@@ -88,7 +88,7 @@ export function Hero({ className, stats }: HeroProps) {
             >
               <Button asChild size="lg" className="h-12 w-full rounded-full px-8 text-base font-semibold shadow-lg shadow-primary/25 sm:w-auto">
                 <Link to={ROUTES.COURSES}>
-                  Explore Courses <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  Explore Courses <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
               <Button

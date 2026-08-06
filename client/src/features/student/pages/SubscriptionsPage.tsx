@@ -162,7 +162,7 @@ export function SubscriptionsPage() {
                     disabled={loadingPlanId === plan._id}
                   >
                     {loadingPlanId === plan._id ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</>
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
                     ) : plan.price === 0 ? (
                       'Get Started Free'
                     ) : (

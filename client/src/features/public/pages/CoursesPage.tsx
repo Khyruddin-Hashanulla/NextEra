@@ -213,7 +213,7 @@ export function CoursesPage() {
                   <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {
                     setSearch(''); setLevel(''); setCategory(''); setSort('popular'); setPage(1);
                   }}>
-                    <Filter className="h-4 w-4 mr-2" />
+                    <Filter className="h-4 w-4" />
                     Clear All Filters
                   </Button>
                 )}

@@ -111,7 +111,7 @@ export function StudyRemindersPage() {
                 <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
               </div>
               <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !form.title.trim()} className="w-full">
-                {createMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Create Reminder
               </Button>
             </div>

@@ -22,6 +22,7 @@ export interface MockInstructor {
   avatar: MockImage;
   bio: string;
   specialties: string[];
+  experience: string;
   totalCourses: number;
   totalStudents: number;
   averageRating: number;

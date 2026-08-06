@@ -290,7 +290,7 @@ export function FAQPage() {
               </Button>
               <Button asChild variant="outline" size="lg">
                 <a href="mailto:support@nextera.io">
-                  <Mail className="h-4 w-4 mr-2" />
+                  <Mail className="h-4 w-4" />
                   Email Us
                 </a>
               </Button>

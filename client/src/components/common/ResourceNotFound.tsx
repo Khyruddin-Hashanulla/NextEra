@@ -118,13 +118,13 @@ export function ResourceNotFound({
           >
             <Button asChild size="lg" className="rounded-full px-8">
               <Link to={link.href}>
-                {link.label === 'Go Home' ? <Home className="mr-2 h-4 w-4" /> : <ArrowLeft className="mr-2 h-4 w-4" />}
+                {link.label === 'Go Home' ? <Home className="h-4 w-4" /> : <ArrowLeft className="h-4 w-4" />}
                 {link.label}
               </Link>
             </Button>
             <Button asChild variant="outline" size="lg" className="rounded-full px-8">
               <Link to={ROUTES.HOME}>
-                <Home className="mr-2 h-4 w-4" />
+                <Home className="h-4 w-4" />
                 Go Home
               </Link>
             </Button>

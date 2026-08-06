@@ -92,7 +92,7 @@ export function FeaturedPromotionsPage() {
             </Button>
           ))}
         </div>
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />New Promotion</Button>
+        <Button onClick={openCreate}><Plus className="h-4 w-4" />New Promotion</Button>
       </div>
 
       {isLoading ? (

@@ -96,7 +96,7 @@ export function InstructorPromo() {
                   className="h-12 rounded-full bg-white px-8 text-base font-semibold text-primary shadow-lg hover:bg-white/90"
                 >
                   <Link to={ROUTES.INSTRUCTOR_APPLY}>
-                    Apply to teach <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                    Apply to teach <ArrowRight className="h-4 w-4" aria-hidden="true" />
                   </Link>
                 </Button>
               </motion.div>

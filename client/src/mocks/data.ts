@@ -13,9 +13,9 @@ export const mockStudents: MockStudent[] = [
 ];
 
 export const mockInstructors: MockInstructor[] = [
-  { _id: 'instructor-01', name: 'Priya Sharma', email: 'priya.sharma@example.com', avatar: image('photo-1573496359142-b8d87734a5a2'), bio: 'Frontend architect helping teams build accessible, high-performance web applications.', specialties: ['React', 'TypeScript', 'Design Systems'], totalCourses: 8, totalStudents: 18420, averageRating: 4.9, totalReviews: 3241 },
-  { _id: 'instructor-02', name: 'Daniel Kim', email: 'daniel.kim@example.com', avatar: image('photo-1560250097-0b93528c311a'), bio: 'Data engineer and educator with a passion for practical machine learning.', specialties: ['Python', 'Machine Learning', 'SQL'], totalCourses: 6, totalStudents: 12780, averageRating: 4.8, totalReviews: 2187 },
-  { _id: 'instructor-03', name: 'Fatima Rahman', email: 'fatima.rahman@example.com', avatar: image('photo-1580489944761-15a19d654956'), bio: 'Product leader teaching research-led product strategy and delivery.', specialties: ['Product Management', 'UX Research'], totalCourses: 4, totalStudents: 8460, averageRating: 4.7, totalReviews: 1328 },
+  { _id: 'instructor-01', name: 'Priya Sharma', email: 'priya.sharma@example.com', avatar: image('photo-1573496359142-b8d87734a5a2'), bio: 'Frontend architect helping teams build accessible, high-performance web applications.', specialties: ['React', 'TypeScript', 'Design Systems'], experience: '8+ years of industry and teaching experience', totalCourses: 8, totalStudents: 18420, averageRating: 4.9, totalReviews: 3241 },
+  { _id: 'instructor-02', name: 'Daniel Kim', email: 'daniel.kim@example.com', avatar: image('photo-1560250097-0b93528c311a'), bio: 'Data engineer and educator with a passion for practical machine learning.', specialties: ['Python', 'Machine Learning', 'SQL'], experience: '10+ years in data engineering and ML', totalCourses: 6, totalStudents: 12780, averageRating: 4.8, totalReviews: 2187 },
+  { _id: 'instructor-03', name: 'Fatima Rahman', email: 'fatima.rahman@example.com', avatar: image('photo-1580489944761-15a19d654956'), bio: 'Product leader teaching research-led product strategy and delivery.', specialties: ['Product Management', 'UX Research'], experience: '6+ years in product leadership', totalCourses: 4, totalStudents: 8460, averageRating: 4.7, totalReviews: 1328 },
 ];
 
 const curriculum = (prefix: string): MockSection[] => [

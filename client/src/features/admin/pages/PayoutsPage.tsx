@@ -65,7 +65,7 @@ export function PayoutsPage() {
           <p className="text-muted-foreground">Manage and process instructor payouts</p>
         </div>
         <Button onClick={() => processAllMutation.mutate()} disabled={processAllMutation.isPending}>
-          {processAllMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : 'Process All Pending'}
+          {processAllMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</> : 'Process All Pending'}
         </Button>
       </div>
 

@@ -339,7 +339,7 @@ export function BlogDetailPage() {
                       className="bg-primary hover:bg-primary-700 text-white shadow-sm rounded-full"
                     >
                       {createCommentMutation.isPending && (
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       )}
                       Post Comment
                     </Button>
@@ -494,7 +494,7 @@ export function BlogDetailPage() {
                 className="rounded-full"
               >
                 <Link to="/blog">
-                  <ArrowRight className="h-4 w-4 mr-2" />
+                  <ArrowRight className="h-4 w-4" />
                   Back to All Articles
                 </Link>
               </Button>

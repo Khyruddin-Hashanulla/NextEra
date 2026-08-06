@@ -564,7 +564,7 @@ function AssignmentTab({ courseId, lectureId }: { courseId: string; lectureId: s
           </div>
         )}
         <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || (!content.trim() && files.length === 0)}>
-          {submitMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {submitMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Submit Assignment
         </Button>
       </CardContent>

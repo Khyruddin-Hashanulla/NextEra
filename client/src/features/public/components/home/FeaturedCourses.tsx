@@ -97,7 +97,7 @@ export function FeaturedCourses({
             <div className="mt-12 text-center">
               <Button asChild size="lg" variant="outline" className="rounded-full px-8">
                 <Link to={viewAllHref}>
-                  Browse all courses <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  Browse all courses <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             </div>

@@ -211,7 +211,7 @@ export function EditCoursePage() {
                   <Input value={sectionTitle} onChange={(e) => setSectionTitle(e.target.value)} placeholder="Section title" className="sm:max-w-xs" />
                   <Input value={sectionDescription} onChange={(e) => setSectionDescription(e.target.value)} placeholder="Description (optional)" className="sm:max-w-sm" />
                   <Button onClick={() => { if (sectionTitle.trim()) { createSectionMutation.mutate({ title: sectionTitle, description: sectionDescription }); setSectionTitle(''); setSectionDescription(''); } }}>
-                    <Plus className="mr-2 h-4 w-4" /> Add
+                    <Plus className="h-4 w-4" /> Add
                   </Button>
                 </div>
               </div>

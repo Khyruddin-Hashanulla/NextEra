@@ -256,7 +256,7 @@ export function PaymentManagementPage() {
                   className="mt-4 w-full"
                   onClick={() => handleOpenRefund(selectedPayment)}
                 >
-                  <RotateCcw className="mr-2 h-4 w-4" />
+                  <RotateCcw className="h-4 w-4" />
                   Issue Refund
                 </Button>
               )}

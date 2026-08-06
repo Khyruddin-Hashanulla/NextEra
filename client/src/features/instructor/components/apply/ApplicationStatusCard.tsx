@@ -116,18 +116,18 @@ export function ApplicationStatusCard({ status, rejectionReason, revoked, onAppl
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             {revoked ? (
               <Button className="h-12 w-full rounded-full px-7 sm:w-auto" onClick={onApplyAgain}>
-                Apply Again <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                Apply Again <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Button>
             ) : isApproved ? (
               <Button asChild className="h-12 w-full rounded-full px-7 sm:w-auto">
                 <Link to={getDashboardRoute('instructor')}>
-                  Go to Instructor Dashboard <LayoutDashboard className="ml-2 h-4 w-4" aria-hidden="true" />
+                  Go to Instructor Dashboard <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             ) : (
               <Button asChild variant="outline" className="h-12 w-full rounded-full px-7 sm:w-auto">
                 <Link to={ROUTES.HOME}>
-                  Back to Home <Home className="ml-2 h-4 w-4" aria-hidden="true" />
+                  Back to Home <Home className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             )}
@@ -140,7 +140,7 @@ export function ApplicationStatusCard({ status, rejectionReason, revoked, onAppl
             ) : (
               <Button asChild variant="ghost" className="h-12 w-full rounded-full px-7 sm:w-auto">
                 <Link to={ROUTES.COURSES}>
-                  Browse Courses <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                  Browse Courses <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               </Button>
             )}

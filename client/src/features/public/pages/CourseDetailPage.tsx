@@ -286,21 +286,21 @@ export function CourseDetailPage() {
                   {isEnrolled ? (
                     <Button asChild size="lg" className="w-full sm:w-auto" variant="default">
                       <Link to={`/student/courses/${course._id}/learn`}>
-                        <BookOpen className="h-4 w-4 mr-2" />
+                        <BookOpen className="h-4 w-4" />
                         Continue Learning
                       </Link>
                     </Button>
                   ) : displayPrice === 0 ? (
                     <Button asChild size="lg" className="w-full sm:w-auto" onClick={handleEnroll}>
                       <Link to="#" onClick={(e) => { e.preventDefault(); handleEnroll(); }}>
-                        <BookOpen className="h-4 w-4 mr-2" />
+                        <BookOpen className="h-4 w-4" />
                         Enroll for Free
                       </Link>
                     </Button>
                   ) : (
                     <Button asChild size="lg" className="w-full sm:w-auto" onClick={handleEnroll}>
                       <Link to="#" onClick={(e) => { e.preventDefault(); handleEnroll(); }}>
-                        <BookOpen className="h-4 w-4 mr-2" />
+                        <BookOpen className="h-4 w-4" />
                         Enroll Now
                       </Link>
                     </Button>

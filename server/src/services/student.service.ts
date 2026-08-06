@@ -170,6 +170,7 @@ export class StudentService {
         avatar: instructor.avatar?.url ?? '',
         bio: instructor.bio ?? '',
         title: instructor.instructorProfile?.qualification ?? '',
+        experience: instructor.instructorProfile?.experience ?? '',
         specialties: expertise.length > 0 ? expertise : teachingCategories,
         rating: Math.round(avgRating * 10) / 10,
         coursesCount,

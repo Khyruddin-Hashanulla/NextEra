@@ -47,7 +47,7 @@ export function CTASection({ title, description, primaryAction, secondaryAction,
             : 'bg-primary text-white hover:bg-primary-700 shadow-md shadow-primary/30'
         )}>
           <Link to={primaryAction.href}>
-            {primaryAction.label} <ArrowRight className="ml-2 h-4 w-4" />
+            {primaryAction.label} <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
         {secondaryAction && (

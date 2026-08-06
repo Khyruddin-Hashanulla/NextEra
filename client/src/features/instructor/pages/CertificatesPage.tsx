@@ -43,7 +43,7 @@ export function CertificatesPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-2 h-4 w-4" />Issue Certificate</Button>
+            <Button><Plus className="h-4 w-4" />Issue Certificate</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader><DialogTitle>Issue Certificate</DialogTitle></DialogHeader>
@@ -57,7 +57,7 @@ export function CertificatesPage() {
                 <Input value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} placeholder="Course ID" />
               </div>
               <Button className="w-full" onClick={() => issueMutation.mutate()} disabled={issueMutation.isPending || !form.user || !form.course}>
-                {issueMutation.isPending ? 'Issuing...' : <><Award className="mr-2 h-4 w-4" />Issue</>}
+                {issueMutation.isPending ? 'Issuing...' : <><Award className="h-4 w-4" />Issue</>}
               </Button>
             </div>
           </DialogContent>

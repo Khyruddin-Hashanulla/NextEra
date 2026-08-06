@@ -270,7 +270,7 @@ export function BlogListPage() {
 
                   {hasActiveFilters && (
                     <Button variant="ghost" size="sm" className="w-full justify-start" onClick={clearFilters}>
-                      <X className="h-4 w-4 mr-2" />
+                      <X className="h-4 w-4" />
                       Clear Filters
                     </Button>
                   )}
