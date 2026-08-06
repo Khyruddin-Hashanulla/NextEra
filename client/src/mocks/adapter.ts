@@ -1,7 +1,7 @@
 import type { AxiosAdapter, AxiosRequestConfig, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { AxiosError } from 'axios';
 import { mockConfig } from './config';
-import { mockBlogs, mockCertificates, mockCategories, mockCoupons, mockCourses, mockInstructorApplications, mockLiveClasses, mockNotifications, mockOrders, mockReviews, mockStudents, mockWalletTransactions } from './data';
+import { mockBlogs, mockCertificates, mockCategories, mockCoupons, mockCourses, mockInstructorApplications, mockInstructors, mockLiveClasses, mockNotifications, mockOrders, mockReviews, mockStudents, mockWalletTransactions } from './data';
 import type { MockScenario } from './types';
 
 type Query = Record<string, unknown>;
@@ -36,6 +36,12 @@ function route(config: AxiosRequestConfig): unknown {
   const url = requestUrl(config); const method = config.method?.toLowerCase() ?? 'get'; const query = queryOf(config);
   if (url === '/student/dashboard') return { data: dashboard };
   if (url === '/student/courses') return { data: coursesFor(query) };
+  if (url === '/student/instructors') return { data: mockInstructors.map((instructor) => ({ _id: instructor._id, name: instructor.name, email: instructor.email, avatar: instructor.avatar.url, bio: instructor.bio, title: '', specialties: instructor.specialties, rating: instructor.averageRating, coursesCount: instructor.totalCourses, studentsCount: instructor.totalStudents, totalReviews: instructor.totalReviews })) };
+  if (/^\/student\/instructors\/[^/]+$/.test(url)) {
+    const instructor = mockInstructors.find((item) => item._id === url.split('/').pop());
+    if (!instructor) return { data: null };
+    return { data: { _id: instructor._id, name: instructor.name, email: instructor.email, phone: '+91 98765 43210', address: 'Bengaluru, India', avatar: instructor.avatar, bio: instructor.bio, socialLinks: { youtube: '', twitter: '', linkedin: '', github: '', portfolio: '', website: '' }, instructorProfile: { qualification: 'B.Tech in Computer Science', experience: '8+ years of industry and teaching experience', expertise: instructor.specialties, teachingCategories: instructor.specialties, resume: { url: 'https://example.com/resume.pdf', publicId: 'resume-01' }, demoVideo: { url: 'https://example.com/intro.mp4', publicId: 'demo-01' }, completedCourses: instructor.totalCourses, totalStudents: instructor.totalStudents, rating: instructor.averageRating }, specialties: instructor.specialties, totalCourses: instructor.totalCourses, totalStudents: instructor.totalStudents, totalReviews: instructor.totalReviews, averageRating: instructor.averageRating, createdAt: '2025-03-10T08:00:00Z' } };
+  }
   if (url.startsWith('/student/courses/')) { const course = mockCourses.find((item) => item._id === url.split('/').pop() || item.slug === url.split('/').pop()) ?? mockCourses[0]; return { data: { course, curriculum: course.curriculum, isEnrolled: true, enrollment: { progress: 78 } } }; }
   if (url === '/student/my-courses') return { data: dashboard.recentCourses };
   if (url === '/student/certificates') return { data: mockCertificates };

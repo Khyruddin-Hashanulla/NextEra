@@ -28,6 +28,7 @@ import { ApiError } from '../utils/ApiError';
 import { MESSAGES } from '../constants/messages';
 import { ROLES } from '../constants/roles';
 import { escapeRegex } from '../utils/escapeRegex';
+import { mergeInstructorApplicationIntoUser } from '../utils/applyInstructorApplication';
 import { withTransaction } from '../utils/transaction';
 import { sendInstructorDecisionEmail } from '../utils/sendEmail';
 import { paymentService } from './payment.service';
@@ -276,6 +277,10 @@ export class AdminService {
 
     user.role = ROLES.INSTRUCTOR;
     user.isActive = true;
+
+    // Persist the application's submitted profile data onto the live User so
+    // the public Instructor Details page can show it (it reads the User).
+    mergeInstructorApplicationIntoUser(user, application);
 
     await user.save();
     await application.save();

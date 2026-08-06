@@ -178,19 +178,32 @@ describe('Static public pages', () => {
   it('InstructorsPage renders', async () => {
     renderPage(<InstructorsPage />, '/instructors', '*');
     await waitFor(() => expect(screen.getByRole('heading', { name: /Our Expert Instructors/i })).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
+    expect(screen.getByText(/1 instructors?/i)).toBeInTheDocument();
+    expect(screen.getByText(/Instructor User/i)).toBeInTheDocument();
   });
 
-  it('InstructorProfilePage renders without error', async () => {
+  it('InstructorProfilePage renders instructor details', async () => {
     renderPage(
       <InstructorProfilePage />,
-      '/instructors/instructor-01',
+      '/instructors/instructor-1',
       '/instructors/:id',
     );
-    // Page should render - either instructor content or not-found state
-    await waitFor(() => {
-      const body = document.body.innerHTML;
-      expect(body.length).toBeGreaterThan(1000);
-    }, { timeout: LONG_TIMEOUT });
+    await waitFor(() => expect(screen.getAllByText(/Instructor User/i).length).toBeGreaterThan(0), { timeout: LONG_TIMEOUT });
+    expect(screen.getByText(/Areas of Expertise/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/MSc Computer Science/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Professional Background/i)).toBeInTheDocument();
+    expect(screen.getByText(/Contact Information/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /View Resume/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Watch Intro Video/i })).toBeInTheDocument();
+  });
+
+  it('InstructorProfilePage shows Instructor Not Found for an invalid id', async () => {
+    renderPage(
+      <InstructorProfilePage />,
+      '/instructors/does-not-exist',
+      '/instructors/:id',
+    );
+    await waitFor(() => expect(screen.getByText(/Instructor Not Found/i)).toBeInTheDocument(), { timeout: LONG_TIMEOUT });
   });
 
   it('NotFoundPage renders', () => {

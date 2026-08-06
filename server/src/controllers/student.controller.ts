@@ -23,6 +23,17 @@ export const getCourseDetail = asyncHandler(async (req: Request, res: Response) 
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course details fetched', data));
 });
 
+// ─── Public Instructors ─────────────────────────────────────────
+export const listInstructors = asyncHandler(async (req: Request, res: Response) => {
+  const data = await studentService.listInstructors();
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructors fetched', data));
+});
+
+export const getInstructorProfile = asyncHandler(async (req: Request, res: Response) => {
+  const data = await studentService.getInstructorProfile(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructor profile fetched', data));
+});
+
 // ─── Enrollment ────────────────────────────────────────────────
 export const getMyCourses = asyncHandler(async (req: Request, res: Response) => {
   const data = await studentService.getMyCourses(req.currentUser!.userId);

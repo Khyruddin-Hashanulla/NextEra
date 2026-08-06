@@ -7,6 +7,12 @@ export const studentApi = {
   listCourses: (params?: { search?: string; category?: string; level?: string; sort?: string; featured?: string; page?: number; limit?: number }, signal?: AbortSignal) =>
     axiosInstance.get<{ data: any }>('/student/courses', { params, signal }),
 
+  listInstructors: (signal?: AbortSignal) =>
+    axiosInstance.get<{ data: any[] }>('/student/instructors', { signal }),
+
+  getInstructorProfile: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<{ data: any }>(`/student/instructors/${id}`, { signal }),
+
   getCourseDetail: (id: string, signal?: AbortSignal) =>
     axiosInstance.get<{ data: CourseDetail }>(`/student/courses/${id}`, { signal }),
 

@@ -118,6 +118,16 @@ describe('Instructor Approval Workflow', () => {
     expect(promoted!.role).toBe(ROLES.INSTRUCTOR);
     expect(promoted!.isActive).toBe(true);
 
+    // Application profile data is merged onto the live User so the public
+    // Instructor Details page (which reads the User) shows the full profile.
+    expect(promoted!.name).toBe('Jane Doe');
+    expect(promoted!.phone).toBe('+15550000000');
+    expect(promoted!.address).toBe('San Francisco, USA');
+    expect(promoted!.instructorProfile?.qualification).toBe('B.Tech in Computer Science');
+    expect(promoted!.instructorProfile?.experience).toBe('Five years of industry and teaching experience');
+    expect(promoted!.instructorProfile?.teachingCategories).toContain('60b9c1f2a1b2c3d4e5f60708');
+    expect(promoted!.instructorProfile?.bankDetails?.accountHolderName).toBe('Jane Doe');
+
     // 6. Applicant receives an approval notification
     const notification = await Notification.findOne({ user: student._id }).lean();
     expect(notification).toBeTruthy();

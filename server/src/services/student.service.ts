@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { User } from '../models/user.model';
+import { ROLES } from '../constants/roles';
 import { Course } from '../models/course.model';
 import { Bundle } from '../models/bundle.model';
 import { Subscription } from '../models/subscription.model';
@@ -120,6 +121,132 @@ export class StudentService {
       },
       !search
     );
+  }
+
+  // ─── Public Instructors ──────────────────────────────────────
+  async listInstructors() {
+    const instructors = await User.find({
+      role: ROLES.INSTRUCTOR,
+      isActive: true,
+      isDeleted: false,
+    })
+      .select('name email avatar bio instructorProfile createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const ids = instructors.map((instructor) => instructor._id);
+
+    const stats = await Course.aggregate<{
+      _id: mongoose.Types.ObjectId;
+      coursesCount: number;
+      studentsCount: number;
+      reviewsCount: number;
+      avgRatingSum: number;
+    }>([
+      { $match: { instructor: { $in: ids }, status: 'published', isApproved: true } },
+      {
+        $group: {
+          _id: '$instructor',
+          coursesCount: { $sum: 1 },
+          studentsCount: { $sum: { $ifNull: ['$totalEnrollments', 0] } },
+          reviewsCount: { $sum: { $ifNull: ['$totalReviews', 0] } },
+          avgRatingSum: { $sum: { $ifNull: ['$averageRating', 0] } },
+        },
+      },
+    ]);
+
+    const statsByInstructor = new Map(stats.map((stat) => [String(stat._id), stat]));
+
+    return instructors.map((instructor) => {
+      const stat = statsByInstructor.get(String(instructor._id));
+      const coursesCount = stat?.coursesCount ?? 0;
+      const avgRating = coursesCount > 0 ? (stat?.avgRatingSum ?? 0) / coursesCount : 0;
+      const expertise = instructor.instructorProfile?.expertise ?? [];
+      const teachingCategories = instructor.instructorProfile?.teachingCategories ?? [];
+      return {
+        _id: instructor._id,
+        name: instructor.name,
+        email: instructor.email,
+        avatar: instructor.avatar?.url ?? '',
+        bio: instructor.bio ?? '',
+        title: instructor.instructorProfile?.qualification ?? '',
+        specialties: expertise.length > 0 ? expertise : teachingCategories,
+        rating: Math.round(avgRating * 10) / 10,
+        coursesCount,
+        studentsCount: stat?.studentsCount ?? 0,
+        totalReviews: stat?.reviewsCount ?? 0,
+      };
+    });
+  }
+
+  async getInstructorProfile(id: string) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw ApiError.notFound('Instructor not found');
+    }
+
+    const instructor = await User.findOne({
+      _id: id,
+      role: ROLES.INSTRUCTOR,
+      isActive: true,
+      isDeleted: false,
+    })
+      .select('-password -resetPasswordToken -resetPasswordExpire')
+      .lean();
+
+    if (!instructor) throw ApiError.notFound('Instructor not found');
+
+    const stats = await Course.aggregate<{
+      _id: mongoose.Types.ObjectId;
+      coursesCount: number;
+      studentsCount: number;
+      reviewsCount: number;
+      avgRatingSum: number;
+    }>([
+      { $match: { instructor: new mongoose.Types.ObjectId(id), status: 'published', isApproved: true } },
+      {
+        $group: {
+          _id: '$instructor',
+          coursesCount: { $sum: 1 },
+          studentsCount: { $sum: { $ifNull: ['$totalEnrollments', 0] } },
+          reviewsCount: { $sum: { $ifNull: ['$totalReviews', 0] } },
+          avgRatingSum: { $sum: { $ifNull: ['$averageRating', 0] } },
+        },
+      },
+    ]);
+
+    const stat = stats[0];
+    const coursesCount = stat?.coursesCount ?? 0;
+    const avgRating = coursesCount > 0 ? (stat?.avgRatingSum ?? 0) / coursesCount : 0;
+    const expertise = instructor.instructorProfile?.expertise ?? [];
+    const teachingCategories = instructor.instructorProfile?.teachingCategories ?? [];
+
+    return {
+      _id: instructor._id,
+      name: instructor.name,
+      email: instructor.email,
+      phone: instructor.phone ?? '',
+      address: instructor.address ?? '',
+      avatar: instructor.avatar,
+      bio: instructor.bio ?? '',
+      socialLinks: instructor.socialLinks,
+      instructorProfile: {
+        qualification: instructor.instructorProfile?.qualification ?? '',
+        experience: instructor.instructorProfile?.experience ?? '',
+        expertise,
+        teachingCategories,
+        resume: instructor.instructorProfile?.resume,
+        demoVideo: instructor.instructorProfile?.demoVideo,
+        completedCourses: instructor.instructorProfile?.completedCourses ?? 0,
+        totalStudents: instructor.instructorProfile?.totalStudents ?? 0,
+        rating: instructor.instructorProfile?.rating ?? 0,
+      },
+      specialties: expertise.length > 0 ? expertise : teachingCategories,
+      totalCourses: coursesCount,
+      totalStudents: stat?.studentsCount ?? 0,
+      totalReviews: stat?.reviewsCount ?? 0,
+      averageRating: Math.round(avgRating * 10) / 10,
+      createdAt: instructor.createdAt,
+    };
   }
 
   // ─── Enrollment ──────────────────────────────────────────────

@@ -25,11 +25,12 @@ interface Instructor {
   email: string;
   avatar?: string;
   bio?: string;
-  totalCourses?: number;
-  totalStudents?: number;
-  averageRating?: number;
-  totalReviews?: number;
+  title?: string;
   specialties?: string[];
+  rating?: number;
+  studentsCount?: number;
+  coursesCount?: number;
+  totalReviews?: number;
 }
 
 export function InstructorsPage() {
@@ -39,76 +40,32 @@ export function InstructorsPage() {
   const [sort, setSort] = useState('popular');
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['public-instructors', page, search, specialty, sort],
-    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
-      const courses = r.data.data.courses || [];
-      const instructorMap = new Map();
-      courses.forEach((course: any) => {
-        if (course.instructor?._id && !instructorMap.has(course.instructor._id)) {
-          instructorMap.set(course.instructor._id, {
-            _id: course.instructor._id,
-            name: course.instructor.name,
-            email: course.instructor.email,
-            avatar: course.instructor.avatar?.url || '',
-            totalCourses: 0,
-            totalStudents: 0,
-            averageRating: 0,
-            totalReviews: 0,
-            specialties: [],
-          });
-        }
-        if (course.instructor?._id) {
-          const inst = instructorMap.get(course.instructor._id);
-          inst.totalCourses++;
-          inst.totalStudents += course.totalEnrollments || 0;
-          inst.averageRating = (inst.averageRating * (inst.totalCourses - 1) + (course.averageRating || 0)) / inst.totalCourses;
-          inst.totalReviews += course.totalReviews || 0;
-        }
-      });
-      let instructors = Array.from(instructorMap.values());
-      
-      if (search) {
-        instructors = instructors.filter(i => 
-          i.name.toLowerCase().includes(search.toLowerCase()) ||
-          i.specialties?.some((s: string) => s.toLowerCase().includes(search.toLowerCase()))
-        );
-      }
-      
-      if (specialty) {
-        instructors = instructors.filter(i => i.specialties?.includes(specialty));
-      }
-      
-      if (sort === 'popular') {
-        instructors.sort((a, b) => (b.totalStudents || 0) - (a.totalStudents || 0));
-      } else if (sort === 'rating') {
-        instructors.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0));
-      } else if (sort === 'courses') {
-        instructors.sort((a, b) => (b.totalCourses || 0) - (a.totalCourses || 0));
-      }
-      
-      const totalPages = Math.ceil(instructors.length / 12);
-      const paginated = instructors.slice((page - 1) * 12, page * 12);
-      
-      return { data: { instructors: paginated, totalPages } };
-    }),
+    queryKey: ['public-instructors'],
+    queryFn: ({ signal }) => studentApi.listInstructors(signal).then(r => r.data.data || []),
     placeholderData: (previousData) => previousData,
   });
 
-  const instructors = data?.data?.instructors || [];
-  const totalPages = data?.data?.totalPages || 1;
+  const allInstructors = data || [];
 
-  const { data: specialtiesData } = useQuery({
-    queryKey: ['instructor-specialties'],
-    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
-      const specialties = new Set<string>();
-      r.data.data.courses.forEach((course: any) => {
-        course.instructor?.specialties?.forEach((s: string) => specialties.add(s));
-      });
-      return Array.from(specialties).sort();
-    }),
-  });
+  const filteredInstructors = allInstructors
+    .filter((instructor: Instructor) =>
+      !search ||
+      instructor.name?.toLowerCase().includes(search.toLowerCase()) ||
+      instructor.specialties?.some((s: string) => s.toLowerCase().includes(search.toLowerCase()))
+    )
+    .filter((instructor: Instructor) => !specialty || instructor.specialties?.includes(specialty));
 
-  const specialties = specialtiesData || [];
+  if (sort === 'popular') {
+    filteredInstructors.sort((a, b) => (b.studentsCount || 0) - (a.studentsCount || 0));
+  } else if (sort === 'rating') {
+    filteredInstructors.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+  } else if (sort === 'courses') {
+    filteredInstructors.sort((a, b) => (b.coursesCount || 0) - (a.coursesCount || 0));
+  }
+
+  const totalPages = Math.max(1, Math.ceil(filteredInstructors.length / 12));
+  const instructors = filteredInstructors.slice((page - 1) * 12, page * 12);
+  const specialties = Array.from(new Set(allInstructors.flatMap((i: Instructor) => i.specialties || []))).sort();
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);

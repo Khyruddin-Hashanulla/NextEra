@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getDashboard, listCourses, getCourseDetail, getMyCourses,
+  listInstructors, getInstructorProfile,
   initiatePayment, verifyPayment, retryPayment,
   updateProgress, getProgress, getWatchHistory,
   createNote, listNotes, updateNote, deleteNote,
@@ -42,6 +43,8 @@ import { z } from 'zod';
 const router = Router();
 
 // Public
+router.get('/instructors', listInstructors);
+router.get('/instructors/:id', getInstructorProfile);
 router.get('/courses', listCourses);
 router.get('/courses/:id', getCourseDetail);
 router.get('/certificates/verify/:certificateId', verifyCertificate);
