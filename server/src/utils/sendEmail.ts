@@ -111,3 +111,67 @@ export const sendPasswordResetEmail = async (email: string, resetToken: string):
     html,
   });
 };
+
+export const sendInstructorDecisionEmail = async (options: {
+  email: string;
+  name: string;
+  status: 'approved' | 'rejected';
+  reason?: string;
+}): Promise<void> => {
+  const isApproved = options.status === 'approved';
+  const dashboardUrl = `${env.clientUrl}/instructor/dashboard`;
+  const applyUrl = `${env.clientUrl}/instructor/apply`;
+
+  const heading = isApproved
+    ? 'Congratulations! Your application to become an instructor has been approved.'
+    : 'Update on your instructor application';
+
+  const body = isApproved
+    ? 'You can now create and publish courses, manage your curriculum, and track your earnings from your instructor dashboard.'
+    : `Unfortunately, your application was not approved at this time.${options.reason ? `\n\nReason: ${options.reason}` : ''}\n\nYou are welcome to review the requirements and reapply.`;
+
+  const text = [
+    'NextEra LMS - Instructor Application',
+    '',
+    `Hi ${options.name},`,
+    '',
+    heading,
+    '',
+    body,
+    '',
+    isApproved ? `Get started: ${dashboardUrl}` : `Reapply: ${applyUrl}`,
+    '',
+    'If you have any questions, please contact our support team.',
+  ].join('\n');
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #f97316;">NextEra LMS - Instructor Application</h2>
+      <p>Hi ${options.name},</p>
+      <p>${heading}</p>
+      ${isApproved
+        ? `<p>You can now create and publish courses, manage your curriculum, and track your earnings from your instructor dashboard.</p>`
+        : `<p>Unfortunately, your application was not approved at this time.</p>
+           ${options.reason ? `<p style="background: #fef2f2; padding: 12px; border-radius: 8px; color: #b91c1c;">Reason: ${options.reason}</p>` : ''}
+           <p>You are welcome to review the requirements and reapply.</p>`}
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${isApproved ? dashboardUrl : applyUrl}"
+           style="background: ${isApproved ? '#f97316' : '#6b7280'}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-size: 16px; display: inline-block;">
+          ${isApproved ? 'Go to Instructor Dashboard' : 'Reapply'}
+        </a>
+      </div>
+      <p>If you have any questions, please contact our support team.</p>
+      <hr style="border: 1px solid #e5e7eb; margin: 20px 0;" />
+      <p style="color: #6b7280; font-size: 12px;">&copy; 2026 NextEra LMS. All rights reserved.</p>
+    </div>
+  `;
+
+  await sendEmail({
+    to: options.email,
+    subject: isApproved
+      ? 'NextEra LMS - Your instructor application was approved'
+      : 'NextEra LMS - Update on your instructor application',
+    text,
+    html,
+  });
+};

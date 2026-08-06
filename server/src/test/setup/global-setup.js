@@ -1,7 +1,9 @@
-const { MongoMemoryServer } = require('mongodb-memory-server');
+const { MongoMemoryReplSet } = require('mongodb-memory-server');
 
 module.exports = async () => {
-  const mongod = await MongoMemoryServer.create();
-  globalThis.__MONGOINSTANCE__ = mongod;
-  process.env.MONGODB_URI = mongod.getUri('nextera_test');
+  const replSet = await MongoMemoryReplSet.create({
+    replSet: { count: 1, storageEngine: 'wiredTiger' },
+  });
+  globalThis.__MONGOINSTANCE__ = replSet;
+  process.env.MONGODB_URI = replSet.getUri('nextera_test');
 };

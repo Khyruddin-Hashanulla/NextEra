@@ -43,6 +43,7 @@ const axiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true,
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
 });
 
 if (isMockingEnabled()) {

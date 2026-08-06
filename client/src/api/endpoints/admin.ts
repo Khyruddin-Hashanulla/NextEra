@@ -9,6 +9,7 @@ import {
   AuditLogItem, SecurityLogItem, Backup, CmsPage, RolePermission,
   PaymentItem, StudentItem, WithdrawRequest, FeatureToggle,
   AdminAssignmentSubmission, AdminAssignmentsAnalytics, GradingLogEntry,
+  InstructorApplication,
 } from '@/types/admin';
 import {
   RevenueDashboardData, RevenueSummary,
@@ -43,9 +44,14 @@ export const adminApi = {
 
   getPendingInstructors: (signal?: AbortSignal) => axiosInstance.get<ApiResponse<any[]>>('/admin/instructors/pending', { signal }),
 
-  approveInstructor: (id: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/instructors/${id}/approve`, undefined, { signal }),
+  getInstructorApplicationDetail: (id: string, signal?: AbortSignal) =>
+    axiosInstance.get<ApiResponse<InstructorApplication>>(`/admin/instructors/${id}`, { signal }),
 
-  rejectInstructor: (id: string, signal?: AbortSignal) => axiosInstance.delete<ApiResponse<null>>(`/admin/instructors/${id}`, { signal }),
+  approveInstructor: (id: string, adminNote?: string, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<InstructorApplication>>(`/admin/instructors/${id}/approve`, { adminNote }, { signal }),
+
+  rejectInstructor: (id: string, rejectionReason: string, signal?: AbortSignal) =>
+    axiosInstance.delete<ApiResponse<InstructorApplication>>(`/admin/instructors/${id}`, { data: { rejectionReason }, signal }),
 
   listCategories: (signal?: AbortSignal) => axiosInstance.get<ApiResponse<Category[]>>('/admin/categories', { signal }),
 

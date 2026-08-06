@@ -192,8 +192,37 @@ export interface MockAnalytics {
 
 export interface MockInstructorApplication {
   _id: string;
-  applicant: Pick<MockInstructor, '_id' | 'name' | 'email'>;
-  expertise: string[];
+  user: { _id: string; name: string; email: string; avatar: string; isEmailVerified: boolean; isActive: boolean; isDeleted: boolean };
+  fullName: string;
+  email: string;
+  phone: string;
+  address: string;
+  photo: { url: string; publicId: string };
+  resume: { url: string; publicId: string };
+  qualification: string;
+  experience: string;
+  linkedin: string;
+  github: string;
+  portfolio: string;
+  website: string;
+  bio: string;
+  teachingCategories: string[];
+  demoVideo: { url: string; publicId: string };
+  identityProof: { url: string; publicId: string };
+  taxDetails: { pan: string; gst: string };
+  bankDetails: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+    branch: string;
+    upiId: string;
+  };
   status: 'pending' | 'approved' | 'rejected';
-  appliedAt: string;
+  reviewedBy?: { _id: string; name: string; email: string };
+  reviewedAt?: string;
+  adminNote?: string;
+  rejectionReason?: string;
+  createdAt: string;
+  updatedAt: string;
 }

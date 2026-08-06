@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { User } from '../models/user.model';
 import { Course } from '../models/course.model';
+import { InstructorApplication } from '../models/instructorApplication.model';
 import { Enrollment } from '../models/enrollment.model';
 import { Payment } from '../models/payment.model';
 import { Payout } from '../models/payout.model';
@@ -28,6 +29,7 @@ import { MESSAGES } from '../constants/messages';
 import { ROLES } from '../constants/roles';
 import { escapeRegex } from '../utils/escapeRegex';
 import { withTransaction } from '../utils/transaction';
+import { sendInstructorDecisionEmail } from '../utils/sendEmail';
 import { paymentService } from './payment.service';
 import { logger } from '../utils/logger';
 import { cascadeDeleteService } from './cascadeDelete.service';
@@ -227,25 +229,116 @@ export class AdminService {
   }
 
   async getPendingInstructors() {
-    return User.find({ role: ROLES.INSTRUCTOR, isEmailVerified: true, isDeleted: { $ne: true } }).sort({ createdAt: -1 }).lean();
+    const applications = await InstructorApplication.find({ status: 'pending' })
+      .populate('user', 'name email avatar isEmailVerified isActive isDeleted')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return applications
+      .filter((app: any) => app.user && app.user.isDeleted !== true)
+      .map((app: any) => ({
+        _id: app._id,
+        userId: app.user._id,
+        name: app.user.name,
+        email: app.user.email,
+        avatar: app.user.avatar,
+        status: app.status,
+        createdAt: app.createdAt,
+        updatedAt: app.updatedAt,
+      }));
   }
 
-  async approveInstructor(userId: string) {
-    const user = await User.findById(userId);
+  async getInstructorApplicationDetail(applicationId: string) {
+    const application = await InstructorApplication.findById(applicationId)
+      .populate('user', 'name email avatar isEmailVerified isActive isDeleted')
+      .populate('reviewedBy', 'name email')
+      .lean();
+    if (!application) throw ApiError.notFound('Instructor application not found');
+    if ((application as any).user?.isDeleted) throw ApiError.notFound('Instructor application not found');
+    return application;
+  }
+
+  async approveInstructor(applicationId: string, adminId: string, adminNote?: string) {
+    const application = await InstructorApplication.findById(applicationId);
+    if (!application) throw ApiError.notFound('Instructor application not found');
+    if (application.status !== 'pending') {
+      throw ApiError.conflict(`Application is already ${application.status}`);
+    }
+
+    const user = await User.findById(application.user);
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
+    if (user.isDeleted) throw ApiError.badRequest('Cannot approve a deleted user');
+
+    application.status = 'approved';
+    application.reviewedBy = new mongoose.Types.ObjectId(adminId);
+    application.reviewedAt = new Date();
+    if (adminNote) application.adminNote = adminNote;
+
+    user.role = ROLES.INSTRUCTOR;
     user.isActive = true;
+
     await user.save();
+    await application.save();
+
     await cacheManager.invalidateAdminCache();
-    return user;
+    await cacheManager.invalidateInstructorCache(application.user.toString());
+    await this.notifyAndEmail(application, user, 'approved', adminNote);
+    return application;
   }
 
-  async rejectInstructor(userId: string, adminId: string) {
-    const user = await User.findById(userId);
+  async rejectInstructor(applicationId: string, adminId: string, rejectionReason?: string) {
+    const application = await InstructorApplication.findById(applicationId);
+    if (!application) throw ApiError.notFound('Instructor application not found');
+    if (application.status !== 'pending') {
+      throw ApiError.conflict(`Application is already ${application.status}`);
+    }
+
+    const user = await User.findById(application.user);
     if (!user) throw ApiError.notFound(MESSAGES.ERROR.USER_NOT_FOUND);
-    await withTransaction(async (session) => {
-      await cascadeDeleteService.deleteUser(userId, adminId, session);
-    });
+
+    application.status = 'rejected';
+    application.reviewedBy = new mongoose.Types.ObjectId(adminId);
+    application.reviewedAt = new Date();
+    application.rejectionReason = rejectionReason || '';
+    await application.save();
+
     await cacheManager.invalidateAdminCache();
+    await this.notifyAndEmail(application, user, 'rejected', rejectionReason);
+    return application;
+  }
+
+  private async notifyAndEmail(
+    application: any,
+    user: any,
+    status: 'approved' | 'rejected',
+    reason?: string
+  ): Promise<void> {
+    const userName = user.name || application.fullName;
+    try {
+      await Notification.create({
+        user: application.user,
+        type: 'approval',
+        title: status === 'approved' ? 'Instructor application approved' : 'Instructor application rejected',
+        message:
+          status === 'approved'
+            ? `Congratulations ${userName}! Your instructor application has been approved. You can now access the instructor dashboard.`
+            : `Your instructor application was not approved.${reason ? ` Reason: ${reason}` : ''}`,
+        link: status === 'approved' ? '/instructor/dashboard' : '/instructor/apply',
+      });
+    } catch (error) {
+      logger.error(`Failed to create instructor ${status} notification for user ${application.user}:`, error);
+    }
+
+    if (process.env.NODE_ENV !== 'test') {
+      void sendInstructorDecisionEmail({
+        email: application.email || user.email,
+        name: userName,
+        status,
+        reason,
+      }).catch((error) => {
+        logger.error(`Failed to send instructor ${status} email to ${application.email || user.email}:`, error);
+      });
+    }
   }
 
   async listCategories() {

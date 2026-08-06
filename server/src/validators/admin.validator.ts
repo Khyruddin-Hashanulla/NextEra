@@ -113,6 +113,17 @@ export const rejectCourseSchema = z.object({
   reason: z.string().min(1).max(FIELD_SIZES.REASON).optional(),
 });
 
+export const approveInstructorSchema = z.object({
+  adminNote: z.string().max(FIELD_SIZES.ADMIN_NOTE).optional(),
+});
+
+export const rejectInstructorSchema = z.object({
+  rejectionReason: z
+    .string()
+    .min(1, 'Rejection reason is required')
+    .max(FIELD_SIZES.REASON),
+});
+
 export const moderateReviewSchema = z.object({
   status: z.enum(['approved', 'rejected']),
   adminNote: z.string().max(FIELD_SIZES.ADMIN_NOTE).optional(),

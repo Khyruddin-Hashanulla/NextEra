@@ -65,6 +65,7 @@ if (require.main === module) {
 
 export function createApp(): express.Application {
   const app = express();
+  app.disable('etag');
 
   if (env.nodeEnv === 'production') {
     app.set('trust proxy', 1);
@@ -104,6 +105,11 @@ export function createApp(): express.Application {
   app.use(globalRateLimiter);
   app.use(requestLogger);
   app.use(maintenanceMode);
+
+  app.use('/api/v1', (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
 
   app.use('/api/v1', csrfRoutes);
 

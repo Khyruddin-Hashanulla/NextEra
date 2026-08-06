@@ -31,6 +31,7 @@ export interface IInstructorApplication extends Document {
   reviewedBy?: mongoose.Types.ObjectId;
   reviewedAt?: Date;
   adminNote?: string;
+  rejectionReason?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -86,6 +87,7 @@ const instructorApplicationSchema = new Schema<IInstructorApplication>(
     reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewedAt: { type: Date },
     adminNote: { type: String, maxlength: 2000 },
+    rejectionReason: { type: String, maxlength: 2000 },
   },
   { timestamps: true }
 );

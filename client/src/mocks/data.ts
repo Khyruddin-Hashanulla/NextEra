@@ -66,7 +66,40 @@ export const mockCertificates: MockCertificate[] = mockCourses.slice(0, 2).map((
 export const mockCoupons: MockCoupon[] = [{ _id: 'coupon-01', code: 'WELCOME20', discountType: 'percentage', discountValue: 20, usageCount: 146, maxUsage: 500, status: 'active', validUntil: '2026-12-31T23:59:59Z' }, { _id: 'coupon-02', code: 'DATA500', discountType: 'fixed', discountValue: 500, usageCount: 68, maxUsage: 100, status: 'active', validUntil: '2026-09-30T23:59:59Z' }];
 export const mockLiveClasses: MockLiveClass[] = [{ _id: 'live-01', title: 'React architecture office hours', course: { _id: 'course-01', title: 'Modern React Architecture' }, instructor: mockInstructors[0], scheduledAt: '2026-07-30T14:00:00Z', duration: 60, status: 'scheduled', attendeeCount: 64 }, { _id: 'live-02', title: 'Model evaluation workshop', course: { _id: 'course-02', title: 'Practical Machine Learning' }, instructor: mockInstructors[1], scheduledAt: '2026-07-26T10:00:00Z', duration: 90, status: 'completed', attendeeCount: 41 }];
 export const mockWalletTransactions: MockWalletTransaction[] = [{ _id: 'transaction-01', type: 'credit', amount: 284900, description: 'Course enrollment settlements', createdAt: '2026-07-24T10:00:00Z' }, { _id: 'transaction-02', type: 'debit', amount: 84500, description: 'Instructor payouts', createdAt: '2026-07-22T10:00:00Z' }, { _id: 'transaction-03', type: 'credit', amount: 126400, description: 'Subscription renewals', createdAt: '2026-07-18T10:00:00Z' }];
-export const mockInstructorApplications: MockInstructorApplication[] = [{ _id: 'application-01', applicant: mockInstructors[2], expertise: ['Product Strategy', 'UX Research'], status: 'pending', appliedAt: '2026-07-16T11:00:00Z' }];
+export const mockInstructorApplications: MockInstructorApplication[] = [
+  {
+    _id: 'application-01',
+    user: { _id: 'instructor-03', name: 'Fatima Rahman', email: 'fatima.rahman@example.com', avatar: image('photo-1580489944761-15a19d654956').url, isEmailVerified: true, isActive: true, isDeleted: false },
+    fullName: 'Fatima Rahman',
+    email: 'fatima.rahman@example.com',
+    phone: '+91 98765 43210',
+    address: 'Hitech City, Hyderabad, India',
+    photo: image('photo-1580489944761-15a19d654956'),
+    resume: image('photo-1586281380349-632531db7ed4'),
+    qualification: 'M.Tech in Computer Science',
+    experience: 'Six years of industry experience in product teams and three years teaching product management.',
+    linkedin: 'https://linkedin.com/in/fatima-rahman',
+    github: 'https://github.com/fatima-rahman',
+    portfolio: 'https://fatima-rahman.dev',
+    website: 'https://fatima-rahman.dev',
+    bio: 'Product leader teaching research-led product strategy and delivery.',
+    teachingCategories: ['Product Management', 'UX Research'],
+    demoVideo: { url: 'https://example.com/demo-video.mp4', publicId: 'demo-video-01' },
+    identityProof: image('photo-1513364776144-60967b0f800f'),
+    taxDetails: { pan: 'ABCDE1234F', gst: '36ABCDE1234F1Z5' },
+    bankDetails: {
+      accountHolderName: 'Fatima Rahman',
+      accountNumber: '50100234567890',
+      ifscCode: 'HDFC0001234',
+      bankName: 'HDFC Bank',
+      branch: 'Hitech City',
+      upiId: 'fatima@hdfcbank',
+    },
+    status: 'pending',
+    createdAt: '2026-07-16T11:00:00Z',
+    updatedAt: '2026-07-16T11:00:00Z',
+  },
+];
 export const mockProgress: MockProgress[] = [{ _id: 'progress-01', studentId: 'student-01', courseId: 'course-01', completedLectureIds: ['course-01-lecture-01', 'course-01-lecture-02', 'course-01-lecture-03', 'course-01-lecture-04'], percentage: 78, lastAccessedAt: '2026-07-24T09:30:00Z' }, { _id: 'progress-02', studentId: 'student-01', courseId: 'course-02', completedLectureIds: ['course-02-lecture-01', 'course-02-lecture-02'], percentage: 43, lastAccessedAt: '2026-07-21T15:10:00Z' }];
 export const mockRevenue: MockRevenue[] = [{ period: '2026-02', grossRevenue: 176000, refunds: 8400, platformFees: 17600, netRevenue: 150000 }, { period: '2026-03', grossRevenue: 208000, refunds: 7200, platformFees: 20800, netRevenue: 180000 }, { period: '2026-04', grossRevenue: 192000, refunds: 9600, platformFees: 19200, netRevenue: 163200 }, { period: '2026-05', grossRevenue: 246000, refunds: 12300, platformFees: 24600, netRevenue: 209100 }, { period: '2026-06', grossRevenue: 269000, refunds: 8100, platformFees: 26900, netRevenue: 234000 }, { period: '2026-07', grossRevenue: 284900, refunds: 11400, platformFees: 28490, netRevenue: 245010 }];
 export const mockAnalytics: MockAnalytics[] = [{ period: '2026-02', newEnrollments: 522, activeLearners: 4120, courseCompletionRate: 65, averageSessionMinutes: 38 }, { period: '2026-03', newEnrollments: 618, activeLearners: 4480, courseCompletionRate: 67, averageSessionMinutes: 41 }, { period: '2026-04', newEnrollments: 574, activeLearners: 4735, courseCompletionRate: 68, averageSessionMinutes: 40 }, { period: '2026-05', newEnrollments: 732, activeLearners: 5120, courseCompletionRate: 70, averageSessionMinutes: 43 }, { period: '2026-06', newEnrollments: 810, activeLearners: 5890, courseCompletionRate: 71, averageSessionMinutes: 44 }, { period: '2026-07', newEnrollments: 862, activeLearners: 6450, courseCompletionRate: 72, averageSessionMinutes: 46 }];

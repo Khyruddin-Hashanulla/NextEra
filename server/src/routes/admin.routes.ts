@@ -10,6 +10,7 @@ import {
   updateUserStatus,
   deleteUser,
   getPendingInstructors,
+  getInstructorApplicationDetail,
   approveInstructor,
   rejectInstructor,
   listCategories,
@@ -117,6 +118,8 @@ import {
   sendBulkNotificationSchema,
   updateSettingsSchema,
   rejectCourseSchema,
+  approveInstructorSchema,
+  rejectInstructorSchema,
   moderateReviewSchema,
   createSubscriptionPlanSchema,
   updateSubscriptionPlanSchema,
@@ -192,10 +195,13 @@ router.delete('/users/:id',
 
 // Instructor Approval
 router.get('/instructors/pending', getPendingInstructors);
+router.get('/instructors/:id', getInstructorApplicationDetail);
 router.put('/instructors/:id/approve',
+  validate(approveInstructorSchema),
   audit({ action: 'INSTRUCTOR_APPROVED', resourceType: 'User', getPreviousData: previousDataLoader(User) }),
   approveInstructor);
 router.delete('/instructors/:id',
+  validate(rejectInstructorSchema),
   audit({ action: 'INSTRUCTOR_REJECTED', resourceType: 'User', getPreviousData: previousDataLoader(User) }),
   rejectInstructor);
 

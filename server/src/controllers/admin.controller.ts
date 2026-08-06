@@ -65,15 +65,23 @@ export const getPendingInstructors = asyncHandler(async (_req: Request, res: Res
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Pending instructors fetched', data));
 });
 
+export const getInstructorApplicationDetail = asyncHandler(async (req: Request, res: Response) => {
+  const data = await adminService.getInstructorApplicationDetail(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructor application detail fetched', data));
+});
+
 export const approveInstructor = asyncHandler(async (req: Request, res: Response) => {
-  const data = await adminService.approveInstructor(req.params.id);
+  const adminId = req.currentUser!.userId;
+  const { adminNote } = req.body as { adminNote?: string };
+  const data = await adminService.approveInstructor(req.params.id, adminId, adminNote);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructor approved', data));
 });
 
 export const rejectInstructor = asyncHandler(async (req: Request, res: Response) => {
-  const adminId = (req as any).user._id;
-  await adminService.rejectInstructor(req.params.id, adminId);
-  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructor rejected', null));
+  const adminId = req.currentUser!.userId;
+  const { rejectionReason } = req.body as { rejectionReason?: string };
+  const data = await adminService.rejectInstructor(req.params.id, adminId, rejectionReason);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Instructor rejected', data));
 });
 
 export const listCategories = asyncHandler(async (_req: Request, res: Response) => {

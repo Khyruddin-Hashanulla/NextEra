@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
+import { QUERY_KEYS } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import { Search, Shield, Ban, Trash2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -56,6 +57,9 @@ export function UsersPage() {
       adminApi.updateUserRole(id, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      // The affected user's session reflects its role; invalidate the shared
+      // auth query so any live client sees the new role immediately.
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.auth.user });
       addToast({ title: 'User role updated', variant: 'success' });
     },
     onError: () => addToast({ title: 'Failed to update role', variant: 'error' }),

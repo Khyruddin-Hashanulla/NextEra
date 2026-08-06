@@ -95,7 +95,12 @@ export class InstructorService {
     const existing = await InstructorApplication.findOne({ user: userId });
     if (existing) {
       if (existing.status === 'pending') throw ApiError.conflict('Application already pending');
-      if (existing.status === 'approved') throw ApiError.conflict('You are already an instructor');
+      if (existing.status === 'approved') {
+        // An approval only grants access while the account is still an
+        // instructor. If an admin revoked the role, allow the user to reapply.
+        const user = await User.findById(userId).select('role').lean();
+        if (user?.role === ROLES.INSTRUCTOR) throw ApiError.conflict('You are already an instructor');
+      }
       Object.assign(existing, data, { status: 'pending' });
       return existing.save();
     }

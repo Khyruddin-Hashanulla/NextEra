@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
-  CheckCircle2, XCircle, Clock, Home, LayoutDashboard, ArrowRight,
+  CheckCircle2, XCircle, Clock, Home, LayoutDashboard, ArrowRight, UserX,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES, getDashboardRoute } from '@/lib/constants';
@@ -29,6 +29,13 @@ const statusConfig = {
     accent: 'bg-warning/10',
     bar: 'bg-warning',
   },
+  revoked: {
+    icon: UserX,
+    iconClasses: 'bg-destructive/10 text-destructive',
+    message: 'You are currently a Student. Your instructor access has been revoked by the administrator.',
+    accent: 'bg-destructive/10',
+    bar: 'bg-destructive',
+  },
 } as const;
 
 const timeline = [
@@ -37,9 +44,16 @@ const timeline = [
   { label: 'Final decision', state: 'pending' },
 ] as const;
 
-export function ApplicationStatusCard({ status }: { status?: string }) {
+interface ApplicationStatusCardProps {
+  status?: string;
+  rejectionReason?: string;
+  revoked?: boolean;
+  onApplyAgain?: () => void;
+}
+
+export function ApplicationStatusCard({ status, rejectionReason, revoked, onApplyAgain }: ApplicationStatusCardProps) {
   const reduceMotion = useReducedMotion();
-  const key = status === 'approved' || status === 'rejected' ? status : 'pending';
+  const key = revoked ? 'revoked' : status === 'approved' || status === 'rejected' ? status : 'pending';
   const { icon: StatusIcon, iconClasses, message, accent, bar } = statusConfig[key];
   const isApproved = key === 'approved';
 
@@ -67,7 +81,14 @@ export function ApplicationStatusCard({ status }: { status?: string }) {
             <p className="mt-2 text-muted-foreground">{message}</p>
           </div>
 
-          {!isApproved && (
+          {key === 'rejected' && rejectionReason && (
+            <div className="mt-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-left">
+              <p className="text-xs font-semibold uppercase tracking-wide text-destructive">Reason</p>
+              <p className="mt-1 text-sm text-foreground">{rejectionReason}</p>
+            </div>
+          )}
+
+          {!isApproved && !revoked && (
             <div className="mt-8 text-left">
               <div className={`mb-4 h-1.5 overflow-hidden rounded-full ${accent}`}>
                 <div className={`h-full w-1/2 rounded-full ${bar}`} />
@@ -93,7 +114,11 @@ export function ApplicationStatusCard({ status }: { status?: string }) {
           )}
 
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            {isApproved ? (
+            {revoked ? (
+              <Button className="h-12 w-full rounded-full px-7 sm:w-auto" onClick={onApplyAgain}>
+                Apply Again <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+              </Button>
+            ) : isApproved ? (
               <Button asChild className="h-12 w-full rounded-full px-7 sm:w-auto">
                 <Link to={getDashboardRoute('instructor')}>
                   Go to Instructor Dashboard <LayoutDashboard className="ml-2 h-4 w-4" aria-hidden="true" />
@@ -106,11 +131,19 @@ export function ApplicationStatusCard({ status }: { status?: string }) {
                 </Link>
               </Button>
             )}
-            <Button asChild variant="ghost" className="h-12 w-full rounded-full px-7 sm:w-auto">
-              <Link to={ROUTES.COURSES}>
-                Browse Courses <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
-              </Link>
-            </Button>
+            {revoked ? (
+              <Button asChild variant="ghost" className="h-12 w-full rounded-full px-7 sm:w-auto">
+                <Link to={ROUTES.CONTACT}>
+                  Contact Administrator
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild variant="ghost" className="h-12 w-full rounded-full px-7 sm:w-auto">
+                <Link to={ROUTES.COURSES}>
+                  Browse Courses <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
       </div>

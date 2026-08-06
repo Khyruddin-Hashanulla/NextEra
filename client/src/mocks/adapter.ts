@@ -54,7 +54,8 @@ function route(config: AxiosRequestConfig): unknown {
   if (url === '/admin/dashboard') return unwrap(adminDashboard);
   if (url === '/admin/users') { const result = page(mockStudents, query); return unwrap({ users: result.items, pagination: result.pagination }); }
   if (url === '/admin/students') { const result = page(mockStudents, query); return unwrap({ students: result.items, pagination: result.pagination }); }
-  if (url === '/admin/instructors/pending') return unwrap(mockInstructorApplications);
+  if (url === '/admin/instructors/pending') return unwrap(mockInstructorApplications.filter((app) => app.status === 'pending'));
+  if (/^\/admin\/instructors\/[^/]+$/.test(url) && method === 'get') return unwrap(mockInstructorApplications.find((app) => app._id === url.split('/').pop()) ?? null);
   if (url === '/admin/categories') return unwrap(mockCategories);
   if (url === '/admin/courses') { const result = page(mockCourses, query); return unwrap({ courses: result.items, pagination: result.pagination }); }
   if (url === '/admin/blog') { const result = page(mockBlogs, query); return unwrap({ blogs: result.items, pagination: result.pagination }); }
