@@ -458,7 +458,7 @@ export function ApplicationForm() {
           <div className="space-y-2">
             <FileFieldLabel>Identity Proof</FileFieldLabel>
             <FileUpload
-              accept="image/png,image/jpeg,image/heic,image/heif,image/avif,application/pdf"
+              accept="image/png,image/jpeg,image/heif,application/pdf"
               maxSize={10 * 1024 * 1024}
               label="Upload identity proof"
               value={form.identityProof}
