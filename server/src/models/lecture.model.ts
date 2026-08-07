@@ -68,6 +68,7 @@ export interface ILecture extends Document {
   videoUrl: { url: string; publicId: string };
   articleContent: string;
   resources: { url: string; publicId: string; name: string; type: string; size: number }[];
+  links: { id: string; label: string; url: string }[];
   attachments: ILectureAttachment[];
   sourceCode: { url: string; publicId: string; name: string; size: number };
   practiceFiles: ILectureAttachment[];
@@ -130,6 +131,13 @@ const lectureSchema = new Schema<ILecture>(
         name: { type: String },
         type: { type: String },
         size: { type: Number, default: 0 },
+      },
+    ],
+    links: [
+      {
+        id: { type: String, default: '' },
+        label: { type: String, default: '' },
+        url: { type: String },
       },
     ],
     attachments: [

@@ -58,6 +58,7 @@ const SettingsPage = lazy(() => import('@/features/admin/pages/SettingsPage').th
 const WalletPage = lazy(() => import('@/features/admin/pages/WalletPage').then(m => ({ default: m.WalletPage })));
 const AdminPayoutsPage = lazy(() => import('@/features/admin/pages/PayoutsPage').then(m => ({ default: m.PayoutsPage })));
 const CourseManagementPage = lazy(() => import('@/features/admin/pages/CourseManagementPage').then(m => ({ default: m.CourseManagementPage })));
+const CourseReviewPage = lazy(() => import('@/features/admin/pages/CourseReviewPage').then(m => ({ default: m.CourseReviewPage })));
 const SubscriptionPlansPage = lazy(() => import('@/features/admin/pages/SubscriptionPlansPage').then(m => ({ default: m.SubscriptionPlansPage })));
 const ReviewsModerationPage = lazy(() => import('@/features/admin/pages/ReviewsModerationPage').then(m => ({ default: m.ReviewsModerationPage })));
 const BannerManagementPage = lazy(() => import('@/features/admin/pages/BannerManagementPage').then(m => ({ default: m.BannerManagementPage })));
@@ -228,6 +229,7 @@ export const router = createBrowserRouter([
       { path: 'students', element: <SuspendedPage Component={StudentManagementPage} /> },
       { path: 'instructors', element: <SuspendedPage Component={InstructorsPage} /> },
       { path: 'courses', element: <SuspendedPage Component={CourseManagementPage} /> },
+      { path: 'courses/:id', element: <SuspendedPage Component={CourseReviewPage} /> },
       { path: 'categories', element: <SuspendedPage Component={CategoriesPage} /> },
       { path: 'subscriptions', element: <SuspendedPage Component={SubscriptionPlansPage} /> },
       { path: 'blog', element: <SuspendedPage Component={BlogPage} /> },

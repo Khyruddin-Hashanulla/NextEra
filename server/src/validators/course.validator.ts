@@ -15,7 +15,7 @@ const lectureAttachmentSchema = z.object({
   url: z.string().max(FIELD_SIZES.URL),
   publicId: z.string().max(FIELD_SIZES.URL),
   name: z.string().max(FIELD_SIZES.TITLE),
-  type: z.string().max(FIELD_SIZES.NAME),
+  type: z.string().max(FIELD_SIZES.NAME).default('file'),
   size: z.number().max(200 * 1024 * 1024).default(0),
 });
 
@@ -23,15 +23,14 @@ const resourceSchema = z.object({
   url: z.string().max(FIELD_SIZES.URL),
   publicId: z.string().max(FIELD_SIZES.URL),
   name: z.string().max(FIELD_SIZES.TITLE),
-  type: z.string().max(FIELD_SIZES.NAME),
+  type: z.string().max(FIELD_SIZES.NAME).default('file'),
   size: z.number().max(200 * 1024 * 1024).default(0),
 });
 
-const sourceCodeSchema = z.object({
-  url: z.string().max(FIELD_SIZES.URL).default(''),
-  publicId: z.string().max(FIELD_SIZES.URL).default(''),
-  name: z.string().max(FIELD_SIZES.TITLE).default(''),
-  size: z.number().max(200 * 1024 * 1024).default(0),
+const lectureLinkSchema = z.object({
+  id: z.string().max(FIELD_SIZES.URL).optional(),
+  label: z.string().max(FIELD_SIZES.TITLE).default(''),
+  url: z.string().min(1).max(FIELD_SIZES.URL),
 });
 
 const certificateSettingsSchema = z.object({
@@ -56,13 +55,30 @@ const metaSchema = z.object({
   seoKeywords: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.SEO_KEYWORDS).optional(),
 });
 
-const questionSchema = z.object({
-  question: z.string().min(1).max(FIELD_SIZES.QUESTION),
-  options: z.array(z.string().min(1).max(FIELD_SIZES.SHORT_DESCRIPTION)).min(2, 'At least 2 options required').max(ARRAY_LIMITS.OPTIONS_PER_QUESTION),
-  correctAnswer: z.string().min(1).max(FIELD_SIZES.SHORT_DESCRIPTION),
-  explanation: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
-  marks: z.number().min(0).max(1000).optional(),
-});
+const QUESTION_TYPES = ['single', 'multiple', 'boolean', 'fill_blank', 'matching', 'coding', 'essay'] as const;
+
+const questionSchema = z
+  .object({
+    question: z.string().min(1).max(FIELD_SIZES.QUESTION),
+    options: z.array(z.string().min(1).max(FIELD_SIZES.SHORT_DESCRIPTION)).max(ARRAY_LIMITS.OPTIONS_PER_QUESTION).optional(),
+    correctAnswer: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
+    explanation: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
+    marks: z.number().min(0).max(1000).optional(),
+    type: z.enum(QUESTION_TYPES).optional(),
+    negativeMarks: z.number().min(0).max(1000).optional(),
+    isBonus: z.boolean().optional(),
+    weight: z.number().min(0).max(100).optional(),
+  })
+  .superRefine((q, ctx) => {
+    const type = q.type ?? 'single';
+    const needsOptions = type === 'single' || type === 'multiple' || type === 'boolean';
+    if (needsOptions && (!q.options || q.options.length < 2)) {
+      ctx.addIssue({ code: 'custom', path: ['options'], message: 'At least 2 options required for this question type' });
+    }
+    if (type !== 'coding' && type !== 'essay' && !q.correctAnswer) {
+      ctx.addIssue({ code: 'custom', path: ['correctAnswer'], message: 'Correct answer is required for this question type' });
+    }
+  });
 
 const assignmentSchema = z.object({
   question: z.string().min(1).max(FIELD_SIZES.DESCRIPTION),
@@ -75,12 +91,25 @@ const assignmentSchema = z.object({
   penaltyPercent: z.number().min(0).max(100).optional(),
 });
 
+const sourceCodeSchema = z.object({
+  url: z.string().max(FIELD_SIZES.URL).default(''),
+  publicId: z.string().max(FIELD_SIZES.URL).default(''),
+  name: z.string().max(FIELD_SIZES.TITLE).default(''),
+  size: z.number().max(200 * 1024 * 1024).default(0),
+}).nullable().optional();
+
 const quizSchema = z.object({
   timeLimit: z.number().min(0).max(1440).optional(),
   passingScore: z.number().min(0).max(100).optional(),
   maxAttempts: z.number().min(0).max(100).optional(),
   showResults: z.boolean().optional(),
   randomizeQuestions: z.boolean().optional(),
+  negativeMarking: z.boolean().optional(),
+  partialMarking: z.boolean().optional(),
+  attemptCooldownMinutes: z.number().min(0).max(10080).optional(),
+  allowResume: z.boolean().optional(),
+  shuffleOptions: z.boolean().optional(),
+  scoringPolicy: z.enum(['best', 'latest', 'average', 'highest']).optional(),
   questions: z.array(questionSchema).max(ARRAY_LIMITS.QUESTIONS_PER_QUIZ).optional(),
 });
 
@@ -126,31 +155,79 @@ export const updateSectionSchema = z.object({
   order: z.number().min(0).max(1000).optional(),
 });
 
-export const createLectureSchema = z.object({
+const createLectureBaseSchema = z.object({
   title: z.string().min(2, 'Lecture title must be at least 2 characters').max(FIELD_SIZES.TITLE),
   slug: z.string().max(FIELD_SIZES.SLUG).optional(),
   description: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
-  type: z.enum(['video', 'article', 'assignment', 'quiz']),
   duration: z.number().min(0).max(86400).optional(),
-  videoSource: videoSourceSchema.optional(),
   videoUrl: z.object({
     url: z.string().max(FIELD_SIZES.URL),
     publicId: z.string().max(FIELD_SIZES.URL),
   }).optional(),
-  articleContent: z.string().max(FIELD_SIZES.ARTICLE_CONTENT).optional(),
   resources: z.array(resourceSchema).max(ARRAY_LIMITS.RESOURCES_PER_LECTURE).optional(),
+  links: z.array(lectureLinkSchema).max(ARRAY_LIMITS.RESOURCES_PER_LECTURE).optional(),
   attachments: z.array(lectureAttachmentSchema).max(ARRAY_LIMITS.ATTACHMENTS_PER_LECTURE).optional(),
-  sourceCode: sourceCodeSchema.optional(),
   practiceFiles: z.array(lectureAttachmentSchema).max(ARRAY_LIMITS.PRACTICE_FILES).optional(),
   notes: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
-  assignment: assignmentSchema.optional(),
-  quiz: quizSchema.optional(),
   isFree: z.boolean().optional(),
   seoTitle: z.string().max(FIELD_SIZES.TITLE).optional(),
   seoDescription: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
 });
 
-export const updateLectureSchema = createLectureSchema.partial();
+const lectureVideoSchema = createLectureBaseSchema.extend({
+  type: z.literal('video'),
+  videoSource: videoSourceSchema.optional(),
+  articleContent: z.string().max(FIELD_SIZES.ARTICLE_CONTENT).optional().default(''),
+  assignment: z.undefined(),
+  quiz: z.undefined(),
+  sourceCode: sourceCodeSchema,
+});
+
+const lectureArticleSchema = createLectureBaseSchema.extend({
+  type: z.literal('article'),
+  videoSource: z.undefined(),
+  articleContent: z.string().min(1).max(FIELD_SIZES.ARTICLE_CONTENT),
+  assignment: z.undefined(),
+  quiz: z.undefined(),
+  sourceCode: sourceCodeSchema,
+});
+
+const lectureAssignmentSchema = createLectureBaseSchema.extend({
+  type: z.literal('assignment'),
+  videoSource: z.undefined(),
+  articleContent: z.string().max(FIELD_SIZES.ARTICLE_CONTENT).optional().default(''),
+  assignment: assignmentSchema,
+  quiz: z.undefined(),
+  sourceCode: sourceCodeSchema,
+});
+
+const lectureQuizSchema = createLectureBaseSchema.extend({
+  type: z.literal('quiz'),
+  videoSource: z.undefined(),
+  articleContent: z.string().max(FIELD_SIZES.ARTICLE_CONTENT).optional().default(''),
+  assignment: z.undefined(),
+  quiz: quizSchema,
+  sourceCode: sourceCodeSchema,
+});
+
+export const createLectureSchema = z.union([
+  lectureVideoSchema,
+  lectureArticleSchema,
+  lectureAssignmentSchema,
+  lectureQuizSchema,
+]);
+
+const lectureVideoUpdateSchema = lectureVideoSchema.partial();
+const lectureArticleUpdateSchema = lectureArticleSchema.partial();
+const lectureAssignmentUpdateSchema = lectureAssignmentSchema.partial();
+const lectureQuizUpdateSchema = lectureQuizSchema.partial();
+
+export const updateLectureSchema = z.union([
+  lectureVideoUpdateSchema,
+  lectureArticleUpdateSchema,
+  lectureAssignmentUpdateSchema,
+  lectureQuizUpdateSchema,
+]);
 
 export const reorderSectionsSchema = z.object({
   sectionOrder: z.array(z.object({
@@ -164,4 +241,8 @@ export const reorderLecturesSchema = z.object({
     lectureId: z.string().max(FIELD_SIZES.URL),
     order: z.number().min(0).max(1000),
   })).max(ARRAY_LIMITS.LECTURES_PER_SECTION),
+});
+
+export const moveLectureSchema = z.object({
+  targetSectionId: z.string().min(1).max(FIELD_SIZES.URL),
 });

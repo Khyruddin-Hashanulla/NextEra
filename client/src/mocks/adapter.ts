@@ -63,6 +63,7 @@ function route(config: AxiosRequestConfig): unknown {
   if (url === '/admin/instructors/pending') return unwrap(mockInstructorApplications.filter((app) => app.status === 'pending'));
   if (/^\/admin\/instructors\/[^/]+$/.test(url) && method === 'get') return unwrap(mockInstructorApplications.find((app) => app._id === url.split('/').pop()) ?? null);
   if (url === '/admin/categories') return unwrap(mockCategories);
+  if (url === '/categories') return unwrap(mockCategories);
   if (url === '/admin/courses') { const result = page(mockCourses, query); return unwrap({ courses: result.items, pagination: result.pagination }); }
   if (url === '/admin/blog') { const result = page(mockBlogs, query); return unwrap({ blogs: result.items, pagination: result.pagination }); }
   if (url === '/admin/coupons') { const result = page(mockCoupons, query); return unwrap({ coupons: result.items, pagination: result.pagination }); }

@@ -1,6 +1,6 @@
 import { Lecture } from '../models/lecture.model';
 import { IQuizAttemptDetail, QuestionType, QuestionStatus, EvaluationStatus } from '../models/quizAttempt.model';
-import { computeLetterGrade, computePercentage, computePassFail } from '../utils/grading';
+import { computeLetterGrade } from '../utils/grading';
 
 export interface NormalizedQuestion {
   questionId: string;
@@ -231,7 +231,7 @@ export function gradeQuestion(
 
   return {
     isCorrect: false,
-    marksObtained: Math.max(0, marksObtained),
+    marksObtained: Math.round(marksObtained * 100) / 100,
     maxMarks: question.marks * question.weight,
     status: 'incorrect',
   };
@@ -306,8 +306,9 @@ export function computeAttemptResult(
   }
 
   const percentage = totalMarks > 0 ? Math.round((score / totalMarks) * 10000) / 100 : 0;
-  const passFail = computePassFail(score, undefined, totalMarks);
-  const passed = passFail === 'pass';
+  const passingScore = config.passingScore ?? 60;
+  const passed = passingScore > 0 ? percentage >= passingScore : true;
+  const passFail: 'pass' | 'fail' = passed ? 'pass' : 'fail';
   const letterGrade = computeLetterGrade(percentage);
 
   let evaluationStatus: EvaluationStatus = 'auto_graded';

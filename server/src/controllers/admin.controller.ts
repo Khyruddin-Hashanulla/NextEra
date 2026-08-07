@@ -243,6 +243,26 @@ export const rejectCourse = asyncHandler(async (req: Request, res: Response) => 
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course rejected', data));
 });
 
+export const publishCourse = asyncHandler(async (req: Request, res: Response) => {
+  const data = await adminService.publishCourse(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course published', data));
+});
+
+export const unpublishCourse = asyncHandler(async (req: Request, res: Response) => {
+  const data = await adminService.unpublishCourse(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course unpublished', data));
+});
+
+export const archiveCourse = asyncHandler(async (req: Request, res: Response) => {
+  const data = await adminService.archiveCourse(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course archived', data));
+});
+
+export const restoreCourse = asyncHandler(async (req: Request, res: Response) => {
+  const data = await adminService.restoreCourse(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course restored to draft', data));
+});
+
 // ─── Subscription Plans ─────────────────────────────────────────
 export const listSubscriptionPlans = asyncHandler(async (_req: Request, res: Response) => {
   const data = await adminService.listSubscriptionPlans();

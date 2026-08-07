@@ -113,6 +113,10 @@ export const adminApi = {
   getCourseDetail: (id: string, signal?: AbortSignal) => axiosInstance.get<ApiResponse<any>>(`/admin/courses/${id}`, { signal }),
   approveCourse: (id: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/courses/${id}/approve`, undefined, { signal }),
   rejectCourse: (id: string, reason?: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/courses/${id}/reject`, { reason }, { signal }),
+  publishCourse: (id: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/courses/${id}/publish`, undefined, { signal }),
+  unpublishCourse: (id: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/courses/${id}/unpublish`, undefined, { signal }),
+  archiveCourse: (id: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/courses/${id}/archive`, undefined, { signal }),
+  restoreCourse: (id: string, signal?: AbortSignal) => axiosInstance.put<ApiResponse<any>>(`/admin/courses/${id}/restore`, undefined, { signal }),
 
   listSubscriptionPlans: (signal?: AbortSignal) => axiosInstance.get<ApiResponse<SubscriptionPlan[]>>('/admin/subscriptions', { signal }),
   createSubscriptionPlan: (data: Partial<SubscriptionPlan>, signal?: AbortSignal) => axiosInstance.post<ApiResponse<SubscriptionPlan>>('/admin/subscriptions', data, { signal }),

@@ -40,6 +40,11 @@ export const getMyCourses = asyncHandler(async (req: Request, res: Response) => 
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Enrolled courses fetched', data));
 });
 
+export const enrollFreeCourse = asyncHandler(async (req: Request, res: Response) => {
+  const data = await studentService.enrollFreeCourse(req.currentUser!.userId, req.params.courseId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Enrolled in free course', data));
+});
+
 // ─── Payment ───────────────────────────────────────────────────
 export const initiatePayment = asyncHandler(async (req: Request, res: Response) => {
   const { courseId, couponCode } = req.body;

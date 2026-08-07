@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search, Star, Users, Clock, BookOpen } from 'lucide-react';
+import { isFreeCourse } from '@/lib/coursePricing';
 import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 
@@ -80,7 +81,7 @@ export function CoursesPage() {
                     <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{course.totalDuration || 0}h</span>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-lg font-bold">₹{course.price === 0 ? 'Free' : course.price.toLocaleString()}</span>
+                    <span className="text-lg font-bold">{isFreeCourse(course) ? 'Free' : `₹${course.price.toLocaleString()}`}</span>
                     <span className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{course.level}</span>
                   </div>
                   <Link to={`/student/courses/${course._id}`}>

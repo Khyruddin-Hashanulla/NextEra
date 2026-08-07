@@ -22,6 +22,9 @@ export const studentApi = {
   initiatePayment: (courseId: string, couponCode?: string, signal?: AbortSignal) =>
     axiosInstance.post<{ data: any }>('/student/payments/initiate', { courseId, couponCode }, { signal }),
 
+  enrollFreeCourse: (courseId: string, signal?: AbortSignal) =>
+    axiosInstance.post<{ data: any }>(`/student/courses/${courseId}/enroll-free`, undefined, { signal }),
+
   verifyPayment: (data: { razorpayOrderId: string; razorpayPaymentId: string; razorpaySignature: string }, signal?: AbortSignal) =>
     axiosInstance.post<{ data: { success: boolean } }>('/student/payments/verify', data, { signal }),
 

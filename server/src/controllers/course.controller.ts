@@ -91,6 +91,11 @@ export const getCurriculum = asyncHandler(async (req: Request, res: Response) =>
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Curriculum fetched', data));
 });
 
+export const getOwnerCurriculum = asyncHandler(async (req: Request, res: Response) => {
+  const data = await courseService.getOwnerCurriculum(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Curriculum fetched', data));
+});
+
 export const getPublishedCurriculum = asyncHandler(async (req: Request, res: Response) => {
   const data = await courseService.getPublishedCurriculum(req.params.id, req.currentUser?.userId);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Curriculum fetched', data));
@@ -140,6 +145,11 @@ export const removeLecture = asyncHandler(async (req: Request, res: Response) =>
 export const reorderLectures = asyncHandler(async (req: Request, res: Response) => {
   await courseService.reorderLectures(req.params.sectionId, req.params.id, req.body.lectureOrder);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Lectures reordered', null));
+});
+
+export const moveLecture = asyncHandler(async (req: Request, res: Response) => {
+  const data = await courseService.moveLecture(req.params.lectureId, req.params.id, req.body.targetSectionId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Lecture moved', data));
 });
 
 export const getLecture = asyncHandler(async (req: Request, res: Response) => {

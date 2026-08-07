@@ -41,6 +41,10 @@ import {
   getCourseDetail,
   approveCourse,
   rejectCourse,
+  publishCourse,
+  unpublishCourse,
+  archiveCourse,
+  restoreCourse,
   listSubscriptionPlans,
   createSubscriptionPlan,
   updateSubscriptionPlan,
@@ -280,6 +284,18 @@ router.put('/courses/:id/approve',
 router.put('/courses/:id/reject',
   audit({ action: 'COURSE_REJECTED', resourceType: 'Course', getPreviousData: previousDataLoader(Course) }),
   validate(rejectCourseSchema), rejectCourse);
+router.put('/courses/:id/publish',
+  audit({ action: 'COURSE_PUBLISHED', resourceType: 'Course', getPreviousData: previousDataLoader(Course) }),
+  publishCourse);
+router.put('/courses/:id/unpublish',
+  audit({ action: 'COURSE_UNPUBLISHED', resourceType: 'Course', getPreviousData: previousDataLoader(Course) }),
+  unpublishCourse);
+router.put('/courses/:id/archive',
+  audit({ action: 'COURSE_ARCHIVED', resourceType: 'Course', getPreviousData: previousDataLoader(Course) }),
+  archiveCourse);
+router.put('/courses/:id/restore',
+  audit({ action: 'COURSE_RESTORED', resourceType: 'Course', getPreviousData: previousDataLoader(Course) }),
+  restoreCourse);
 
 // Subscription Plans
 router.get('/subscriptions', listSubscriptionPlans);

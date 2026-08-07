@@ -79,6 +79,7 @@ export const ROUTES = {
   ADMIN_USERS: '/admin/users',
   ADMIN_INSTRUCTORS: '/admin/instructors',
   ADMIN_COURSES: '/admin/courses',
+  ADMIN_COURSE_DETAIL: (id: string) => `/admin/courses/${id}`,
   ADMIN_CATEGORIES: '/admin/categories',
   ADMIN_BLOG: '/admin/blog',
   ADMIN_COUPONS: '/admin/coupons',
@@ -176,6 +177,9 @@ export const QUERY_KEYS = {
     list: (params?: Record<string, unknown>) => ['courses', params] as const,
     detail: (id: string) => ['courses', id] as const,
     instructor: (id: string) => ['courses', 'instructor', id] as const,
+  },
+  categories: {
+    list: () => ['categories'] as const,
   },
   bundles: {
     list: (params?: Record<string, unknown>) => ['bundles', params] as const,

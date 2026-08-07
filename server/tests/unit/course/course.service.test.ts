@@ -391,6 +391,131 @@ describe('getLecture', () => {
     vi.mocked(Lecture.findOne as never).mockReturnValue(queryChain(null));
     await expect(service.getLecture('l1', 'c1')).rejects.toThrow('Lecture not found');
   });
+
+  it('blocks unauthenticated users from paid lectures', async () => {
+    vi.mocked(Lecture.findOne as never).mockReturnValue(
+      queryChain({ _id: 'l1', isFree: false, section: 's1', order: 1 }),
+    );
+    await expect(service.getLecture('l1', 'c1')).rejects.toThrow('Not enrolled in this course');
+  });
+
+  it('strips answer keys from free lectures for unauthenticated users', async () => {
+    vi.mocked(Lecture.findOne as never)
+      .mockReturnValueOnce(queryChain({
+        _id: 'l1',
+        isFree: true,
+        section: 's1',
+        order: 1,
+        title: 'Free Video',
+        quiz: { questions: [{ question: 'Q1', correctAnswer: 'A', explanation: 'because' }] },
+      }))
+      .mockReturnValueOnce(queryChain(null))
+      .mockReturnValueOnce(queryChain(null));
+    vi.mocked(Section.findById as never).mockReturnValue(queryChain(null));
+
+    const result = await service.getLecture('l1', 'c1');
+
+    expect(result.quiz.questions[0]).not.toHaveProperty('correctAnswer');
+    expect(result.quiz.questions[0]).not.toHaveProperty('explanation');
+    expect(result.quiz.questions[0].question).toBe('Q1');
+  });
+
+  it('keeps answer keys for enrolled students', async () => {
+    vi.mocked(Lecture.findOne as never)
+      .mockReturnValueOnce(queryChain({
+        _id: 'l1',
+        isFree: false,
+        section: 's1',
+        order: 2,
+        quiz: { questions: [{ question: 'Q1', correctAnswer: 'B', explanation: 'because' }] },
+      }))
+      .mockReturnValueOnce(queryChain({ _id: 'l0', title: 'Prev' }))
+      .mockReturnValueOnce(queryChain(null));
+    vi.mocked(Enrollment.findOne as never).mockReturnValue(queryChain({ _id: 'e1' }));
+    vi.mocked(Section.findById as never).mockReturnValue(queryChain(null));
+
+    const result = await service.getLecture('l1', 'c1', 'u1');
+
+    expect(result.quiz.questions[0].correctAnswer).toBe('B');
+  });
+});
+
+describe('reorderSections', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it('reorders sections owned by the course inside a transaction', async () => {
+    vi.mocked(Section.countDocuments as never).mockResolvedValue(2);
+    vi.mocked(Section.findByIdAndUpdate as never).mockResolvedValue({});
+    vi.mocked(Course.findByIdAndUpdate as never).mockResolvedValue({});
+
+    await service.reorderSections('c1', [
+      { sectionId: 's1', order: 2 },
+      { sectionId: 's2', order: 1 },
+    ]);
+
+    expect(Section.findByIdAndUpdate).toHaveBeenCalledWith('s1', { order: 2 }, { session: {} });
+    expect(Section.findByIdAndUpdate).toHaveBeenCalledWith('s2', { order: 1 }, { session: {} });
+    expect(Course.findByIdAndUpdate).toHaveBeenCalledWith(
+      'c1',
+      { lastActivity: expect.any(Date) },
+      { session: {} },
+    );
+    expect(cacheManager.invalidateCourseCache).toHaveBeenCalled();
+  });
+
+  it('rejects sections that do not belong to the course', async () => {
+    vi.mocked(Section.countDocuments as never).mockResolvedValue(1);
+    await expect(
+      service.reorderSections('c1', [
+        { sectionId: 's1', order: 1 },
+        { sectionId: 'foreign', order: 2 },
+      ]),
+    ).rejects.toThrow('One or more sections do not belong to this course');
+    expect(Section.findByIdAndUpdate).not.toHaveBeenCalled();
+  });
+});
+
+describe('reorderLectures', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it('reorders lectures owned by the section inside a transaction', async () => {
+    vi.mocked(Section.findOne as never).mockReturnValue(queryChain({ _id: 's1' }));
+    vi.mocked(Lecture.countDocuments as never).mockResolvedValue(2);
+    vi.mocked(Lecture.findByIdAndUpdate as never).mockResolvedValue({});
+    vi.mocked(Course.findByIdAndUpdate as never).mockResolvedValue({});
+
+    await service.reorderLectures('s1', 'c1', [
+      { lectureId: 'l1', order: 2 },
+      { lectureId: 'l2', order: 1 },
+    ]);
+
+    expect(Lecture.findByIdAndUpdate).toHaveBeenCalledWith('l1', { order: 2 }, { session: {} });
+    expect(Lecture.findByIdAndUpdate).toHaveBeenCalledWith('l2', { order: 1 }, { session: {} });
+    expect(Course.findByIdAndUpdate).toHaveBeenCalledWith(
+      'c1',
+      { lastActivity: expect.any(Date) },
+      { session: {} },
+    );
+  });
+
+  it('throws when the section is not part of the course', async () => {
+    vi.mocked(Section.findOne as never).mockReturnValue(queryChain(null));
+    await expect(
+      service.reorderLectures('foreign-section', 'c1', [{ lectureId: 'l1', order: 1 }]),
+    ).rejects.toThrow('Section not found');
+  });
+
+  it('rejects lectures that do not belong to the section', async () => {
+    vi.mocked(Section.findOne as never).mockReturnValue(queryChain({ _id: 's1' }));
+    vi.mocked(Lecture.countDocuments as never).mockResolvedValue(1);
+    await expect(
+      service.reorderLectures('s1', 'c1', [
+        { lectureId: 'l1', order: 1 },
+        { lectureId: 'foreign', order: 2 },
+      ]),
+    ).rejects.toThrow('One or more lectures do not belong to this section');
+    expect(Lecture.findByIdAndUpdate).not.toHaveBeenCalled();
+  });
 });
 
 describe('getById / getBySlug / listAll', () => {
@@ -448,6 +573,84 @@ describe('getById / getBySlug / listAll', () => {
       status: 'published',
       featured: true,
     });
+  });
+});
+
+describe('getCurriculum', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it('returns only free lectures with metadata, no answer keys, for public viewers', async () => {
+    vi.mocked(Course.findById as never).mockReturnValue(
+      queryChain({ _id: 'c1', title: 'React' }),
+    );
+    vi.mocked(Section.find as never).mockReturnValue(
+      queryChain([{ _id: 's1', title: 'Intro' }]),
+    );
+    vi.mocked(Lecture.find as never).mockReturnValue(
+      queryChain([
+        {
+          _id: 'l1',
+          title: 'Free Preview',
+          type: 'video',
+          duration: 5,
+          isFree: true,
+          order: 1,
+          videoUrl: { url: 'preview.mp4' },
+          quiz: { questions: [{ question: 'Q', correctAnswer: 'A' }] },
+        },
+        {
+          _id: 'l2',
+          title: 'Paid Video',
+          type: 'video',
+          duration: 20,
+          isFree: false,
+          order: 2,
+          videoUrl: { url: 'paid.mp4' },
+        },
+      ]),
+    );
+
+    const result = await service.getCurriculum('c1');
+
+    const lectures = result[0].lectures;
+    expect(lectures).toHaveLength(1);
+    expect(lectures[0]._id).toBe('l1');
+    expect(lectures[0]).not.toHaveProperty('quiz');
+    expect(lectures[0].videoUrl).toBeDefined();
+  });
+});
+
+describe('getOwnerCurriculum', () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it('keeps full content and answer keys for the owner', async () => {
+    vi.mocked(Course.findById as never).mockReturnValue(
+      queryChain({ _id: 'c1', title: 'React' }),
+    );
+    vi.mocked(Section.find as never).mockReturnValue(
+      queryChain([{ _id: 's1', title: 'Intro' }]),
+    );
+    vi.mocked(Lecture.find as never).mockReturnValue(
+      queryChain([
+        {
+          _id: 'l1',
+          title: 'Video',
+          type: 'video',
+          duration: 10,
+          isFree: false,
+          order: 1,
+          videoUrl: { url: 'paid.mp4' },
+          quiz: { questions: [{ question: 'Q', correctAnswer: 'A' }] },
+        },
+      ]),
+    );
+
+    const result = await service.getOwnerCurriculum('c1');
+
+    const lecture = result[0].lectures[0];
+    expect(lecture.videoUrl).toBeDefined();
+    expect(lecture.quiz.questions[0].question).toBe('Q');
+    expect(lecture.quiz.questions[0].correctAnswer).toBe('A');
   });
 });
 

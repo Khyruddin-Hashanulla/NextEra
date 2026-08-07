@@ -4,6 +4,7 @@ import { Star, Users, Clock, BookOpen } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { ROUTES } from '@/lib/constants';
 import type { MockCourse } from '@/mocks/types';
+import { getCoursePricing } from '@/lib/coursePricing';
 
 interface HomeCourseCardProps {
   course: MockCourse;
@@ -11,10 +12,7 @@ interface HomeCourseCardProps {
 }
 
 export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
-  const price = course.pricing?.originalPrice ?? course.price ?? 0;
-  const discount = course.pricing?.discountPercent ?? 0;
-  const hasDiscount = discount > 0 && price > 0;
-  const discountedPrice = hasDiscount ? price * (1 - discount / 100) : price;
+  const pricing = getCoursePricing(course);
   const thumbUrl = course.thumbnail?.url;
   const catName =
     course.category && typeof course.category === 'object'
@@ -47,9 +45,9 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
             <BookOpen className="h-12 w-12" aria-hidden="true" />
           </div>
         )}
-        {hasDiscount && (
+        {pricing.hasDiscount && (
           <span className="absolute left-3 top-3 rounded-full bg-red-500 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-            {discount}% OFF
+            {pricing.discountPercent}% OFF
           </span>
         )}
         {level && (
@@ -95,16 +93,16 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
 
         <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
           <div className="flex items-baseline gap-2">
-            {price === 0 ? (
+            {pricing.isFree ? (
               <span className="text-lg font-bold text-foreground">Free</span>
             ) : (
               <>
                 <span className="text-lg font-bold text-foreground">
-                  ${discountedPrice.toFixed(0)}
+                  ${pricing.price.toFixed(0)}
                 </span>
-                {hasDiscount && (
+                {pricing.hasDiscount && (
                   <span className="text-sm text-muted-foreground line-through">
-                    ${price.toFixed(0)}
+                    ${pricing.originalPrice.toFixed(0)}
                   </span>
                 )}
               </>

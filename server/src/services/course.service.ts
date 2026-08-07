@@ -320,7 +320,22 @@ export class CourseService {
     const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
     const sectionsWithLectures = await Promise.all(
       sections.map(async (section: any) => {
-        const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 }).select('-quiz.questions.correctAnswer').lean();
+        const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 }).lean();
+        const freeLectures = lectures.filter((l: any) => l.isFree || false);
+        return { ...section, lectures: this.sanitizeCurriculumLectures(freeLectures, false) };
+      })
+    );
+    return sectionsWithLectures;
+  }
+
+  async getOwnerCurriculum(courseId: string): Promise<any[]> {
+    const course = await Course.findById(courseId).select('title instructor').lean();
+    if (!course) throw ApiError.notFound('Course not found');
+
+    const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
+    const sectionsWithLectures = await Promise.all(
+      sections.map(async (section: any) => {
+        const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 }).lean();
         return { ...section, lectures };
       })
     );
@@ -340,15 +355,56 @@ export class CourseService {
     const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
     const sectionsWithLectures = await Promise.all(
       sections.map(async (section: any) => {
-        const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 })
-          .select(isEnrolled ? '-quiz.questions.correctAnswer' : 'title type duration isFree order description videoSource videoUrl')
-          .lean();
-        const filteredLectures = isEnrolled ? lectures : lectures.filter((l: any) => l.isFree || false);
-        return { ...section, lectures: filteredLectures };
+        const lectures = await Lecture.find({ section: section._id }).sort({ order: 1 }).lean();
+        return { ...section, lectures: this.sanitizeCurriculumLectures(lectures, isEnrolled) };
       })
     );
 
     return { curriculum: sectionsWithLectures, isEnrolled };
+  }
+
+  /**
+   * Strips answer keys (and, for non-enrolled viewers, all playback content on
+   * non-free lectures) from curriculum lectures before they are returned to the
+   * client. Every lecture stays visible so the full curriculum is disclosed
+   * pre-enrollment; only playback is restricted.
+   *
+   * - Owner (instructor/admin): full lecture, minus quiz answer keys only.
+   * - Enrolled student:        full lecture, minus quiz answer keys only.
+   * - Public/non-enrolled:     metadata for ALL lectures (title/type/duration/
+   *                            isFree/order/description); videoSource/videoUrl
+   *                            only on free-preview lectures.
+   */
+  private sanitizeCurriculumLectures(lectures: any[], isEnrolled: boolean): any[] {
+    return lectures.map((lecture) => {
+      if (!isEnrolled) {
+        const base = {
+          _id: lecture._id,
+          title: lecture.title,
+          type: lecture.type,
+          duration: lecture.duration,
+          isFree: lecture.isFree,
+          order: lecture.order,
+          description: lecture.description,
+        };
+        if (lecture.isFree) {
+          return {
+            ...base,
+            videoSource: lecture.videoSource,
+            videoUrl: lecture.videoUrl,
+          };
+        }
+        return base;
+      }
+      const { quiz, ...rest } = lecture;
+      if (quiz?.questions) {
+        quiz.questions = quiz.questions.map((q: any) => {
+          const { correctAnswer, ...safeQuestion } = q;
+          return safeQuestion;
+        });
+      }
+      return { ...rest, quiz };
+    });
   }
 
   // ─── Sections ────────────────────────────────────────────────
@@ -396,10 +452,21 @@ export class CourseService {
   }
 
   async reorderSections(courseId: string, sectionOrder: { sectionId: string; order: number }[]) {
+    if (!sectionOrder?.length) return;
 
-    const updates = sectionOrder.map((s) => Section.findByIdAndUpdate(s.sectionId, { order: s.order }));
-    await Promise.all(updates);
-    await Course.findByIdAndUpdate(courseId, { lastActivity: new Date() });
+    const requestedIds = sectionOrder.map((s) => s.sectionId);
+    const ownedCount = await Section.countDocuments({ _id: { $in: requestedIds }, course: courseId });
+    if (ownedCount !== new Set(requestedIds).size) {
+      throw ApiError.badRequest('One or more sections do not belong to this course');
+    }
+
+    await withTransaction(async (session) => {
+      const updates = sectionOrder.map((s) =>
+        Section.findByIdAndUpdate(s.sectionId, { order: s.order }, { session })
+      );
+      await Promise.all(updates);
+      await Course.findByIdAndUpdate(courseId, { lastActivity: new Date() }, { session });
+    });
     await this.invalidateCourseCaches(courseId);
   }
 
@@ -454,11 +521,53 @@ export class CourseService {
   }
 
   async reorderLectures(sectionId: string, courseId: string, lectureOrder: { lectureId: string; order: number }[]) {
+    if (!lectureOrder?.length) return;
 
-    const updates = lectureOrder.map((l) => Lecture.findByIdAndUpdate(l.lectureId, { order: l.order }));
-    await Promise.all(updates);
-    await Course.findByIdAndUpdate(courseId, { lastActivity: new Date() });
+    const section = await Section.findOne({ _id: sectionId, course: courseId }).select('_id').lean();
+    if (!section) throw ApiError.notFound('Section not found');
+
+    const requestedIds = lectureOrder.map((l) => l.lectureId);
+    const ownedCount = await Lecture.countDocuments({
+      _id: { $in: requestedIds },
+      section: sectionId,
+      course: courseId,
+    });
+    if (ownedCount !== new Set(requestedIds).size) {
+      throw ApiError.badRequest('One or more lectures do not belong to this section');
+    }
+
+    await withTransaction(async (session) => {
+      const updates = lectureOrder.map((l) =>
+        Lecture.findByIdAndUpdate(l.lectureId, { order: l.order }, { session })
+      );
+      await Promise.all(updates);
+      await Course.findByIdAndUpdate(courseId, { lastActivity: new Date() }, { session });
+    });
     await this.invalidateCourseCaches(courseId);
+  }
+
+  async moveLecture(lectureId: string, courseId: string, targetSectionId: string) {
+    const lecture = await Lecture.findOne({ _id: lectureId, course: courseId }).select('section course title');
+    if (!lecture) throw ApiError.notFound('Lecture not found');
+
+    const targetSection = await Section.findOne({ _id: targetSectionId, course: courseId });
+    if (!targetSection) throw ApiError.notFound('Target section not found');
+
+    const sourceSectionId = lecture.section.toString();
+    if (sourceSectionId === targetSectionId) return lecture;
+
+    const lastLecture = await Lecture.findOne({ section: targetSectionId }).sort({ order: -1 });
+    const newOrder = (lastLecture?.order ?? -1) + 1;
+
+    lecture.section = new mongoose.Types.ObjectId(targetSectionId);
+    lecture.order = newOrder;
+    await lecture.save();
+
+    await this.recalculateSection(sourceSectionId);
+    await this.recalculateSection(targetSectionId);
+    await this.recalculateCourseTotals(courseId);
+    await this.invalidateCourseCaches(courseId);
+    return lecture;
   }
 
   async getLecture(lectureId: string, courseId: string, userId?: string): Promise<any> {
@@ -466,22 +575,49 @@ export class CourseService {
     const lecture = await Lecture.findOne(query).lean();
     if (!lecture) throw ApiError.notFound('Lecture not found');
 
+    let isEnrolled = false;
     if (userId) {
       const enrollment = await Enrollment.findOne({ user: userId, course: courseId }).lean();
+      isEnrolled = !!enrollment;
       if (!enrollment && !lecture.isFree) throw ApiError.forbidden('Not enrolled in this course');
+    }
+
+    if (!isEnrolled && !lecture.isFree) {
+      throw ApiError.forbidden('Not enrolled in this course');
     }
 
     const section = await Section.findById(lecture.section).lean();
     const prev = await Lecture.findOne({ section: lecture.section, order: { $lt: lecture.order } }).sort({ order: -1 }).select('_id title').lean();
     const next = await Lecture.findOne({ section: lecture.section, order: { $gt: lecture.order } }).sort({ order: 1 }).select('_id title').lean();
 
-    return { ...lecture, section: section || null, prevLecture: prev || null, nextLecture: next || null };
+    const safeLecture = this.sanitizeLectureForViewer(lecture, isEnrolled);
+    return { ...safeLecture, section: section || null, prevLecture: prev || null, nextLecture: next || null };
+  }
+
+  /**
+   * Strips answer keys (correctAnswer, and explanation for non-enrolled/free
+   * viewers) from a single lecture before returning it to a viewer who is not
+   * the course owner.
+   */
+  private sanitizeLectureForViewer(lecture: any, isEnrolled: boolean): any {
+    const { quiz, ...rest } = lecture;
+    if (quiz?.questions) {
+      quiz.questions = quiz.questions.map((q: any) => {
+        const safe: any = { ...q };
+        if (!isEnrolled) {
+          delete safe.correctAnswer;
+          delete safe.explanation;
+        }
+        return safe;
+      });
+    }
+    return { ...rest, quiz };
   }
 
   // ─── Recaclulation ──────────────────────────────────────────
   private async recalculateSection(sectionId: string) {
     const [{ totalLectures, totalDuration }] = await Lecture.aggregate([
-      { $match: { section: sectionId as any } },
+      { $match: { section: new mongoose.Types.ObjectId(sectionId) } },
       { $group: { _id: null, totalLectures: { $sum: 1 }, totalDuration: { $sum: '$duration' } } },
     ]).then((r) => (r.length ? r : [{ totalLectures: 0, totalDuration: 0 }]));
 
@@ -489,13 +625,14 @@ export class CourseService {
   }
 
   private async recalculateCourseTotals(courseId: string) {
+    const courseObjectId = new mongoose.Types.ObjectId(courseId);
     const [sectionStats, lectureStats] = await Promise.all([
       Section.aggregate([
-        { $match: { course: courseId as any } },
+        { $match: { course: courseObjectId } },
         { $group: { _id: null, totalSections: { $sum: 1 }, totalDuration: { $sum: '$totalDuration' }, totalLectures: { $sum: '$totalLectures' } } },
       ]).then((r) => (r.length ? r[0] : { totalSections: 0, totalDuration: 0, totalLectures: 0 })),
       Lecture.aggregate([
-        { $match: { course: courseId as any } },
+        { $match: { course: courseObjectId } },
         { $group: { _id: null, totalResources: { $sum: { $size: { $ifNull: ['$resources', []] } } } } },
       ]).then((r) => (r.length ? r[0] : { totalResources: 0 })),
     ]);

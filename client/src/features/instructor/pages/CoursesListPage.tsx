@@ -9,6 +9,7 @@ import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { isFreeCourse } from '@/lib/coursePricing';
 import {
   Plus, Pencil, Trash2, Eye, Send, BookOpen, Users, DollarSign,
   ChevronRight,
@@ -115,7 +116,7 @@ export function CoursesListPage() {
                   </Link>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{course.totalEnrollments || 0}</span>
-                    <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />₹{course.price?.toLocaleString() ?? 0}</span>
+                    <span className="flex items-center gap-1"><DollarSign className="h-3.5 w-3.5" />{isFreeCourse(course) ? 'Free' : `₹${course.price?.toLocaleString() ?? 0}`}</span>
                   </div>
                   <div className="flex gap-2 pt-1">
                     <Link to={`/instructor/courses/${course._id}/edit`} className="flex-1">

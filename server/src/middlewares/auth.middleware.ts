@@ -53,3 +53,35 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
     }
   }
 };
+
+/**
+ * Optional authentication: populates `req.currentUser` when a valid Bearer
+ * token is present, but never blocks the request. Used on routes that must stay
+ * public (e.g. the course-details endpoint) yet need to personalize/enrich
+ * responses for signed-in users — most importantly to detect whether the
+ * current user is enrolled so `isEnrolled` is set correctly.
+ */
+export const optionalAuthenticate = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next();
+    }
+
+    const token = authHeader.split(' ')[1];
+    const decoded = verifyAccessToken(token);
+
+    const userDoc = await UserModel.findById(decoded.userId);
+    if (userDoc && userDoc.isActive) {
+      req.currentUser = decoded;
+    }
+    return next();
+  } catch {
+    // Invalid/expired token: fall through as anonymous — the route must stay public.
+    return next();
+  }
+};

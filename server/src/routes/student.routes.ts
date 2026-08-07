@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import {
-  getDashboard, listCourses, getCourseDetail, getMyCourses,
+  getDashboard, listCourses, getCourseDetail, getMyCourses, enrollFreeCourse,
   listInstructors, getInstructorProfile,
   initiatePayment, verifyPayment, retryPayment,
   updateProgress, getProgress, getWatchHistory,
@@ -20,8 +20,7 @@ import {
 import {
   submitQuiz, getStudentQuizAttempts, startQuiz, getAttemptDetails, resumeQuiz, autoSubmitQuiz,
 } from '../controllers/quiz.controller';
-import { authenticate } from '../middlewares/auth.middleware';
-import { validate } from '../middlewares/validate.middleware';
+import { authenticate, optionalAuthenticate } from '../middlewares/auth.middleware';import { validate } from '../middlewares/validate.middleware';
 import { audit, auditMiddleware } from '../middlewares/audit.middleware';
 import {
   verifyNoteOwnership,
@@ -46,7 +45,7 @@ const router = Router();
 router.get('/instructors', listInstructors);
 router.get('/instructors/:id', getInstructorProfile);
 router.get('/courses', listCourses);
-router.get('/courses/:id', getCourseDetail);
+router.get('/courses/:id', optionalAuthenticate, getCourseDetail);
 router.get('/certificates/verify/:certificateId', verifyCertificate);
 
 // Protected - any authenticated user
@@ -55,6 +54,7 @@ router.use(authenticate);
 router.get('/dashboard', getDashboard);
 router.get('/my-courses', getMyCourses);
 router.get('/watch-history', getWatchHistory);
+router.post('/courses/:courseId/enroll-free', enrollFreeCourse);
 
 // Payment
 router.post('/payments/initiate', validate(initiatePaymentSchema), initiatePayment);

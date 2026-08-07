@@ -8,6 +8,7 @@ import { Payout } from '../models/payout.model';
 import { PlatformWallet } from '../models/platformWallet.model';
 import { Category } from '../models/category.model';
 import { Coupon } from '../models/coupon.model';
+import { courseService } from './course.service';
 import { Blog } from '../models/blog.model';
 import { Notification } from '../models/notification.model';
 import { PlatformSettings } from '../models/platformSettings.model';
@@ -554,6 +555,22 @@ export class AdminService {
     course.rejectionReason = reason || '';
     await course.save();
     return course;
+  }
+
+  async publishCourse(courseId: string) {
+    return courseService.publish(courseId);
+  }
+
+  async unpublishCourse(courseId: string) {
+    return courseService.unpublish(courseId);
+  }
+
+  async archiveCourse(courseId: string) {
+    return courseService.archive(courseId);
+  }
+
+  async restoreCourse(courseId: string) {
+    return courseService.restore(courseId);
   }
 
   // ─── Subscription Plans ──────────────────────────────────────

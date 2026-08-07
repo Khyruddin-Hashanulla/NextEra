@@ -270,18 +270,25 @@ export class StudentService {
       .lean();
     if (!course) throw ApiError.notFound('Course not found');
 
-    if (course.status !== 'published' && !userId) {
-      throw ApiError.notFound('Course not found');
+    // Unpublished/draft courses are only reachable by the owning instructor or
+    // an enrolled student. This guard stays strict even when an unrelated
+    // signed-in user hits the public course route (optional auth).
+    if (course.status !== 'published') {
+      let canView = false;
+      if (userId) {
+        const ownerId = course.instructor?._id?.toString?.() || course.instructor?.toString?.();
+        canView = ownerId === userId;
+        if (!canView) {
+          const draftEnrollment = await Enrollment.findOne({ user: userId, course: courseId }).lean();
+          canView = !!draftEnrollment;
+        }
+      }
+      if (!canView) throw ApiError.notFound('Course not found');
     }
 
     const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
     const sectionIds = sections.map((s) => s._id);
     const lectures = await Lecture.find({ section: { $in: sectionIds } }).sort({ order: 1 }).lean();
-
-    const curriculum = sections.map((section) => ({
-      ...section,
-      lectures: lectures.filter((l) => l.section.toString() === section._id.toString()),
-    }));
 
     let enrollment = null;
     let isEnrolled = false;
@@ -290,12 +297,114 @@ export class StudentService {
       isEnrolled = !!enrollment;
     }
 
+    const curriculum = sections.map((section) => ({
+      ...section,
+      lectures: this.sanitizeCurriculumLectures(
+        lectures.filter((l) => l.section.toString() === section._id.toString()),
+        isEnrolled
+      ),
+    }));
+
     return { course, curriculum, isEnrolled, enrollment };
+  }
+
+  /**
+   * Strips answer keys from curriculum lectures. For viewers who are not
+   * enrolled, EVERY lecture is returned so the complete curriculum stays
+   * visible (lock icons on the client), but playback content
+   * (videoSource/videoUrl) is only attached to free-preview lectures.
+   */
+  private sanitizeCurriculumLectures(lectures: any[], isEnrolled: boolean): any[] {
+    if (!isEnrolled) {
+      return lectures.map((lecture) => {
+        const base = {
+          _id: lecture._id,
+          title: lecture.title,
+          type: lecture.type,
+          duration: lecture.duration,
+          isFree: lecture.isFree,
+          order: lecture.order,
+          description: lecture.description,
+        };
+        if (lecture.isFree) {
+          return {
+            ...base,
+            videoSource: lecture.videoSource,
+            videoUrl: lecture.videoUrl,
+          };
+        }
+        return base;
+      });
+    }
+    return lectures.map((lecture) => {
+      const { quiz, ...rest } = lecture;
+      if (quiz?.questions) {
+        quiz.questions = quiz.questions.map((q: any) => {
+          const { correctAnswer, ...safeQuestion } = q;
+          return safeQuestion;
+        });
+      }
+      return { ...rest, quiz };
+    });
   }
 
   // ─── Payment & Enrollment ────────────────────────────────────
   async initiatePayment(userId: string, courseId: string, couponCode?: string) {
     return paymentService.initiateCoursePayment(userId, courseId, couponCode);
+  }
+
+  /**
+   * Enrolls a student in a free course without touching the payment gateway.
+   * Idempotent: if the student is already enrolled, the existing enrollment is
+   * returned (no 409). This is the ONLY entry point for free-course enrollment.
+   */
+  async enrollFreeCourse(userId: string, courseId: string) {
+    const course = await Course.findById(courseId);
+    if (!course) throw ApiError.notFound('Course not found');
+    if (course.status !== 'published' || !course.isApproved) {
+      throw ApiError.badRequest('Course is not available for enrollment');
+    }
+    if (course.price > 0 && course.courseType !== 'free') {
+      throw ApiError.badRequest('This course requires payment to enroll');
+    }
+
+    const existing = await Enrollment.findOne({ user: userId, course: courseId }).lean();
+    if (existing) {
+      return { free: true, alreadyEnrolled: true, enrollment: existing };
+    }
+
+    try {
+      const result = await withTransaction(async (session) => {
+        const enrollment = await Enrollment.create([{ user: userId, course: courseId }], { session });
+        await Course.findByIdAndUpdate(courseId, { $inc: { totalEnrollments: 1 } }, { session });
+        return enrollment[0];
+      });
+      await this.invalidateEnrollmentCaches(userId, [courseId]);
+      return { free: true, alreadyEnrolled: false, enrollment: result };
+    } catch (error: any) {
+      // E11000: concurrent duplicate inserts hit the unique (user, course) index.
+      // The first insert wins; this request must return the winner instead of failing.
+      if (error?.code === 11000 || (error?.message || '').includes('E11000')) {
+        const winner = await Enrollment.findOne({ user: userId, course: courseId }).lean();
+        if (winner) {
+          await this.invalidateEnrollmentCaches(userId, [courseId]);
+          return { free: true, alreadyEnrolled: true, enrollment: winner };
+        }
+      }
+      throw error;
+    }
+  }
+
+  private async invalidateEnrollmentCaches(userId: string, courseIds: string[]): Promise<void> {
+    const course = await Course.findById(courseIds[0]).select('instructor').lean();
+    await Promise.allSettled([
+      cacheManager.invalidateStudentCache(userId),
+      cacheManager.invalidateStudentCourseList(),
+      cacheManager.invalidateCourseCache(),
+      cacheManager.invalidateAdminCache(),
+      cacheManager.invalidateRevenueCache(),
+      course ? cacheManager.invalidateInstructorCache(course.instructor.toString()) : Promise.resolve(),
+    ]);
   }
 
   async verifyPayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {

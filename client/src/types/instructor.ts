@@ -27,12 +27,18 @@ export interface LectureAssignment {
   penaltyPercent: number;
 }
 
+export type QuizQuestionType = 'single' | 'multiple' | 'boolean' | 'fill_blank' | 'matching' | 'coding' | 'essay';
+
 export interface QuizQuestion {
   question: string;
   options: string[];
   correctAnswer: string;
   explanation: string;
   marks: number;
+  type?: QuizQuestionType;
+  negativeMarks?: number;
+  isBonus?: boolean;
+  weight?: number;
 }
 
 export interface LectureQuiz {
@@ -41,6 +47,12 @@ export interface LectureQuiz {
   maxAttempts: number;
   showResults: boolean;
   randomizeQuestions: boolean;
+  negativeMarking?: boolean;
+  partialMarking?: boolean;
+  attemptCooldownMinutes?: number;
+  allowResume?: boolean;
+  shuffleOptions?: boolean;
+  scoringPolicy?: 'best' | 'latest' | 'average' | 'highest';
   questions: QuizQuestion[];
 }
 

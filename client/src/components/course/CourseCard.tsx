@@ -4,6 +4,7 @@ import { Star, Users, Clock, BookOpen, Heart } from 'lucide-react';
 import { useState } from 'react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import type { MockCourse } from '@/mocks/types';
+import { getCoursePricing } from '@/lib/coursePricing';
 
 interface CourseCardProps {
   course: MockCourse;
@@ -14,9 +15,7 @@ interface CourseCardProps {
 export function CourseCard({ course, variant = 'default', className }: CourseCardProps) {
   const [favorited, setFavorited] = useState(false);
 
-  const price = course.pricing?.originalPrice ?? course.price ?? 0;
-  const discount = course.pricing?.discountPercent ?? 0;
-  const discountedPrice = discount > 0 ? price * (1 - discount / 100) : price;
+  const pricing = getCoursePricing(course);
   const thumbUrl = course.thumbnail?.url;
   const catName = course.category?.name;
 
@@ -38,7 +37,7 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
               <Clock className="h-3 w-3" aria-hidden="true" /> {course.totalDuration}h
             </div>
             <span className="text-xs font-semibold text-primary">
-              {discountedPrice === 0 ? 'Free' : `$${discountedPrice.toFixed(0)}`}
+              {pricing.isFree ? 'Free' : `$${pricing.price.toFixed(0)}`}
             </span>
           </div>
         </div>
@@ -55,8 +54,8 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
           ) : (
             <div className="flex items-center justify-center h-full text-gray-300"><BookOpen className="h-10 w-10" aria-hidden="true" /></div>
           )}
-          {discount > 0 && (
-            <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">{discount}% OFF</span>
+          {pricing.hasDiscount && (
+            <span className="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">{pricing.discountPercent}% OFF</span>
           )}
           <button
             onClick={(e) => { e.preventDefault(); setFavorited(!favorited); }}
@@ -85,7 +84,7 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
               <span className="text-sm font-semibold text-gray-700">{course.averageRating?.toFixed(1) ?? '4.5'}</span>
             </div>
             <span className="text-sm font-bold text-primary">
-              {discountedPrice === 0 ? 'Free' : `$${discountedPrice.toFixed(0)}`}
+              {pricing.isFree ? 'Free' : `$${pricing.price.toFixed(0)}`}
             </span>
           </div>
         </div>
@@ -137,9 +136,13 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
         </div>
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold text-gray-900">${discountedPrice.toFixed(0)}</span>
-            {discount > 0 && (
-              <span className="text-sm text-gray-400 line-through">${price.toFixed(0)}</span>
+            {pricing.isFree ? (
+              <span className="text-lg font-bold text-gray-900">Free</span>
+            ) : (
+              <span className="text-lg font-bold text-gray-900">${pricing.price.toFixed(0)}</span>
+            )}
+            {pricing.hasDiscount && (
+              <span className="text-sm text-gray-400 line-through">${pricing.originalPrice.toFixed(0)}</span>
             )}
           </div>
         </div>

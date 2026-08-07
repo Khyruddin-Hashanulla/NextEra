@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentApi } from '@/api/endpoints/student';
@@ -16,13 +16,34 @@ import { ResourceNotFound } from '@/components/common/ResourceNotFound';
 import { ErrorState } from '@/components/common/ErrorState';
 import { categorizeError } from '@/lib/error-utils';
 import { Loader2, ChevronLeft, ChevronRight, PlayCircle, CheckCircle, Bookmark, StickyNote, MessageSquare, FileQuestion, FileCheck, FileText, ArrowLeft, Download, Play, Video } from 'lucide-react';
+import { resolveVideoEmbed } from '@/lib/video';
+
+function renderEmbeddedVideo(lecture: any): React.ReactNode {
+  const embed = resolveVideoEmbed(lecture);
+  if (!embed.url) return null;
+  const isYoutube = embed.type === 'youtube';
+  return (
+    <iframe
+      title={lecture?.title || 'Lecture video'}
+      src={embed.url}
+      className="h-full w-full rounded-lg border-0"
+      frameBorder="0"
+      allow={
+        isYoutube
+          ? 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+          : 'autoplay; fullscreen; picture-in-picture'
+      }
+      allowFullScreen
+    />
+  );
+}
 
 export function CoursePlayerPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const { addToast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['student', 'course-player', courseId],
     queryFn: () => studentApi.getCourseDetail(courseId!).then((r: any) => r.data.data),
     enabled: !!courseId,
@@ -41,6 +62,13 @@ export function CoursePlayerPage() {
 
   const allLectures = data?.curriculum?.flatMap((s: any) => s.lectures || []) || [];
   const currentIdx = currentLecture ? allLectures.findIndex((l: any) => l._id === currentLecture._id) : -1;
+
+  useEffect(() => {
+    if (!currentLecture && allLectures.length > 0) {
+      setCurrentLecture(allLectures[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, currentLecture]);
 
   const handleLectureSelect = (lecture: any) => {
     setCurrentLecture(lecture);
@@ -96,9 +124,14 @@ export function CoursePlayerPage() {
 
   if (!data?.isEnrolled) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
         <p className="text-muted-foreground">You are not enrolled in this course.</p>
-        <Link to={`/courses/${courseId}`}><Button>View Course</Button></Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Button asChild variant="outline">
+            <Link to="/student/my-courses">My Courses</Link>
+          </Button>
+          <Button onClick={() => refetch()}>Try Again</Button>
+        </div>
       </div>
     );
   }
@@ -106,8 +139,8 @@ export function CoursePlayerPage() {
   const completedLectureIds = new Set(data.enrollment?.completedLectures?.map((id: string) => id.toString()) || []);
 
   return (
-    <div className="flex gap-6">
-      <div className="w-80 shrink-0 space-y-2">
+    <div className="flex flex-col gap-6 lg:flex-row">
+      <div className="w-full shrink-0 space-y-2 lg:w-80">
         <Link to="/student/my-courses" className="mb-2 flex items-center gap-1 text-sm text-primary hover:underline">
           <ArrowLeft className="h-4 w-4" /> Back to My Courses
         </Link>
@@ -152,7 +185,9 @@ export function CoursePlayerPage() {
         {currentLecture ? (
           <div className="space-y-4">
             <div className="aspect-video rounded-lg bg-black">
-              {currentLecture.type === 'video' && currentLecture.videoUrl?.url ? (
+              {currentLecture.type === 'video' && renderEmbeddedVideo(currentLecture) ? (
+                renderEmbeddedVideo(currentLecture)
+              ) : currentLecture.type === 'video' && currentLecture.videoUrl?.url ? (
                 <video
                   key={currentLecture._id}
                   src={currentLecture.videoUrl.url}
@@ -234,6 +269,13 @@ export function CoursePlayerPage() {
                 </>
               )}
             </Tabs>
+          </div>
+        ) : allLectures.length === 0 ? (
+          <div className="flex min-h-[40vh] items-center justify-center">
+            <div className="text-center text-muted-foreground">
+              <PlayCircle className="mx-auto h-12 w-12" />
+              <p className="mt-2">No lessons available yet.</p>
+            </div>
           </div>
         ) : (
           <div className="flex min-h-[40vh] items-center justify-center">

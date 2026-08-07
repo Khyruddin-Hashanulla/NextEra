@@ -64,7 +64,7 @@ export const instructorApi = {
     axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/archive`, undefined, { signal }),
 
   getCurriculum: (id: string, signal?: AbortSignal) =>
-    axiosInstance.get<ApiResponse<Section[]>>(`/courses/${id}/curriculum`, { signal }),
+    axiosInstance.get<ApiResponse<Section[]>>(`/courses/${id}/curriculum/owner`, { signal }),
 
   getSection: (courseId: string, sectionId: string, signal?: AbortSignal) =>
     axiosInstance.get<ApiResponse<Section>>(`/courses/${courseId}/sections/${sectionId}`, { signal }),
@@ -92,6 +92,9 @@ export const instructorApi = {
 
   reorderLectures: (courseId: string, sectionId: string, lectureOrder: { lectureId: string; order: number }[], signal?: AbortSignal) =>
     axiosInstance.put<ApiResponse<null>>(`/courses/${courseId}/sections/${sectionId}/lectures/reorder`, { lectureOrder }, { signal }),
+
+  moveLecture: (courseId: string, lectureId: string, targetSectionId: string, signal?: AbortSignal) =>
+    axiosInstance.put<ApiResponse<Lecture>>(`/courses/${courseId}/lectures/${lectureId}/move`, { targetSectionId }, { signal }),
 
   getLecture: (courseId: string, lectureId: string, signal?: AbortSignal) =>
     axiosInstance.get<ApiResponse<Lecture>>(`/courses/${courseId}/lectures/${lectureId}`, { signal }),

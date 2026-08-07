@@ -18,7 +18,8 @@
     "test:jest:unit": "jest --selectProjects unit --silent",
     "test:jest:integration": "jest --selectProjects integration --silent",
     "test:jest:coverage": "jest --coverage",
-    "backfill:instructor-profiles": "ts-node --transpile-only scripts/backfillInstructorProfiles.ts"
+    "backfill:instructor-profiles": "ts-node --transpile-only scripts/backfillInstructorProfiles.ts",
+    "backfill:youtube-lectures": "ts-node --transpile-only scripts/backfillYouTubeLectures.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

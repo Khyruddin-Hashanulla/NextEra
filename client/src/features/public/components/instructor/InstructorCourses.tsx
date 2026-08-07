@@ -8,6 +8,7 @@ import { Reveal } from './Reveal';
 import { ROUTES } from '@/lib/constants';
 import { formatCurrency } from '@/lib/utils';
 import type { InstructorCourse } from './types';
+import { getCoursePricing } from '@/lib/coursePricing';
 
 interface InstructorCoursesProps {
   courses: InstructorCourse[];
@@ -16,9 +17,7 @@ interface InstructorCoursesProps {
 }
 
 function HorizontalCourseCard({ course }: { course: InstructorCourse }) {
-  const price = course.pricing?.originalPrice ?? course.price ?? 0;
-  const discount = course.pricing?.discountPercent ?? 0;
-  const discountedPrice = discount > 0 ? price * (1 - discount / 100) : price;
+  const pricing = getCoursePricing(course);
 
   return (
     <Link
@@ -39,9 +38,9 @@ function HorizontalCourseCard({ course }: { course: InstructorCourse }) {
             <BookOpen className="h-8 w-8" aria-hidden="true" />
           </div>
         )}
-        {discount > 0 && (
+        {pricing.hasDiscount && (
           <span className="absolute left-3 top-3 rounded-full bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground">
-            {discount}% OFF
+            {pricing.discountPercent}% OFF
           </span>
         )}
       </div>
@@ -65,7 +64,7 @@ function HorizontalCourseCard({ course }: { course: InstructorCourse }) {
           </span>
         </div>
         <p className="mt-auto pt-2 text-sm font-bold text-primary">
-          {discountedPrice === 0 ? 'Free' : formatCurrency(discountedPrice)}
+          {pricing.isFree ? 'Free' : formatCurrency(pricing.price)}
         </p>
       </div>
     </Link>

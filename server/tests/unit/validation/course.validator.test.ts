@@ -135,12 +135,155 @@ describe('createLectureSchema', () => {
       createLectureSchema.parse({ title: 'Lecture 1', type: 'quiz', quiz: { timeLimit: -1 } }),
     ).toThrow();
   });
+
+  it('accepts quiz questions with full scoring fields', () => {
+    const out = createLectureSchema.parse({
+      title: 'Lecture 1',
+      type: 'quiz',
+      quiz: {
+        timeLimit: 10,
+        passingScore: 60,
+        maxAttempts: 2,
+        negativeMarking: true,
+        partialMarking: true,
+        attemptCooldownMinutes: 5,
+        allowResume: false,
+        shuffleOptions: true,
+        scoringPolicy: 'best',
+        questions: [
+          {
+            question: 'Pick the answers',
+            type: 'multiple',
+            options: ['A', 'B', 'C', 'D'],
+            correctAnswer: '["A","C"]',
+            marks: 2,
+            negativeMarks: 1,
+            isBonus: false,
+            weight: 1,
+            explanation: 'Explanation',
+          },
+          {
+            question: 'True or false?',
+            type: 'boolean',
+            options: ['True', 'False'],
+            correctAnswer: 'true',
+            marks: 1,
+          },
+        ],
+      },
+    });
+    expect(out.quiz!.questions).toHaveLength(2);
+    expect(out.quiz!.questions![0].type).toBe('multiple');
+    expect(out.quiz!.questions![0].negativeMarks).toBe(1);
+    expect(out.quiz!.scoringPolicy).toBe('best');
+  });
+
+  it('accepts coding questions without a correct answer or options', () => {
+    const out = createLectureSchema.parse({
+      title: 'Lecture 1',
+      type: 'quiz',
+      quiz: {
+        questions: [{ question: 'Write a function', type: 'coding', marks: 5 }],
+      },
+    });
+    expect(out.quiz!.questions![0].type).toBe('coding');
+    expect(out.quiz!.questions![0].correctAnswer).toBeUndefined();
+  });
+
+  it('rejects choice-type questions with fewer than 2 options', () => {
+    expect(() =>
+      createLectureSchema.parse({
+        title: 'Lecture 1',
+        type: 'quiz',
+        quiz: {
+          questions: [{ question: 'Q', type: 'single', options: ['Only one'], correctAnswer: 'Only one' }],
+        },
+      }),
+    ).toThrow(/At least 2 options required/);
+  });
+
+  it('rejects choice-type questions without a correct answer', () => {
+    expect(() =>
+      createLectureSchema.parse({
+        title: 'Lecture 1',
+        type: 'quiz',
+        quiz: {
+          questions: [{ question: 'Q', type: 'single', options: ['A', 'B'] }],
+        },
+      }),
+    ).toThrow(/Correct answer is required/);
+  });
 });
 
 describe('updateLectureSchema', () => {
   it('allows partial updates', () => {
     expect(updateLectureSchema.parse({ title: 'Renamed' }).title).toBe('Renamed');
     expect(updateLectureSchema.parse({}).title).toBeUndefined();
+  });
+});
+
+describe('createLectureSchema – attachments, resources and links', () => {
+  it('defaults the attachment type when omitted', () => {
+    const out = createLectureSchema.parse({
+      title: 'Lecture 1',
+      type: 'assignment',
+      assignment: { question: 'Q', instructions: 'I' },
+      attachments: [{ url: 'https://cdn/a.pdf', publicId: 'a', name: 'brief.pdf' }],
+    });
+    expect(out.attachments![0].type).toBe('file');
+  });
+
+  it('defaults the resource type when omitted', () => {
+    const out = createLectureSchema.parse({
+      title: 'Lecture 1',
+      type: 'video',
+      videoSource: { source: 'youtube', videoId: 'abc' },
+      resources: [{ url: 'https://cdn/r.zip', publicId: 'r', name: 'notes.zip' }],
+    });
+    expect(out.resources![0].type).toBe('file');
+  });
+
+  it('accepts useful links with a label and url', () => {
+    const out = createLectureSchema.parse({
+      title: 'Lecture 1',
+      type: 'article',
+      articleContent: '<p>hi</p>',
+      links: [{ id: '1', label: 'Docs', url: 'https://docs.example' }],
+    });
+    expect(out.links).toHaveLength(1);
+    expect(out.links![0].url).toBe('https://docs.example');
+  });
+
+  it('rejects a link without a url', () => {
+    expect(() =>
+      createLectureSchema.parse({
+        title: 'Lecture 1',
+        type: 'article',
+        articleContent: '<p>hi</p>',
+        links: [{ label: 'Broken', url: '' }],
+      }),
+    ).toThrow();
+  });
+
+  it('accepts an assignment lecture with all panel fields', () => {
+    const out = createLectureSchema.parse({
+      title: 'Assignment 1',
+      type: 'assignment',
+      assignment: {
+        question: 'Build X',
+        instructions: 'Do it',
+        dueDate: '2026-12-31',
+        totalMarks: 50,
+        passingMarks: 30,
+        allowLateSubmission: true,
+        lateSubmissionDays: 7,
+        penaltyPercent: 5,
+      },
+      attachments: [{ url: 'https://cdn/a.pdf', publicId: 'a', name: 'brief.pdf' }],
+    });
+    expect(out.assignment!.allowLateSubmission).toBe(true);
+    expect(out.assignment!.penaltyPercent).toBe(5);
+    expect(out.attachments).toHaveLength(1);
   });
 });
 

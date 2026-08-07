@@ -17,6 +17,7 @@ import { maintenanceMode } from './middlewares/maintenance.middleware';
 import { httpsRedirect } from './middlewares/httpsRedirect.middleware';
 import { payloadGuard } from './middlewares/payloadGuard.middleware';
 import { bulkSeedFeatures } from './services/featureToggle.service';
+import { categoryService } from './services/category.service';
 import { startScheduler } from './services/scheduler.service';
 import { doubleCsrfProtection } from './config/csrf';
 import csrfRoutes from './routes/csrf.routes';
@@ -38,6 +39,7 @@ const startServer = async (): Promise<void> => {
     await connectRedis();
     await verifyTransporter();
     await bulkSeedFeatures();
+    await categoryService.initializeDefaultCategories();
     startScheduler();
 
     const server = app.listen(env.port);

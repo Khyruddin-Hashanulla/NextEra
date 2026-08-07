@@ -10,6 +10,7 @@ import { useToast } from '@/providers/ToastProvider';
 import { Heart, Trash2, BookOpen, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { isFreeCourse } from '@/lib/coursePricing';
 
 const container = {
   hidden: { opacity: 0 },
@@ -111,7 +112,7 @@ export function WishlistPage() {
 
                   <div className="flex items-center justify-between">
                     <span className="text-lg font-bold tabular-nums">
-                      {item.course?.price === 0 ? (
+                      {isFreeCourse(item.course) ? (
                         <span className="text-green-600 dark:text-green-400">Free</span>
                       ) : (
                         `₹${item.course?.price?.toLocaleString() ?? 0}`

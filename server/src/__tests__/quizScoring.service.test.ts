@@ -37,7 +37,7 @@ describe('gradeQuestion', () => {
     expect(result.marksObtained).toBe(1);
   });
 
-  it('grades single incorrect answer with negative marking', () => {
+  it('applies negative marking for incorrect answers', () => {
     const result = gradeQuestion(
       makeQuestion({ negativeMarks: 0.5 }),
       'B',
@@ -45,16 +45,25 @@ describe('gradeQuestion', () => {
     );
     expect(result.isCorrect).toBe(false);
     expect(result.status).toBe('incorrect');
+    expect(result.marksObtained).toBe(-0.5);
+  });
+
+  it('does not penalise when negative marking is disabled', () => {
+    const result = gradeQuestion(
+      makeQuestion({ negativeMarks: 2 }),
+      'B',
+      { negativeMarking: false, partialMarking: false }
+    );
     expect(result.marksObtained).toBe(0);
   });
 
-  it('never returns negative marks', () => {
+  it('applies negative marking even for large penalties', () => {
     const result = gradeQuestion(
       makeQuestion({ negativeMarks: 2 }),
       'B',
       { negativeMarking: true, partialMarking: false }
     );
-    expect(result.marksObtained).toBe(0);
+    expect(result.marksObtained).toBe(-2);
   });
 
   it('grades boolean questions case-insensitively', () => {
@@ -205,6 +214,52 @@ describe('computeAttemptResult', () => {
       submittedAt: new Date('2026-01-01T00:05:00Z'),
     }));
     expect(result.evaluationStatus).toBe('auto_graded');
+  });
+
+  it('uses the configured passing score for pass/fail', () => {
+    const questions = [
+      makeQuestion({ questionId: 'q1', correctAnswer: 'A' }),
+      makeQuestion({ questionId: 'q2', correctAnswer: 'B' }),
+    ];
+    const result = computeAttemptResult(questions, [
+      { questionId: 'q1', question: 'q1', selectedAnswer: 'A' },
+      { questionId: 'q2', question: 'q2', selectedAnswer: 'C' },
+    ], config({ passingScore: 40 }));
+
+    expect(result.percentage).toBe(50);
+    expect(result.passed).toBe(true);
+    expect(result.passFail).toBe('pass');
+  });
+
+  it('fails when score is below the configured passing score', () => {
+    const questions = [makeQuestion({ questionId: 'q1', correctAnswer: 'A' })];
+    const result = computeAttemptResult(questions, [
+      { questionId: 'q1', question: 'q1', selectedAnswer: 'B' },
+    ], config({ passingScore: 80 }));
+    expect(result.percentage).toBe(0);
+    expect(result.passed).toBe(false);
+    expect(result.passFail).toBe('fail');
+  });
+
+  it('passes automatically when the passing score is zero', () => {
+    const questions = [makeQuestion({ questionId: 'q1', correctAnswer: 'A' })];
+    const result = computeAttemptResult(questions, [], config({ passingScore: 0 }));
+    expect(result.percentage).toBe(0);
+    expect(result.passed).toBe(true);
+  });
+
+  it('applies negative marking to the final score', () => {
+    const questions = [
+      makeQuestion({ questionId: 'q1', correctAnswer: 'A', negativeMarks: 1 }),
+      makeQuestion({ questionId: 'q2', correctAnswer: 'B', negativeMarks: 1 }),
+    ];
+    const result = computeAttemptResult(questions, [
+      { questionId: 'q1', question: 'q1', selectedAnswer: 'A' },
+      { questionId: 'q2', question: 'q2', selectedAnswer: 'C' },
+    ], config({ negativeMarking: true }));
+
+    expect(result.score).toBe(0);
+    expect(result.percentage).toBe(0);
   });
 });
 

@@ -6,10 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
+import { isFreeCourse } from '@/lib/coursePricing';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { motion } from 'framer-motion';
 import { Eye, CheckCircle, XCircle, Search, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/lib/constants';
 
 const container = {
   hidden: { opacity: 0 },
@@ -125,14 +127,14 @@ export function CourseManagementPage() {
                         </td>
                         <td className="px-4 py-3">{c.category?.name || '-'}</td>
                         <td className="px-4 py-3 capitalize">{c.level}</td>
-                        <td className="px-4 py-3">{c.pricing?.originalPrice ? `₹${c.pricing.originalPrice}` : 'Free'}</td>
+                        <td className="px-4 py-3">{isFreeCourse(c) ? 'Free' : `₹${c.price?.toLocaleString() ?? 0}`}</td>
                         <td className="px-4 py-3">
                           <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[c.status] || ''}`}>{c.status}</span>
                         </td>
                         <td className="px-4 py-3">{c.totalEnrollments || 0}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => navigate(`/admin/courses/${c._id}`)}>
+                            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.ADMIN_COURSE_DETAIL(c._id))}>
                               <Eye className="h-4 w-4" />
                             </Button>
                             {c.status === 'review' && (

@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { studentApi } from '@/api/endpoints/student';
 import { CourseCard } from '@/components/course/CourseCard';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
-import { Star, Users, Clock, BookOpen, CheckCircle2, Share2, Heart, Bookmark, AlertCircle, PlayCircle, ArrowRight, Award } from 'lucide-react';
+import { Star, Users, Clock, BookOpen, CheckCircle2, Share2, Heart, Bookmark, AlertCircle, PlayCircle, ArrowRight, Award, Lock } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -27,6 +28,9 @@ import { CourseShowcase } from '../components/CourseShowcase';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { courseSchema, breadcrumbListSchema } from '@/lib/schema';
+import { getCoursePricing } from '@/lib/coursePricing';
+import { PreviewVideoModal } from '../components/PreviewVideoModal';
+import { resolveThumbnailUrl } from '@/lib/video';
 
 interface CourseDetail {
   course: {
@@ -75,15 +79,16 @@ interface CourseDetail {
 }
 
 export function CourseDetailPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const { addToast } = useToast();
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ['course-detail', slug],
-    queryFn: ({ signal }) => studentApi.getCourseDetail(slug!, signal).then(r => r.data.data),
-    enabled: !!slug,
+    queryKey: ['course-detail', id, user?._id],
+    queryFn: ({ signal }) => studentApi.getCourseDetail(id!, signal).then(r => r.data.data),
+    enabled: !!id,
     retry: 1,
   });
 
@@ -92,20 +97,45 @@ export function CourseDetailPage() {
   const isEnrolled = data?.isEnrolled || false;
   const enrollment = data?.enrollment;
 
-  const price = course?.pricing?.originalPrice || course?.price || 0;
-  const hasDiscount = course?.pricing?.hasDiscount && course?.pricing?.discountPercent > 0;
-  const displayPrice = hasDiscount ? price * (1 - course.pricing.discountPercent / 100) : price;
+  const { isFree, price, originalPrice, hasDiscount } = getCoursePricing(course);
+
+  const [previewLecture, setPreviewLecture] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [isEnrolling, setIsEnrolling] = useState(false);
+  const enrollInFlight = useRef(false);
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
-      navigate(`${ROUTES.LOGIN}?redirect=/courses/${slug}`);
+      navigate(`${ROUTES.LOGIN}?redirect=/courses/${id}`);
       return;
     }
+    if (enrollInFlight.current) return;
+    enrollInFlight.current = true;
+    setIsEnrolling(true);
     try {
+      if (price === 0) {
+        const res: any = await studentApi.enrollFreeCourse(course._id);
+        const payload = res?.data?.data || res?.data || {};
+        addToast({
+          title: payload.alreadyEnrolled ? 'You are already enrolled' : 'Enrolled successfully',
+          variant: 'success',
+        });
+        // Drop the 5-minute stale cache for this course so a return trip to the
+        // details page reflects the enrollment immediately (Continue button,
+        // unlocked curriculum) instead of showing the pre-enrollment snapshot.
+        await queryClient.invalidateQueries({ queryKey: ['course-detail', id] });
+        navigate(ROUTES.STUDENT_COURSE_PLAYER(course._id), { replace: true });
+        return;
+      }
       await studentApi.initiatePayment(course._id);
+      await queryClient.invalidateQueries({ queryKey: ['course-detail', id] });
       addToast({ title: 'Redirecting to payment...', variant: 'info' });
-    } catch {
-      addToast({ title: 'Failed to initiate payment', variant: 'error' });
+    } catch (e: any) {
+      const message = e?.response?.data?.message || 'Failed to enroll in this course';
+      addToast({ title: message, variant: 'error' });
+    } finally {
+      enrollInFlight.current = false;
+      setIsEnrolling(false);
     }
   };
 
@@ -162,8 +192,8 @@ export function CourseDetailPage() {
         description={seoDescription}
         keywords={seoKeywords}
         image={course?.thumbnail?.url || ''}
-        url={`/courses/${slug}`}
-        canonical={`/courses/${slug}`}
+        url={`/courses/${id}`}
+        canonical={`/courses/${id}`}
         type="article"
         author={course?.instructor?.name}
       />
@@ -187,7 +217,7 @@ export function CourseDetailPage() {
         breadcrumbListSchema([
           { name: 'Home', path: '/' },
           { name: 'Courses', path: '/courses' },
-          { name: course.title, path: `/courses/${course.slug}` },
+          { name: course.title, path: `/courses/${id}` },
         ]),
       ]} />
       {/* Hero Section */}
@@ -200,18 +230,40 @@ export function CourseDetailPage() {
               className="relative"
             >
               <div className="aspect-video rounded-2xl overflow-hidden bg-muted relative">
-                {course.thumbnail?.url && (
-                  <OptimizedImage 
-                    src={course.thumbnail.url} 
-                    alt={course.title} 
+                {(course.thumbnail?.url || course.introVideo?.source === 'youtube') && (
+                  <OptimizedImage
+                    src={resolveThumbnailUrl(course.thumbnail?.url, course.introVideo)}
+                    alt={course.title}
                     placeholderType="course"
-                    className="object-cover" 
+                    className="object-cover"
                     lazy={false}
                     fetchPriority="high"
+                    fallbackSrc={
+                      course.introVideo?.source === 'youtube'
+                        ? resolveThumbnailUrl(course.thumbnail?.url, course.introVideo).replace('maxresdefault', 'hqdefault')
+                        : undefined
+                    }
                   />
                 )}
-                {course.introVideo?.url && (
-                  <button className="absolute inset-0 flex items-center justify-center bg-black/50 hover:bg-black/60 transition-colors">
+                {course.introVideo?.url && course.introVideo?.videoId && (
+                  <button
+                    type="button"
+                    aria-label="Play intro video"
+                    onClick={() => {
+                      setPreviewLecture({
+                        _id: 'intro',
+                        title: course.title,
+                        type: 'video',
+                        videoSource: {
+                          source: course.introVideo.source,
+                          videoId: course.introVideo.videoId,
+                          url: course.introVideo.url,
+                        },
+                      });
+                      setPreviewOpen(true);
+                    }}
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 hover:bg-black/60 transition-colors"
+                  >
                     <PlayCircle className="h-16 w-16 text-white" />
                   </button>
                 )}
@@ -272,10 +324,10 @@ export function CourseDetailPage() {
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4 border-t">
                 <div className="flex items-baseline gap-3">
                   <span className="text-heading-lg font-bold text-foreground">
-                    {displayPrice === 0 ? 'Free' : formatCurrency(displayPrice)}
+                    {price === 0 ? 'Free' : formatCurrency(price)}
                   </span>
                   {hasDiscount && (
-                    <span className="text-muted-foreground line-through">{formatCurrency(price)}</span>
+                    <span className="text-muted-foreground line-through">{formatCurrency(originalPrice)}</span>
                   )}
                   {hasDiscount && (
                     <Badge variant="secondary">Save {course.pricing.discountPercent}%</Badge>
@@ -290,19 +342,16 @@ export function CourseDetailPage() {
                         Continue Learning
                       </Link>
                     </Button>
-                  ) : displayPrice === 0 ? (
-                    <Button asChild size="lg" className="w-full sm:w-auto" onClick={handleEnroll}>
-                      <Link to="#" onClick={(e) => { e.preventDefault(); handleEnroll(); }}>
-                        <BookOpen className="h-4 w-4" />
-                        Enroll for Free
-                      </Link>
-                    </Button>
                   ) : (
-                    <Button asChild size="lg" className="w-full sm:w-auto" onClick={handleEnroll}>
-                      <Link to="#" onClick={(e) => { e.preventDefault(); handleEnroll(); }}>
-                        <BookOpen className="h-4 w-4" />
-                        Enroll Now
-                      </Link>
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto gap-2"
+                      onClick={handleEnroll}
+                      disabled={isEnrolling}
+                      loading={isEnrolling}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      {price === 0 ? 'Enroll for Free' : 'Enroll Now'}
                     </Button>
                   )}
 
@@ -468,9 +517,9 @@ export function CourseDetailPage() {
 
                   <Card className="bg-muted/50">
                     <CardContent className="pt-6">
-                      <Button asChild className="w-full" size="lg" variant={displayPrice === 0 ? 'default' : 'default'}>
+                      <Button asChild className="w-full" size="lg" variant="default">
                         <Link to="#" onClick={(e) => { e.preventDefault(); handleEnroll(); }}>
-                          {isEnrolled ? 'Continue Learning' : displayPrice === 0 ? 'Enroll for Free' : 'Enroll Now'}
+                          {isEnrolled ? 'Continue Learning' : price === 0 ? 'Enroll for Free' : 'Enroll Now'}
                         </Link>
                       </Button>
                       <p className="text-center text-sm text-muted-foreground mt-3">
@@ -502,22 +551,43 @@ export function CourseDetailPage() {
                       </AccordionTrigger>
                       <AccordionContent className="pt-4">
                         <div className="space-y-2 ml-8">
-                          {section.lectures?.map((lecture: any, lectureIndex: number) => (
-                            <div key={lecture._id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
-                              <span className="text-muted-foreground flex-shrink-0">
-                                {sectionIndex + 1}.{lectureIndex + 1}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{lecture.title}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {lecture.type} · {lecture.duration}min
-                                </p>
-                              </div>
-                              {lecture.isFree && (
-                                <Badge variant="secondary" className="text-xs">Free Preview</Badge>
-                              )}
-                            </div>
-                          ))}
+                          {section.lectures?.map((lecture: any, lectureIndex: number) => {
+                            const canPlay = isEnrolled || lecture.isFree;
+                            return (
+                              <button
+                                key={lecture._id}
+                                type="button"
+                                onClick={() => {
+                                  if (isEnrolled) {
+                                    navigate(`/student/courses/${course._id}/learn`);
+                                    return;
+                                  }
+                                  if (!lecture.isFree) return;
+                                  setPreviewLecture(lecture);
+                                  setPreviewOpen(true);
+                                }}
+                                disabled={!canPlay}
+                                className="flex w-full items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left disabled:cursor-not-allowed disabled:opacity-70"
+                              >
+                                <span className="text-muted-foreground flex-shrink-0">
+                                  {sectionIndex + 1}.{lectureIndex + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium truncate">{lecture.title}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {lecture.type} · {lecture.duration}min
+                                  </p>
+                                </div>
+                                {isEnrolled ? (
+                                  <PlayCircle className="h-4 w-4 text-success" />
+                                ) : lecture.isFree ? (
+                                  <Badge variant="secondary" className="text-xs">Free Preview</Badge>
+                                ) : (
+                                  <Lock className="h-4 w-4 text-muted-foreground" />
+                                )}
+                              </button>
+                            );
+                          })}
                         </div>
                       </AccordionContent>
                     </AccordionItem>
@@ -624,6 +694,7 @@ export function CourseDetailPage() {
           </motion.div>
         </Container>
       </Section>
+      <PreviewVideoModal lecture={previewLecture} open={previewOpen} onOpenChange={setPreviewOpen} />
     </div>
   );
 }

@@ -16,6 +16,10 @@ jest.mock('../middlewares/auth.middleware', () => {
       req.currentUser = mockCurrentUser;
       next();
     },
+    optionalAuthenticate: (req: any, _res: any, next: any) => {
+      if (mockCurrentUser) req.currentUser = mockCurrentUser;
+      next();
+    },
   };
 });
 

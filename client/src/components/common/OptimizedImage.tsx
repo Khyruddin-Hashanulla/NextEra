@@ -14,6 +14,7 @@ interface OptimizedImageProps extends Omit<React.ImgHTMLAttributes<HTMLImageElem
   fetchPriority?: 'high' | 'low' | 'auto';
   width?: number;
   height?: number;
+  fallbackSrc?: string;
 }
 
 function optimizeCloudinaryUrl(url: string): string {
@@ -66,13 +67,15 @@ function OptimizedImageComponent({
   fetchPriority,
   width,
   height,
+  fallbackSrc,
   ...rest
 }: OptimizedImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [shimmer, setShimmer] = useState(true);
+  const [currentSrc, setCurrentSrc] = useState(src);
 
-  const optimizedSrc = optimizeCloudinaryUrl(src);
+  const optimizedSrc = optimizeCloudinaryUrl(currentSrc);
 
   const handleLoad = useCallback(() => {
     setLoaded(true);
@@ -80,9 +83,13 @@ function OptimizedImageComponent({
   }, []);
 
   const handleError = useCallback(() => {
+    if (fallbackSrc && currentSrc !== fallbackSrc) {
+      setCurrentSrc(fallbackSrc);
+      return;
+    }
     setError(true);
     setShimmer(false);
-  }, []);
+  }, [fallbackSrc, currentSrc]);
 
   const isDecorative = !alt || alt === '';
   const PlaceholderIcon = placeholderIcon[placeholderType];

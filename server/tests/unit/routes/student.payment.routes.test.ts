@@ -9,6 +9,10 @@ vi.mock('../../../src/middlewares/auth.middleware', () => ({
     req.currentUser = { userId: '65f1a1b2c3d4e5f6a7b8c9d0', role: 'student', email: 'student@example.com' };
     next();
   },
+  optionalAuthenticate: (req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    req.currentUser = { userId: '65f1a1b2c3d4e5f6a7b8c9d0', role: 'student', email: 'student@example.com' };
+    next();
+  },
 }));
 
 vi.mock('../../../src/services/student.service', () => ({
