@@ -4,14 +4,15 @@ import type { User } from '@/types/user';
 import { AuthContext } from '@/providers/AuthProvider';
 import { ThemeContext } from '@/providers/ThemeProvider';
 import { ToastContext, type Toast } from '@/providers/ToastProvider';
+import { buildUserWithRole } from '@/test/factories';
 
 export interface AuthMockValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<User>;
   verifyEmail: (email: string, otp: string) => Promise<User>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -35,9 +36,9 @@ export function createAuthValue(overrides: Partial<AuthMockValue> = {}): AuthMoc
     user: null,
     isLoading: false,
     isAuthenticated: false,
-    login: vi.fn(async () => {}),
+    login: vi.fn(async () => buildUserWithRole('student')),
     register: vi.fn(async () => {}),
-    googleLogin: vi.fn(async () => {}),
+    googleLogin: vi.fn(async () => buildUserWithRole('student')),
     verifyEmail: vi.fn(async () => null as unknown as User),
     logout: vi.fn(async () => {}),
     setUser: vi.fn(),

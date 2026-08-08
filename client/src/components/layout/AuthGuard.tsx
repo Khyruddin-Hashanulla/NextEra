@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
-import { ROUTES } from '@/lib/constants';
+import { ROUTES, getDashboardRoute } from '@/lib/constants';
 import { PageLoader } from '@/components/common/LoadingSpinner';
 
 interface AuthGuardProps {
@@ -21,7 +21,7 @@ export function AuthGuard({ children, allowedRoles }: AuthGuardProps) {
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={getDashboardRoute(user.role)} replace />;
   }
 
   return <>{children}</>;

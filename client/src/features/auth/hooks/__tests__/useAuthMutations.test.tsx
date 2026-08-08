@@ -6,6 +6,7 @@ import { AxiosError } from 'axios';
 import { renderWithProviders } from '@/test/render/renderWithProviders';
 import { createAuthValue } from '@/test/mocks/providers';
 import { TOKEN_KEYS } from '@/lib/constants';
+import { buildUserWithRole } from '@/test/factories';
 import {
   useLoginMutation,
   useRegisterMutation,
@@ -72,9 +73,9 @@ function ResetPasswordHarness({ token, password }: { token: string; password: st
 }
 
 describe('useLoginMutation', () => {
-  it('navigates to the dashboard and shows a success toast on success', async () => {
+  it('navigates to the student dashboard for a student on success', async () => {
     const auth = createAuthValue({
-      login: vi.fn(async () => {}),
+      login: vi.fn(async () => buildUserWithRole('student')),
     });
     renderWithProviders(<LoginHarness email="student@example.com" password="Password1" />, {
       route: '/login',
@@ -83,6 +84,32 @@ describe('useLoginMutation', () => {
 
     await waitFor(() => expect(screen.getByText('/student')).toBeInTheDocument());
     expect(auth.login).toHaveBeenCalledWith('student@example.com', 'Password1');
+    expect(screen.getByRole('alert')).toHaveTextContent('Login successful');
+  });
+
+  it('navigates to the instructor dashboard for an instructor on success', async () => {
+    const auth = createAuthValue({
+      login: vi.fn(async () => buildUserWithRole('instructor')),
+    });
+    renderWithProviders(<LoginHarness email="instructor@example.com" password="Password1" />, {
+      route: '/login',
+      mockAuth: auth,
+    });
+
+    await waitFor(() => expect(screen.getByText('/instructor')).toBeInTheDocument());
+    expect(screen.getByRole('alert')).toHaveTextContent('Login successful');
+  });
+
+  it('navigates to the admin dashboard for an admin on success', async () => {
+    const auth = createAuthValue({
+      login: vi.fn(async () => buildUserWithRole('admin')),
+    });
+    renderWithProviders(<LoginHarness email="admin@example.com" password="Password1" />, {
+      route: '/login',
+      mockAuth: auth,
+    });
+
+    await waitFor(() => expect(screen.getByText('/admin')).toBeInTheDocument());
     expect(screen.getByRole('alert')).toHaveTextContent('Login successful');
   });
 

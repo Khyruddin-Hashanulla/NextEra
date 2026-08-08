@@ -14,9 +14,9 @@ export function useLoginMutation() {
 
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => login(email, password),
-    onSuccess: () => {
+    onSuccess: (user) => {
       addToast({ title: 'Login successful', variant: 'success' });
-      navigate(ROUTES.DASHBOARD);
+      navigate(getDashboardRoute(user.role), { replace: true });
     },
     onError: (error: AxiosError<ApiError>) => {
       addToast({

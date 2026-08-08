@@ -3,7 +3,7 @@ import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/lib/constants';
+import { getDashboardRoute } from '@/lib/constants';
 import { useState } from 'react';
 
 const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -23,9 +23,9 @@ function GoogleOAuthButtonInner() {
     onSuccess: async (tokenResponse) => {
       setIsLoading(true);
       try {
-        await googleLogin(tokenResponse.access_token);
+        const user = await googleLogin(tokenResponse.access_token);
         addToast({ title: 'Google sign in successful', variant: 'success' });
-        navigate(ROUTES.DASHBOARD);
+        navigate(getDashboardRoute(user.role), { replace: true });
       } catch (error: any) {
         addToast({
           title: 'Google sign in failed',

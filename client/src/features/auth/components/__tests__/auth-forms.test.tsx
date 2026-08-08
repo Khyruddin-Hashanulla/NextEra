@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AxiosError } from 'axios';
 import { renderWithProviders } from '@/test/render/renderWithProviders';
 import { createAuthValue } from '@/test/mocks/providers';
+import { buildUserWithRole } from '@/test/factories';
 import { LoginForm } from '@/features/auth/components/LoginForm';
 import { RegisterForm } from '@/features/auth/components/RegisterForm';
 import { ForgotPasswordForm } from '@/features/auth/components/ForgotPasswordForm';
@@ -58,7 +59,7 @@ describe('LoginForm', () => {
 
   it('calls login and navigates to the dashboard on success', async () => {
     const user = userEvent.setup();
-    const auth = createAuthValue({ login: vi.fn(async () => {}) });
+    const auth = createAuthValue({ login: vi.fn(async () => buildUserWithRole('student')) });
     renderForm(<LoginForm />, { route: '/auth/login', mockAuth: auth });
     await user.type(screen.getByLabelText('Email'), 'student@example.com');
     await user.type(screen.getByLabelText('Password'), 'Password1');

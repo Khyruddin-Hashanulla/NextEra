@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
-import { TOKEN_KEYS, ROUTES } from '@/lib/constants';
+import { TOKEN_KEYS, ROUTES, getDashboardRoute } from '@/lib/constants';
 import { useToast } from '@/providers/ToastProvider';
 import axios from 'axios';
 import { PageTransition } from '@/components/common/PageTransition';
@@ -32,10 +32,11 @@ export function OAuthCallbackPage() {
         const { data } = await axios.get('/api/v1/users/me', {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
-        setUser(data.data);
+        const userData = data.data;
+        setUser(userData);
         setStatus('success');
         addToast({ title: 'Google sign in successful', variant: 'success' });
-        setTimeout(() => navigate(ROUTES.DASHBOARD, { replace: true }), 1000);
+        navigate(getDashboardRoute(userData.role), { replace: true });
       } catch {
         setError('Failed to fetch user profile');
         setStatus('error');

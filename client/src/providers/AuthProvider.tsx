@@ -10,9 +10,9 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   register: (name: string, email: string, password: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<void>;
+  googleLogin: (credential: string) => Promise<User>;
   verifyEmail: (email: string, otp: string) => Promise<User>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -52,9 +52,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [queryClient],
   );
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string): Promise<User> => {
     const { data } = await authApi.login({ email, password });
     applySession(data.data);
+    return data.data.user;
   }, [applySession]);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
@@ -62,9 +63,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryClient.setQueryData(QUERY_KEYS.auth.user, data.data);
   }, [queryClient]);
 
-  const googleLogin = useCallback(async (credential: string) => {
+  const googleLogin = useCallback(async (credential: string): Promise<User> => {
     const { data } = await authApi.googleAuth(credential);
     applySession(data.data);
+    return data.data.user;
   }, [applySession]);
 
   const verifyEmail = useCallback(async (email: string, otp: string): Promise<User> => {
