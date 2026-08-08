@@ -3,6 +3,7 @@ import {
   create, getById, getBySlug, update, remove, duplicate,
   listMyCourses, listAll,
   submitForReview, approve, reject, publish, unpublish, archive, restore, toggleFeatured,
+  markCourseContentCompleted,
   getCurriculum, getPublishedCurriculum, getOwnerCurriculum,
   createSection, updateSection, removeSection, reorderSections, getSection,
   createLecture, updateLecture, removeLecture, reorderLectures, getLecture, moveLecture,
@@ -53,6 +54,7 @@ router.post('/:id/unpublish', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.AD
 router.post('/:id/archive', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, archive);
 router.post('/:id/restore', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, restore);
 router.post('/:id/featured', authenticate, authorize(ROLES.ADMIN), toggleFeatured);
+router.post('/:id/content/complete', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, markCourseContentCompleted);
 
 // Sections
 router.post('/:id/sections', authenticate, authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), verifyCourseOwnership, validate(createSectionSchema), createSection);

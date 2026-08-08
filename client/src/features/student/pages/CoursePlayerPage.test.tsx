@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-const { getCourseDetail, updateProgress } = vi.hoisted(() => ({
+const { getCourseDetail, updateProgress, getQuizAttempts } = vi.hoisted(() => ({
   getCourseDetail: vi.fn(),
   updateProgress: vi.fn(),
+  getQuizAttempts: vi.fn(),
 }));
 
 vi.mock('@tanstack/react-query', () => ({
@@ -17,6 +18,14 @@ vi.mock('@/api/endpoints/student', () => ({
   studentApi: {
     getCourseDetail,
     updateProgress,
+    getQuizAttempts,
+  },
+}));
+
+vi.mock('@/api/endpoints/quiz', () => ({
+  quizApi: {
+    startQuizEnhanced: vi.fn(),
+    submitQuiz: vi.fn(),
   },
 }));
 
@@ -65,6 +74,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   getCourseDetail.mockReset();
   updateProgress.mockReset();
+  getQuizAttempts.mockReset();
 
   useQueryMock.mockReturnValue({ data: courseData(), isLoading: false, error: null });
   useMutationMock.mockReturnValue({
@@ -151,5 +161,51 @@ describe('CoursePlayerPage', () => {
 
     expect(screen.getByRole('link', { name: /My Courses/i })).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: /View Course/i })).not.toBeInTheDocument();
+  });
+
+  it('renders quiz questions and options for a quiz-type lecture', () => {
+    const data = courseData();
+    data.curriculum[0].lectures = [
+      {
+        _id: 'q1',
+        title: 'React Basics Quiz',
+        type: 'quiz',
+        isFree: false,
+        order: 1,
+        duration: 0,
+        correctAnswer: undefined,
+        quiz: {
+          timeLimit: 0,
+          passingScore: 60,
+          maxAttempts: 3,
+          showResults: true,
+          randomizeQuestions: false,
+          negativeMarking: false,
+          partialMarking: false,
+          attemptCooldownMinutes: 0,
+          allowResume: true,
+          shuffleOptions: false,
+          scoringPolicy: 'best',
+          questions: [
+            { question: 'What does JSX stand for?', options: ['JavaScript XML', 'Java Syntax'], marks: 1, type: 'single' },
+            { question: 'True or false: Hooks are functions.', options: ['True', 'False'], marks: 1, type: 'boolean' },
+          ],
+        },
+      },
+    ] as any;
+    getQuizAttempts.mockResolvedValue({ data: { data: [] } });
+    useQueryMock.mockReturnValue({ data, isLoading: false, error: null });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole('button', { name: /React Basics Quiz/i }));
+
+    expect(screen.getByText(/2 Question Quiz/i)).toBeInTheDocument();
+    expect(screen.getByText(/What does JSX stand for\?/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Submit Quiz/i })).toBeInTheDocument();
+    expect(screen.getByText('JavaScript XML')).toBeInTheDocument();
+    expect(screen.getByText('Java Syntax')).toBeInTheDocument();
+    expect(screen.getByText('True')).toBeInTheDocument();
+    expect(screen.getByText('False')).toBeInTheDocument();
   });
 });

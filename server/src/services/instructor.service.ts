@@ -10,9 +10,8 @@ import { Coupon } from '../models/coupon.model';
 import { ApiError } from '../utils/ApiError';
 import { ROLES } from '../constants/roles';
 import { escapeRegex } from '../utils/escapeRegex';
-import { env } from '../config/env';
 import { generateCertificateId } from '../utils/certificateIdGenerator';
-import { generateCertificateSignature, generateQrCodeDataUrl, getVerificationUrl } from '../utils/certificate';
+import { generateCertificateSignature, generateQrCodePngBuffer, getQrCodeImageUrl, getVerificationUrl } from '../utils/certificate';
 import { generateCertificatePdf, getCertificateUrl } from '../utils/pdfGenerator';
 import { subscriptionPermissionService } from './subscriptionPermission.service';
 import { Types } from 'mongoose';
@@ -588,8 +587,9 @@ export class InstructorService {
       version: 1,
     });
 
-    const verifyUrl = getVerificationUrl(certificateId);
-    const qrCodeUrl = await generateQrCodeDataUrl(verifyUrl);
+    const verificationUrl = getVerificationUrl(certificateId);
+    const qrCodeImageUrl = getQrCodeImageUrl(certificateId);
+    const qrCodeData = await generateQrCodePngBuffer(verificationUrl);
 
     const pdfPath = await generateCertificatePdf({
       studentName: user.name,
@@ -597,12 +597,13 @@ export class InstructorService {
       instructorName,
       certificateId,
       issuedAt,
-      qrCodeDataUrl: qrCodeUrl,
+      verificationUrl,
+      qrCodeData,
     });
 
     const pdfFilename = `certificate-${certificateId}.pdf`;
     const pdfUrl = getCertificateUrl(pdfFilename);
-    const certificateUrl = `${env.clientUrl}/certificate/${certificateId}`;
+    const certificateUrl = verificationUrl;
 
     try {
       return await Certificate.create({
@@ -610,7 +611,8 @@ export class InstructorService {
         course: data.courseId,
         enrollment: data.enrollmentId,
         certificateId,
-        qrCodeUrl,
+        verificationUrl,
+        qrCodeUrl: qrCodeImageUrl,
         certificateUrl,
         pdfUrl,
         digitalSignature,

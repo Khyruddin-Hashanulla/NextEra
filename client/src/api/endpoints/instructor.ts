@@ -57,6 +57,9 @@ export const instructorApi = {
   publish: (id: string, signal?: AbortSignal) =>
     axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/publish`, undefined, { signal }),
 
+  finalizeCourseContent: (id: string, signal?: AbortSignal) =>
+    axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/content/complete`, undefined, { signal }),
+
   unpublishCourse: (id: string, signal?: AbortSignal) =>
     axiosInstance.post<ApiResponse<Course>>(`/courses/${id}/unpublish`, undefined, { signal }),
 

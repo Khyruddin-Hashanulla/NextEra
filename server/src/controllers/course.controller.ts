@@ -81,6 +81,11 @@ export const restore = asyncHandler(async (req: Request, res: Response) => {
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course restored', data));
 });
 
+export const markCourseContentCompleted = asyncHandler(async (req: Request, res: Response) => {
+  const data = await courseService.markCourseContentCompleted(req.params.id);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Course content finalized', data));
+});
+
 export const toggleFeatured = asyncHandler(async (req: Request, res: Response) => {
   const data = await courseService.toggleFeatured(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Featured toggled', data));

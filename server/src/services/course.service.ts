@@ -302,6 +302,29 @@ export class CourseService {
     return course;
   }
 
+  async markCourseContentCompleted(courseId: string) {
+    const course = await Course.findById(courseId);
+    if (!course) throw ApiError.notFound('Course not found');
+    if (course.status === 'archived') {
+      throw ApiError.badRequest('Cannot finalize an archived course');
+    }
+    if (course.status === 'draft' || course.status === 'rejected') {
+      throw ApiError.badRequest('Course must be in an active, reviewable state before finalizing content');
+    }
+
+    const lectureCount = await Lecture.countDocuments({ course: courseId });
+    if (lectureCount === 0) {
+      throw ApiError.badRequest('Add at least one lecture before finalizing course content');
+    }
+
+    course.contentStatus = 'COMPLETED';
+    course.lastActivity = new Date();
+    await course.save();
+    await this.invalidateCourseCaches(courseId, course.slug);
+    await cacheManager.invalidateStudentCourseList();
+    return course;
+  }
+
   async toggleFeatured(courseId: string) {
     const course = await Course.findById(courseId);
     if (!course) throw ApiError.notFound('Course not found');

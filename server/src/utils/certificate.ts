@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import QRCode from 'qrcode';
 import { env } from '../config/env';
+import { logger } from './logger';
 
 export interface CertificatePayload {
   certificateId: string;
@@ -29,10 +30,31 @@ export async function generateQrCodeDataUrl(text: string): Promise<string> {
       color: { dark: '#1e293b', light: '#ffffff' },
     });
   } catch {
-    return `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`;
+    const external = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(text)}`;
+    logger.warn('qrcode generation failed, falling back to external QR API', { text });
+    return external;
+  }
+}
+
+export async function generateQrCodePngBuffer(text: string): Promise<Buffer> {
+  try {
+    return await QRCode.toBuffer(text, {
+      width: 300,
+      margin: 2,
+      color: { dark: '#1e293b', light: '#ffffff' },
+      type: 'png',
+    });
+  } catch (error) {
+    logger.error('qrcode buffer generation failed', { error });
+    throw error;
   }
 }
 
 export function getVerificationUrl(certificateId: string): string {
-  return `${env.clientUrl || 'http://localhost:5173'}/verify-certificate/${certificateId}`;
+  return `${env.clientUrl || 'http://localhost:5173'}/certificates/verify/${certificateId}`;
+}
+
+export function getQrCodeImageUrl(certificateId: string): string {
+  const serverUrl = env.serverUrl || `http://localhost:${env.port || 5000}`;
+  return `${serverUrl}/api/v1/student/certificates/verify/${certificateId}/qr.png`;
 }

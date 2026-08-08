@@ -9,7 +9,7 @@ import {
   createDiscussion, listDiscussions, replyToDiscussion,
   createReview, updateReview, listReviews,
   submitAssignment, getAssignments, getAssignmentsOverview, getAssignmentDetail,
-  generateCertificate, getCertificates, verifyCertificate, downloadCertificate,
+  generateCertificate, getCertificates, verifyCertificate, getCertificateQr, downloadCertificate,
   toggleWishlist, listWishlist,
   listMyPayments, getPaymentById, generateInvoice,
   getLectureResources,
@@ -47,6 +47,7 @@ router.get('/instructors/:id', getInstructorProfile);
 router.get('/courses', listCourses);
 router.get('/courses/:id', optionalAuthenticate, getCourseDetail);
 router.get('/certificates/verify/:certificateId', verifyCertificate);
+router.get('/certificates/verify/:certificateId/qr.png', getCertificateQr);
 
 // Protected - any authenticated user
 router.use(authenticate);

@@ -157,7 +157,7 @@ export function QuizzesPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{stats.averageScore.toFixed(1)}%</div>
+              <div className="text-2xl font-bold">{Number(stats.averageScore || 0).toFixed(1)}%</div>
               <TrendingUp className="h-8 w-8 text-muted-foreground/50" />
             </div>
           </CardContent>

@@ -159,6 +159,7 @@ export interface NotificationItem {
 export interface CertificateItem {
   _id: string;
   certificateId: string;
+  verificationUrl?: string;
   qrCodeUrl: string;
   certificateUrl: string;
   pdfUrl?: string;

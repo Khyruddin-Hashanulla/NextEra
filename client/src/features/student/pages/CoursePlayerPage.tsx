@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentApi } from '@/api/endpoints/student';
+import { quizApi } from '@/api/endpoints/quiz';
 import { liveClassApi } from '@/api/endpoints/liveClass';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,7 +73,7 @@ export function CoursePlayerPage() {
 
   const handleLectureSelect = (lecture: any) => {
     setCurrentLecture(lecture);
-    setActiveTab('content');
+    setActiveTab(lecture.type === 'quiz' ? 'quiz' : 'content');
     progressMutation.mutate({ lectureId: lecture._id, completed: false });
   };
 
@@ -209,11 +210,21 @@ export function CoursePlayerPage() {
                     <p className="text-sm text-gray-400">{currentLecture.articleContent}</p>
                   </div>
                 </div>
+              ) : currentLecture.type === 'quiz' ? (
+                <div className="flex h-full items-center justify-center text-white">
+                  <div className="text-center">
+                    <FileQuestion className="mx-auto h-12 w-12" />
+                    <p className="mt-2 text-lg font-medium">{currentLecture.quiz?.questions?.length || 0} Question Quiz</p>
+                    {currentLecture.quiz?.timeLimit > 0 && (
+                      <p className="mt-1 text-sm text-gray-400">{currentLecture.quiz.timeLimit} minute time limit</p>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <div className="flex h-full items-center justify-center text-white">
                   <div className="text-center">
                     <FileCheck className="mx-auto h-12 w-12" />
-                    <p className="mt-2 text-lg font-medium">Assignment / Quiz</p>
+                    <p className="mt-2 text-lg font-medium">Assignment</p>
                   </div>
                 </div>
               )}
@@ -247,6 +258,9 @@ export function CoursePlayerPage() {
                     <TabsTrigger value="assignment"><FileCheck className="mr-1 h-4 w-4" /> Assignment</TabsTrigger>
                   </>
                 )}
+                {currentLecture.type === 'quiz' && (
+                  <TabsTrigger value="quiz"><FileQuestion className="mr-1 h-4 w-4" /> Quiz</TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="notes">
@@ -261,12 +275,17 @@ export function CoursePlayerPage() {
               {currentLecture.type === 'assignment' && (
                 <>
                   <TabsContent value="quiz">
-                    <QuizTab courseId={courseId!} lectureId={currentLecture._id} assignment={currentLecture.assignment} />
+                    <QuizTab courseId={courseId!} lectureId={currentLecture._id} lecture={currentLecture} />
                   </TabsContent>
                   <TabsContent value="assignment">
                     <AssignmentTab courseId={courseId!} lectureId={currentLecture._id} />
                   </TabsContent>
                 </>
+              )}
+              {currentLecture.type === 'quiz' && (
+                <TabsContent value="quiz">
+                  <QuizTab courseId={courseId!} lectureId={currentLecture._id} lecture={currentLecture} />
+                </TabsContent>
               )}
             </Tabs>
           </div>
@@ -416,39 +435,100 @@ function DiscussionTab({ courseId, lectureId }: { courseId: string; lectureId: s
   );
 }
 
-function QuizTab({ courseId, lectureId, assignment }: { courseId: string; lectureId: string; assignment: any }) {
-  const queryClient = useQueryClient();
+type QuizQuestionLite = {
+  question: string;
+  options: string[];
+  correctAnswer?: string;
+  type: string;
+  marks?: number;
+};
+
+function parseQuizQuestions(lecture: any): QuizQuestionLite[] {
+  if (lecture?.quiz?.questions?.length) {
+    return lecture.quiz.questions.map((q: any) => ({
+      question: q.question,
+      options: Array.isArray(q.options) ? q.options : [],
+      correctAnswer: '',
+      type: q.type || 'single',
+      marks: q.marks,
+    }));
+  }
+  try {
+    if (lecture?.assignment?.question) {
+      const parsed = JSON.parse(lecture.assignment.question);
+      if (Array.isArray(parsed)) {
+        return parsed.map((q: any) => ({
+          question: q.question,
+          options: q.options || [],
+          correctAnswer: q.correctAnswer || '',
+          type: q.type || 'single',
+          marks: q.marks,
+        }));
+      }
+    }
+  } catch {}
+  return [];
+}
+
+function QuizTab({ courseId, lectureId, lecture }: { courseId: string; lectureId: string; lecture: any }) {
   const { addToast } = useToast();
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [textAnswers, setTextAnswers] = useState<Record<string, string>>({});
+  const [currentAttempt, setCurrentAttempt] = useState<any>(null);
 
-  let questions: { question: string; options: string[]; correctAnswer: string }[] = [];
-  try {
-    if (assignment?.question) questions = JSON.parse(assignment.question);
-  } catch {}
+  const questions = parseQuizQuestions(lecture);
 
-  const { data: attempts } = useQuery({
+  const { data: attempts, refetch: refetchAttempts } = useQuery({
     queryKey: ['student', 'quiz-attempts', lectureId],
     queryFn: () => studentApi.getQuizAttempts(lectureId).then((r: any) => r.data.data),
   });
 
+  const lastAttempt = attempts?.[0] || currentAttempt;
+
   const submitMutation = useMutation({
-    mutationFn: () => {
-      const formattedAnswers = questions.map((q) => ({ question: q.question, selectedAnswer: answers[q.question] || '' }));
-      return studentApi.submitQuiz({ courseId, lectureId, answers: formattedAnswers }).then((r: any) => r.data.data);
+    mutationFn: async () => {
+      let attemptToSubmit = currentAttempt;
+      if (!attemptToSubmit?.attempt?._id) {
+        const started = await quizApi.startQuizEnhanced({ courseId, lectureId }).then((r: any) => r.data);
+        attemptToSubmit = started?.data;
+      }
+      const attemptId = attemptToSubmit?.attempt?._id;
+      if (!attemptId) throw new Error('Failed to start quiz attempt');
+
+      const answersPayload = questions
+        .map((q, idx) => {
+          const question = q.question;
+          const selectedAnswer = q.type === 'fill_blank' ? textAnswers[String(idx)] || '' : answers[String(idx)] || '';
+          return { questionId: `q_${idx}`, question, selectedAnswer };
+        })
+        .filter((a) => a.selectedAnswer.trim() !== '');
+
+      const res = await quizApi.submitQuiz({ attemptId, answers: answersPayload }).then((r: any) => r.data);
+      return res?.data?.attempt || res?.attempt;
     },
     onSuccess: (result: any) => {
-      queryClient.invalidateQueries({ queryKey: ['student', 'quiz-attempts', lectureId] });
+      setCurrentAttempt(result);
+      refetchAttempts();
+      const score = result?.score ?? result?.marksObtained ?? 0;
+      const total = result?.totalQuestions || questions.length;
+      const passed = result?.passed;
       addToast({
-        title: result.passed ? 'Quiz Passed!' : 'Quiz Failed',
-        description: `Score: ${result.score}/${result.totalQuestions}`,
-        variant: result.passed ? 'success' : 'error',
+        title: passed ? 'Quiz Passed!' : 'Quiz Attempted',
+        description: `Score: ${score}/${total} (${result?.percentage ?? 0}%)`,
+        variant: passed ? 'success' : 'error',
       });
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || 'Failed to submit quiz';
+      addToast({ title: 'Quiz submission failed', description: message, variant: 'error' });
     },
   });
 
   if (!questions.length) return <p className="text-muted-foreground">No quiz questions available.</p>;
 
-  const lastAttempt = attempts?.[0];
+  const answeredCount = questions.filter((q, idx) =>
+    q.type === 'fill_blank' ? (textAnswers[String(idx)] || '').trim() : (answers[String(idx)] || '').trim()
+  ).length;
 
   return (
     <Card>
@@ -458,26 +538,37 @@ function QuizTab({ courseId, lectureId, assignment }: { courseId: string; lectur
             Last attempt: {lastAttempt.score}/{lastAttempt.totalQuestions} ({lastAttempt.passed ? 'Passed' : 'Failed'})
           </div>
         )}
-        {questions.map((q, i) => (
-          <div key={i} className="space-y-2">
-            <p className="text-sm font-medium">{i + 1}. {q.question}</p>
-            <div className="space-y-1">
-              {q.options.map((opt) => (
-                <label key={opt} className="flex items-center gap-2 rounded border p-2 text-sm cursor-pointer hover:bg-muted">
-                  <input
-                    type="radio"
-                    name={`q-${i}`}
-                    value={opt}
-                    checked={answers[q.question] === opt}
-                    onChange={() => setAnswers({ ...answers, [q.question]: opt })}
-                  />
-                  {opt}
-                </label>
-              ))}
-            </div>
+        {questions.map((q, idx) => (
+          <div key={idx} className="space-y-2">
+            <p className="text-sm font-medium">
+              {idx + 1}. {q.question}
+              {q.marks ? <span className="ml-2 text-xs text-muted-foreground">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span> : null}
+            </p>
+            {q.type === 'fill_blank' ? (
+              <Input
+                value={textAnswers[String(idx)] || ''}
+                onChange={(e) => setTextAnswers({ ...textAnswers, [String(idx)]: e.target.value })}
+                placeholder="Type your answer"
+              />
+            ) : (
+              <div className="space-y-1">
+                {(q.options || []).map((opt) => (
+                  <label key={opt} className="flex items-center gap-2 rounded border p-2 text-sm cursor-pointer hover:bg-muted">
+                    <input
+                      type="radio"
+                      name={`q-${idx}`}
+                      value={opt}
+                      checked={answers[String(idx)] === opt}
+                      onChange={() => setAnswers({ ...answers, [String(idx)]: opt })}
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         ))}
-        <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || Object.keys(answers).length < questions.length}>
+        <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || answeredCount < questions.length}>
           {submitMutation.isPending ? 'Submitting...' : 'Submit Quiz'}
         </Button>
       </CardContent>

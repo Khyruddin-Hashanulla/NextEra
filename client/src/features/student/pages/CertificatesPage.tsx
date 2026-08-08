@@ -95,9 +95,12 @@ export function CertificatesPage() {
   }
 
   const completedCourses = courses?.filter((e: any) => e.isCompleted) || [];
+  const isContentFinalized = (c: any) => (c.course?.contentStatus ?? 'COMPLETED') === 'COMPLETED';
   const uncertifiedCompleted = completedCourses.filter(
     (c: any) => !certificates?.some((cert: Certificate) => cert.course?._id === c.course?._id)
   );
+  const generatable = uncertifiedCompleted.filter(isContentFinalized);
+  const locked = uncertifiedCompleted.filter((c: any) => !isContentFinalized(c));
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -106,7 +109,7 @@ export function CertificatesPage() {
         <p className="mt-1 text-muted-foreground">Download your course completion certificates</p>
       </motion.div>
 
-      {uncertifiedCompleted.length > 0 && (
+      {generatable.length > 0 && (
         <motion.div variants={item}>
           <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
             <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -117,13 +120,13 @@ export function CertificatesPage() {
                 <div>
                   <p className="text-sm font-medium">Generate certificates for completed courses</p>
                   <p className="text-xs text-muted-foreground">
-                    You have {uncertifiedCompleted.length} completed course{uncertifiedCompleted.length > 1 ? 's' : ''} without certificates
+                    You have {generatable.length} completed course{generatable.length > 1 ? 's' : ''} without certificates
                   </p>
                 </div>
               </div>
             </CardContent>
             <div className="grid gap-2 px-5 pb-5 sm:grid-cols-2">
-              {uncertifiedCompleted.slice(0, 4).map((enrollment: any) => (
+              {generatable.slice(0, 4).map((enrollment: any) => (
                 <div
                   key={enrollment._id}
                   className="flex items-center justify-between rounded-lg border bg-background/50 p-3"
@@ -141,6 +144,39 @@ export function CertificatesPage() {
                     )}
                     Generate
                   </Button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </motion.div>
+      )}
+
+      {locked.length > 0 && (
+        <motion.div variants={item}>
+          <Card className="border-muted bg-muted/40">
+            <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                  <Shield className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Certificate Locked</p>
+                  <p className="text-xs text-muted-foreground">
+                    Your instructor has not finalized this course yet.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+            <div className="grid gap-2 px-5 pb-5 sm:grid-cols-2">
+              {locked.slice(0, 4).map((enrollment: any) => (
+                <div
+                  key={enrollment._id}
+                  className="flex items-center justify-between rounded-lg border bg-background/50 p-3"
+                >
+                  <span className="truncate text-sm font-medium">{enrollment.course?.title}</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <Shield className="h-3 w-3" /> Locked
+                  </span>
                 </div>
               ))}
             </div>

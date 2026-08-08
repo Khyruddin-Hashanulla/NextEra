@@ -3,12 +3,17 @@ import {
   generateCertificateSignature,
   verifyCertificateSignature,
   generateQrCodeDataUrl,
+  generateQrCodePngBuffer,
   getVerificationUrl,
+  getQrCodeImageUrl,
 } from '../../../src/utils/certificate';
 import { env } from '../../../src/config/env';
 
 vi.mock('qrcode', () => ({
-  default: { toDataURL: vi.fn() },
+  default: {
+    toDataURL: vi.fn(),
+    toBuffer: vi.fn(),
+  },
 }));
 
 const payload = {
@@ -107,7 +112,7 @@ describe('generateQrCodeDataUrl', () => {
 describe('getVerificationUrl', () => {
   it('builds a verification URL containing the certificate id', () => {
     const url = getVerificationUrl('NXLMS-2026-CS-000001');
-    expect(url).toMatch(/https?:\/\/.+\/verify-certificate\/NXLMS-2026-CS-000001$/);
+    expect(url).toMatch(/https?:\/\/.+\/certificates\/verify\/NXLMS-2026-CS-000001$/);
   });
 
   it('falls back to the local default when clientUrl is not set', () => {
@@ -115,9 +120,48 @@ describe('getVerificationUrl', () => {
     (env as any).clientUrl = '';
     try {
       const url = getVerificationUrl('NXLMS-2026-CS-000001');
-      expect(url).toBe('http://localhost:5173/verify-certificate/NXLMS-2026-CS-000001');
+      expect(url).toBe('http://localhost:5173/certificates/verify/NXLMS-2026-CS-000001');
     } finally {
       (env as any).clientUrl = original;
+    }
+  });
+});
+
+describe('generateQrCodePngBuffer', () => {
+  beforeEach(() => {
+    vi.mocked(QRCode.toBuffer).mockReset();
+  });
+
+  it('returns a PNG buffer on success', async () => {
+    vi.mocked(QRCode.toBuffer).mockResolvedValue(Buffer.from('png-bytes'));
+    const buf = await generateQrCodePngBuffer('https://example.com');
+    expect(Buffer.isBuffer(buf)).toBe(true);
+    expect(vi.mocked(QRCode.toBuffer)).toHaveBeenCalledWith(
+      'https://example.com',
+      expect.objectContaining({ width: 300, type: 'png' }),
+    );
+  });
+
+  it('rethrows when qrcode buffer generation fails', async () => {
+    vi.mocked(QRCode.toBuffer).mockRejectedValue(new Error('failed'));
+    await expect(generateQrCodePngBuffer('hello world')).rejects.toThrow('failed');
+  });
+});
+
+describe('getQrCodeImageUrl', () => {
+  it('builds a QR image url pointing at the verify route', () => {
+    const url = getQrCodeImageUrl('NXLMS-2026-CS-000001');
+    expect(url).toContain('/api/v1/student/certificates/verify/NXLMS-2026-CS-000001/qr.png');
+  });
+
+  it('falls back to the server default port when serverUrl is not set', () => {
+    const original = env.serverUrl;
+    (env as any).serverUrl = '';
+    try {
+      const url = getQrCodeImageUrl('NXLMS-2026-CS-000001');
+      expect(url).toContain(`:${env.port || 5000}/api/v1/`);
+    } finally {
+      (env as any).serverUrl = original;
     }
   });
 });

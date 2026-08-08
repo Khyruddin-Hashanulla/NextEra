@@ -14,6 +14,7 @@ export interface ICertificate extends Document {
   course: mongoose.Types.ObjectId;
   enrollment: mongoose.Types.ObjectId;
   certificateId: string;
+  verificationUrl: string;
   qrCodeUrl: string;
   certificateUrl: string;
   pdfUrl: string;
@@ -36,6 +37,7 @@ const certificateSchema = new Schema<ICertificate>(
     course: { type: Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
     enrollment: { type: Schema.Types.ObjectId, ref: 'Enrollment', required: true, unique: true },
     certificateId: { type: String, required: true, unique: true, maxlength: 100 },
+    verificationUrl: { type: String, required: true, maxlength: 500 },
     qrCodeUrl: { type: String, required: true, maxlength: 500 },
     certificateUrl: { type: String, required: true, maxlength: 500 },
     pdfUrl: { type: String, default: '', maxlength: 500 },

@@ -114,6 +114,7 @@ export interface Course {
   rejectionReason: string;
   featured: boolean;
   badge: string;
+  contentStatus?: 'IN_PROGRESS' | 'COMPLETED';
   totalDuration: number;
   totalLectures: number;
   totalSections: number;

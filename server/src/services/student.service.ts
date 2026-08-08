@@ -24,7 +24,7 @@ import { ApiError } from '../utils/ApiError';
 import { sanitizePlainText } from '../utils/sanitize';
 import { escapeRegex } from '../utils/escapeRegex';
 import { env } from '../config/env';
-import { generateCertificateSignature, generateQrCodeDataUrl, verifyCertificateSignature, getVerificationUrl } from '../utils/certificate';
+import { generateCertificateSignature, generateQrCodePngBuffer, getQrCodeImageUrl, verifyCertificateSignature, getVerificationUrl } from '../utils/certificate';
 import { generateCertificateId } from '../utils/certificateIdGenerator';
 import { generateCertificatePdf, getCertificateUrl, getCertificateFilePath } from '../utils/pdfGenerator';
 import fs from 'fs';
@@ -255,7 +255,7 @@ export class StudentService {
     const enrollments = await Enrollment.find({ user: userId })
       .populate({
         path: 'course',
-        select: 'title thumbnail price level totalLectures totalDuration instructor',
+        select: 'title thumbnail price level totalLectures totalDuration instructor contentStatus',
         populate: { path: 'instructor', select: 'name avatar' },
       })
       .sort({ enrolledAt: -1 })
@@ -970,6 +970,9 @@ export class StudentService {
     if (!user || !course) throw ApiError.notFound('User or Course not found');
     if (!course.isApproved) throw ApiError.badRequest('Course is not approved');
     if (course.status !== 'published') throw ApiError.badRequest('Course is not published');
+    if (course.contentStatus === 'IN_PROGRESS') {
+      throw ApiError.forbidden('Certificate is locked while the instructor is still finalizing course content');
+    }
 
     const certificateId = await generateCertificateId((course as any).category?.name || '');
     const issuedAt = new Date();
@@ -983,8 +986,9 @@ export class StudentService {
       version: 1,
     });
 
-    const verifyUrl = getVerificationUrl(certificateId);
-    const qrCodeUrl = await generateQrCodeDataUrl(verifyUrl);
+    const verificationUrl = getVerificationUrl(certificateId);
+    const qrCodeImageUrl = getQrCodeImageUrl(certificateId);
+    const qrCodeData = await generateQrCodePngBuffer(verificationUrl);
 
     const instructorName = ((course as any).instructor as any)?.name || 'Instructor';
     const categoryName = ((course as any).category as any)?.name || '';
@@ -997,12 +1001,13 @@ export class StudentService {
       instructorName,
       certificateId,
       issuedAt,
-      qrCodeDataUrl: qrCodeUrl,
+      verificationUrl,
+      qrCodeData,
     });
 
     const pdfFilename = `certificate-${certificateId}.pdf`;
     const pdfUrl = getCertificateUrl(pdfFilename);
-    const certificateUrl = `${env.clientUrl}/certificate/${certificateId}`;
+    const certificateUrl = verificationUrl;
 
     try {
       return await withTransaction(async (session) => {
@@ -1011,7 +1016,8 @@ export class StudentService {
           course: courseId,
           enrollment: enrollment._id,
           certificateId,
-          qrCodeUrl,
+          verificationUrl,
+          qrCodeUrl: qrCodeImageUrl,
           certificateUrl,
           pdfUrl,
           digitalSignature,
@@ -1088,6 +1094,15 @@ export class StudentService {
     };
   }
 
+  async getCertificateQrImage(certificateId: string): Promise<{ buffer: Buffer; filename: string }> {
+    const cert = await Certificate.findOne({ certificateId }).lean();
+    if (!cert) throw ApiError.notFound('Certificate not found');
+
+    const verificationUrl = cert.verificationUrl || getVerificationUrl(cert.certificateId);
+    const buffer = await generateQrCodePngBuffer(verificationUrl);
+    return { buffer, filename: `certificate-${certificateId}-qr.png` };
+  }
+
   async downloadCertificate(userId: string, certificateId: string): Promise<{ filePath: string; filename: string; contentType: string }> {
     const cert = await Certificate.findOne({ certificateId }).lean();
     if (!cert) throw ApiError.notFound('Certificate not found');
@@ -1109,7 +1124,8 @@ export class StudentService {
       Course.findById(cert.course).populate('instructor', 'name').lean(),
     ]);
 
-    const qrCodeDataUrl = cert.qrCodeUrl || undefined;
+    const verificationUrl = cert.verificationUrl || getVerificationUrl(cert.certificateId);
+    const qrCodeData = await generateQrCodePngBuffer(verificationUrl);
     const instructorName = (cert.metadata?.instructorName) || (course as any)?.instructor?.name || 'Instructor';
 
     const pdfPath = await generateCertificatePdf({
@@ -1118,7 +1134,8 @@ export class StudentService {
       instructorName,
       certificateId: cert.certificateId,
       issuedAt: cert.issuedAt,
-      qrCodeDataUrl,
+      verificationUrl,
+      qrCodeData,
     });
 
     const pdfFilename = `certificate-${certificateId}.pdf`;

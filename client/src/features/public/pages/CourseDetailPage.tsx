@@ -46,7 +46,7 @@ interface CourseDetail {
     pricing: { originalPrice: number; discountPercent: number; hasDiscount: boolean; gstPercent: number; gstInclusive: boolean };
     price: number;
     category: { _id: string; name: string } | string;
-    instructor: { _id: string; name: string; email: string; avatar?: { url: string }; bio?: string; socialLinks?: Record<string, string>; totalCourses?: number; totalStudents?: number; averageRating?: number; totalReviews?: number };
+    instructor: { _id: string; name: string; email: string; avatar?: { url: string }; bio?: string } | null;
     level: 'beginner' | 'intermediate' | 'advanced' | 'all';
     language: string;
     prerequisites: string;
@@ -203,7 +203,7 @@ export function CourseDetailPage() {
           description: course.shortDescription || course.description,
           slug: course.slug,
           thumbnail: course.thumbnail,
-          instructor: course.instructor,
+          instructor: course.instructor ?? undefined,
           category: course.category,
           level: course.level,
           price: course.price,
@@ -597,68 +597,40 @@ export function CourseDetailPage() {
             </TabsContent>
 
             <TabsContent value="instructor" className="mt-8">
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                  <div className="flex items-start gap-6">
-                    <Avatar className="h-24 w-24">
-                      <AvatarImage src={course.instructor?.avatar?.url} alt={course.instructor?.name || ''} />
-                      <AvatarFallback className="text-3xl font-bold">{getInitials(course.instructor?.name)}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="text-heading-lg font-semibold">{course.instructor?.name}</h3>
-                      <p className="text-muted-foreground mt-1">{course.instructor?.bio || 'Experienced instructor passionate about teaching.'}</p>
+              {course.instructor ? (
+                <div className="grid lg:grid-cols-3 gap-8">
+                  <div className="lg:col-span-2 space-y-8">
+                    <div className="flex items-start gap-6">
+                      <Avatar className="h-24 w-24">
+                        <AvatarImage src={course.instructor.avatar?.url} alt={course.instructor.name || ''} />
+                        <AvatarFallback className="text-3xl font-bold">{getInitials(course.instructor.name)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <h3 className="text-heading-lg font-semibold">{course.instructor.name}</h3>
+                        <p className="text-muted-foreground mt-1">{course.instructor.bio || 'Experienced instructor passionate about teaching.'}</p>
+                      </div>
                     </div>
                   </div>
 
-                  {course.instructor?.socialLinks && (
-                    <div className="flex gap-4">
-                      {Object.entries(course.instructor.socialLinks as Record<string, string>).map(([platform, url]) => (
-                        url && <a key={platform} href={url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                          {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                        </a>
-                      ))}
-                    </div>
-                  )}
+                  <div className="space-y-4">
+                    <Card>
+                      <CardContent className="pt-6">
+                        <Button asChild variant="outline" className="w-full">
+                          <Link to={`/instructors/${course.instructor._id}`}>
+                            View Instructor Profile
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-
-                <div className="space-y-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-heading-sm">Instructor Stats</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="text-center p-4 rounded-lg bg-muted/50">
-                          <p className="text-2xl font-bold text-primary">{course.instructor?.totalCourses || 0}</p>
-                          <p className="text-sm text-muted-foreground">Courses</p>
-                        </div>
-                        <div className="text-center p-4 rounded-lg bg-muted/50">
-                          <p className="text-2xl font-bold text-primary">{formatNumber(course.instructor?.totalStudents || 0)}</p>
-                          <p className="text-sm text-muted-foreground">Students</p>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <div className="flex items-center justify-center gap-1 mb-2">
-                          {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={`h-5 w-5 ${i < (course.instructor?.averageRating || 0) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} />
-                          ))}
-                        </div>
-                        <p className="text-sm text-muted-foreground">Based on {course.instructor?.totalReviews || 0} reviews</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="pt-6">
-                      <Button asChild variant="outline" className="w-full">
-                        <Link to={`/instructors/${course.instructor?._id}`}>
-                          View Instructor Profile
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+              ) : (
+                <EmptyState
+                  icon={<BookOpen className="h-12 w-12 text-muted-foreground/50" />}
+                  title="Instructor information unavailable"
+                  description="Information about this course's instructor is not available right now."
+                />
+              )}
             </TabsContent>
 
             <TabsContent value="reviews" className="mt-8">

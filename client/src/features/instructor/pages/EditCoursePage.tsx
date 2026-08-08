@@ -19,7 +19,7 @@ import { buildCourseUpdatePayload, filterLectureData, getDefaultLectureData } fr
 import { FileUploader } from '@/features/instructor/components/course-editor/FileUploader';
 import { uploadApi } from '@/api/endpoints/upload';
 import {
-  Globe, Lock, Play, ArrowLeft,
+  Globe, Lock, Play, ArrowLeft, CheckCircle2, FileCheck2,
 } from 'lucide-react';
 
 export function EditCoursePage() {
@@ -92,6 +92,17 @@ export function EditCoursePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['instructor', 'course', id] });
       addToast({ title: 'Course published', variant: 'success' });
+    },
+  });
+
+  const finalizeContentMutation = useMutation({
+    mutationFn: () => instructorApi.finalizeCourseContent(id || ''),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['instructor', 'course', id] });
+      addToast({ title: 'Course content finalized', variant: 'success' });
+    },
+    onError: (error: any) => {
+      addToast({ title: error?.response?.data?.message || 'Failed to finalize course content', variant: 'error' });
     },
   });
 
@@ -185,6 +196,18 @@ export function EditCoursePage() {
     return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${(s && colors[s]) || ''}`}>{s}</span>;
   };
 
+  const contentStatusBadge = (s: string | undefined) => {
+    const completed = s === 'COMPLETED';
+    return (
+      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+        completed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+      }`}>
+        {completed ? <CheckCircle2 className="h-3 w-3" /> : <FileCheck2 className="h-3 w-3" />}
+        Content {completed ? 'Completed' : 'In Progress'}
+      </span>
+    );
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -196,6 +219,7 @@ export function EditCoursePage() {
             <div className="flex items-center gap-2">
               <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{course?.title || 'Edit Course'}</h1>
               {statusBadge(course?.status)}
+              {contentStatusBadge(course?.contentStatus)}
               {course?.visibility === 'public' ? <Globe className="h-4 w-4 text-muted-foreground" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
             </div>
           </div>
@@ -209,6 +233,16 @@ export function EditCoursePage() {
           )}
           {course?.status === 'review' && <Button variant="outline" size="sm" disabled>Pending Review</Button>}
           {course?.status === 'published' && <Button variant="outline" size="sm" onClick={() => archiveMutation.mutate()}>Archive</Button>}
+          {course?.contentStatus !== 'COMPLETED' && ['review', 'approved', 'published'].includes(course?.status || '') && (
+            <Button
+              variant={course?.status === 'published' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => finalizeContentMutation.mutate()}
+              loading={finalizeContentMutation.isPending}
+            >
+              <FileCheck2 className="mr-1 h-4 w-4" /> Mark Content Complete
+            </Button>
+          )}
         </div>
       </div>
 

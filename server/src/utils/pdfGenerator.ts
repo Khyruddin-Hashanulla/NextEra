@@ -16,7 +16,8 @@ interface CertificateData {
   instructorName: string;
   certificateId: string;
   issuedAt: Date;
-  qrCodeDataUrl?: string;
+  verificationUrl?: string;
+  qrCodeData?: Buffer | string;
 }
 
 function wrapText(doc: InstanceType<typeof PDFDocument>, text: string, x: number, y: number, maxWidth: number, fontSize: number): number {
@@ -126,18 +127,18 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
       doc.text(`Date Issued: ${dateStr}`, 0, instrY + 22, { align: 'center' });
 
       // QR Code
-      if (data.qrCodeDataUrl) {
+      if (data.qrCodeData) {
         const qrSize = 80;
         const qrX = pageWidth - 130;
         const qrY = pageHeight - 160;
-        doc.image(data.qrCodeDataUrl, qrX, qrY, { width: qrSize, height: qrSize });
+        doc.image(data.qrCodeData, qrX, qrY, { width: qrSize, height: qrSize });
         doc.fontSize(7).fillColor('#666666').font('Helvetica');
         doc.text('Scan to verify', qrX, qrY + qrSize + 5, { align: 'center', width: qrSize });
       }
 
       // Verification text
       doc.fontSize(8).fillColor('#94a3b8').font('Helvetica');
-      doc.text(`Verify at: ${env.clientUrl || 'http://localhost:5173'}/verify-certificate/${data.certificateId}`,
+      doc.text(`Verify at: ${data.verificationUrl || `${env.clientUrl || 'http://localhost:5173'}/certificates/verify/${data.certificateId}`}`,
         pageWidth - 250, pageHeight - 55, { align: 'right' });
 
       // Footer

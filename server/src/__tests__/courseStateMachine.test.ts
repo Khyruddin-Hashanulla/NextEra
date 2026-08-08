@@ -412,4 +412,56 @@ describe('Course State Machine', () => {
       expect($set.rejectionReason).toBeUndefined();
     });
   });
+
+  describe('markCourseContentCompleted', () => {
+    it('finalizes content for a course with lectures', async () => {
+      const course = makeCourse({ status: 'published', contentStatus: 'IN_PROGRESS' });
+      mockModels.Course.findById.mockResolvedValue(course);
+      mockModels.Lecture.countDocuments.mockResolvedValue(2);
+
+      const { courseService } = await import('../services/course.service');
+      await courseService.markCourseContentCompleted(COURSE_ID);
+
+      expect(course.contentStatus).toBe('COMPLETED');
+      expect(course.lastActivity).toBeInstanceOf(Date);
+      expect(course.save).toHaveBeenCalled();
+    });
+
+    it('rejects draft courses', async () => {
+      const course = makeCourse({ status: 'draft', contentStatus: 'IN_PROGRESS' });
+      mockModels.Course.findById.mockResolvedValue(course);
+
+      const { courseService } = await import('../services/course.service');
+      await expect(courseService.markCourseContentCompleted(COURSE_ID)).rejects.toThrow(ApiError);
+      expect(course.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects rejected courses', async () => {
+      const course = makeCourse({ status: 'rejected', contentStatus: 'IN_PROGRESS' });
+      mockModels.Course.findById.mockResolvedValue(course);
+
+      const { courseService } = await import('../services/course.service');
+      await expect(courseService.markCourseContentCompleted(COURSE_ID)).rejects.toThrow(ApiError);
+      expect(course.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects archived courses', async () => {
+      const course = makeCourse({ status: 'archived', contentStatus: 'IN_PROGRESS' });
+      mockModels.Course.findById.mockResolvedValue(course);
+
+      const { courseService } = await import('../services/course.service');
+      await expect(courseService.markCourseContentCompleted(COURSE_ID)).rejects.toThrow(ApiError);
+      expect(course.save).not.toHaveBeenCalled();
+    });
+
+    it('rejects when no lectures exist', async () => {
+      const course = makeCourse({ status: 'published', contentStatus: 'IN_PROGRESS' });
+      mockModels.Course.findById.mockResolvedValue(course);
+      mockModels.Lecture.countDocuments.mockResolvedValue(0);
+
+      const { courseService } = await import('../services/course.service');
+      await expect(courseService.markCourseContentCompleted(COURSE_ID)).rejects.toThrow(ApiError);
+      expect(course.save).not.toHaveBeenCalled();
+    });
+  });
 });

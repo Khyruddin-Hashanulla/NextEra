@@ -18,6 +18,7 @@ export interface EnrolledCourse {
     level: string;
     totalLectures: number;
     totalDuration: number;
+    contentStatus?: 'IN_PROGRESS' | 'COMPLETED';
     instructor: { _id: string; name: string; avatar: { url: string } };
   };
   completionPercentage: number;
@@ -204,6 +205,7 @@ export interface Certificate {
   user: string | { _id: string; name: string; email: string };
   course: { _id: string; title: string; instructor: { _id: string; name: string }; thumbnail?: string };
   certificateId: string;
+  verificationUrl?: string;
   qrCodeUrl: string;
   certificateUrl: string;
   pdfUrl?: string;

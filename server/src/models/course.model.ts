@@ -59,6 +59,7 @@ export interface ICourse extends Document {
   archivedAt: Date | null;
   featured: boolean;
   badge: string;
+  contentStatus: 'IN_PROGRESS' | 'COMPLETED';
   totalDuration: number;
   totalLectures: number;
   totalSections: number;
@@ -146,6 +147,11 @@ const courseSchema = new Schema<ICourse>(
     archivedAt: { type: Date, default: null },
     featured: { type: Boolean, default: false },
     badge: { type: String, default: '' },
+    contentStatus: {
+      type: String,
+      enum: ['IN_PROGRESS', 'COMPLETED'],
+      default: 'IN_PROGRESS',
+    },
     totalDuration: { type: Number, default: 0 },
     totalLectures: { type: Number, default: 0 },
     totalSections: { type: Number, default: 0 },
