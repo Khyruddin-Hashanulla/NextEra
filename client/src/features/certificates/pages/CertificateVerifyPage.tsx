@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CertificateVerifySkeleton } from '@/components/skeletons/CertificateSkeleton';
-import { CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink, Download } from 'lucide-react';
+import { CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink, Download, Printer } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { CertificateDocument } from '@/features/certificates/components/CertificateDocument';
 
 export function CertificateVerifyPage() {
   const { certificateId } = useParams<{ certificateId: string }>();
@@ -35,6 +36,10 @@ export function CertificateVerifyPage() {
     }
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   if (isLoading) {
     return <CertificateVerifySkeleton />;
   }
@@ -57,137 +62,147 @@ export function CertificateVerifyPage() {
   const isValid = cert.signatureValid && !cert.isRevoked;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <Card className="border-2 shadow-lg">
-        <CardHeader className="text-center pb-2">
-          <div className="mx-auto mb-4">
-            {isValid ? (
-              <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="h-10 w-10 text-green-600" />
-              </div>
-            ) : (
-              <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
-                <XCircle className="h-10 w-10 text-red-600" />
-              </div>
+    <div className="w-full px-4 py-8 sm:py-12">
+      <div className="mx-auto max-w-4xl space-y-8">
+        {/* Certificate preview */}
+        <section aria-label="Certificate" className="print:mb-0 print:!m-0">
+          <CertificateDocument cert={cert} valid={isValid} />
+        </section>
+
+        <Card className="border-2 shadow-lg print:hidden">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto mb-4">
+              {isValid ? (
+                <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-10 w-10 text-green-600" />
+                </div>
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-red-100 flex items-center justify-center mx-auto">
+                  <XCircle className="h-10 w-10 text-red-600" />
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-center gap-2 mb-2">
+              <Award className="h-6 w-6 text-primary" />
+              <CardTitle className="text-2xl">Certificate of Completion</CardTitle>
+            </div>
+            <Badge variant={isValid ? 'default' : 'destructive'} className="mt-2">
+              {isValid ? 'Verified' : cert.isRevoked ? 'Revoked' : 'Invalid Signature'}
+            </Badge>
+            {cert.isRevoked && cert.revokedReason && (
+              <p className="text-sm text-red-500 mt-2">Reason: {cert.revokedReason}</p>
             )}
-          </div>
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Award className="h-6 w-6 text-primary" />
-            <CardTitle className="text-2xl">Certificate of Completion</CardTitle>
-          </div>
-          <Badge variant={isValid ? 'default' : 'destructive'} className="mt-2">
-            {isValid ? 'Verified' : cert.isRevoked ? 'Revoked' : 'Invalid Signature'}
-          </Badge>
-          {cert.isRevoked && cert.revokedReason && (
-            <p className="text-sm text-red-500 mt-2">Reason: {cert.revokedReason}</p>
-          )}
-        </CardHeader>
+          </CardHeader>
 
-        <CardContent className="space-y-6 pt-4">
-          <Separator />
+          <CardContent className="space-y-6 pt-4">
+            <Separator />
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <User className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Student</p>
-                <p className="font-medium">{(cert.user as any)?.name || 'N/A'}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <BookOpen className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Course</p>
-                <p className="font-medium">{cert.course?.title || 'N/A'}</p>
-              </div>
-            </div>
-
-            {cert.metadata?.courseLevel && (
+            <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Award className="h-5 w-5 text-muted-foreground shrink-0" />
+                <User className="h-5 w-5 text-muted-foreground shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Level</p>
-                  <p className="font-medium capitalize">{cert.metadata.courseLevel}</p>
+                  <p className="text-xs text-muted-foreground">Student</p>
+                  <p className="font-medium">{(cert.user as any)?.name || 'N/A'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Course</p>
+                  <p className="font-medium">{cert.course?.title || 'N/A'}</p>
+                </div>
+              </div>
+
+              {cert.metadata?.courseLevel && (
+                <div className="flex items-center gap-3">
+                  <Award className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Level</p>
+                    <p className="font-medium capitalize">{cert.metadata.courseLevel}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center gap-3">
+                <Calendar className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Issued On</p>
+                  <p className="font-medium">
+                    {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString(undefined, {
+                      year: 'numeric', month: 'long', day: 'numeric',
+                    }) : 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Fingerprint className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Certificate ID</p>
+                  <p className="font-mono text-sm">{cert.certificateId}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Shield className="h-5 w-5 text-muted-foreground shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">Digital Signature</p>
+                  <p className={`font-medium ${isValid ? 'text-green-600' : 'text-red-600'}`}>
+                    {isValid ? 'Authentic — Certificate has not been tampered with' : cert.isRevoked ? 'Certificate has been revoked' : 'Invalid — Certificate may have been altered'}
+                  </p>
+                </div>
+              </div>
+
+              {cert.version > 1 && (
+                <div className="flex items-center gap-3">
+                  <Award className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">Version</p>
+                    <p className="font-medium">v{cert.version}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {cert.qrCodeUrl && (
+              <div className="text-center space-y-2">
+                <p className="text-xs text-muted-foreground">Scan QR to verify</p>
+                <div className="inline-block border rounded-lg p-2 bg-white">
+                  <OptimizedImage src={cert.qrCodeUrl} alt="Verification QR Code" placeholderType="qrcode" className="mx-auto" containerClassName="w-32 h-32" />
                 </div>
               </div>
             )}
 
-            <div className="flex items-center gap-3">
-              <Calendar className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Issued On</p>
-                <p className="font-medium">
-                  {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString(undefined, {
-                    year: 'numeric', month: 'long', day: 'numeric',
-                  }) : 'N/A'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Fingerprint className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Certificate ID</p>
-                <p className="font-mono text-sm">{cert.certificateId}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Shield className="h-5 w-5 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Digital Signature</p>
-                <p className={`font-medium ${isValid ? 'text-green-600' : 'text-red-600'}`}>
-                  {isValid ? 'Authentic — Certificate has not been tampered with' : cert.isRevoked ? 'Certificate has been revoked' : 'Invalid — Certificate may have been altered'}
-                </p>
-              </div>
-            </div>
-
-            {cert.version > 1 && (
-              <div className="flex items-center gap-3">
-                <Award className="h-5 w-5 text-muted-foreground shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Version</p>
-                  <p className="font-medium">v{cert.version}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <Separator />
-
-          {cert.qrCodeUrl && (
-            <div className="text-center space-y-2">
-              <p className="text-xs text-muted-foreground">Scan QR to verify</p>
-              <div className="inline-block border rounded-lg p-2 bg-white">
-                <OptimizedImage src={cert.qrCodeUrl} alt="Verification QR Code" placeholderType="qrcode" className="mx-auto" containerClassName="w-32 h-32" />
-              </div>
-            </div>
-          )}
-
-          <div className="flex justify-center gap-3 pt-2">
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/">Home</Link>
-            </Button>
-            {isValid && (
-              <Button variant="default" size="sm" onClick={handleDownload}>
-                <Download className="h-4 w-4 mr-1" /> Download PDF
-              </Button>
-            )}
-            {cert.certificateUrl && (
+            <div className="flex flex-wrap justify-center gap-3 pt-2">
               <Button variant="outline" size="sm" asChild>
-                <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-3 w-3 mr-1" /> View Certificate
-                </a>
+                <Link to="/">Home</Link>
               </Button>
-            )}
-          </div>
+              <Button variant="outline" size="sm" onClick={handlePrint}>
+                <Printer className="h-4 w-4 mr-1" /> Print
+              </Button>
+              {isValid && (
+                <Button variant="default" size="sm" onClick={handleDownload}>
+                  <Download className="h-4 w-4 mr-1" /> Download PDF
+                </Button>
+              )}
+              {cert.certificateUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={cert.certificateUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3 w-3 mr-1" /> View Certificate
+                  </a>
+                </Button>
+              )}
+            </div>
 
-          <p className="text-xs text-center text-muted-foreground">
-            This certificate verification is provided by NextEra Learning Platform
-          </p>
-        </CardContent>
-      </Card>
+            <p className="text-xs text-center text-muted-foreground">
+              This certificate verification is provided by NextEra Learning Platform
+            </p>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

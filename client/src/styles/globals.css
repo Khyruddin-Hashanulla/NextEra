@@ -115,3 +115,50 @@
     animation: none;
   }
 }
+
+/* Certificate print layout */
+@page {
+  size: A4 landscape;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 297mm;
+    height: 210mm;
+    margin: 0;
+    padding: 0;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    forced-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #certificate-document,
+  #certificate-document * {
+    visibility: visible;
+  }
+
+  #certificate-document {
+    position: absolute;
+    inset: 0;
+    width: 297mm;
+    height: 210mm;
+    margin: 0;
+    box-shadow: none !important;
+    border-radius: 0;
+  }
+
+  @media (max-width: 1050px) {
+    /* Ensure landscape scales on small viewports when printing */
+    html {
+      transform: scale(1);
+    }
+  }
+}

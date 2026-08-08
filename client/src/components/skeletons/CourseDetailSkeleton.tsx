@@ -87,27 +87,40 @@ export function CourseDetailSkeleton() {
 
 export function CoursePlayerSkeleton() {
   return (
-    <div className="flex h-[calc(100vh-4rem)]" aria-hidden="true">
-      <div className="flex-1 flex flex-col">
-        <Skeleton className="flex-1 w-full rounded-none" />
-        <div className="border-t p-4">
-          <div className="flex gap-4">
-            <Skeleton className="h-8 w-24 rounded-full" />
-            <Skeleton className="h-8 w-24 rounded-full" />
-            <Skeleton className="h-8 w-24 rounded-full" />
-          </div>
+    <div aria-hidden="true">
+      <div className="flex h-14 items-center gap-3 border-b px-4 sm:px-5">
+        <Skeleton className="h-8 w-8 rounded-lg" />
+        <Skeleton className="hidden h-5 w-28 sm:block" />
+        <Skeleton className="h-5 w-1/3 max-w-xs" />
+        <div className="ml-auto flex items-center gap-3">
+          <Skeleton className="hidden h-3 w-24 sm:block" />
+          <Skeleton className="h-8 w-8 rounded-md lg:hidden" />
         </div>
       </div>
-      <div className="w-80 border-l bg-card p-4 space-y-4 hidden lg:block">
-        <Skeleton className="h-6 w-32" />
-        <div className="space-y-2">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 p-2">
-              <Skeleton className="h-4 w-4 rounded" />
-              <Skeleton className="h-3 flex-1" />
-              <Skeleton className="h-3 w-8" />
-            </div>
-          ))}
+      <div className="mx-auto grid w-full max-w-[1600px] items-start gap-6 px-4 py-5 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_22rem]">
+        <div className="min-w-0 space-y-4">
+          <Skeleton className="aspect-video w-full rounded-xl" />
+          <Skeleton className="h-7 w-3/4 max-w-md" />
+          <Skeleton className="h-4 w-40" />
+          <div className="flex gap-2 py-2">
+            <Skeleton className="h-9 w-24 rounded-lg" />
+            <Skeleton className="h-9 w-24 rounded-lg" />
+            <Skeleton className="h-9 w-24 rounded-lg" />
+          </div>
+          <div className="space-y-3 rounded-xl border p-4">
+            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+          </div>
+        </div>
+        <div className="hidden space-y-4 xl:block">
+          <div className="sticky top-14 max-h-[calc(100vh-4.5rem)] space-y-3 overflow-hidden rounded-2xl border p-4">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-2 w-full rounded-full" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
         </div>
       </div>
     </div>
