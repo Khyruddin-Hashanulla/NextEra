@@ -43,9 +43,11 @@ export function Footer() {
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             <div className="space-y-5">
               <Link to="/" className="flex items-center gap-2.5" aria-label="NextEra home">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-600 text-sm font-bold text-white shadow-md shadow-primary/30">
-                  N
-                </div>
+                <img
+                  src="/images/NextEra.png"
+                  alt="NextEra logo"
+                  className="h-9 w-9 rounded-md object-cover shadow-md shadow-primary/30"
+                />
                 <span className="text-xl font-bold tracking-tight font-display">
                   <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">Next</span>
                   <span className="text-white">Era</span>

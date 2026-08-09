@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { ReactNode } from 'react';
-import { GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -26,9 +25,11 @@ export function AuthLayout({ children, className }: AuthLayoutProps) {
           to={ROUTES.HOME}
           className="mb-8 flex items-center justify-center gap-2.5 transition-opacity hover:opacity-80"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/25">
-            <GraduationCap className="h-6 w-6 text-primary-foreground" />
-          </div>
+          <img
+            src="/images/NextEra.png"
+            alt="NextEra logo"
+            className="h-10 w-10 rounded-md object-cover shadow-lg shadow-primary/25"
+          />
           <span className="text-2xl font-bold tracking-tight">NextEra</span>
         </Link>
 

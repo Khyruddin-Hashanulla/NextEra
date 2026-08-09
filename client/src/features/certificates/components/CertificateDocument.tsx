@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
-import { OptimizedImage } from '@/components/common/OptimizedImage';
-import { CheckCircle2, ShieldCheck, Award } from 'lucide-react';
+import { CheckCircle2, ShieldCheck } from 'lucide-react';
 import type { Certificate } from '@/types/student';
+import { CertificateQrCode } from '@/features/certificates/components/CertificateQrCode';
 
 interface CertificateDocumentProps {
   cert: Certificate;
@@ -21,118 +21,123 @@ function classNames(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(' ');
 }
 
+function gradientBorder(): string {
+  return 'rounded-sm border-2 border-transparent [background:linear-gradient(#ffffff,#ffffff)_padding-box,linear-gradient(135deg,#f97316,#ec4899_55%,#8b5cf6)_border-box]';
+}
+
 export function CertificateDocument({ cert, valid = true }: CertificateDocumentProps) {
   const studentName = (cert.user as { name?: string } | undefined)?.name || '';
   const courseTitle = cert.course?.title || '';
   const instructorName = cert.metadata?.instructorName || cert.course?.instructor?.name || '';
   const verificationUrl = cert.verificationUrl || `/certificates/verify/${cert.certificateId}`;
+  const level = cert.metadata?.courseLevel ? cert.metadata.courseLevel.toLowerCase() : '';
+  const issuedDate = formatIssueDate(cert.issuedAt);
 
   return (
     <div
       id="certificate-document"
       className={classNames(
-        'relative w-full overflow-hidden rounded-sm border border-primary/20 bg-white text-slate-900 shadow-2xl shadow-primary/10',
+        'relative aspect-[1.414/1] w-full overflow-hidden rounded-sm bg-white text-slate-900 shadow-2xl shadow-primary/10',
         'print:shadow-none print:rounded-none print:border-0',
       )}
     >
-      <div className="pointer-events-none absolute inset-2.5 rounded-[2px] border border-primary/40 sm:inset-4" aria-hidden="true">
-        <div className="absolute inset-[3px] rounded-[1px] border border-primary/15 pointer-events-none" />
-      </div>
+      {/* Gradient border */}
+      <div aria-hidden="true" className={classNames(gradientBorder(), 'absolute inset-0')} />
 
-      {/* Corner decorations */}
-      <div aria-hidden="true" className="absolute left-0 top-0 h-8 w-8 border-l-2 border-t-2 border-primary/60 sm:h-12 sm:w-12" />
-      <div aria-hidden="true" className="absolute right-0 top-0 h-8 w-8 border-r-2 border-t-2 border-primary/60 sm:h-12 sm:w-12" />
-      <div aria-hidden="true" className="absolute bottom-0 left-0 h-8 w-8 border-b-2 border-l-2 border-primary/60 sm:h-12 sm:w-12" />
-      <div aria-hidden="true" className="absolute bottom-0 right-0 h-8 w-8 border-b-2 border-r-2 border-primary/60 sm:h-12 sm:w-12" />
+      <div className="relative m-1.5 flex h-[calc(100%-12px)] flex-col overflow-hidden rounded-[2px] bg-white sm:m-2 sm:h-[calc(100%-16px)]">
+        {/* Decorative gradient curves */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0">
+          {/* Top-left orange glow */}
+          <div
+            className="absolute -left-20 -top-24 h-72 w-96 rounded-full"
+            style={{ background: 'radial-gradient(closest-side, rgba(253,186,116,0.5), rgba(253,186,116,0))' }}
+          />
+          <div
+            className="absolute -left-10 -top-16 h-48 w-64 rounded-full"
+            style={{ background: 'radial-gradient(closest-side, rgba(236,72,153,0.28), rgba(236,72,153,0))' }}
+          />
+          {/* Bottom-right purple glow */}
+          <div
+            className="absolute -bottom-24 -right-20 h-80 w-[28rem] rounded-full"
+            style={{ background: 'radial-gradient(closest-side, rgba(167,139,250,0.42), rgba(167,139,250,0))' }}
+          />
+          <div
+            className="absolute -bottom-16 -right-12 h-56 w-72 rounded-full"
+            style={{ background: 'radial-gradient(closest-side, rgba(139,92,246,0.28), rgba(139,92,246,0))' }}
+          />
+        </div>
 
-      {/* Subtle watermark */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-[0.04] print:opacity-[0.04]"
-      >
-        <Award className="h-[55%] w-auto text-primary" />
-      </div>
-
-      <div className="relative flex aspect-[1.414/1] w-full flex-col items-center justify-between px-6 py-6 sm:px-14 sm:py-10">
-        {/* Logo / platform banner */}
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-violet-600 text-sm font-bold text-white shadow-md shadow-primary/25 sm:h-10 sm:w-10">
-            N
+        {/* Header */}
+        <div className="relative flex shrink-0 items-start justify-between px-8 pt-6 sm:px-12 sm:pt-7">
+          <div className="flex items-center gap-3">
+            <img
+              src="/images/NextEra.png"
+              alt="NextEra logo"
+              className="h-10 w-10 rounded-md object-cover sm:h-12 sm:w-12"
+            />
+            <div className="flex flex-col">
+              <span className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">NextEra</span>
+              <span className="text-[9px] font-medium uppercase tracking-[0.28em] text-slate-400 sm:text-[10px]">
+                Learning Platform
+              </span>
+            </div>
           </div>
-          <span className="text-lg font-bold tracking-tight sm:text-xl">
-            <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">Next</span>
-            <span className="text-slate-900">Era</span>
-          </span>
-          <span className="ml-2 hidden rounded-full border border-primary/30 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-primary sm:inline-block">
-            Learning Platform
-          </span>
+
+          {/* Verified badge */}
+          <div className="flex flex-col items-center gap-0.5">
+            <div
+              className={classNames(
+                'flex items-center gap-1.5 rounded-full border-2 bg-white px-3 py-1 text-[11px] font-bold sm:px-3.5 sm:py-1 sm:text-xs',
+                valid ? 'border-primary text-primary' : 'border-red-400 text-red-600',
+              )}
+            >
+              {valid ? <ShieldCheck className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+              {valid ? 'Verified' : 'Not Verified'}
+            </div>
+          </div>
         </div>
 
-        {/* Avatar status */}
-        <div className="absolute right-8 top-6 hidden items-center gap-1 text-xs font-medium sm:inline-flex" aria-hidden="true">
-          {valid ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 ring-1 ring-emerald-200">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Verified
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-red-700 ring-1 ring-red-200">
-              <CheckCircle2 className="h-3.5 w-3.5" />
-              Not Verified
-            </span>
-          )}
-        </div>
-
-        <div className="flex min-w-0 flex-1 flex-col items-center justify-center">
-          <p className="text-center text-[9px] font-semibold uppercase tracking-[0.32em] text-primary sm:text-[11px]">
-            Certificate of
-          </p>
-          <h1 className="mt-1 text-center font-display text-2xl font-bold uppercase tracking-[0.08em] text-slate-900 sm:text-4xl">
+        {/* Center content */}
+        <div className="relative flex flex-1 flex-col items-center px-6 pt-5 text-center sm:px-14 sm:pt-6">
+          <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-primary sm:text-xs">Certificate of</p>
+          <h1 className="mt-1 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 bg-clip-text text-3xl font-bold uppercase tracking-[0.06em] text-transparent sm:text-5xl">
             Achievement
           </h1>
+          <div className="mt-2 h-1 w-40 rounded-full bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 sm:mt-3 sm:w-56" />
 
-          <p className="mt-3 max-w-[90%] text-center text-[10px] text-slate-500 sm:mt-4 sm:text-xs">
-            This certificate is proudly presented to
-          </p>
+          <p className="mt-3 text-[10px] text-slate-500 sm:mt-4 sm:text-xs">This certificate is proudly presented to</p>
 
           {/* Student name */}
-          <p className="mt-2 max-w-[95%] text-center font-display text-3xl font-semibold text-primary sm:text-5xl">
+          <p className="mt-2 max-w-[95%] font-display text-3xl font-semibold italic text-slate-900 sm:text-5xl">
             {studentName}
           </p>
+          <div className="mt-1 h-[2px] w-40 rounded-full bg-primary sm:w-56" />
 
-          <p className="mt-2 max-w-[90%] text-center text-[10px] text-slate-500 sm:mt-3 sm:text-xs">
-            who has successfully completed the course
-          </p>
+          <p className="mt-3 text-[10px] text-slate-500 sm:mt-4 sm:text-xs">who has successfully completed the course</p>
 
           {/* Course name */}
-          <p className="mt-1.5 max-w-[90%] text-center font-display text-lg font-bold text-slate-800 sm:text-2xl">
-            {courseTitle}
-          </p>
+          <p className="mt-1.5 max-w-[90%] text-lg font-bold text-slate-800 sm:text-2xl">{courseTitle}</p>
 
-          {cert.metadata?.courseLevel && (
-            <p className="mt-1 text-center text-[10px] capitalize text-slate-500 sm:text-xs">
-              Level: {cert.metadata.courseLevel.toLowerCase()}
-            </p>
+          {/* Level badge */}
+          {level && (
+            <span className="mt-3 inline-flex items-center rounded-full bg-gradient-to-r from-orange-500 to-violet-500 px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-white sm:mt-4 sm:text-[11px]">
+              {level} level
+            </span>
           )}
         </div>
 
-        {/* Footer row */}
-        <div className="flex w-full items-end justify-between gap-4">
-          {/* Issue date + ID */}
-          <div className="flex flex-col items-start gap-1">
+        {/* Footer */}
+        <div className="relative flex w-full shrink-0 items-end justify-between gap-4 px-8 pb-6 sm:px-12 sm:pb-7">
+          <div className="flex flex-col items-start gap-0.5">
             <span className="text-[9px] uppercase tracking-[0.16em] text-slate-400 sm:text-[10px]">Issue Date</span>
-            <span className="text-[11px] font-semibold text-slate-700 sm:text-sm">
-              {formatIssueDate(cert.issuedAt)}
-            </span>
+            <span className="text-[11px] font-semibold text-slate-700 sm:text-sm">{issuedDate}</span>
             <span className="mt-1 text-[9px] uppercase tracking-[0.16em] text-slate-400 sm:text-[10px]">Certificate ID</span>
             <span className="font-mono text-[10px] font-semibold text-slate-700 sm:text-xs">{cert.certificateId}</span>
           </div>
 
           {/* Instructor signature */}
           <div className="hidden max-w-[200px] flex-col items-center sm:flex">
-            <span className="font-display text-lg italic text-slate-600" aria-hidden="false">
-              {instructorName}
-            </span>
+            <span className="font-display text-lg italic text-slate-600">{instructorName}</span>
             <div className="mt-0.5 w-28 border-t border-slate-400" />
             <span className="mt-1 text-[9px] uppercase tracking-[0.14em] text-slate-400">Instructor</span>
           </div>
@@ -141,12 +146,11 @@ export function CertificateDocument({ cert, valid = true }: CertificateDocumentP
           <div className="flex flex-col items-end gap-1">
             {cert.qrCodeUrl ? (
               <>
-                <OptimizedImage
-                  src={cert.qrCodeUrl}
+                <CertificateQrCode
+                  certificateId={cert.certificateId}
+                  qrCodeUrl={cert.qrCodeUrl}
                   alt={`QR code to verify the certificate ${cert.certificateId}`}
-                  placeholderType="qrcode"
-                  containerClassName="h-14 w-14 shrink-0 rounded bg-white ring-1 ring-primary/20 sm:h-16 sm:w-16"
-                  className="rounded"
+                  className="h-16 w-16 ring-1 ring-slate-200 sm:h-20 sm:w-20"
                 />
                 <span className="text-[9px] uppercase tracking-[0.14em] text-slate-400">Scan to verify</span>
               </>

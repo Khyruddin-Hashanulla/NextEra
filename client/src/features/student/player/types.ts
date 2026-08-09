@@ -6,6 +6,55 @@ export interface PlayerInstructor {
   bio?: string;
 }
 
+export interface PlayerResource {
+  url: string;
+  publicId: string;
+  name: string;
+  type: string;
+  size: number;
+}
+
+export interface PlayerLectureLink {
+  id: string;
+  label: string;
+  url: string;
+}
+
+export interface PlayerAssignment {
+  question?: string;
+  instructions?: string;
+  dueDate?: string;
+  totalMarks?: number;
+  passingMarks?: number;
+  allowLateSubmission?: boolean;
+  lateSubmissionDays?: number;
+  penaltyPercent?: number;
+  title?: string;
+  description?: string;
+}
+
+export interface PlayerQuiz {
+  timeLimit?: number;
+  passingScore?: number;
+  maxAttempts?: number;
+  showResults?: boolean;
+  randomizeQuestions?: boolean;
+  negativeMarking?: boolean;
+  partialMarking?: boolean;
+  attemptCooldownMinutes?: number;
+  allowResume?: boolean;
+  shuffleOptions?: boolean;
+  scoringPolicy?: string;
+  questions?: {
+    question: string;
+    options?: string[];
+    correctAnswer?: string;
+    type?: string;
+    marks?: number;
+    explanation?: string;
+  }[];
+}
+
 export interface PlayerLecture {
   _id: string;
   title: string;
@@ -22,23 +71,12 @@ export interface PlayerLecture {
   };
   videoUrl?: { url?: string; publicId?: string };
   articleContent?: string;
-  quiz?: {
-    timeLimit?: number;
-    passingScore?: number;
-    maxAttempts?: number;
-    questions?: {
-      question: string;
-      options?: string[];
-      correctAnswer?: string;
-      type?: string;
-      marks?: number;
-    }[];
-  };
-  assignment?: {
-    question?: string;
-    title?: string;
-    description?: string;
-  };
+  resources?: PlayerResource[];
+  links?: PlayerLectureLink[];
+  attachments?: PlayerResource[];
+  notes?: string;
+  quiz?: PlayerQuiz;
+  assignment?: PlayerAssignment;
 }
 
 export interface PlayerSection {

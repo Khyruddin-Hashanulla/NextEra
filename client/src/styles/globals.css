@@ -77,6 +77,62 @@
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
 
+  /* Rendered lecture article content (Tiptap HTML) */
+  .lecture-article-content {
+    @apply text-sm leading-relaxed text-foreground sm:text-base;
+  }
+  .lecture-article-content h1,
+  .lecture-article-content h2,
+  .lecture-article-content h3 {
+    @apply mt-6 mb-3 font-semibold tracking-tight text-foreground;
+  }
+  .lecture-article-content h1 {
+    @apply text-2xl;
+  }
+  .lecture-article-content h2 {
+    @apply text-xl;
+  }
+  .lecture-article-content h3 {
+    @apply text-lg;
+  }
+  .lecture-article-content p {
+    @apply my-3;
+  }
+  .lecture-article-content ul,
+  .lecture-article-content ol {
+    @apply my-3 pl-6;
+  }
+  .lecture-article-content ul {
+    @apply list-disc;
+  }
+  .lecture-article-content ol {
+    @apply list-decimal;
+  }
+  .lecture-article-content li {
+    @apply my-1;
+  }
+  .lecture-article-content blockquote {
+    @apply border-l-4 border-primary/40 pl-4 italic text-muted-foreground;
+  }
+  .lecture-article-content code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+  }
+  .lecture-article-content pre {
+    @apply my-3 overflow-x-auto rounded-lg bg-muted p-4;
+  }
+  .lecture-article-content pre code {
+    @apply bg-transparent p-0;
+  }
+  .lecture-article-content a {
+    @apply text-primary underline underline-offset-2 hover:text-primary/80;
+  }
+  .lecture-article-content img {
+    @apply my-3 max-w-full rounded-lg;
+  }
+  .lecture-article-content hr {
+    @apply my-6 border-border;
+  }
+
   .input-base {
     @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 transition-colors;
   }

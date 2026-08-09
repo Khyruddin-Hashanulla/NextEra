@@ -9,8 +9,10 @@ import { useToast } from '@/providers/ToastProvider';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CertificateDocument } from '@/features/certificates/components/CertificateDocument';
-import { Award, Download, ExternalLink, Shield, Loader2, Sparkles, BadgeCheck, Printer } from 'lucide-react';
+import { CertificateQrCode } from '@/features/certificates/components/CertificateQrCode';
+import { Award, Download, ExternalLink, Shield, Loader2, Sparkles, BadgeCheck, Printer, Link2, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/lib/constants';
 import { motion } from 'framer-motion';
 import type { Certificate } from '@/types/student';
 
@@ -31,6 +33,7 @@ export function CertificatesPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const [preview, setPreview] = useState<Certificate | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: certResult, isLoading: certsLoading } = useQuery({
     queryKey: ['student', 'certificates'],
@@ -74,8 +77,19 @@ export function CertificatesPage() {
     }
   };
 
-  const verifyUrl = (cert: Certificate) =>
-    cert.verificationUrl || `/certificates/verify/${cert.certificateId}`;
+  const verifyUrl = (cert: Certificate) => ROUTES.CERTIFICATE_VERIFY(cert.certificateId);
+
+  const handleCopyUrl = async (cert: Certificate) => {
+    const url = `${window.location.origin}${ROUTES.CERTIFICATE_VERIFY(cert.certificateId)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      addToast({ title: 'Verification link copied', variant: 'success' });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      addToast({ title: 'Could not copy link', variant: 'error' });
+    }
+  };
 
   const isLoading = certsLoading || coursesLoading;
 
@@ -264,12 +278,11 @@ export function CertificatesPage() {
                       )}
                     </div>
                     {cert.qrCodeUrl && (
-                      <OptimizedImage
-                        src={cert.qrCodeUrl}
+                      <CertificateQrCode
+                        certificateId={cert.certificateId}
+                        qrCodeUrl={cert.qrCodeUrl}
                         alt={`QR code for ${cert.course?.title || 'certificate'}`}
-                        placeholderType="qrcode"
-                        className="rounded-lg border bg-card p-0.5"
-                        containerClassName="h-12 w-12 shrink-0"
+                        className="h-12 w-12 shrink-0 rounded-lg border bg-card p-0.5"
                       />
                     )}
                   </div>
@@ -288,6 +301,14 @@ export function CertificatesPage() {
                     <Button size="sm" className="flex-1" onClick={() => setPreview(cert)}>
                       <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                       View
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleCopyUrl(cert)}
+                      aria-label="Copy verification link"
+                    >
+                      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Link2 className="h-4 w-4 text-primary" />}
                     </Button>
                     <Button size="sm" variant="ghost" asChild aria-label="Verify certificate">
                       <Link to={verifyUrl(cert)} target="_blank">
@@ -315,10 +336,19 @@ export function CertificatesPage() {
               <CertificateDocument cert={preview} valid={preview.status === 'active'} />
               <div className="flex flex-wrap items-center justify-end gap-2 print:hidden">
                 <Button variant="outline" size="sm" asChild>
-                  <Link to={`/certificates/verify/${preview.certificateId}`} target="_blank">
+                  <Link to={ROUTES.CERTIFICATE_VERIFY(preview.certificateId)} target="_blank">
                     <Shield className="mr-1.5 h-3.5 w-3.5" />
                     Verify
                   </Link>
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleCopyUrl(preview)}
+                  disabled={preview.status === 'revoked'}
+                >
+                  {copied ? <Check className="mr-1.5 h-3.5 w-3.5 text-green-600" /> : <Link2 className="mr-1.5 h-3.5 w-3.5" />}
+                  {copied ? 'Copied' : 'Copy Link'}
                 </Button>
                 <Button
                   variant="outline"

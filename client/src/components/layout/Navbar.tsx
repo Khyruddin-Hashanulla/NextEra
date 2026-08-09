@@ -98,9 +98,11 @@ export function Navbar() {
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link to={ROUTES.HOME} className="flex items-center gap-2.5 flex-shrink-0" aria-label="NextEra home">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-600 text-sm font-bold text-white shadow-md shadow-primary/25">
-              N
-            </div>
+            <img
+              src="/images/NextEra.png"
+              alt="NextEra logo"
+              className="h-9 w-9 rounded-md object-cover shadow-md shadow-primary/25"
+            />
             <span className="text-xl font-bold tracking-tight font-display">
               <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">Next</span>
               <span className="text-foreground">Era</span>

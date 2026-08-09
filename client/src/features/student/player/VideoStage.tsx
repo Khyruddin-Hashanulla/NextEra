@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { FileCheck, FileQuestion, FileText, Loader2, PlayCircle } from 'lucide-react';
+import { CalendarClock, FileCheck, FileQuestion, FileText, Loader2, PlayCircle, Trophy } from 'lucide-react';
 import { resolveVideoEmbed } from '@/lib/video';
+import { EmptyState } from '@/components/common/EmptyState';
 import type { PlayerLecture } from './types';
 
 interface VideoStageProps {
@@ -27,15 +28,59 @@ function UnavailableVideo({ lecture }: { lecture: PlayerLecture }) {
 }
 
 function ArticleStage({ lecture }: { lecture: PlayerLecture }) {
+  if (!lecture.articleContent?.trim()) {
+    return (
+      <EmptyState
+        icon={<FileText className="h-8 w-8 text-muted-foreground" />}
+        title="This article is still being prepared"
+        description="The instructor hasn't published written content for this lecture yet."
+      />
+    );
+  }
   return (
-    <div className="flex h-full items-center justify-center overflow-y-auto p-6">
-      <div className="max-w-2xl text-center text-white">
-        <FileText className="mx-auto h-12 w-12 text-white/70" aria-hidden="true" />
-        <p className="mt-4 text-lg font-semibold">Article Content</p>
-        {lecture.articleContent && <p className="mt-2 whitespace-pre-line text-sm text-white/70">{lecture.articleContent}</p>}
-        {!lecture.articleContent && (
-          <p className="mt-2 text-sm text-white/70">This lecture is read as an article. The written content will appear here soon.</p>
-        )}
+    <div className="rounded-xl border bg-card ring-1 ring-border">
+      <div className="lecture-article-content px-5 py-6 sm:px-8 sm:py-8" dangerouslySetInnerHTML={{ __html: lecture.articleContent }} />
+    </div>
+  );
+}
+
+function AssignmentStage({ lecture }: { lecture: PlayerLecture }) {
+  const assignment = lecture.assignment;
+  const dueDate = assignment?.dueDate ? new Date(assignment.dueDate) : null;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <FileCheck className="h-5 w-5 shrink-0 text-primary" aria-hidden="true" />
+        <p className="text-sm font-medium">Assignment</p>
+      </div>
+
+      {assignment?.question ? (
+        <p className="whitespace-pre-line text-sm leading-relaxed text-foreground">{assignment.question}</p>
+      ) : (
+        <p className="text-sm text-muted-foreground">The instructor hasn't published the assignment prompt yet.</p>
+      )}
+
+      {assignment?.instructions ? (
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-xs font-medium text-muted-foreground">Instructions</p>
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed">{assignment.instructions}</p>
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
+          Total marks: {assignment?.totalMarks ?? '—'}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <FileCheck className="h-3.5 w-3.5" aria-hidden="true" />
+          Passing marks: {assignment?.passingMarks ?? '—'}
+        </span>
+        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+          Due: {dueDate ? dueDate.toLocaleDateString() : 'No deadline'}
+        </span>
       </div>
     </div>
   );
@@ -49,19 +94,8 @@ function QuizOverlay({ lecture }: { lecture: PlayerLecture }) {
         <FileQuestion className="mx-auto h-12 w-12 text-white/70" aria-hidden="true" />
         <p className="mt-3 text-lg font-semibold">{questionCount} Question Quiz</p>
         {lecture.quiz?.timeLimit ? <p className="mt-1 text-sm text-white/70">{lecture.quiz?.timeLimit} minute time limit</p> : null}
+        {lecture.quiz?.passingScore ? <p className="mt-1 text-sm text-white/70">Pass mark: {lecture.quiz?.passingScore}%</p> : null}
         <p className="mt-3 text-sm text-white/60">Complete the quiz below to finish this lecture.</p>
-      </div>
-    </div>
-  );
-}
-
-function AssignmentOverlay() {
-  return (
-    <div className="flex h-full items-center justify-center p-6">
-      <div className="text-center text-white">
-        <FileCheck className="mx-auto h-12 w-12 text-white/70" aria-hidden="true" />
-        <p className="mt-3 text-lg font-semibold">Assignment</p>
-        <p className="mt-2 text-sm text-white/70">Complete the assignment below to finish this lecture.</p>
       </div>
     </div>
   );
@@ -110,18 +144,7 @@ export function VideoStage({ lecture, onPosition, onComplete }: VideoStageProps)
         </div>
       );
     }
-  }
 
-  const overlay =
-    lecture.type === 'article' ? (
-      <ArticleStage lecture={lecture} />
-    ) : lecture.type === 'quiz' ? (
-      <QuizOverlay lecture={lecture} />
-    ) : (
-      <AssignmentOverlay />
-    );
-
-  if (lecture.type === 'video') {
     return (
       <div className="aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-border">
         <UnavailableVideo lecture={lecture} />
@@ -129,9 +152,17 @@ export function VideoStage({ lecture, onPosition, onComplete }: VideoStageProps)
     );
   }
 
+  if (lecture.type === 'article') {
+    return <ArticleStage lecture={lecture} />;
+  }
+
+  if (lecture.type === 'assignment') {
+    return <AssignmentStage lecture={lecture} />;
+  }
+
   return (
     <div className="aspect-video w-full overflow-hidden rounded-xl bg-zinc-900 ring-1 ring-border">
-      {overlay}
+      <QuizOverlay lecture={lecture} />
     </div>
   );
 }

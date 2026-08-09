@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileUpload } from '@/components/ui/file-upload';
-import { Loader2, FileText, Download } from 'lucide-react';
+import { CalendarClock, Loader2, FileText, Download, Trophy, FileCheck } from 'lucide-react';
 import { useToast } from '@/providers/ToastProvider';
 import { studentApi } from '@/api/endpoints/student';
 
@@ -28,6 +28,9 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
     queryFn: () => studentApi.getAssignmentDetail(lectureId).then((r: any) => r.data.data),
     enabled: !!lectureId,
   });
+
+  const assignment = detail?.lecture?.assignment;
+  const dueDate = assignment?.dueDate ? new Date(assignment.dueDate) : null;
 
   const submission = detail?.submission || null;
   const canSubmit = detail?.canSubmit;
@@ -110,36 +113,64 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
   }
 
   return (
-    <Card>
-      <CardContent className="space-y-3 pt-4">
-        <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your assignment answer..." rows={6} />
-        <FileUpload
-          accept=".pdf,.doc,.docx,.zip,.rar,.txt,.md,.c,.cpp,.js,.jsx,.ts,.tsx,.py,.java,.jpeg,.jpg,.png,.webp"
-          maxSize={25 * 1024 * 1024}
-          label="Upload assignment files (max 5)"
-          value={pendingFile}
-          onChange={(f) => { setPendingFile(f); if (f) handleUpload(f); }}
-          disabled={uploading || files.length >= 5}
-        />
-        {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
-        {files.length > 0 && (
-          <div className="space-y-2">
-            {files.map((f) => (
-              <div key={f.publicId} className="flex items-center justify-between rounded-lg border p-2">
-                <div className="flex min-w-0 items-center gap-2">
-                  <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate text-sm">{f.name}</span>
-                </div>
-                <button onClick={() => setFiles((prev) => prev.filter((x) => x.publicId !== f.publicId))} className="text-xs text-destructive hover:underline">Remove</button>
-              </div>
-            ))}
+    <div className="space-y-3">
+      <div className="space-y-3">
+        {assignment?.question && <p className="whitespace-pre-line text-sm leading-relaxed">{assignment.question}</p>}
+        {assignment?.instructions && (
+          <div className="rounded-lg border bg-muted/30 p-3">
+            <p className="text-xs font-medium text-muted-foreground">Instructions</p>
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed">{assignment.instructions}</p>
           </div>
         )}
-        <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || (!content.trim() && files.length === 0)}>
-          {submitMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Submit Assignment
-        </Button>
-      </CardContent>
-    </Card>
+        {assignment && (
+          <div className="flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <Trophy className="h-3.5 w-3.5" aria-hidden="true" />
+              Total marks: {assignment.totalMarks ?? '—'}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <FileCheck className="h-3.5 w-3.5" aria-hidden="true" />
+              Passing marks: {assignment.passingMarks ?? '—'}
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+              <CalendarClock className="h-3.5 w-3.5" aria-hidden="true" />
+              Due: {dueDate ? dueDate.toLocaleDateString() : 'No deadline'}
+            </span>
+          </div>
+        )}
+      </div>
+
+      <Card>
+        <CardContent className="space-y-3 pt-4">
+          <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your assignment answer..." rows={6} />
+          <FileUpload
+            accept=".pdf,.doc,.docx,.zip,.rar,.txt,.md,.c,.cpp,.js,.jsx,.ts,.tsx,.py,.java,.jpeg,.jpg,.png,.webp"
+            maxSize={25 * 1024 * 1024}
+            label="Upload assignment files (max 5)"
+            value={pendingFile}
+            onChange={(f) => { setPendingFile(f); if (f) handleUpload(f); }}
+            disabled={uploading || files.length >= 5}
+          />
+          {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          {files.length > 0 && (
+            <div className="space-y-2">
+              {files.map((f) => (
+                <div key={f.publicId} className="flex items-center justify-between rounded-lg border p-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate text-sm">{f.name}</span>
+                  </div>
+                  <button onClick={() => setFiles((prev) => prev.filter((x) => x.publicId !== f.publicId))} className="text-xs text-destructive hover:underline">Remove</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || (!content.trim() && files.length === 0)}>
+            {submitMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Submit Assignment
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

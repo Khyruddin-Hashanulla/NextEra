@@ -40,7 +40,7 @@ export function CoursePlayerPage() {
   });
 
   const [currentLecture, setCurrentLecture] = useState<PlayerLecture | null>(null);
-  const [activeTab, setActiveTab] = useState('content');
+  const [activeTab, setActiveTab] = useState('notes');
   const [curriculumOpen, setCurriculumOpen] = useState(false);
 
   const detail = data as PlayerCourseDetail | undefined;
@@ -56,7 +56,7 @@ export function CoursePlayerPage() {
 
   const handleLectureSelect = (lecture: PlayerLecture) => {
     setCurrentLecture(lecture);
-    setActiveTab(lecture.type === 'quiz' ? 'quiz' : 'content');
+    setActiveTab(lecture.type === 'quiz' ? 'quiz' : lecture.type === 'assignment' ? 'assignment' : 'notes');
     progressMutation.mutate({ lectureId: lecture._id, completed: false });
   };
 

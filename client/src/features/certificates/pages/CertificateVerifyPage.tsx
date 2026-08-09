@@ -6,12 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CertificateVerifySkeleton } from '@/components/skeletons/CertificateSkeleton';
-import { CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink, Download, Printer } from 'lucide-react';
-import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink, Download, Printer, Link2, Check } from 'lucide-react';
 import { CertificateDocument } from '@/features/certificates/components/CertificateDocument';
+import { CertificateQrCode } from '@/features/certificates/components/CertificateQrCode';
+import { useState } from 'react';
+import { useToast } from '@/providers/ToastProvider';
 
 export function CertificateVerifyPage() {
   const { certificateId } = useParams<{ certificateId: string }>();
+  const { addToast } = useToast();
+  const [copied, setCopied] = useState(false);
 
   const { data: cert, isLoading, error } = useQuery({
     queryKey: ['certificate-verify', certificateId],
@@ -38,6 +42,18 @@ export function CertificateVerifyPage() {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleCopyUrl = async () => {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      addToast({ title: 'Verification link copied', variant: 'success' });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      addToast({ title: 'Could not copy link', variant: 'error' });
+    }
   };
 
   if (isLoading) {
@@ -171,7 +187,12 @@ export function CertificateVerifyPage() {
               <div className="text-center space-y-2">
                 <p className="text-xs text-muted-foreground">Scan QR to verify</p>
                 <div className="inline-block border rounded-lg p-2 bg-white">
-                  <OptimizedImage src={cert.qrCodeUrl} alt="Verification QR Code" placeholderType="qrcode" className="mx-auto" containerClassName="w-32 h-32" />
+                  <CertificateQrCode
+                    certificateId={cert.certificateId}
+                    qrCodeUrl={cert.qrCodeUrl}
+                    alt="Verification QR Code"
+                    className="w-32 h-32"
+                  />
                 </div>
               </div>
             )}
@@ -182,6 +203,10 @@ export function CertificateVerifyPage() {
               </Button>
               <Button variant="outline" size="sm" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-1" /> Print
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleCopyUrl} aria-label="Copy verification link">
+                {copied ? <Check className="h-4 w-4 mr-1 text-green-600" /> : <Link2 className="h-4 w-4 mr-1" />}
+                {copied ? 'Copied' : 'Copy Link'}
               </Button>
               {isValid && (
                 <Button variant="default" size="sm" onClick={handleDownload}>

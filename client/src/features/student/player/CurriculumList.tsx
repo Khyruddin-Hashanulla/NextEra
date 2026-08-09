@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { CheckCircle2, PlayCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -10,6 +11,11 @@ interface CurriculumListProps {
   completedLectureIds: Set<string>;
   currentLectureId?: string;
   onSelect: (lecture: PlayerLecture) => void;
+}
+
+function findSectionIdForLecture(sections: PlayerSection[], lectureId?: string): string | undefined {
+  if (!lectureId) return undefined;
+  return sections.find((section) => section.lectures.some((lecture) => lecture._id === lectureId))?._id;
 }
 
 function SectionRow({ section, completedLectureIds, currentLectureId, onSelect }: {
@@ -97,12 +103,33 @@ function SectionRow({ section, completedLectureIds, currentLectureId, onSelect }
 }
 
 export function CurriculumList({ sections, completedLectureIds, currentLectureId, onSelect }: CurriculumListProps) {
+  const [openSections, setOpenSections] = useState<string[]>(() => {
+    const activeSectionId = findSectionIdForLecture(sections, currentLectureId);
+    return activeSectionId ? [activeSectionId] : sections[0] ? [sections[0]._id] : [];
+  });
+  const previousLectureId = useRef(currentLectureId);
+
+  useEffect(() => {
+    if (currentLectureId === previousLectureId.current) return;
+    previousLectureId.current = currentLectureId;
+
+    const activeSectionId = findSectionIdForLecture(sections, currentLectureId);
+    if (activeSectionId) {
+      setOpenSections((prev) => (prev.includes(activeSectionId) ? prev : [...prev, activeSectionId]));
+    }
+  }, [currentLectureId, sections]);
+
   if (!sections.length) {
     return <p className="px-4 py-6 text-center text-sm text-muted-foreground">No curriculum has been published yet.</p>;
   }
 
   return (
-    <Accordion type="multiple" defaultValue={sections.map((section) => section._id)} className="space-y-2 px-2">
+    <Accordion
+      type="multiple"
+      value={openSections}
+      onValueChange={setOpenSections}
+      className="space-y-2 px-2"
+    >
       {sections.map((section) => (
         <SectionRow
           key={section._id}

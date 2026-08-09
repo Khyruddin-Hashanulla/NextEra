@@ -36,13 +36,13 @@ export function LectureTabs({ courseId, lecture, value, onValueChange }: Lecture
       </TabsList>
 
       <TabsContent value="notes" className="mt-3">
-        <NotesTab courseId={courseId} lectureId={lecture._id} />
+        <NotesTab courseId={courseId} lectureId={lecture._id} instructorNote={lecture.notes} />
       </TabsContent>
       <TabsContent value="discussion" className="mt-3">
         <DiscussionTab courseId={courseId} lectureId={lecture._id} />
       </TabsContent>
       <TabsContent value="resources" className="mt-3">
-        <ResourcesTab courseId={courseId} lectureId={lecture._id} />
+        <ResourcesTab courseId={courseId} lectureId={lecture._id} lecture={lecture} />
       </TabsContent>
       {isAssignmentLecture && (
         <>

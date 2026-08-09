@@ -215,6 +215,7 @@ export const getCertificateQr = asyncHandler(async (req: Request, res: Response)
   const { buffer, filename } = await studentService.getCertificateQrImage(req.params.certificateId);
   res.setHeader('Content-Type', 'image/png');
   res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   res.status(HTTP_STATUS.OK).send(buffer);
 });
 

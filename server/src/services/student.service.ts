@@ -26,8 +26,7 @@ import { escapeRegex } from '../utils/escapeRegex';
 import { env } from '../config/env';
 import { generateCertificateSignature, generateQrCodePngBuffer, getQrCodeImageUrl, verifyCertificateSignature, getVerificationUrl } from '../utils/certificate';
 import { generateCertificateId } from '../utils/certificateIdGenerator';
-import { generateCertificatePdf, getCertificateUrl, getCertificateFilePath } from '../utils/pdfGenerator';
-import fs from 'fs';
+import { generateCertificatePdf, getCertificateUrl } from '../utils/pdfGenerator';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { paymentService } from './payment.service';
@@ -974,6 +973,28 @@ export class StudentService {
       throw ApiError.forbidden('Certificate is locked while the instructor is still finalizing course content');
     }
 
+    // Respect the instructor-configured certificate policy (server-side, never trusted from the client).
+    const certSettings = (course as any).certificateSettings || {
+      enabled: true,
+      passingCriteria: 'completion',
+      minimumQuizScore: 60,
+    };
+    if (certSettings.enabled === false) {
+      throw ApiError.badRequest('Certificates are disabled for this course');
+    }
+    if (certSettings.passingCriteria === 'quiz_score') {
+      const minScore = Math.max(0, Math.min(100, Number(certSettings.minimumQuizScore ?? 60)));
+      const best = await QuizAttempt.findOne({ user: userId, course: courseId, passed: true })
+        .sort({ percentage: -1 })
+        .select('percentage passed')
+        .lean();
+      if (!best || Number(best.percentage) < minScore) {
+        throw ApiError.badRequest(
+          `A minimum quiz score of ${minScore}% is required to earn this certificate`
+        );
+      }
+    }
+
     const certificateId = await generateCertificateId((course as any).category?.name || '');
     const issuedAt = new Date();
     const issuedAtStr = issuedAt.toISOString();
@@ -999,6 +1020,9 @@ export class StudentService {
       studentName: user.name,
       courseTitle: course.title,
       instructorName,
+      courseLevel,
+      categoryName,
+      courseDuration,
       certificateId,
       issuedAt,
       verificationUrl,
@@ -1098,7 +1122,7 @@ export class StudentService {
     const cert = await Certificate.findOne({ certificateId }).lean();
     if (!cert) throw ApiError.notFound('Certificate not found');
 
-    const verificationUrl = cert.verificationUrl || getVerificationUrl(cert.certificateId);
+    const verificationUrl = getVerificationUrl(cert.certificateId);
     const buffer = await generateQrCodePngBuffer(verificationUrl);
     return { buffer, filename: `certificate-${certificateId}-qr.png` };
   }
@@ -1111,14 +1135,9 @@ export class StudentService {
 
     await Certificate.updateOne({ _id: cert._id }, { $set: { downloadedAt: new Date() } });
 
-    if (cert.pdfUrl) {
-      const filename = `certificate-${certificateId}.pdf`;
-      const filePath = getCertificateFilePath(filename);
-      if (fs.existsSync(filePath)) {
-        return { filePath, filename, contentType: 'application/pdf' };
-      }
-    }
-
+    // Always regenerate the PDF from the live database record. Never trust a
+    // cached file on disk: stale files (e.g. generated with placeholder data)
+    // would otherwise be served to students.
     const [user, course] = await Promise.all([
       User.findById(cert.user).lean(),
       Course.findById(cert.course).populate('instructor', 'name').lean(),
@@ -1132,6 +1151,9 @@ export class StudentService {
       studentName: user?.name || 'Student',
       courseTitle: (course as any)?.title || 'Course',
       instructorName,
+      courseLevel: cert.metadata?.courseLevel || (course as any)?.level || '',
+      categoryName: cert.metadata?.categoryName || '',
+      courseDuration: cert.metadata?.courseDuration || (course as any)?.totalDuration || 0,
       certificateId: cert.certificateId,
       issuedAt: cert.issuedAt,
       verificationUrl,

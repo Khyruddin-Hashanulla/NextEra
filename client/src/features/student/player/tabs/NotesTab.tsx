@@ -6,14 +6,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/providers/ToastProvider';
 import { studentApi } from '@/api/endpoints/student';
 import { EmptyState } from '@/components/common/EmptyState';
-import { StickyNote } from 'lucide-react';
+import { Info, StickyNote } from 'lucide-react';
 
 interface NotesTabProps {
   courseId: string;
   lectureId: string;
+  instructorNote?: string;
 }
 
-export function NotesTab({ courseId, lectureId }: NotesTabProps) {
+export function NotesTab({ courseId, lectureId, instructorNote }: NotesTabProps) {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const [newNote, setNewNote] = useState('');
@@ -43,6 +44,15 @@ export function NotesTab({ courseId, lectureId }: NotesTabProps) {
   return (
     <Card>
       <CardContent className="space-y-3 pt-4">
+        {instructorNote?.trim() && (
+          <div className="rounded-lg border bg-primary/5 p-3">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <p className="text-sm font-medium">Notes from the instructor</p>
+            </div>
+            <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">{instructorNote}</p>
+          </div>
+        )}
         <div className="flex gap-2">
           <Textarea value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Write a note..." rows={3} />
           <Button onClick={() => createMutation.mutate()} disabled={!newNote.trim()} className="shrink-0">Add</Button>
