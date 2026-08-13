@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode, useRef, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode, useRef } from 'react';
 
 export interface Toast {
   id: string;
@@ -38,12 +38,15 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent, id: string) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      removeToast(id);
-    }
-  }, [removeToast]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent, id: string) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        removeToast(id);
+      }
+    },
+    [removeToast]
+  );
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>

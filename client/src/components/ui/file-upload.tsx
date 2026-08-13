@@ -44,7 +44,15 @@ function isValidMimeType(file: File, accept: string): boolean {
   return false;
 }
 
-export function FileUpload({ accept, maxSize, label, value, onChange, disabled, error: externalError }: FileUploadProps) {
+export function FileUpload({
+  accept,
+  maxSize,
+  label,
+  value,
+  onChange,
+  disabled,
+  error: externalError,
+}: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [internalError, setInternalError] = useState<string | null>(null);
@@ -52,57 +60,69 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
 
   const error = externalError || internalError;
 
-  const validateFile = useCallback((file: File): string | null => {
-    if (file.name.length > MAX_FILENAME_LENGTH) {
-      return 'Filename is too long';
-    }
-    if (!isValidExtension(file.name, accept) && !isValidMimeType(file, accept)) {
-      return `Invalid file type. Accepted: ${accept}`;
-    }
-    if (file.size > maxSize) {
-      return `File is too large. Maximum: ${formatSize(maxSize)}`;
-    }
-    if (file.size === 0) {
-      return 'File is empty';
-    }
-    return null;
-  }, [accept, maxSize]);
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (file.name.length > MAX_FILENAME_LENGTH) {
+        return 'Filename is too long';
+      }
+      if (!isValidExtension(file.name, accept) && !isValidMimeType(file, accept)) {
+        return `Invalid file type. Accepted: ${accept}`;
+      }
+      if (file.size > maxSize) {
+        return `File is too large. Maximum: ${formatSize(maxSize)}`;
+      }
+      if (file.size === 0) {
+        return 'File is empty';
+      }
+      return null;
+    },
+    [accept, maxSize]
+  );
 
-  const handleFile = useCallback((file: File | null) => {
-    setInternalError(null);
-    if (!file) {
-      setPreview(null);
-      onChange(null);
-      return;
-    }
-    const validationError = validateFile(file);
-    if (validationError) {
-      setInternalError(validationError);
-      onChange(null);
-      return;
-    }
-    if (file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreview(reader.result as string);
-      reader.readAsDataURL(file);
-    } else {
-      setPreview(null);
-    }
-    onChange(file);
-  }, [validateFile, onChange]);
+  const handleFile = useCallback(
+    (file: File | null) => {
+      setInternalError(null);
+      if (!file) {
+        setPreview(null);
+        onChange(null);
+        return;
+      }
+      const validationError = validateFile(file);
+      if (validationError) {
+        setInternalError(validationError);
+        onChange(null);
+        return;
+      }
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setPreview(reader.result as string);
+        reader.readAsDataURL(file);
+      } else {
+        setPreview(null);
+      }
+      onChange(file);
+    },
+    [validateFile, onChange]
+  );
 
-  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
-  }, [handleFile]);
+  const handleDrop = useCallback(
+    (e: DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setDragOver(false);
+      const file = e.dataTransfer.files?.[0];
+      if (file) handleFile(file);
+    },
+    [handleFile]
+  );
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    handleFile(file);
-    if (e.target) e.target.value = '';
-  }, [handleFile]);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0] || null;
+      handleFile(file);
+      if (e.target) e.target.value = '';
+    },
+    [handleFile]
+  );
 
   const handleRemove = useCallback(() => {
     setPreview(null);
@@ -115,11 +135,16 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
       <div
         role="button"
         tabIndex={0}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click(); }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
+        }}
         className={`
           relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6
           transition-colors
@@ -138,11 +163,19 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
         />
         {value && preview ? (
           <div className="relative">
-            <OptimizedImage src={preview} alt="Uploaded image preview" className="max-h-40 rounded object-contain" lazy={false} />
+            <OptimizedImage
+              src={preview}
+              alt="Uploaded image preview"
+              className="max-h-40 rounded object-contain"
+              lazy={false}
+            />
             {!disabled && (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); handleRemove(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove();
+                }}
                 className="absolute -right-2 -top-2 rounded-full bg-destructive p-1 text-destructive-foreground shadow"
               >
                 <X className="h-3 w-3" />
@@ -163,7 +196,10 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
             {!disabled && (
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); handleRemove(); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove();
+                }}
                 className="rounded-full p-1 hover:bg-muted"
               >
                 <X className="h-4 w-4" />
@@ -178,9 +214,7 @@ export function FileUpload({ accept, maxSize, label, value, onChange, disabled, 
               <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
             )}
             <p className="text-sm font-medium">{label}</p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Drag & drop or click to browse
-            </p>
+            <p className="mt-1 text-xs text-muted-foreground">Drag & drop or click to browse</p>
             <p className="text-xs text-muted-foreground">
               Accepted: {accept} (max {formatSize(maxSize)})
             </p>

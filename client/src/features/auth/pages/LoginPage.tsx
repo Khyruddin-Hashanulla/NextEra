@@ -6,7 +6,11 @@ import { SEO } from '@/components/seo/SEO';
 export function LoginPage() {
   return (
     <PageTransition>
-      <SEO title="Sign In" description="Sign in to your NextEra account to access your courses and learning materials." robots="noindex,nofollow" />
+      <SEO
+        title="Sign In"
+        description="Sign in to your NextEra account to access your courses and learning materials."
+        robots="noindex,nofollow"
+      />
       <AuthLayout>
         <LoginForm />
       </AuthLayout>

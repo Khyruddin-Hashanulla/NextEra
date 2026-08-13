@@ -102,10 +102,7 @@ describe('generateQrCodeDataUrl', () => {
   it('passes sizing options to qrcode', async () => {
     vi.mocked(QRCode.toDataURL).mockResolvedValue('data:image/png;base64,abc');
     await generateQrCodeDataUrl('text');
-    expect(vi.mocked(QRCode.toDataURL)).toHaveBeenCalledWith(
-      'text',
-      expect.objectContaining({ width: 300 }),
-    );
+    expect(vi.mocked(QRCode.toDataURL)).toHaveBeenCalledWith('text', expect.objectContaining({ width: 300 }));
   });
 });
 
@@ -138,7 +135,7 @@ describe('generateQrCodePngBuffer', () => {
     expect(Buffer.isBuffer(buf)).toBe(true);
     expect(vi.mocked(QRCode.toBuffer)).toHaveBeenCalledWith(
       'https://example.com',
-      expect.objectContaining({ width: 300, type: 'png' }),
+      expect.objectContaining({ width: 300, type: 'png' })
     );
   });
 

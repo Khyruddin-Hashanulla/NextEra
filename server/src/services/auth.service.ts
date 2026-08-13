@@ -63,7 +63,7 @@ export class AuthService {
   async verifyEmail(
     email: string,
     otp: string,
-    deviceInfo: DeviceInfo,
+    deviceInfo: DeviceInfo
   ): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     const otpRecord = await OTPStore.findOne({
       email: email.toLowerCase(),
@@ -76,11 +76,7 @@ export class AuthService {
       throw ApiError.badRequest(MESSAGES.ERROR.INVALID_OTP);
     }
 
-    const user = await User.findOneAndUpdate(
-      { email: email.toLowerCase() },
-      { isEmailVerified: true },
-      { new: true },
-    );
+    const user = await User.findOneAndUpdate({ email: email.toLowerCase() }, { isEmailVerified: true }, { new: true });
 
     if (!user) {
       throw ApiError.badRequest(MESSAGES.ERROR.INVALID_OTP);
@@ -92,12 +88,7 @@ export class AuthService {
 
     await OTPStore.deleteMany({ email: email.toLowerCase(), purpose: 'email_verification' });
 
-    const tokens = await tokenService.generateTokens(
-      user._id.toString(),
-      user.email,
-      user.role,
-      deviceInfo,
-    );
+    const tokens = await tokenService.generateTokens(user._id.toString(), user.email, user.role, deviceInfo);
 
     return {
       user: this.sanitizeUser(user),
@@ -109,7 +100,7 @@ export class AuthService {
   async login(
     email: string,
     password: string,
-    deviceInfo: DeviceInfo,
+    deviceInfo: DeviceInfo
   ): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
 
@@ -174,12 +165,7 @@ export class AuthService {
     user.lastFailedLoginIp = undefined;
     await user.save();
 
-    const tokens = await tokenService.generateTokens(
-      user._id.toString(),
-      user.email,
-      user.role,
-      deviceInfo,
-    );
+    const tokens = await tokenService.generateTokens(user._id.toString(), user.email, user.role, deviceInfo);
 
     return {
       user: this.sanitizeUser(user),
@@ -212,7 +198,10 @@ export class AuthService {
     await user.save();
   }
 
-  async googleAuth(profile: any, deviceInfo: DeviceInfo): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
+  async googleAuth(
+    profile: any,
+    deviceInfo: DeviceInfo
+  ): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     const email = profile.emails?.[0]?.value;
     if (!email) {
       throw ApiError.badRequest('Google account must have an email address');
@@ -252,7 +241,10 @@ export class AuthService {
     };
   }
 
-  async googleAuthWithCredential(credential: string, deviceInfo: DeviceInfo): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
+  async googleAuthWithCredential(
+    credential: string,
+    deviceInfo: DeviceInfo
+  ): Promise<{ user: IUserResponse; accessToken: string; refreshToken: string }> {
     let ticket;
     try {
       ticket = await googleClient.verifyIdToken({
@@ -356,7 +348,7 @@ export class AuthService {
 
     try {
       await emailService.sendPasswordReset(email, resetToken);
-    } catch (error) {
+    } catch (_error) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
       await user.save({ validateBeforeSave: false });

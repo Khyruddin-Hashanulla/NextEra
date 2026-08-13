@@ -1,12 +1,9 @@
-import {
-  createBlogCommentSchema,
-  updateBlogCommentSchema,
-} from '../../../src/validators/blog.validator';
+import { createBlogCommentSchema, updateBlogCommentSchema } from '../../../src/validators/blog.validator';
 
 describe('blog.validator', () => {
   it('validates comment creation', () => {
     expect(createBlogCommentSchema.parse({ body: { content: 'nice post', parent: 'p1' } }).body.content).toBe(
-      'nice post',
+      'nice post'
     );
     expect(createBlogCommentSchema.parse({ body: { content: 'nice post' } }).body.parent).toBeUndefined();
     expect(() => createBlogCommentSchema.parse({ body: { content: '' } })).toThrow();

@@ -71,14 +71,26 @@ const sections: { title: string; content: string }[] = [
 export function PrivacyPage() {
   return (
     <PageTransition>
-      <SEO title="Privacy Policy" description="Read NextEra's privacy policy to understand how we collect, use, and protect your personal information." canonical="/privacy" robots="index,follow" />
-      <StructuredData schemas={[
-        webPageSchema({ name: 'Privacy Policy', description: 'Read NextEra\'s privacy policy to understand how we collect, use, and protect your personal information.', path: '/privacy' }),
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Privacy Policy', path: '/privacy' },
-        ]),
-      ]} />
+      <SEO
+        title="Privacy Policy"
+        description="Read NextEra's privacy policy to understand how we collect, use, and protect your personal information."
+        canonical="/privacy"
+        robots="index,follow"
+      />
+      <StructuredData
+        schemas={[
+          webPageSchema({
+            name: 'Privacy Policy',
+            description:
+              "Read NextEra's privacy policy to understand how we collect, use, and protect your personal information.",
+            path: '/privacy',
+          }),
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Privacy Policy', path: '/privacy' },
+          ]),
+        ]}
+      />
       <div className="min-h-screen">
         <section className="bg-gradient-to-br from-primary/10 via-background to-background py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
@@ -87,17 +99,12 @@ export function PrivacyPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-4xl mx-auto text-center"
             >
-              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
-                Privacy Policy
-              </h1>
-              <p className="mt-4 text-muted-foreground">
-                Last updated: January 2024
-              </p>
+              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Privacy Policy</h1>
+              <p className="mt-4 text-muted-foreground">Last updated: January 2024</p>
               <p className="mt-6 text-lg text-muted-foreground leading-relaxed max-w-2xl mx-auto">
-                At NextEra, we take your privacy seriously. This policy outlines
-                how we collect, use, and protect your personal information when
-                you use our learning platform. We are committed to transparency
-                and safeguarding the data you entrust to us.
+                At NextEra, we take your privacy seriously. This policy outlines how we collect, use, and protect your
+                personal information when you use our learning platform. We are committed to transparency and
+                safeguarding the data you entrust to us.
               </p>
             </motion.div>
           </div>
@@ -116,12 +123,8 @@ export function PrivacyPage() {
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <h2 className="text-xl font-semibold text-foreground mb-3">
-                        {section.title}
-                      </h2>
-                      <p className="text-muted-foreground leading-relaxed mb-6">
-                        {section.content}
-                      </p>
+                      <h2 className="text-xl font-semibold text-foreground mb-3">{section.title}</h2>
+                      <p className="text-muted-foreground leading-relaxed mb-6">{section.content}</p>
                     </motion.div>
                   ))}
                 </div>

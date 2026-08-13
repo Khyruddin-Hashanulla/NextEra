@@ -6,6 +6,7 @@ import {
   forgotPasswordLimiter,
   refreshTokenLimiter,
   googleLoginLimiter,
+  razorpayWebhookLimiter,
 } from '../../../src/middlewares/rateLimiter.middleware';
 
 function buildApp(limiter: (req: any, res: any, next: () => void) => void): Express {
@@ -76,5 +77,18 @@ describe('rate limiting (functional)', () => {
 
     const res = await request(app).post('/protected').send({ credential: 'x' });
     expect(res.status).toBe(200);
+  });
+
+  it('throttles the razorpay webhook past 200 requests per window', async () => {
+    const app = buildApp(razorpayWebhookLimiter as any);
+
+    for (let i = 0; i < 200; i++) {
+      const res = await request(app).post('/protected').send({ event: 'payment.captured' });
+      expect(res.status).toBe(200);
+    }
+
+    const limited = await request(app).post('/protected').send({ event: 'payment.captured' });
+    expect(limited.status).toBe(429);
+    expect(limited.headers['ratelimit-policy']).toBeDefined();
   });
 });

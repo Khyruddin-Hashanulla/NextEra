@@ -15,7 +15,7 @@ export function CertificatesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['my-certificates', page],
-    queryFn: ({ signal }) => studentApi.getCertificates({ page, limit: 12 }, signal).then(r => r.data.data),
+    queryFn: ({ signal }) => studentApi.getCertificates({ page, limit: 12 }, signal).then((r) => r.data.data),
   });
 
   const handleDownload = async (certificateId: string) => {
@@ -34,9 +34,10 @@ export function CertificatesPage() {
     }
   };
 
-  const filtered = data?.certificates?.filter(c =>
-    c.certificateId.toLowerCase().includes(search.toLowerCase()) ||
-    c.course?.title?.toLowerCase().includes(search.toLowerCase())
+  const filtered = data?.certificates?.filter(
+    (c) =>
+      c.certificateId.toLowerCase().includes(search.toLowerCase()) ||
+      c.course?.title?.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -45,9 +46,7 @@ export function CertificatesPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">My Certificates</h1>
-            <p className="text-muted-foreground mt-1">
-              View and download your course completion certificates
-            </p>
+            <p className="text-muted-foreground mt-1">View and download your course completion certificates</p>
           </div>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -83,16 +82,11 @@ export function CertificatesPage() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
-                        <CardTitle className="text-base line-clamp-1">
-                          {cert.course?.title || 'Course'}
-                        </CardTitle>
-                        <p className="text-sm text-muted-foreground">
-                          {cert.metadata?.instructorName || ''}
-                        </p>
+                        <CardTitle className="text-base line-clamp-1">{cert.course?.title || 'Course'}</CardTitle>
+                        <p className="text-sm text-muted-foreground">{cert.metadata?.instructorName || ''}</p>
                       </div>
                       <Badge variant="outline" className="shrink-0">
-                        <Award className="h-3 w-3 mr-1 text-primary" />
-                        v{cert.version}
+                        <Award className="h-3 w-3 mr-1 text-primary" />v{cert.version}
                       </Badge>
                     </div>
                   </CardHeader>
@@ -129,7 +123,7 @@ export function CertificatesPage() {
                   variant="outline"
                   size="sm"
                   disabled={page <= 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" /> Previous
                 </Button>
@@ -140,7 +134,7 @@ export function CertificatesPage() {
                   variant="outline"
                   size="sm"
                   disabled={page >= data.totalPages}
-                  onClick={() => setPage(p => p + 1)}
+                  onClick={() => setPage((p) => p + 1)}
                 >
                   Next <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>

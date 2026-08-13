@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
@@ -28,9 +27,7 @@ function Bomb(): never {
 
 describe('EmptyState', () => {
   it('renders title, description and icon', () => {
-    render(
-      <EmptyState icon={<span>📦</span>} title="No courses yet" description="Start by enrolling." />,
-    );
+    render(<EmptyState icon={<span>📦</span>} title="No courses yet" description="Start by enrolling." />);
     expect(screen.getByText('No courses yet')).toBeInTheDocument();
     expect(screen.getByText('Start by enrolling.')).toBeInTheDocument();
     expect(screen.getByText('📦')).toBeInTheDocument();
@@ -41,7 +38,7 @@ describe('EmptyState', () => {
     render(
       <MemoryRouter>
         <EmptyState title="Empty" action={{ label: 'Browse Courses', href: '/courses' }} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     const link = screen.getByRole('link', { name: 'Browse Courses' });
     expect(link).toHaveAttribute('href', '/courses');
@@ -59,7 +56,7 @@ describe('ErrorState', () => {
     render(
       <MemoryRouter>
         <ErrorState />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
@@ -86,7 +83,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Bomb />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByText('Something went wrong')).toBeInTheDocument();
     expect(screen.getByText('kaboom')).toBeInTheDocument();
@@ -98,7 +95,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary>
         <Bomb />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     // re-throws on re-render, so the fallback stays; at minimum the button exists
@@ -111,7 +108,7 @@ describe('ErrorBoundary', () => {
     render(
       <ErrorBoundary fallback={<div>Custom fallback</div>}>
         <Bomb />
-      </ErrorBoundary>,
+      </ErrorBoundary>
     );
     expect(screen.getByText('Custom fallback')).toBeInTheDocument();
     spy.mockRestore();
@@ -129,7 +126,7 @@ describe('RouteErrorBoundary', () => {
     render(
       <RouteErrorBoundary>
         <Bomb />
-      </RouteErrorBoundary>,
+      </RouteErrorBoundary>
     );
     expect(screen.getByRole('alert')).toBeInTheDocument();
     expect(screen.getByText('Failed to load page')).toBeInTheDocument();
@@ -145,7 +142,7 @@ describe('RouteErrorBoundary', () => {
     render(
       <RouteErrorBoundary>
         <DynamicBomb />
-      </RouteErrorBoundary>,
+      </RouteErrorBoundary>
     );
     expect(screen.getByText(/network issue/)).toBeInTheDocument();
     spy.mockRestore();
@@ -233,25 +230,17 @@ describe('OptimizedImage', () => {
   });
 
   it('optimizes cloudinary URLs with auto transformations', () => {
-    render(
-      <OptimizedImage
-        src="https://res.cloudinary.com/demo/image/upload/v1234/photo.jpg"
-        alt="Cloud"
-      />,
-    );
+    render(<OptimizedImage src="https://res.cloudinary.com/demo/image/upload/v1234/photo.jpg" alt="Cloud" />);
     const img = screen.getByRole('img', { name: 'Cloud' });
     expect(img).toHaveAttribute(
       'src',
-      'https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,w_auto/v1234/photo.jpg',
+      'https://res.cloudinary.com/demo/image/upload/f_auto,q_auto,w_auto/v1234/photo.jpg'
     );
   });
 
   it('leaves non-cloudinary URLs untouched', () => {
     render(<OptimizedImage src="https://cdn.example.com/photo.png" alt="Cdn" />);
-    expect(screen.getByRole('img', { name: 'Cdn' })).toHaveAttribute(
-      'src',
-      'https://cdn.example.com/photo.png',
-    );
+    expect(screen.getByRole('img', { name: 'Cdn' })).toHaveAttribute('src', 'https://cdn.example.com/photo.png');
   });
 
   it('hides decorative images from the a11y tree', () => {
@@ -270,7 +259,11 @@ describe('OptimizedImage', () => {
 
 describe('Section & Container', () => {
   it('applies size and background classes', () => {
-    const { container } = render(<Section size="sm" background="muted">Body</Section>);
+    const { container } = render(
+      <Section size="sm" background="muted">
+        Body
+      </Section>
+    );
     const section = container.querySelector('section')!;
     expect(section.className).toContain('py-12');
     expect(section.className).toContain('bg-muted/50');
@@ -293,7 +286,7 @@ describe('ResourceNotFound', () => {
     render(
       <MemoryRouter>
         <ResourceNotFound resourceType="course" />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByRole('heading', { name: 'Course Not Found' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Browse Courses/ })).toBeInTheDocument();
@@ -303,7 +296,7 @@ describe('ResourceNotFound', () => {
     render(
       <MemoryRouter>
         <ResourceNotFound resourceType="blog" title="Gone" message="It is gone." />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByRole('heading', { name: 'Gone' })).toBeInTheDocument();
     expect(screen.getByText('It is gone.')).toBeInTheDocument();
@@ -313,7 +306,7 @@ describe('ResourceNotFound', () => {
     render(
       <MemoryRouter>
         <ResourceNotFound resourceType="page" />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.queryByText(/Go back/)).not.toBeInTheDocument();
   });
@@ -323,7 +316,7 @@ describe('ResourceNotFound', () => {
     render(
       <MemoryRouter>
         <ResourceNotFound resourceType="course" />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     fireEvent.click(screen.getByText(/Go back/));
     expect(back).toHaveBeenCalled();

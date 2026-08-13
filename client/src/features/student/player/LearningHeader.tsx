@@ -18,7 +18,10 @@ export function LearningHeader({ courseTitle, completionPercent, onOpenCurriculu
         className
       )}
     >
-      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground" aria-hidden="true">
+      <div
+        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground"
+        aria-hidden="true"
+      >
         <GraduationCap className="h-5 w-5" />
       </div>
 
@@ -43,13 +46,23 @@ export function LearningHeader({ courseTitle, completionPercent, onOpenCurriculu
             aria-valuemax={100}
             aria-valuenow={completionPercent}
           >
-            <div className="h-full rounded-full bg-primary transition-all duration-500 ease-out" style={{ width: `${completionPercent}%` }} />
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `${completionPercent}%` }}
+            />
           </div>
           <span className="text-xs text-muted-foreground tabular-nums">{completionPercent}%</span>
         </div>
       </div>
 
-      <Button variant="ghost" size="iconSm" onClick={onOpenCurriculum} className="xl:hidden" aria-label="Open curriculum" aria-haspopup="dialog">
+      <Button
+        variant="ghost"
+        size="iconSm"
+        onClick={onOpenCurriculum}
+        className="xl:hidden"
+        aria-label="Open curriculum"
+        aria-haspopup="dialog"
+      >
         <ListVideo className="h-5 w-5" />
       </Button>
     </header>

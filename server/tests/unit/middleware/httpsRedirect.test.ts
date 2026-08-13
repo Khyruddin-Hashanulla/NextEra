@@ -30,16 +30,14 @@ describe('httpsRedirect middleware', () => {
 
   it('calls next when the request is secure in production', () => {
     (env as any).nodeEnv = 'production';
-    const { next } = run(
-      mockRequest({ secure: true, protocol: 'https', originalUrl: '/api/courses' }),
-    );
+    const { next } = run(mockRequest({ secure: true, protocol: 'https', originalUrl: '/api/courses' }));
     expect(next).toHaveBeenCalledOnce();
   });
 
   it('calls next when the protocol is https', () => {
     (env as any).nodeEnv = 'production';
     const { next } = run(
-      mockRequest({ protocol: 'https', originalUrl: '/api/courses', headers: { host: 'example.com' } }),
+      mockRequest({ protocol: 'https', originalUrl: '/api/courses', headers: { host: 'example.com' } })
     );
     expect(next).toHaveBeenCalledOnce();
   });
@@ -53,12 +51,12 @@ describe('httpsRedirect middleware', () => {
         ip: '1.2.3.4',
         method: 'GET',
         headers: { host: 'example.com' },
-      }),
+      })
     );
     expect(res.redirect).toHaveBeenCalledWith(301, 'https://example.com/api/courses');
     expect(logger.warn).toHaveBeenCalledWith(
       'HTTPS redirect',
-      expect.objectContaining({ from: 'http://example.com/api/courses' }),
+      expect.objectContaining({ from: 'http://example.com/api/courses' })
     );
     expect(next).not.toHaveBeenCalled();
   });
@@ -70,16 +68,14 @@ describe('httpsRedirect middleware', () => {
         protocol: 'http',
         originalUrl: '/x',
         headers: { 'x-forwarded-host': 'cdn.example.com' },
-      }),
+      })
     );
     expect(res.redirect).toHaveBeenCalledWith(301, 'https://cdn.example.com/x');
   });
 
   it('falls back to the env port when no host header exists', () => {
     (env as any).nodeEnv = 'production';
-    const { res } = run(
-      mockRequest({ protocol: 'http', originalUrl: '/y', headers: {} }),
-    );
+    const { res } = run(mockRequest({ protocol: 'http', originalUrl: '/y', headers: {} }));
     expect(res.redirect).toHaveBeenCalledWith(301, 'https://localhost:5055/y');
   });
 });

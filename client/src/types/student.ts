@@ -34,6 +34,23 @@ export interface CourseDetail {
   enrollment: any;
 }
 
+export interface WishlistItem {
+  _id: string;
+  user: string;
+  course: {
+    _id: string;
+    title: string;
+    thumbnail?: { url: string; publicId: string };
+    price: number;
+    level?: string;
+    totalDuration?: number;
+    averageRating?: number;
+    totalReviews?: number;
+    instructor?: { _id: string; name: string; avatar?: { url: string } };
+  };
+  createdAt: string;
+}
+
 export interface Note {
   _id: string;
   user: string;
@@ -233,7 +250,15 @@ export interface Bundle {
   description: string;
   shortDescription: string;
   thumbnail: { url: string; publicId: string };
-  courses: { _id: string; title: string; thumbnail: { url: string }; price: number; instructor: { _id: string; name: string; avatar: { url: string } }; totalDuration: number; averageRating: number }[];
+  courses: {
+    _id: string;
+    title: string;
+    thumbnail: { url: string };
+    price: number;
+    instructor: { _id: string; name: string; avatar: { url: string } };
+    totalDuration: number;
+    averageRating: number;
+  }[];
   price: number;
   discountedPrice: number;
   totalDuration: number;

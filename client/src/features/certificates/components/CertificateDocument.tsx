@@ -38,7 +38,7 @@ export function CertificateDocument({ cert, valid = true }: CertificateDocumentP
       id="certificate-document"
       className={classNames(
         'relative aspect-[1.414/1] w-full overflow-hidden rounded-sm bg-white text-slate-900 shadow-2xl shadow-primary/10',
-        'print:shadow-none print:rounded-none print:border-0',
+        'print:shadow-none print:rounded-none print:border-0'
       )}
     >
       {/* Gradient border */}
@@ -88,7 +88,7 @@ export function CertificateDocument({ cert, valid = true }: CertificateDocumentP
             <div
               className={classNames(
                 'flex items-center gap-1.5 rounded-full border-2 bg-white px-3 py-1 text-[11px] font-bold sm:px-3.5 sm:py-1 sm:text-xs',
-                valid ? 'border-primary text-primary' : 'border-red-400 text-red-600',
+                valid ? 'border-primary text-primary' : 'border-red-400 text-red-600'
               )}
             >
               {valid ? <ShieldCheck className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
@@ -113,7 +113,9 @@ export function CertificateDocument({ cert, valid = true }: CertificateDocumentP
           </p>
           <div className="mt-1 h-[2px] w-40 rounded-full bg-primary sm:w-56" />
 
-          <p className="mt-3 text-[10px] text-slate-500 sm:mt-4 sm:text-xs">who has successfully completed the course</p>
+          <p className="mt-3 text-[10px] text-slate-500 sm:mt-4 sm:text-xs">
+            who has successfully completed the course
+          </p>
 
           {/* Course name */}
           <p className="mt-1.5 max-w-[90%] text-lg font-bold text-slate-800 sm:text-2xl">{courseTitle}</p>
@@ -131,7 +133,9 @@ export function CertificateDocument({ cert, valid = true }: CertificateDocumentP
           <div className="flex flex-col items-start gap-0.5">
             <span className="text-[9px] uppercase tracking-[0.16em] text-slate-400 sm:text-[10px]">Issue Date</span>
             <span className="text-[11px] font-semibold text-slate-700 sm:text-sm">{issuedDate}</span>
-            <span className="mt-1 text-[9px] uppercase tracking-[0.16em] text-slate-400 sm:text-[10px]">Certificate ID</span>
+            <span className="mt-1 text-[9px] uppercase tracking-[0.16em] text-slate-400 sm:text-[10px]">
+              Certificate ID
+            </span>
             <span className="font-mono text-[10px] font-semibold text-slate-700 sm:text-xs">{cert.certificateId}</span>
           </div>
 

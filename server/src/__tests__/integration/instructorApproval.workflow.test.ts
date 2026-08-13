@@ -1,4 +1,3 @@
-import request from 'supertest';
 import { createApp } from '../../app';
 import { connectTestDb, disconnectTestDb, clearDb } from '../../test/helpers/db.helper';
 import { TestRequest } from '../../test/helpers/request.helper';
@@ -104,10 +103,7 @@ describe('Instructor Approval Workflow', () => {
     // 4. Admin approves using the application id returned by the listing
     const approveApi = new TestRequest(app);
     await approveApi.fetchCsrfToken();
-    const approveRes = await approveApi.put(
-      `/api/v1/admin/instructors/${pendingApp._id}/approve`,
-      adminToken
-    );
+    const approveRes = await approveApi.put(`/api/v1/admin/instructors/${pendingApp._id}/approve`, adminToken);
     expect(approveRes.status).toBe(200);
 
     // 5. Application marked approved and user promoted to instructor

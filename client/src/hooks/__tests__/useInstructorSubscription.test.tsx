@@ -2,10 +2,7 @@ import { describe, expect, it, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { QueryClientProvider } from '@tanstack/react-query';
-import {
-  useInstructorSubscription,
-  useInstructorSubscriptionStatus,
-} from '@/hooks/useInstructorSubscription';
+import { useInstructorSubscription, useInstructorSubscriptionStatus } from '@/hooks/useInstructorSubscription';
 import { createTestQueryClient } from '@/test/utils';
 import { TOKEN_KEYS } from '@/lib/constants';
 
@@ -68,11 +65,7 @@ describe('useInstructorSubscriptionStatus', () => {
   it('falls back to defaults when fields are missing', async () => {
     const { http, HttpResponse } = await import('msw');
     const { server } = await import('@/test/mocks/server');
-    server.use(
-      http.get('/api/v1/instructor/subscription', () =>
-        HttpResponse.json({ data: {} }),
-      ),
-    );
+    server.use(http.get('/api/v1/instructor/subscription', () => HttpResponse.json({ data: {} })));
 
     localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, 'token');
     const result = renderStatus();

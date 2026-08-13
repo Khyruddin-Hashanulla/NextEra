@@ -5,11 +5,7 @@ import { ROLES } from '../constants/roles';
 import { validate } from '../middlewares/validate.middleware';
 import { verifyCodingSubmissionOwnership } from '../middlewares/ownership.middleware';
 import * as codingController from '../controllers/codingProblem.controller';
-import {
-  createCodingProblemSchema,
-  updateCodingProblemSchema,
-  submitCodeSchema,
-} from '../validators/coding.validator';
+import { createCodingProblemSchema, updateCodingProblemSchema, submitCodeSchema } from '../validators/coding.validator';
 
 const router = Router();
 
@@ -22,7 +18,7 @@ router.post(
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
   validate(createCodingProblemSchema),
-  codingController.createProblem,
+  codingController.createProblem
 );
 
 router.put(
@@ -30,47 +26,34 @@ router.put(
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
   validate(updateCodingProblemSchema),
-  codingController.updateProblem,
+  codingController.updateProblem
 );
 
 router.delete(
   '/problems/:problemId',
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
-  codingController.deleteProblem,
+  codingController.deleteProblem
 );
 
 router.get(
   '/my-problems',
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
-  codingController.listInstructorProblems,
+  codingController.listInstructorProblems
 );
 
-router.post(
-  '/problems/:problemId/submit',
-  authenticate,
-  validate(submitCodeSchema),
-  codingController.submitCode,
-);
+router.post('/problems/:problemId/submit', authenticate, validate(submitCodeSchema), codingController.submitCode);
 
-router.get(
-  '/problems/:problemId/submissions',
-  authenticate,
-  codingController.getUserSubmissions,
-);
+router.get('/problems/:problemId/submissions', authenticate, codingController.getUserSubmissions);
 
 router.get(
   '/submissions/:submissionId',
   authenticate,
   verifyCodingSubmissionOwnership,
-  codingController.getSubmissionById,
+  codingController.getSubmissionById
 );
 
-router.get(
-  '/submissions',
-  authenticate,
-  codingController.getAllUserSubmissions,
-);
+router.get('/submissions', authenticate, codingController.getAllUserSubmissions);
 
 export default router;

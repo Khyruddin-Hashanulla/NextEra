@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { InstructorLayout } from '@/features/instructor/InstructorLayout';
@@ -37,7 +37,7 @@ function renderInstructorLayout(logout: () => Promise<void> = vi.fn(async () => 
     {
       initialEntries: ['/instructor'],
       mockAuth: createAuthValue({ user: instructorUser, isAuthenticated: true, logout }),
-    },
+    }
   );
 }
 
@@ -101,7 +101,9 @@ describe('InstructorLayout', () => {
 
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await user.click(
-      within(screen.getByRole('dialog', { name: 'Mobile navigation menu' })).getByRole('link', { name: /Back to Website/ }),
+      within(screen.getByRole('dialog', { name: 'Mobile navigation menu' })).getByRole('link', {
+        name: /Back to Website/,
+      })
     );
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

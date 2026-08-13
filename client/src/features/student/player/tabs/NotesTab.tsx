@@ -54,8 +54,15 @@ export function NotesTab({ courseId, lectureId, instructorNote }: NotesTabProps)
           </div>
         )}
         <div className="flex gap-2">
-          <Textarea value={newNote} onChange={(e) => setNewNote(e.target.value)} placeholder="Write a note..." rows={3} />
-          <Button onClick={() => createMutation.mutate()} disabled={!newNote.trim()} className="shrink-0">Add</Button>
+          <Textarea
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            placeholder="Write a note..."
+            rows={3}
+          />
+          <Button onClick={() => createMutation.mutate()} disabled={!newNote.trim()} className="shrink-0">
+            Add
+          </Button>
         </div>
         {notes?.length ? (
           notes.map((note: any) => (
@@ -63,7 +70,12 @@ export function NotesTab({ courseId, lectureId, instructorNote }: NotesTabProps)
               <p className="text-sm">{note.content}</p>
               <div className="mt-1 flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleString()}</span>
-                <button onClick={() => deleteMutation.mutate(note._id)} className="text-xs text-destructive hover:underline">Delete</button>
+                <button
+                  onClick={() => deleteMutation.mutate(note._id)}
+                  className="text-xs text-destructive hover:underline"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           ))

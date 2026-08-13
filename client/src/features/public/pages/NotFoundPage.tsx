@@ -8,7 +8,11 @@ import { ROUTES } from '@/lib/constants';
 export function NotFoundPage() {
   return (
     <PageTransition>
-      <SEO title="Page Not Found" description="The page you are looking for does not exist or has been moved." robots="noindex,nofollow" />
+      <SEO
+        title="Page Not Found"
+        description="The page you are looking for does not exist or has been moved."
+        robots="noindex,nofollow"
+      />
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4 py-16">
           <motion.div
@@ -24,9 +28,7 @@ export function NotFoundPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <h1 className="text-2xl font-bold text-foreground mb-3">
-              Page Not Found
-            </h1>
+            <h1 className="text-2xl font-bold text-foreground mb-3">Page Not Found</h1>
             <p className="text-muted-foreground mb-8 leading-relaxed">
               The page you're looking for doesn't exist or has been moved.
             </p>

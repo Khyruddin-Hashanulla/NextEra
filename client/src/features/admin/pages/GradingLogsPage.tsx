@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { adminApi } from '@/api/endpoints/admin';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { DataTable } from '@/features/admin/components/DataTable';
 import type { Column } from '@/features/admin/components/DataTable';
 import type { GradingLogEntry } from '@/types/admin';
@@ -19,12 +18,38 @@ function formatStatus(status: string): string {
 }
 
 function toCSV(logs: GradingLogEntry[]): string {
-  const headers = ['Timestamp', 'Student', 'Email', 'Course', 'Assignment', 'Grade', 'Max Marks', 'Percentage', 'Letter Grade', 'Pass/Fail', 'Status', 'Graded By'];
-  const rows = logs.map((l) => [
-    l.gradedAt, l.user?.name || '', l.user?.email || '', l.course?.title || '',
-    l.lecture?.title || '', l.grade ?? '', l.maxMarks ?? '', l.percentage ?? '',
-    l.letterGrade || '', l.passFail || '', l.status, l.gradedBy?.name || '',
-  ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const headers = [
+    'Timestamp',
+    'Student',
+    'Email',
+    'Course',
+    'Assignment',
+    'Grade',
+    'Max Marks',
+    'Percentage',
+    'Letter Grade',
+    'Pass/Fail',
+    'Status',
+    'Graded By',
+  ];
+  const rows = logs.map((l) =>
+    [
+      l.gradedAt,
+      l.user?.name || '',
+      l.user?.email || '',
+      l.course?.title || '',
+      l.lecture?.title || '',
+      l.grade ?? '',
+      l.maxMarks ?? '',
+      l.percentage ?? '',
+      l.letterGrade || '',
+      l.passFail || '',
+      l.status,
+      l.gradedBy?.name || '',
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(',')
+  );
   return [headers.join(','), ...rows].join('\n');
 }
 
@@ -72,14 +97,17 @@ export function GradingLogsPage() {
     },
     {
       header: 'Result',
-      accessor: (l) => (
+      accessor: (l) =>
         l.passFail ? (
-          <span className={`inline-flex items-center gap-1 text-xs font-medium ${l.passFail === 'pass' ? 'text-green-600' : 'text-red-600'}`}>
+          <span
+            className={`inline-flex items-center gap-1 text-xs font-medium ${l.passFail === 'pass' ? 'text-green-600' : 'text-red-600'}`}
+          >
             {l.passFail === 'pass' ? <CheckCircle className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
             {l.passFail === 'pass' ? 'Pass' : 'Fail'}
           </span>
-        ) : <span className="text-muted-foreground">—</span>
-      ),
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
     },
     {
       header: 'Status',

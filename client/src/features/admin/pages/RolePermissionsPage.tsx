@@ -3,16 +3,26 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/api/endpoints/admin';
 import { RolePermission } from '@/types/admin';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/providers/ToastProvider';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Loader2, Shield, ShieldCheck, ShieldAlert, Save } from 'lucide-react';
+import { Shield, ShieldCheck, ShieldAlert, Save } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
-import { Switch } from '@/components/ui/switch';
 
-const allModules = ['courses', 'users', 'payments', 'reviews', 'categories', 'blog', 'settings', 'banners', 'tickets', 'certificates', 'faq', 'analytics'];
+const allModules = [
+  'courses',
+  'users',
+  'payments',
+  'reviews',
+  'categories',
+  'blog',
+  'settings',
+  'banners',
+  'tickets',
+  'certificates',
+  'faq',
+  'analytics',
+];
 const allActions = ['create', 'read', 'update', 'delete'];
 
 const roleIcons: Record<string, any> = { admin: ShieldCheck, instructor: Shield, student: ShieldAlert };
@@ -27,12 +37,16 @@ export function RolePermissionsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['admin-role-permissions'],
     queryFn: ({ signal }) => adminApi.listRolePermissions(signal),
-   });
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, d }: { id: string; d: any }) => adminApi.updateRolePermission(id, d),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-role-permissions'] }); addToast({ title: 'Permissions updated', variant: 'success' }); setDialogOpen(false); },
-   });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-role-permissions'] });
+      addToast({ title: 'Permissions updated', variant: 'success' });
+      setDialogOpen(false);
+    },
+  });
 
   const roles = data?.data?.data || [];
 
@@ -41,7 +55,7 @@ export function RolePermissionsPage() {
     const merged = allModules.map((module) => {
       const existing = rp.permissions.find((p: { module: string; actions: string[] }) => p.module === module);
       return { module, actions: existing?.actions || [] };
-     });
+    });
     setFormPermissions(merged);
     setDialogOpen(true);
   };
@@ -55,7 +69,7 @@ export function RolePermissionsPage() {
         actions: has ? copy[moduleIdx].actions.filter((a) => a !== action) : [...copy[moduleIdx].actions, action],
       };
       return copy;
-     });
+    });
   };
 
   const toggleAllForModule = (moduleIdx: number, enable: boolean) => {
@@ -63,7 +77,7 @@ export function RolePermissionsPage() {
       const copy = [...prev];
       copy[moduleIdx] = { ...copy[moduleIdx], actions: enable ? [...allActions] : [] };
       return copy;
-     });
+    });
   };
 
   return (
@@ -80,7 +94,9 @@ export function RolePermissionsPage() {
               <Card key={rp._id}>
                 <CardHeader>
                   <div className="flex items-center gap-3">
-                    <Icon className={`h-8 w-8 ${rp.role === 'admin' ? 'text-red-500' : rp.role === 'instructor' ? 'text-blue-500' : 'text-green-500'}`} />
+                    <Icon
+                      className={`h-8 w-8 ${rp.role === 'admin' ? 'text-red-500' : rp.role === 'instructor' ? 'text-blue-500' : 'text-green-500'}`}
+                    />
                     <div>
                       <CardTitle className="capitalize">{rp.role}</CardTitle>
                       {rp.description && <p className="text-xs text-muted-foreground">{rp.description}</p>}
@@ -95,7 +111,9 @@ export function RolePermissionsPage() {
                         <span className="text-xs text-muted-foreground">{p.actions.join(', ')}</span>
                       </div>
                     ))}
-                    {rp.permissions.length > 5 && <p className="text-xs text-muted-foreground">+{rp.permissions.length - 5} more</p>}
+                    {rp.permissions.length > 5 && (
+                      <p className="text-xs text-muted-foreground">+{rp.permissions.length - 5} more</p>
+                    )}
                   </div>
                   <Button variant="outline" className="w-full" onClick={() => openEdit(rp)}>
                     <Shield className="mr-1 h-3 w-3" /> Edit Permissions
@@ -118,8 +136,22 @@ export function RolePermissionsPage() {
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium capitalize">{perm.module}</span>
                   <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => toggleAllForModule(idx, true)}>All</Button>
-                    <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => toggleAllForModule(idx, false)}>None</Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-6"
+                      onClick={() => toggleAllForModule(idx, true)}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-6"
+                      onClick={() => toggleAllForModule(idx, false)}
+                    >
+                      None
+                    </Button>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -139,7 +171,12 @@ export function RolePermissionsPage() {
             ))}
             <Button
               className="w-full"
-              onClick={() => updateMutation.mutate({ id: editing!._id, d: { permissions: formPermissions.filter((p) => p.actions.length > 0) } })}
+              onClick={() =>
+                updateMutation.mutate({
+                  id: editing!._id,
+                  d: { permissions: formPermissions.filter((p) => p.actions.length > 0) },
+                })
+              }
               disabled={updateMutation.isPending}
             >
               <Save className="mr-1 h-4 w-4" /> Save Permissions

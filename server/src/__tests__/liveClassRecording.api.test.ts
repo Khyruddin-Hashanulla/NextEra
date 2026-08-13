@@ -66,11 +66,9 @@ import liveClassRoutes from '../routes/liveClass.routes';
 import adminRoutes from '../routes/admin.routes';
 import zoomWebhookRoutes from '../routes/zoomWebhook.routes';
 import { auditService } from '../services/audit.service';
-import { LiveClassRecording } from '../models/liveClassRecording.model';
 
 const STUDENT_ID = new mongoose.Types.ObjectId().toString();
 const INSTRUCTOR_ID = new mongoose.Types.ObjectId().toString();
-const INSTRUCTOR2_ID = new mongoose.Types.ObjectId().toString();
 const LIVE_CLASS_ID = new mongoose.Types.ObjectId().toString();
 const RECORDING_ID = new mongoose.Types.ObjectId().toString();
 
@@ -97,10 +95,7 @@ function asUser(role: string, userId = INSTRUCTOR_ID) {
 }
 
 function zoomSignature(rawBody: string, timestamp: string): string {
-  return crypto
-    .createHmac('sha256', 'test-webhook-secret')
-    .update(`${timestamp}.${rawBody}`)
-    .digest('base64');
+  return crypto.createHmac('sha256', 'test-webhook-secret').update(`${timestamp}.${rawBody}`).digest('base64');
 }
 
 beforeEach(() => {
@@ -149,9 +144,7 @@ describe('Live class recordings RBAC', () => {
 
   it('rejects sync without a liveClassId with 400', async () => {
     asUser(ROLES.INSTRUCTOR);
-    const res = await request(buildApp())
-      .post('/api/v1/live-classes/instructor/recordings/sync')
-      .send({});
+    const res = await request(buildApp()).post('/api/v1/live-classes/instructor/recordings/sync').send({});
     expect(res.status).toBe(400);
   });
 
@@ -226,10 +219,7 @@ describe('POST /api/v1/live-classes/webhook/zoom', () => {
 
   it('rejects a request with an invalid signature with 401', async () => {
     const timestamp = String(Date.now());
-    const signature = crypto
-      .createHmac('sha256', 'wrong-secret')
-      .update(`${timestamp}.${rawBody}`)
-      .digest('base64');
+    const signature = crypto.createHmac('sha256', 'wrong-secret').update(`${timestamp}.${rawBody}`).digest('base64');
     const res = await request(buildWebhookApp())
       .post('/api/v1/live-classes/webhook/zoom')
       .set('Content-Type', 'application/json')

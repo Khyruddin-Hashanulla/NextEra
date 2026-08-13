@@ -55,9 +55,15 @@ describe('generateCertificatePdf', () => {
     expect(date?.text).toBe('August 8, 2026');
 
     // Bug regression: "INSTRUCTOR" previously wrapped into "INSTRUCTO"+"R".
-    expect(c.textRuns.some((r) => r.text.includes('INSTRUCT')))
-    expect(c.textRuns.find((r) => r.text.trim().toUpperCase() === 'INSTRUCTOR'), 'INSTRUCTOR must be a single line').toBeDefined();
-    expect(c.textRuns.some((r) => r.text === 'R'), 'no stray wrapped R line').toBe(false);
+    expect(c.textRuns.some((r) => r.text.includes('INSTRUCT')));
+    expect(
+      c.textRuns.find((r) => r.text.trim().toUpperCase() === 'INSTRUCTOR'),
+      'INSTRUCTOR must be a single line'
+    ).toBeDefined();
+    expect(
+      c.textRuns.some((r) => r.text === 'R'),
+      'no stray wrapped R line'
+    ).toBe(false);
 
     // Bug regression: "OF" previously wrapped on its own line beneath CERTIFICATE.
     const certRun = c.textRuns.find((r) => r.text.includes('CERTIFICATE OF'));
@@ -83,7 +89,7 @@ describe('generateCertificatePdf', () => {
         l.x1 <= (nameRun?.x ?? 0) &&
         l.x2 >= (nameRun?.x ?? 0) + 80 &&
         l.yTop >= (nameRun?.yTop ?? 0) + 4 &&
-        l.yTop <= (nameRun?.yTop ?? 0) + 40,
+        l.yTop <= (nameRun?.yTop ?? 0) + 40
     );
     expect(underline, 'underline must be drawn below the name baseline').toBeDefined();
   });
@@ -116,7 +122,7 @@ describe('generateCertificatePdf', () => {
     // Underline must still sit below the LAST name line.
     const last = [...nameRuns].sort((a, b) => b.yTop - a.yTop)[0];
     const underlineBelow = c.hLines.find(
-      (l) => l.yTop - last.yTop > 4 && l.yTop - last.yTop < 50 && l.x1 <= last.x + 60 && l.x2 >= last.x + 60,
+      (l) => l.yTop - last.yTop > 4 && l.yTop - last.yTop < 50 && l.x1 <= last.x + 60 && l.x2 >= last.x + 60
     );
     expect(underlineBelow, 'underline drawn below the wrapped name').toBeDefined();
 
@@ -125,10 +131,11 @@ describe('generateCertificatePdf', () => {
   });
 
   it('embeds the verification URL only inside the QR code', async () => {
-    const qrCodeData = await QRCode.toBuffer(
-      `https://localhost:5173/certificates/verify/${testCertId}`,
-      { width: 300, margin: 2, type: 'png' },
-    );
+    const qrCodeData = await QRCode.toBuffer(`https://localhost:5173/certificates/verify/${testCertId}`, {
+      width: 300,
+      margin: 2,
+      type: 'png',
+    });
     const file = await generateCertificatePdf({
       studentName: 'Grace Hopper',
       courseTitle: 'Compiler Design',
@@ -146,7 +153,10 @@ describe('generateCertificatePdf', () => {
     // QR is painted via an XObject Do (e.g. `/I2 Do`).
     expect(c.content).toMatch(/\/I\d+\s+Do\b/);
     // The full URL stays inside the QR payload — never a printed string.
-    const runs = c.textRuns.map((r) => r.text).join(' ').toLowerCase();
+    const runs = c.textRuns
+      .map((r) => r.text)
+      .join(' ')
+      .toLowerCase();
     expect(runs).not.toContain('localhost');
     expect(runs).not.toContain('http');
 

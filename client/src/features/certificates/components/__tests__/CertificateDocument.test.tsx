@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent } from '@testing-library/react';
 import { renderWithProviders } from '@/test/render';
 import { CertificateDocument } from '../CertificateDocument';
 import type { Certificate } from '@/types/student';
 
-function makeCert(overrides: Partial<Omit<Certificate, 'qrCodeUrl'>> & { qrCodeUrl?: string | undefined } = {}): Certificate {
+function makeCert(
+  overrides: Partial<Omit<Certificate, 'qrCodeUrl'>> & { qrCodeUrl?: string | undefined } = {}
+): Certificate {
   return {
     _id: 'cert1',
     user: { _id: 'user-1', name: 'Kharnisha Hashanulla', email: 'kharnisha@example.com' },
@@ -60,7 +62,7 @@ describe('CertificateDocument', () => {
     const img = screen.getByAltText('QR code to verify the certificate NXLMS-2026-CS-000042');
     expect(img).toHaveAttribute(
       'src',
-      'http://localhost:4053/api/v1/student/certificates/verify/NXLMS-2026-CS-000042/qr.png',
+      'http://localhost:4053/api/v1/student/certificates/verify/NXLMS-2026-CS-000042/qr.png'
     );
     fireEvent.load(img);
     expect(img).toHaveClass('opacity-100');
@@ -77,7 +79,7 @@ describe('CertificateDocument', () => {
 
     expect(screen.getByRole('link', { name: 'Verify Online' })).toHaveAttribute(
       'href',
-      '/certificates/verify/NXLMS-2026-CS-000042',
+      '/certificates/verify/NXLMS-2026-CS-000042'
     );
   });
 });

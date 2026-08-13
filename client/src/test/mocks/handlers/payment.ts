@@ -1,5 +1,5 @@
 import { http, HttpResponse } from 'msw';
-import { failure, jsonResponse, success } from '../helpers';
+import { failure, success } from '../helpers';
 
 export const paymentHandlers = [
   http.post('/api/v1/student/payments/initiate', async ({ request }) => {

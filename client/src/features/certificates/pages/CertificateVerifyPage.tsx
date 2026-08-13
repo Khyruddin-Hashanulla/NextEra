@@ -6,7 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CertificateVerifySkeleton } from '@/components/skeletons/CertificateSkeleton';
-import { CheckCircle2, XCircle, Award, User, BookOpen, Calendar, Fingerprint, Shield, ExternalLink, Download, Printer, Link2, Check } from 'lucide-react';
+import {
+  CheckCircle2,
+  XCircle,
+  Award,
+  User,
+  BookOpen,
+  Calendar,
+  Fingerprint,
+  Shield,
+  ExternalLink,
+  Download,
+  Printer,
+  Link2,
+  Check,
+} from 'lucide-react';
 import { CertificateDocument } from '@/features/certificates/components/CertificateDocument';
 import { CertificateQrCode } from '@/features/certificates/components/CertificateQrCode';
 import { useState } from 'react';
@@ -17,9 +31,13 @@ export function CertificateVerifyPage() {
   const { addToast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  const { data: cert, isLoading, error } = useQuery({
+  const {
+    data: cert,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['certificate-verify', certificateId],
-    queryFn: ({ signal }) => studentApi.verifyCertificate(certificateId!, signal).then(r => r.data.data),
+    queryFn: ({ signal }) => studentApi.verifyCertificate(certificateId!, signal).then((r) => r.data.data),
     enabled: !!certificateId,
   });
 
@@ -145,9 +163,13 @@ export function CertificateVerifyPage() {
                 <div>
                   <p className="text-xs text-muted-foreground">Issued On</p>
                   <p className="font-medium">
-                    {cert.issuedAt ? new Date(cert.issuedAt).toLocaleDateString(undefined, {
-                      year: 'numeric', month: 'long', day: 'numeric',
-                    }) : 'N/A'}
+                    {cert.issuedAt
+                      ? new Date(cert.issuedAt).toLocaleDateString(undefined, {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                        })
+                      : 'N/A'}
                   </p>
                 </div>
               </div>
@@ -165,7 +187,11 @@ export function CertificateVerifyPage() {
                 <div>
                   <p className="text-xs text-muted-foreground">Digital Signature</p>
                   <p className={`font-medium ${isValid ? 'text-green-600' : 'text-red-600'}`}>
-                    {isValid ? 'Authentic — Certificate has not been tampered with' : cert.isRevoked ? 'Certificate has been revoked' : 'Invalid — Certificate may have been altered'}
+                    {isValid
+                      ? 'Authentic — Certificate has not been tampered with'
+                      : cert.isRevoked
+                        ? 'Certificate has been revoked'
+                        : 'Invalid — Certificate may have been altered'}
                   </p>
                 </div>
               </div>

@@ -47,8 +47,23 @@ export function PaymentManagementPage() {
   });
 
   const refundMutation = useMutation({
-    mutationFn: ({ paymentId, amount, reason, adminNote }: { paymentId: string; amount: number; reason: string; adminNote?: string }) =>
-      adminApi.issueRefund(paymentId, { amount, reason, refundType: amount >= (refundDialog.payment?.amount || 0) ? 'full' : 'partial', adminNote }),
+    mutationFn: ({
+      paymentId,
+      amount,
+      reason,
+      adminNote,
+    }: {
+      paymentId: string;
+      amount: number;
+      reason: string;
+      adminNote?: string;
+    }) =>
+      adminApi.issueRefund(paymentId, {
+        amount,
+        reason,
+        refundType: amount >= (refundDialog.payment?.amount || 0) ? 'full' : 'partial',
+        adminNote,
+      }),
     onSuccess: () => {
       addToast({ title: 'Refund processed', variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['admin-payments'] });
@@ -100,7 +115,15 @@ export function PaymentManagementPage() {
 
       <motion.div variants={item} className="flex flex-wrap gap-2">
         {['', 'success', 'pending', 'failed'].map((s) => (
-          <Button key={s} size="sm" variant={statusFilter === s ? 'default' : 'outline'} onClick={() => { setStatusFilter(s); setPage(1); }}>
+          <Button
+            key={s}
+            size="sm"
+            variant={statusFilter === s ? 'default' : 'outline'}
+            onClick={() => {
+              setStatusFilter(s);
+              setPage(1);
+            }}
+          >
             {s || 'All'}
           </Button>
         ))}
@@ -133,8 +156,12 @@ export function PaymentManagementPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">User</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Type</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Item</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Amount</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Amount
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Status
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Date</th>
                       <th className="px-4 py-3" />
                     </tr>
@@ -148,16 +175,26 @@ export function PaymentManagementPage() {
                             {p.type}
                           </span>
                         </td>
-                        <td className="px-4 py-3">{p.course?.title || p.bundle?.title || p.subscription?.name || '-'}</td>
+                        <td className="px-4 py-3">
+                          {p.course?.title || p.bundle?.title || p.subscription?.name || '-'}
+                        </td>
                         <td className="px-4 py-3 font-medium">₹{p.amount}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            p.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            p.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          }`}>{p.status}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              p.status === 'success'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : p.status === 'failed'
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}
+                          >
+                            {p.status}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(p.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(p.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3">
                           <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(p)}>
                             <Eye className="h-4 w-4" />
@@ -177,7 +214,12 @@ export function PaymentManagementPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -193,53 +235,98 @@ export function PaymentManagementPage() {
           <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Payment Details</h2>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(null)}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedPayment(null)}>
+                Close
+              </Button>
             </div>
             <div className="space-y-3 text-sm">
               <div className="grid grid-cols-2 gap-3">
-                <div><strong>User:</strong> {selectedPayment.user?.name}</div>
-                <div><strong>Email:</strong> {selectedPayment.user?.email}</div>
-                <div><strong>Amount:</strong> ₹{selectedPayment.amount}</div>
-                <div><strong>Status:</strong>
-                  <span className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    selectedPayment.status === 'success' ? 'bg-green-100 text-green-700' :
-                    selectedPayment.status === 'failed' ? 'bg-red-100 text-red-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  }`}>{selectedPayment.status}</span>
+                <div>
+                  <strong>User:</strong> {selectedPayment.user?.name}
                 </div>
-                <div><strong>Type:</strong> {selectedPayment.type}</div>
-                <div><strong>Currency:</strong> {selectedPayment.currency}</div>
+                <div>
+                  <strong>Email:</strong> {selectedPayment.user?.email}
+                </div>
+                <div>
+                  <strong>Amount:</strong> ₹{selectedPayment.amount}
+                </div>
+                <div>
+                  <strong>Status:</strong>
+                  <span
+                    className={`ml-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      selectedPayment.status === 'success'
+                        ? 'bg-green-100 text-green-700'
+                        : selectedPayment.status === 'failed'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                    }`}
+                  >
+                    {selectedPayment.status}
+                  </span>
+                </div>
+                <div>
+                  <strong>Type:</strong> {selectedPayment.type}
+                </div>
+                <div>
+                  <strong>Currency:</strong> {selectedPayment.currency}
+                </div>
               </div>
               {selectedPayment.razorpayOrderId && (
-                <div><strong>Order ID:</strong> <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{selectedPayment.razorpayOrderId}</code></div>
+                <div>
+                  <strong>Order ID:</strong>{' '}
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{selectedPayment.razorpayOrderId}</code>
+                </div>
               )}
               {selectedPayment.razorpayPaymentId && (
-                <div><strong>Payment ID:</strong> <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{selectedPayment.razorpayPaymentId}</code></div>
+                <div>
+                  <strong>Payment ID:</strong>{' '}
+                  <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{selectedPayment.razorpayPaymentId}</code>
+                </div>
               )}
-              <div><strong>Date:</strong> {new Date(selectedPayment.createdAt).toLocaleString()}</div>
+              <div>
+                <strong>Date:</strong> {new Date(selectedPayment.createdAt).toLocaleString()}
+              </div>
               {selectedPayment.status === 'failed' && selectedPayment.failureDetails && (
                 <div className="space-y-2 border-t pt-3 mt-3">
                   <p className="font-semibold text-red-600 dark:text-red-400">Failure Details</p>
                   {selectedPayment.failureDetails.failureCode && (
-                    <div><strong>Code:</strong> <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{selectedPayment.failureDetails.failureCode}</code></div>
+                    <div>
+                      <strong>Code:</strong>{' '}
+                      <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
+                        {selectedPayment.failureDetails.failureCode}
+                      </code>
+                    </div>
                   )}
                   {selectedPayment.failureDetails.failureReason && (
-                    <div><strong>Reason:</strong> {selectedPayment.failureDetails.failureReason}</div>
+                    <div>
+                      <strong>Reason:</strong> {selectedPayment.failureDetails.failureReason}
+                    </div>
                   )}
                   {selectedPayment.failureDetails.failureDescription && (
-                    <div><strong>Description:</strong> {selectedPayment.failureDetails.failureDescription}</div>
+                    <div>
+                      <strong>Description:</strong> {selectedPayment.failureDetails.failureDescription}
+                    </div>
                   )}
                   {selectedPayment.failureDetails.paymentMethod && (
-                    <div><strong>Method:</strong> {selectedPayment.failureDetails.paymentMethod}</div>
+                    <div>
+                      <strong>Method:</strong> {selectedPayment.failureDetails.paymentMethod}
+                    </div>
                   )}
                   {selectedPayment.failureDetails.bank && (
-                    <div><strong>Bank:</strong> {selectedPayment.failureDetails.bank}</div>
+                    <div>
+                      <strong>Bank:</strong> {selectedPayment.failureDetails.bank}
+                    </div>
                   )}
                   {selectedPayment.failureDetails.cardLast4 && (
-                    <div><strong>Card:</strong> ....{selectedPayment.failureDetails.cardLast4} {selectedPayment.failureDetails.cardNetwork || ''}</div>
+                    <div>
+                      <strong>Card:</strong> ....{selectedPayment.failureDetails.cardLast4}{' '}
+                      {selectedPayment.failureDetails.cardNetwork || ''}
+                    </div>
                   )}
                   {selectedPayment.failureDetails.failedAt && (
-                    <div><strong>Failed At:</strong> {new Date(selectedPayment.failureDetails.failedAt).toLocaleString()}</div>
+                    <div>
+                      <strong>Failed At:</strong> {new Date(selectedPayment.failureDetails.failedAt).toLocaleString()}
+                    </div>
                   )}
                 </div>
               )}
@@ -265,9 +352,19 @@ export function PaymentManagementPage() {
         </div>
       )}
 
-      <Dialog open={refundDialog.open} onOpenChange={(open) => { if (!open && !refundMutation.isPending) { setRefundDialog({ open: false, payment: null }); setSelectedPayment(null); } }}>
+      <Dialog
+        open={refundDialog.open}
+        onOpenChange={(open) => {
+          if (!open && !refundMutation.isPending) {
+            setRefundDialog({ open: false, payment: null });
+            setSelectedPayment(null);
+          }
+        }}
+      >
         <DialogContent>
-          <DialogHeader><DialogTitle>Issue Refund</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Issue Refund</DialogTitle>
+          </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label>Payment Amount</Label>
@@ -287,10 +384,14 @@ export function PaymentManagementPage() {
             <div>
               <Label htmlFor="refundReason">Reason</Label>
               <Select value={refundReason} onValueChange={setRefundReason}>
-                <SelectTrigger><SelectValue placeholder="Select reason..." /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select reason..." />
+                </SelectTrigger>
                 <SelectContent>
                   {REFUND_REASONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -299,7 +400,12 @@ export function PaymentManagementPage() {
               <Label htmlFor="refundNote">Admin Note (optional)</Label>
               <Input id="refundNote" value={refundNote} onChange={(e) => setRefundNote(e.target.value)} />
             </div>
-            <Button onClick={handleConfirmRefund} variant="destructive" className="w-full" disabled={refundMutation.isPending}>
+            <Button
+              onClick={handleConfirmRefund}
+              variant="destructive"
+              className="w-full"
+              disabled={refundMutation.isPending}
+            >
               {refundMutation.isPending ? 'Processing Refund...' : 'Confirm Refund'}
             </Button>
           </div>

@@ -194,7 +194,11 @@ const lectureSchema = new Schema<ILecture>(
           correctAnswer: { type: String },
           explanation: { type: String, default: '' },
           marks: { type: Number, default: 1 },
-          type: { type: String, enum: ['single', 'multiple', 'boolean', 'fill_blank', 'matching', 'coding', 'essay'], default: 'single' },
+          type: {
+            type: String,
+            enum: ['single', 'multiple', 'boolean', 'fill_blank', 'matching', 'coding', 'essay'],
+            default: 'single',
+          },
           negativeMarks: { type: Number, default: 0 },
           isBonus: { type: Boolean, default: false },
           weight: { type: Number, default: 1 },

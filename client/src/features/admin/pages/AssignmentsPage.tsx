@@ -34,12 +34,16 @@ export function AssignmentsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'assignments', page, search, statusFilter],
-    queryFn: ({ signal }) => adminApi.listAssignments({
-      page,
-      limit: 10,
-      search: search || undefined,
-      status: statusFilter === 'all' ? undefined : statusFilter,
-    }, signal),
+    queryFn: ({ signal }) =>
+      adminApi.listAssignments(
+        {
+          page,
+          limit: 10,
+          search: search || undefined,
+          status: statusFilter === 'all' ? undefined : statusFilter,
+        },
+        signal
+      ),
   });
 
   const { data: analyticsData } = useQuery({
@@ -49,30 +53,51 @@ export function AssignmentsPage() {
 
   const submissions = data?.data?.data?.submissions || [];
   const pagination = data?.data?.data?.pagination;
-  const analytics: AdminAssignmentsAnalytics = analyticsData?.data?.data || {} as AdminAssignmentsAnalytics;
-  const byStatus = analytics.byStatus || {} as AdminAssignmentsAnalytics['byStatus'];
+  const analytics: AdminAssignmentsAnalytics = analyticsData?.data?.data || ({} as AdminAssignmentsAnalytics);
+  const byStatus = analytics.byStatus || ({} as AdminAssignmentsAnalytics['byStatus']);
 
   const columns = [
-    { header: 'Student', accessor: (s: AdminAssignmentSubmission) => (
-      <div>
-        <p className="font-medium">{s.user?.name || 'Unknown'}</p>
-        <p className="text-xs text-muted-foreground">{s.user?.email}</p>
-      </div>
-    )},
+    {
+      header: 'Student',
+      accessor: (s: AdminAssignmentSubmission) => (
+        <div>
+          <p className="font-medium">{s.user?.name || 'Unknown'}</p>
+          <p className="text-xs text-muted-foreground">{s.user?.email}</p>
+        </div>
+      ),
+    },
     { header: 'Course', accessor: (s: AdminAssignmentSubmission) => s.course?.title || '-' },
     { header: 'Assignment', accessor: (s: AdminAssignmentSubmission) => s.lecture?.title || '-' },
-    { header: 'Status', accessor: (s: AdminAssignmentSubmission) => (
-      <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[s.status] || ''}`}>{s.status.replace(/_/g, ' ')}</span>
-    )},
-    { header: 'Grade', accessor: (s: AdminAssignmentSubmission) => (
-      s.grade !== undefined ? <span className="font-medium">{s.grade}/{s.maxMarks || 100}</span> : <span className="text-muted-foreground">—</span>
-    )},
+    {
+      header: 'Status',
+      accessor: (s: AdminAssignmentSubmission) => (
+        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[s.status] || ''}`}>
+          {s.status.replace(/_/g, ' ')}
+        </span>
+      ),
+    },
+    {
+      header: 'Grade',
+      accessor: (s: AdminAssignmentSubmission) =>
+        s.grade !== undefined ? (
+          <span className="font-medium">
+            {s.grade}/{s.maxMarks || 100}
+          </span>
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+    },
     { header: 'Submitted', accessor: (s: AdminAssignmentSubmission) => new Date(s.submittedAt).toLocaleDateString() },
-    { header: 'Actions', accessor: (s: AdminAssignmentSubmission) => (
-      <Link to={`/admin/assignments/${s._id}`}>
-        <Button variant="outline" size="sm">View</Button>
-      </Link>
-    )},
+    {
+      header: 'Actions',
+      accessor: (s: AdminAssignmentSubmission) => (
+        <Link to={`/admin/assignments/${s._id}`}>
+          <Button variant="outline" size="sm">
+            View
+          </Button>
+        </Link>
+      ),
+    },
   ];
 
   return (
@@ -103,9 +128,23 @@ export function AssignmentsPage() {
       <div className="flex flex-wrap items-center gap-4">
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search students..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
+          <Input
+            placeholder="Search students..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="pl-9"
+          />
         </div>
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => {
+            setStatusFilter(v);
+            setPage(1);
+          }}
+        >
           <SelectTrigger className="w-44">
             <SelectValue />
           </SelectTrigger>

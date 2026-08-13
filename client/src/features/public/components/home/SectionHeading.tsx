@@ -10,22 +10,11 @@ interface SectionHeadingProps {
   id?: string;
 }
 
-export function SectionHeading({
-  eyebrow,
-  title,
-  subtitle,
-  align = 'center',
-  className,
-  id,
-}: SectionHeadingProps) {
+export function SectionHeading({ eyebrow, title, subtitle, align = 'center', className, id }: SectionHeadingProps) {
   return (
     <div
       id={id}
-      className={cn(
-        'mb-12 sm:mb-16 max-w-3xl',
-        align === 'center' ? 'mx-auto text-center' : 'text-left',
-        className,
-      )}
+      className={cn('mb-12 sm:mb-16 max-w-3xl', align === 'center' ? 'mx-auto text-center' : 'text-left', className)}
     >
       {eyebrow && (
         <motion.span

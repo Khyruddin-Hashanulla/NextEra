@@ -39,13 +39,18 @@ import type { BlogPost, BlogComment } from '@/types/blog';
 
 export function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuth();
   const { addToast } = useToast();
   const [commentText, setCommentText] = useState('');
 
-  const { data: blogData, isLoading, error, refetch } = useQuery({
+  const {
+    data: blogData,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['blog-detail', slug],
     queryFn: ({ signal }) => blogApi.getBySlug(slug!, signal).then((r) => r.data.data),
     enabled: !!slug,
@@ -155,14 +160,16 @@ export function BlogDetailPage() {
         publishedTime={blog?.publishedAt}
         author={blog?.author?.name}
       />
-      <StructuredData schemas={[
-        articleSchema(blog),
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Blog', path: '/blog' },
-          { name: blog.title, path: `/blog/${blog.slug}` },
-        ]),
-      ]} />
+      <StructuredData
+        schemas={[
+          articleSchema(blog),
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Blog', path: '/blog' },
+            { name: blog.title, path: `/blog/${blog.slug}` },
+          ]),
+        ]}
+      />
       <div className="min-h-screen">
         <Section size="sm" className="bg-gradient-to-br from-primary/10 via-background to-background">
           <Container>
@@ -196,13 +203,11 @@ export function BlogDetailPage() {
                 </Badge>
               ))}
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mt-4">
-                {blog.title}
-              </h1>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mt-4">{blog.title}</h1>
 
               <div className="flex flex-wrap items-center gap-4 mt-6 text-sm">
                 <div className="flex items-center gap-2">
-                    {blog.author?.avatar?.url ? (
+                  {blog.author?.avatar?.url ? (
                     <OptimizedImage
                       src={blog.author.avatar.url}
                       alt={`Profile photo of ${blog.author.name}`}
@@ -317,11 +322,7 @@ export function BlogDetailPage() {
 
         <Section size="md" background="muted">
           <Container>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
+            <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
               <h2 className="text-2xl font-bold text-foreground mb-8">Comments</h2>
 
               {isAuthenticated ? (
@@ -338,9 +339,7 @@ export function BlogDetailPage() {
                       disabled={!commentText.trim() || createCommentMutation.isPending}
                       className="bg-primary hover:bg-primary-700 text-white shadow-sm rounded-full"
                     >
-                      {createCommentMutation.isPending && (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      )}
+                      {createCommentMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                       Post Comment
                     </Button>
                   </div>
@@ -380,7 +379,10 @@ export function BlogDetailPage() {
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10">
                             {comment.user?.avatar?.url ? (
-                              <AvatarImage src={comment.user.avatar.url} alt={`Profile photo of ${comment.user.name}`} />
+                              <AvatarImage
+                                src={comment.user.avatar.url}
+                                alt={`Profile photo of ${comment.user.name}`}
+                              />
                             ) : (
                               <AvatarFallback>{getInitials(comment.user?.name || 'U')}</AvatarFallback>
                             )}
@@ -425,11 +427,7 @@ export function BlogDetailPage() {
         {relatedPosts.length > 0 && (
           <Section size="md">
             <Container>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <h2 className="text-2xl font-bold text-foreground mb-8">Related Articles</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {relatedPosts.slice(0, 3).map((related: BlogPost, index: number) => (
@@ -443,15 +441,17 @@ export function BlogDetailPage() {
                       <Link to={`/blog/${related.slug}`}>
                         <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full">
                           <div className="h-48 overflow-hidden">
-                              <OptimizedImage
-                                src={related.featuredImage?.url || '/placeholder-blog.jpg'}
-                                alt={`${related.title} featured image`}
-                                placeholderType="blog"
-                                className="object-cover"
-                              />
+                            <OptimizedImage
+                              src={related.featuredImage?.url || '/placeholder-blog.jpg'}
+                              alt={`${related.title} featured image`}
+                              placeholderType="blog"
+                              className="object-cover"
+                            />
                           </div>
                           <div className="p-5">
-                            <span className="text-xs text-muted-foreground/70">{formatDate(related.publishedAt || related.createdAt)}</span>
+                            <span className="text-xs text-muted-foreground/70">
+                              {formatDate(related.publishedAt || related.createdAt)}
+                            </span>
                             {related.categories?.slice(0, 1).map((cat) => (
                               <span
                                 key={cat}
@@ -463,9 +463,7 @@ export function BlogDetailPage() {
                             <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
                               {related.title}
                             </h3>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {related.excerpt}
-                            </p>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{related.excerpt}</p>
                             <span className="text-xs text-muted-foreground/70 mt-3 block">
                               {related.readingTime} min read
                             </span>
@@ -488,11 +486,7 @@ export function BlogDetailPage() {
               viewport={{ once: true }}
               className="text-center"
             >
-              <Button
-                asChild
-                variant="outline"
-                className="rounded-full"
-              >
+              <Button asChild variant="outline" className="rounded-full">
                 <Link to="/blog">
                   <ArrowRight className="h-4 w-4" />
                   Back to All Articles

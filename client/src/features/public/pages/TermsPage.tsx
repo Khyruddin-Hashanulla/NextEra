@@ -39,7 +39,7 @@ const sections: { title: string; content: string }[] = [
   {
     title: '7. Subscriptions',
     content:
-      'Subscription plans auto-renew at the end of each billing period (monthly or annually) unless cancelled before the renewal date. You may cancel your subscription at any time through your account settings; cancellation takes effect at the end of the current billing period, and no partial refunds are provided for unused portions. We reserve the right to modify subscription pricing upon 30 days\' prior notice. Continued use after a price change constitutes acceptance of the new pricing. Promotional or discounted introductory rates apply only to the initial billing period.',
+      "Subscription plans auto-renew at the end of each billing period (monthly or annually) unless cancelled before the renewal date. You may cancel your subscription at any time through your account settings; cancellation takes effect at the end of the current billing period, and no partial refunds are provided for unused portions. We reserve the right to modify subscription pricing upon 30 days' prior notice. Continued use after a price change constitutes acceptance of the new pricing. Promotional or discounted introductory rates apply only to the initial billing period.",
   },
   {
     title: '8. Certificates',
@@ -49,7 +49,7 @@ const sections: { title: string; content: string }[] = [
   {
     title: '9. Prohibited Conduct',
     content:
-      'You agree not to engage in any conduct that violates applicable laws or regulations, infringes upon the rights of others, or disrupts the Platform\'s operations. Prohibited conduct includes, but is not limited to: harassment, intimidation, or discrimination against any user or instructor; plagiarism or unauthorized distribution of course materials; uploading viruses, malware, or other harmful code; attempting to circumvent security measures or access restricted areas; using bots, scrapers, or automated tools without our prior written consent; impersonating another individual or entity; and engaging in any commercial activity on the Platform without authorization.',
+      "You agree not to engage in any conduct that violates applicable laws or regulations, infringes upon the rights of others, or disrupts the Platform's operations. Prohibited conduct includes, but is not limited to: harassment, intimidation, or discrimination against any user or instructor; plagiarism or unauthorized distribution of course materials; uploading viruses, malware, or other harmful code; attempting to circumvent security measures or access restricted areas; using bots, scrapers, or automated tools without our prior written consent; impersonating another individual or entity; and engaging in any commercial activity on the Platform without authorization.",
   },
   {
     title: '10. Intellectual Property',
@@ -69,7 +69,7 @@ const sections: { title: string; content: string }[] = [
   {
     title: '13. Indemnification',
     content:
-      'You agree to indemnify, defend, and hold harmless NextEra, its affiliates, and their respective officers, directors, employees, and agents from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys\' fees) arising out of or related to: (a) your use of the Platform; (b) your violation of these Terms; (c) your violation of any third-party right, including intellectual property or privacy rights; or (d) any content you submit to the Platform. We reserve the right to assume the exclusive defense and control of any matter subject to indemnification at your expense.',
+      "You agree to indemnify, defend, and hold harmless NextEra, its affiliates, and their respective officers, directors, employees, and agents from and against any and all claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising out of or related to: (a) your use of the Platform; (b) your violation of these Terms; (c) your violation of any third-party right, including intellectual property or privacy rights; or (d) any content you submit to the Platform. We reserve the right to assume the exclusive defense and control of any matter subject to indemnification at your expense.",
   },
   {
     title: '14. Termination',
@@ -79,7 +79,7 @@ const sections: { title: string; content: string }[] = [
   {
     title: '15. Governing Law and Disputes',
     content:
-      'These Terms shall be governed by and construed in accordance with the laws of the State of California, United States, without regard to its conflict of laws principles. Any dispute, claim, or controversy arising out of or relating to these Terms or your use of the Platform shall be resolved exclusively through binding arbitration administered by the American Arbitration Association under its Commercial Arbitration Rules in San Francisco, California. You waive any right to participate in a class-action lawsuit or class-wide arbitration. The prevailing party in any dispute shall be entitled to recover reasonable attorneys\' fees and costs.',
+      "These Terms shall be governed by and construed in accordance with the laws of the State of California, United States, without regard to its conflict of laws principles. Any dispute, claim, or controversy arising out of or relating to these Terms or your use of the Platform shall be resolved exclusively through binding arbitration administered by the American Arbitration Association under its Commercial Arbitration Rules in San Francisco, California. You waive any right to participate in a class-action lawsuit or class-wide arbitration. The prevailing party in any dispute shall be entitled to recover reasonable attorneys' fees and costs.",
   },
   {
     title: '16. General Provisions',
@@ -96,14 +96,25 @@ const sections: { title: string; content: string }[] = [
 export function TermsPage() {
   return (
     <PageTransition>
-      <SEO title="Terms of Service" description="Read the terms and conditions for using the NextEra learning platform." canonical="/terms" robots="index,follow" />
-      <StructuredData schemas={[
-        webPageSchema({ name: 'Terms of Service', description: 'Read the terms and conditions for using the NextEra learning platform.', path: '/terms' }),
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Terms of Service', path: '/terms' },
-        ]),
-      ]} />
+      <SEO
+        title="Terms of Service"
+        description="Read the terms and conditions for using the NextEra learning platform."
+        canonical="/terms"
+        robots="index,follow"
+      />
+      <StructuredData
+        schemas={[
+          webPageSchema({
+            name: 'Terms of Service',
+            description: 'Read the terms and conditions for using the NextEra learning platform.',
+            path: '/terms',
+          }),
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Terms of Service', path: '/terms' },
+          ]),
+        ]}
+      />
       <div className="min-h-screen">
         <section className="bg-gradient-to-br from-primary/10 via-background to-background py-16 sm:py-24 lg:py-32">
           <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
@@ -112,9 +123,7 @@ export function TermsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-4xl mx-auto text-center"
             >
-              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
-                Terms of Service
-              </h1>
+              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">Terms of Service</h1>
               <p className="mt-4 text-lg text-muted-foreground">
                 Please read these terms carefully before using our platform.
               </p>
@@ -135,12 +144,8 @@ export function TermsPage() {
                       viewport={{ once: true }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <h2 className="text-xl font-semibold text-foreground mb-3">
-                        {section.title}
-                      </h2>
-                      <p className="text-muted-foreground leading-relaxed mb-6">
-                        {section.content}
-                      </p>
+                      <h2 className="text-xl font-semibold text-foreground mb-3">{section.title}</h2>
+                      <p className="text-muted-foreground leading-relaxed mb-6">{section.content}</p>
                     </motion.div>
                   ))}
                 </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { SidebarLogoutButton } from '@/components/layout/SidebarLogoutButton';
@@ -27,13 +27,21 @@ function LocationProbe() {
 function renderButton(logout: () => Promise<void>) {
   return renderWithProviders(
     <Routes>
-      <Route path="/dashboard" element={<><SidebarLogoutButton /><LocationProbe /></>} />
+      <Route
+        path="/dashboard"
+        element={
+          <>
+            <SidebarLogoutButton />
+            <LocationProbe />
+          </>
+        }
+      />
       <Route path="/" element={<LocationProbe />} />
     </Routes>,
     {
       initialEntries: ['/dashboard'],
       mockAuth: createAuthValue({ user: testUser, isAuthenticated: true, logout }),
-    },
+    }
   );
 }
 
@@ -61,7 +69,7 @@ describe('SidebarLogoutButton', () => {
       () =>
         new Promise<void>((resolve) => {
           resolveLogout = resolve;
-        }),
+        })
     );
     renderButton(logout);
 

@@ -1,11 +1,5 @@
 import { motion } from 'framer-motion';
-import {
-  GraduationCap,
-  Infinity as InfinityIcon,
-  Award,
-  Users2,
-  type LucideIcon,
-} from 'lucide-react';
+import { GraduationCap, Infinity as InfinityIcon, Award, Users2, type LucideIcon } from 'lucide-react';
 import { SectionHeading } from './SectionHeading';
 
 interface Feature {
@@ -19,29 +13,25 @@ const FEATURES: Feature[] = [
   {
     icon: GraduationCap,
     title: 'Expert instructors',
-    description:
-      'Learn directly from industry professionals who have shipped real products and mentor full teams.',
+    description: 'Learn directly from industry professionals who have shipped real products and mentor full teams.',
     accent: 'bg-primary/10 text-primary',
   },
   {
     icon: InfinityIcon,
     title: 'Lifetime access',
-    description:
-      'Buy once and keep forever. Revisit lessons anytime and stay current with free course updates.',
+    description: 'Buy once and keep forever. Revisit lessons anytime and stay current with free course updates.',
     accent: 'bg-sky-500/10 text-sky-500',
   },
   {
     icon: Award,
     title: 'Recognized certificates',
-    description:
-      'Earn shareable certificates on completion that showcase your verified skills to employers.',
+    description: 'Earn shareable certificates on completion that showcase your verified skills to employers.',
     accent: 'bg-amber-500/10 text-amber-500',
   },
   {
     icon: Users2,
     title: 'Community learning',
-    description:
-      'Join a thriving community of learners, collaborate on projects, and grow your network.',
+    description: 'Join a thriving community of learners, collaborate on projects, and grow your network.',
     accent: 'bg-violet-500/10 text-violet-500',
   },
 ];
@@ -78,9 +68,7 @@ export function WhyChooseUs() {
                 <feature.icon className="h-6 w-6" aria-hidden="true" />
               </div>
               <h3 className="font-semibold text-foreground">{feature.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                {feature.description}
-              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
             </motion.div>
           ))}
         </motion.div>

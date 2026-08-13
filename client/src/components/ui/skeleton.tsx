@@ -1,13 +1,7 @@
 import { cn } from '@/lib/utils';
 
 function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div
-      className={cn('animate-pulse rounded-lg bg-muted', className)}
-      aria-hidden="true"
-      {...props}
-    />
-  );
+  return <div className={cn('animate-pulse rounded-lg bg-muted', className)} aria-hidden="true" {...props} />;
 }
 
 export function SkeletonCard({ className }: { className?: string }) {

@@ -18,10 +18,18 @@ export function filterLectureData(data: any): any {
     filtered.videoSource = undefined;
     filtered.articleContent = articleContent || '';
     filtered.quiz = quiz || {
-      timeLimit: 0, passingScore: 60, maxAttempts: 3, showResults: true,
-      randomizeQuestions: false, negativeMarking: false, partialMarking: false,
-      attemptCooldownMinutes: 0, allowResume: true, shuffleOptions: false,
-      scoringPolicy: 'best', questions: [],
+      timeLimit: 0,
+      passingScore: 60,
+      maxAttempts: 3,
+      showResults: true,
+      randomizeQuestions: false,
+      negativeMarking: false,
+      partialMarking: false,
+      attemptCooldownMinutes: 0,
+      allowResume: true,
+      shuffleOptions: false,
+      scoringPolicy: 'best',
+      questions: [],
     };
   }
 
@@ -29,7 +37,15 @@ export function filterLectureData(data: any): any {
 }
 
 export function normalizeVideoSource(source: any): any {
-  const empty = { source: 'none', url: '', videoId: '', provider: '', thumbnailUrl: '', playbackRate: 1, qualities: [] };
+  const empty = {
+    source: 'none',
+    url: '',
+    videoId: '',
+    provider: '',
+    thumbnailUrl: '',
+    playbackRate: 1,
+    qualities: [],
+  };
   if (!source) {
     return empty;
   }
@@ -55,19 +71,74 @@ export function normalizeVideoSource(source: any): any {
 }
 
 export function getDefaultLectureData(type: string) {
-  const base = { title: '', type, duration: 0, description: '', isFree: false, seoTitle: '', seoDescription: '', resources: [], attachments: [], notes: '', practiceFiles: [] };
+  const base = {
+    title: '',
+    type,
+    duration: 0,
+    description: '',
+    isFree: false,
+    seoTitle: '',
+    seoDescription: '',
+    resources: [],
+    attachments: [],
+    notes: '',
+    practiceFiles: [],
+  };
   if (type === 'video') return { ...base, videoSource: { source: 'none', url: '', videoId: '' }, articleContent: '' };
   if (type === 'article') return { ...base, videoSource: undefined, articleContent: '' };
-  if (type === 'assignment') return { ...base, videoSource: undefined, articleContent: '', assignment: { question: '', instructions: '', totalMarks: 100, passingMarks: 60 } };
-  if (type === 'quiz') return { ...base, videoSource: undefined, articleContent: '', quiz: { timeLimit: 0, passingScore: 60, maxAttempts: 3, showResults: true, randomizeQuestions: false, negativeMarking: false, partialMarking: false, attemptCooldownMinutes: 0, allowResume: true, shuffleOptions: false, scoringPolicy: 'best', questions: [] } };
+  if (type === 'assignment')
+    return {
+      ...base,
+      videoSource: undefined,
+      articleContent: '',
+      assignment: { question: '', instructions: '', totalMarks: 100, passingMarks: 60 },
+    };
+  if (type === 'quiz')
+    return {
+      ...base,
+      videoSource: undefined,
+      articleContent: '',
+      quiz: {
+        timeLimit: 0,
+        passingScore: 60,
+        maxAttempts: 3,
+        showResults: true,
+        randomizeQuestions: false,
+        negativeMarking: false,
+        partialMarking: false,
+        attemptCooldownMinutes: 0,
+        allowResume: true,
+        shuffleOptions: false,
+        scoringPolicy: 'best',
+        questions: [],
+      },
+    };
   return base;
 }
 
 export const EDITABLE_COURSE_FIELDS = [
-  'title', 'description', 'shortDescription', 'thumbnail', 'introVideo',
-  'welcomeMessage', 'congratulationMessage', 'pricing', 'price', 'category',
-  'level', 'language', 'prerequisites', 'benefits', 'requirements', 'tags',
-  'whatYouWillLearn', 'visibility', 'courseType', 'badge', 'certificateSettings', 'meta',
+  'title',
+  'description',
+  'shortDescription',
+  'thumbnail',
+  'introVideo',
+  'welcomeMessage',
+  'congratulationMessage',
+  'pricing',
+  'price',
+  'category',
+  'level',
+  'language',
+  'prerequisites',
+  'benefits',
+  'requirements',
+  'tags',
+  'whatYouWillLearn',
+  'visibility',
+  'courseType',
+  'badge',
+  'certificateSettings',
+  'meta',
 ];
 
 export function buildCourseUpdatePayload(form: any): any {

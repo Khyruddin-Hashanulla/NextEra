@@ -241,7 +241,7 @@ describe('auth.controller', () => {
       await refreshToken(
         mockRequest({ body: { refreshToken: refreshTokenValue }, ip: '127.0.0.1' }) as never,
         res as never,
-        vi.fn(),
+        vi.fn()
       );
 
       expect(service.refreshToken).toHaveBeenCalledWith(refreshTokenValue, expect.any(Object));
@@ -255,7 +255,7 @@ describe('auth.controller', () => {
       await refreshToken(
         mockRequest({ cookies: { refreshToken: refreshTokenValue }, ip: '127.0.0.1' }) as never,
         res as never,
-        next,
+        next
       );
       await flushMicrotasks();
 
@@ -282,7 +282,7 @@ describe('auth.controller', () => {
       await resetPassword(
         mockRequest({ body: { token: 'reset-token', password: 'NewPass1' } }) as never,
         res as never,
-        vi.fn(),
+        vi.fn()
       );
 
       expect(service.resetPassword).toHaveBeenCalledWith('reset-token', 'NewPass1');
@@ -299,11 +299,7 @@ describe('auth.controller', () => {
       vi.mocked(service.resetPassword).mockRejectedValue(error);
       const next = mockNext();
 
-      await resetPassword(
-        mockRequest({ body: { token: 'bad', password: 'NewPass1' } }) as never,
-        res as never,
-        next,
-      );
+      await resetPassword(mockRequest({ body: { token: 'bad', password: 'NewPass1' } }) as never, res as never, next);
       await flushMicrotasks();
 
       expect(next).toHaveBeenCalledWith(error);

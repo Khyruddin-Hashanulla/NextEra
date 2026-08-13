@@ -16,13 +16,19 @@ export class MockRazorpay {
   };
   static refundError: Error | null = null;
   static payoutError: Error | null = null;
+  static orderError: Error | null = null;
 
   orders: MockRazorpayInstance['orders'];
   payouts: MockRazorpayInstance['payouts'];
   payments: MockRazorpayInstance['payments'];
 
   constructor(..._args: unknown[]) {
-    this.orders = { create: vi.fn().mockResolvedValue(MockRazorpay.orderToReturn) };
+    this.orders = {
+      create: vi.fn().mockImplementation(() => {
+        if (MockRazorpay.orderError) return Promise.reject(MockRazorpay.orderError);
+        return Promise.resolve(MockRazorpay.orderToReturn);
+      }),
+    };
     this.payouts = {
       create: vi.fn().mockImplementation(() => {
         if (MockRazorpay.payoutError) return Promise.reject(MockRazorpay.payoutError);
@@ -50,6 +56,7 @@ export class MockRazorpay {
     };
     MockRazorpay.refundError = null;
     MockRazorpay.payoutError = null;
+    MockRazorpay.orderError = null;
   }
 
   static last(): MockRazorpayInstance | undefined {

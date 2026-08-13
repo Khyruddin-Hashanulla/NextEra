@@ -21,7 +21,14 @@ describe('liveClass.validator', () => {
         timezone: 'Asia/Kolkata',
         meetingProvider: 'zoom',
         password: 'pw',
-        settings: { muteOnEntry: true, approvalType: 'automatic', waitingRoom: false, qa: true, chat: true, allowRecording: false },
+        settings: {
+          muteOnEntry: true,
+          approvalType: 'automatic',
+          waitingRoom: false,
+          qa: true,
+          chat: true,
+          allowRecording: false,
+        },
         notifyStudents: true,
         recording: { autoRecord: true },
       },
@@ -29,7 +36,9 @@ describe('liveClass.validator', () => {
     const parsed = createLiveClassSchema.parse(valid);
     expect(parsed.body.duration).toBe(60);
     expect(parsed.body.settings.muteOnEntry).toBe(true);
-    expect(() => createLiveClassSchema.parse({ body: { course: '', title: '', startTime: '', duration: 0 } })).toThrow();
+    expect(() =>
+      createLiveClassSchema.parse({ body: { course: '', title: '', startTime: '', duration: 0 } })
+    ).toThrow();
   });
 
   it('applies live class defaults', () => {
@@ -59,7 +68,9 @@ describe('liveClass.validator', () => {
       },
     };
     expect(addRecordingSchema.parse(valid).body.url).toBe('https://example.com/rec.mp4');
-    expect(() => addRecordingSchema.parse({ body: { liveClass: '', course: '', title: '', url: 'not-a-url' } })).toThrow();
+    expect(() =>
+      addRecordingSchema.parse({ body: { liveClass: '', course: '', title: '', url: 'not-a-url' } })
+    ).toThrow();
   });
 
   it('validates recording sync and params', () => {
@@ -73,6 +84,9 @@ describe('liveClass.validator', () => {
     const valid = { query: { page: '1', limit: '10', courseId: 'c', instructorId: 'i', status: 'ready', search: 's' } };
     expect(recordingsQuerySchema.parse(valid).query.page).toBe(1);
     expect(recordingsQuerySchema.parse({ query: {} }).query).toMatchObject({ page: 1, limit: 20 });
-    expect(recordingsQuerySchema.parse({ query: { page: 'abc', limit: 'x' } }).query).toMatchObject({ page: 1, limit: 20 });
+    expect(recordingsQuerySchema.parse({ query: { page: 'abc', limit: 'x' } }).query).toMatchObject({
+      page: 1,
+      limit: 20,
+    });
   });
 });

@@ -27,7 +27,15 @@ export function SubscriptionPlansPage() {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<SubscriptionPlan | null>(null);
-  const [form, setForm] = useState({ name: '', price: 0, discountedPrice: 0, durationDays: 30, features: [''], level: 'basic', status: 'active' });
+  const [form, setForm] = useState({
+    name: '',
+    price: 0,
+    discountedPrice: 0,
+    durationDays: 30,
+    features: [''],
+    level: 'basic',
+    status: 'active',
+  });
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
@@ -37,23 +45,59 @@ export function SubscriptionPlansPage() {
 
   const createMutation = useMutation({
     mutationFn: (d: any) => adminApi.createSubscriptionPlan(d),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] }); addToast({ title: 'Plan created', variant: 'success' }); setDialogOpen(false); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
+      addToast({ title: 'Plan created', variant: 'success' });
+      setDialogOpen(false);
+    },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, d }: { id: string; d: any }) => adminApi.updateSubscriptionPlan(id, d),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] }); addToast({ title: 'Plan updated', variant: 'success' }); setDialogOpen(false); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
+      addToast({ title: 'Plan updated', variant: 'success' });
+      setDialogOpen(false);
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminApi.deleteSubscriptionPlan(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] }); addToast({ title: 'Plan deleted', variant: 'success' }); setDeleteId(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-subscription-plans'] });
+      addToast({ title: 'Plan deleted', variant: 'success' });
+      setDeleteId(null);
+    },
   });
 
   const plans = data?.data?.data || [];
 
-  const openCreate = () => { setEditing(null); setForm({ name: '', price: 0, discountedPrice: 0, durationDays: 30, features: [''], level: 'basic', status: 'active' }); setDialogOpen(true); };
-  const openEdit = (p: SubscriptionPlan) => { setEditing(p); setForm({ name: p.name, price: p.price, discountedPrice: p.discountedPrice || 0, durationDays: p.durationDays, features: p.features, level: p.level, status: p.status }); setDialogOpen(true); };
+  const openCreate = () => {
+    setEditing(null);
+    setForm({
+      name: '',
+      price: 0,
+      discountedPrice: 0,
+      durationDays: 30,
+      features: [''],
+      level: 'basic',
+      status: 'active',
+    });
+    setDialogOpen(true);
+  };
+  const openEdit = (p: SubscriptionPlan) => {
+    setEditing(p);
+    setForm({
+      name: p.name,
+      price: p.price,
+      discountedPrice: p.discountedPrice || 0,
+      durationDays: p.durationDays,
+      features: p.features,
+      level: p.level,
+      status: p.status,
+    });
+    setDialogOpen(true);
+  };
 
   const handleSave = () => {
     const data = { ...form, features: form.features.filter((f: string) => f.trim()) };
@@ -68,13 +112,23 @@ export function SubscriptionPlansPage() {
           <h1 className="text-2xl font-bold tracking-tight">Subscription Plans</h1>
           <p className="mt-1 text-muted-foreground">Manage platform subscription plans</p>
         </div>
-        <Button onClick={openCreate}><Plus className="mr-1.5 h-4 w-4" /> Add Plan</Button>
+        <Button onClick={openCreate}>
+          <Plus className="mr-1.5 h-4 w-4" /> Add Plan
+        </Button>
       </motion.div>
 
       {isLoading ? (
         <motion.div variants={item} className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}><CardHeader><Skeleton className="h-6 w-32" /><Skeleton className="mt-1 h-4 w-24" /></CardHeader><CardContent><Skeleton className="h-24 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+                <Skeleton className="mt-1 h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-24 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </motion.div>
       ) : !plans.length ? (
@@ -96,16 +150,25 @@ export function SubscriptionPlansPage() {
                   <div className="flex items-start justify-between">
                     <div>
                       <CardTitle className="capitalize">{plan.name}</CardTitle>
-                      <p className="text-sm text-muted-foreground capitalize">{plan.level} · {plan.durationDays} days</p>
+                      <p className="text-sm text-muted-foreground capitalize">
+                        {plan.level} · {plan.durationDays} days
+                      </p>
                     </div>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                      plan.status === 'active' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-muted text-muted-foreground'
-                    }`}>{plan.status}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        plan.status === 'active'
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {plan.status}
+                    </span>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <p className="mb-3 text-3xl font-bold tracking-tight">
-                    ₹{plan.price} <span className="text-sm font-normal text-muted-foreground">/{plan.durationDays}d</span>
+                    ₹{plan.price}{' '}
+                    <span className="text-sm font-normal text-muted-foreground">/{plan.durationDays}d</span>
                   </p>
                   {plan.discountedPrice ? (
                     <p className="mb-3 text-sm text-green-600">Discounted: ₹{plan.discountedPrice}</p>
@@ -121,7 +184,12 @@ export function SubscriptionPlansPage() {
                     <Button variant="outline" size="sm" onClick={() => openEdit(plan)}>
                       <Edit3 className="mr-1 h-3 w-3" /> Edit
                     </Button>
-                    <Button variant="outline" size="sm" className="text-destructive" onClick={() => setDeleteId(plan._id)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => setDeleteId(plan._id)}
+                    >
                       <Trash2 className="mr-1 h-3 w-3" /> Delete
                     </Button>
                   </div>
@@ -137,7 +205,9 @@ export function SubscriptionPlansPage() {
           <div className="w-full max-w-lg rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">{editing ? 'Edit Plan' : 'Create Plan'}</h2>
-              <Button variant="ghost" size="sm" onClick={() => setDialogOpen(false)}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={() => setDialogOpen(false)}>
+                Close
+              </Button>
             </div>
             <div className="max-h-[70vh] space-y-4 overflow-y-auto pr-2">
               <div className="space-y-2">
@@ -147,21 +217,36 @@ export function SubscriptionPlansPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Price (₹)</Label>
-                  <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.price}
+                    onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Discounted Price</Label>
-                  <Input type="number" value={form.discountedPrice} onChange={(e) => setForm({ ...form, discountedPrice: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.discountedPrice}
+                    onChange={(e) => setForm({ ...form, discountedPrice: Number(e.target.value) })}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Duration (days)</Label>
-                <Input type="number" value={form.durationDays} onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })} />
+                <Input
+                  type="number"
+                  value={form.durationDays}
+                  onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Level</Label>
-                <select value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })}
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <select
+                  value={form.level}
+                  onChange={(e) => setForm({ ...form, level: e.target.value })}
+                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                >
                   <option value="basic">Basic</option>
                   <option value="standard">Standard</option>
                   <option value="premium">Premium</option>
@@ -169,15 +254,24 @@ export function SubscriptionPlansPage() {
               </div>
               <div className="space-y-2">
                 <Label>Features (one per line)</Label>
-                <Textarea value={form.features.join('\n')} onChange={(e) => setForm({ ...form, features: e.target.value.split('\n') })} rows={4} />
+                <Textarea
+                  value={form.features.join('\n')}
+                  onChange={(e) => setForm({ ...form, features: e.target.value.split('\n') })}
+                  rows={4}
+                />
               </div>
               <div className="flex items-center gap-2">
-                <Switch checked={form.status === 'active'} onCheckedChange={(v) => setForm({ ...form, status: v ? 'active' : 'inactive' })} />
+                <Switch
+                  checked={form.status === 'active'}
+                  onCheckedChange={(v) => setForm({ ...form, status: v ? 'active' : 'inactive' })}
+                />
                 <Label>Active</Label>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancel
+              </Button>
               <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
                 {editing ? 'Update Plan' : 'Create Plan'}
               </Button>
@@ -192,8 +286,16 @@ export function SubscriptionPlansPage() {
             <h2 className="text-lg font-semibold">Delete Plan</h2>
             <p className="mt-2 text-sm text-muted-foreground">Are you sure you want to delete this plan?</p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteId)} loading={deleteMutation.isPending}>Delete</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteMutation.mutate(deleteId)}
+                loading={deleteMutation.isPending}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>

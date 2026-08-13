@@ -42,30 +42,58 @@ function CouponsContent() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => instructorApi.deleteCoupon(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['instructor', 'coupons'] }); addToast({ title: 'Coupon deleted', variant: 'success' }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['instructor', 'coupons'] });
+      addToast({ title: 'Coupon deleted', variant: 'success' });
+    },
     onError: () => addToast({ title: 'Delete failed', variant: 'error' }),
   });
 
-  const [form, setForm] = useState({ code: '', discountType: 'percentage', discountValue: 0, minAmount: 0, maxUses: 0, expiresAt: '', isActive: true, course: '' });
+  const [form, setForm] = useState({
+    code: '',
+    discountType: 'percentage',
+    discountValue: 0,
+    minAmount: 0,
+    maxUses: 0,
+    expiresAt: '',
+    isActive: true,
+    course: '',
+  });
 
   const saveMutation = useMutation({
     mutationFn: () =>
-      editing
-        ? instructorApi.updateCoupon(editing._id, form as any)
-        : instructorApi.createCoupon(form as any),
+      editing ? instructorApi.updateCoupon(editing._id, form as any) : instructorApi.createCoupon(form as any),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['instructor', 'coupons'] });
       addToast({ title: editing ? 'Coupon updated' : 'Coupon created', variant: 'success' });
       setOpen(false);
       setEditing(null);
-      setForm({ code: '', discountType: 'percentage', discountValue: 0, minAmount: 0, maxUses: 0, expiresAt: '', isActive: true, course: '' });
+      setForm({
+        code: '',
+        discountType: 'percentage',
+        discountValue: 0,
+        minAmount: 0,
+        maxUses: 0,
+        expiresAt: '',
+        isActive: true,
+        course: '',
+      });
     },
     onError: () => addToast({ title: 'Save failed', variant: 'error' }),
   });
 
   const openEdit = (coupon: any) => {
     setEditing(coupon);
-    setForm({ code: coupon.code, discountType: coupon.discountType, discountValue: coupon.discountValue, minAmount: coupon.minAmount, maxUses: coupon.maxUses, expiresAt: coupon.expiresAt?.split('T')[0] || '', isActive: coupon.isActive, course: coupon.course?._id || '' });
+    setForm({
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      minAmount: coupon.minAmount,
+      maxUses: coupon.maxUses,
+      expiresAt: coupon.expiresAt?.split('T')[0] || '',
+      isActive: coupon.isActive,
+      course: coupon.course?._id || '',
+    });
     setOpen(true);
   };
 
@@ -76,7 +104,22 @@ function CouponsContent() {
           <h1 className="text-2xl font-bold tracking-tight">Coupons</h1>
           <p className="mt-1 text-muted-foreground">Manage discount coupons for your courses</p>
         </div>
-        <Button onClick={() => { setEditing(null); setForm({ code: '', discountType: 'percentage', discountValue: 0, minAmount: 0, maxUses: 0, expiresAt: '', isActive: true, course: '' }); setOpen(true); }}>
+        <Button
+          onClick={() => {
+            setEditing(null);
+            setForm({
+              code: '',
+              discountType: 'percentage',
+              discountValue: 0,
+              minAmount: 0,
+              maxUses: 0,
+              expiresAt: '',
+              isActive: true,
+              course: '',
+            });
+            setOpen(true);
+          }}
+        >
           <Plus className="mr-1.5 h-4 w-4" /> New Coupon
         </Button>
       </motion.div>
@@ -109,10 +152,16 @@ function CouponsContent() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Code</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Discount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Discount
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Used</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Expires</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Active</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Expires
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Active
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -123,14 +172,23 @@ function CouponsContent() {
                           <span className="font-mono font-bold">{coupon.code}</span>
                         </td>
                         <td className="px-4 py-3">
-                          {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
+                          {coupon.discountType === 'percentage'
+                            ? `${coupon.discountValue}%`
+                            : `₹${coupon.discountValue}`}
                         </td>
-                        <td className="px-4 py-3">{coupon.usedCount || 0}/{coupon.maxUses || '∞'}</td>
+                        <td className="px-4 py-3">
+                          {coupon.usedCount || 0}/{coupon.maxUses || '∞'}
+                        </td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : 'Never'}
                         </td>
                         <td className="px-4 py-3">
-                          <input type="checkbox" checked={coupon.isActive} disabled className="h-4 w-4 rounded border-gray-300" />
+                          <input
+                            type="checkbox"
+                            checked={coupon.isActive}
+                            disabled
+                            className="h-4 w-4 rounded border-gray-300"
+                          />
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
@@ -156,7 +214,12 @@ function CouponsContent() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -172,7 +235,16 @@ function CouponsContent() {
           <div className="w-full max-w-lg rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">{editing ? 'Edit Coupon' : 'Create Coupon'}</h2>
-              <Button variant="ghost" size="sm" onClick={() => { setOpen(false); setEditing(null); }}>Close</Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setOpen(false);
+                  setEditing(null);
+                }}
+              >
+                Close
+              </Button>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -182,42 +254,79 @@ function CouponsContent() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Discount Type</Label>
-                  <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value })}
-                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                  <select
+                    value={form.discountType}
+                    onChange={(e) => setForm({ ...form, discountType: e.target.value })}
+                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  >
                     <option value="percentage">Percentage</option>
                     <option value="fixed">Fixed</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <Label>Discount Value</Label>
-                  <Input type="number" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.discountValue}
+                    onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })}
+                  />
                 </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Minimum Amount</Label>
-                  <Input type="number" value={form.minAmount} onChange={(e) => setForm({ ...form, minAmount: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.minAmount}
+                    onChange={(e) => setForm({ ...form, minAmount: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Max Uses</Label>
-                  <Input type="number" value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.maxUses}
+                    onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })}
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Expiry Date</Label>
-                <Input type="date" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
+                <Input
+                  type="date"
+                  value={form.expiresAt}
+                  onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Course ID (optional)</Label>
-                <Input value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} placeholder="Leave empty for all courses" />
+                <Input
+                  value={form.course}
+                  onChange={(e) => setForm({ ...form, course: e.target.value })}
+                  placeholder="Leave empty for all courses"
+                />
               </div>
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="isActive" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={form.isActive}
+                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
                 <Label htmlFor="isActive">Active</Label>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => { setOpen(false); setEditing(null); }}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setOpen(false);
+                  setEditing(null);
+                }}
+              >
+                Cancel
+              </Button>
               <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.code}>
                 {editing ? 'Update' : 'Create'}
               </Button>

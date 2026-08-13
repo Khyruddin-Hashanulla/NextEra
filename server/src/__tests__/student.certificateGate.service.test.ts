@@ -76,7 +76,7 @@ describe('StudentService.generateCertificate content gate', () => {
         isApproved: true,
         status: 'published',
         contentStatus: 'IN_PROGRESS',
-      }),
+      })
     );
 
     const { Certificate } = require('../models/certificate.model');
@@ -95,7 +95,7 @@ describe('StudentService.generateCertificate content gate', () => {
         contentStatus: undefined,
         level: 'beginner',
         totalDuration: 120,
-      }),
+      })
     );
 
     const { Certificate } = require('../models/certificate.model');

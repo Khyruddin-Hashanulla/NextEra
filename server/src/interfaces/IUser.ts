@@ -72,7 +72,14 @@ export interface IUserResponse {
   bio: string;
   phone?: string;
   address?: string;
-  socialLinks: { youtube: string; twitter: string; linkedin: string; github: string; portfolio?: string; website?: string };
+  socialLinks: {
+    youtube: string;
+    twitter: string;
+    linkedin: string;
+    github: string;
+    portfolio?: string;
+    website?: string;
+  };
   isEmailVerified: boolean;
   instructorProfile?: IUser['instructorProfile'];
   createdAt: Date;

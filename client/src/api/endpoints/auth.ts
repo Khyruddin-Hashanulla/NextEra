@@ -35,6 +35,5 @@ export const authApi = {
   resetPassword: (data: ResetPasswordRequest, signal?: AbortSignal) =>
     axiosInstance.post<ApiResponse<null>>('/auth/reset-password', data, { signal }),
 
-  logout: (signal?: AbortSignal) =>
-    axiosInstance.post<ApiResponse<null>>('/auth/logout', undefined, { signal }),
+  logout: (signal?: AbortSignal) => axiosInstance.post<ApiResponse<null>>('/auth/logout', undefined, { signal }),
 };

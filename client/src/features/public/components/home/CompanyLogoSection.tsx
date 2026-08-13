@@ -20,10 +20,7 @@ export const DEFAULT_COMPANIES = [
   'Notion',
 ];
 
-export function CompanyLogoSection({
-  companies = DEFAULT_COMPANIES,
-  className,
-}: CompanyLogoSectionProps) {
+export function CompanyLogoSection({ companies = DEFAULT_COMPANIES, className }: CompanyLogoSectionProps) {
   const marqueeItems = useMemo(() => [...companies, ...companies], [companies]);
 
   return (
@@ -45,10 +42,8 @@ export function CompanyLogoSection({
         <div
           className="group relative flex overflow-hidden"
           style={{
-            maskImage:
-              'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
-            WebkitMaskImage:
-              'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+            maskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 12%, black 88%, transparent)',
           }}
         >
           <div className="animate-marquee flex w-max items-center gap-16 pr-16 group-hover:[animation-play-state:paused]">
@@ -60,10 +55,7 @@ export function CompanyLogoSection({
                   aria-hidden={isDuplicate}
                   className="flex items-center gap-2 whitespace-nowrap font-display text-xl font-bold tracking-tight text-muted-foreground/50 transition-colors duration-300 hover:text-foreground sm:text-2xl"
                 >
-                  <span
-                    className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-60"
-                    aria-hidden="true"
-                  />
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-60" aria-hidden="true" />
                   {company}
                 </span>
               );

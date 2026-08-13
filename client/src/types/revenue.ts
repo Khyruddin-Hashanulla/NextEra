@@ -16,26 +16,65 @@ export interface RevenueDashboardData {
   featuredPromotionRevenue: number;
 }
 
+export interface InstructorPlanEntitlements {
+  courses: {
+    canCreateFree: boolean;
+    canCreatePaid: boolean;
+    maxCreationCount: number;
+    creationWindowDays: number;
+    maxPublishedCourses: number;
+    unlimitedCreationMode: boolean;
+    highCreationCap: number;
+  };
+  students: { maxStudents: number };
+  revenue: { enabled: boolean; commissionPercent: number; instructorSharePercent: number };
+  storage: {
+    videoGB: number;
+    materialGB: number;
+    recordingGB: number;
+    maxVideoFileSizeMB: number;
+    unlimited?: boolean;
+  };
+  certificates: { enabled: boolean; qrVerification: boolean };
+  liveClasses: { enabled: boolean; monthlyLimit: number; maxDurationMinutes: number; recording: boolean };
+  analytics: { basic: boolean; advanced: boolean; revenue: boolean; export: boolean };
+  marketing: {
+    coupons: boolean;
+    maxActiveCoupons: number;
+    bundles: boolean;
+    instructorSubscriptions: boolean;
+    affiliate: boolean;
+    affiliatePayout: boolean;
+  };
+  support: { level: 'none' | 'email' | 'priority' | 'dedicated' };
+}
+
+export interface InstructorPlanLegacyFeatures {
+  freeCoursesLimit: number;
+  unlimitedCourses: boolean;
+  storageLimitMB: number;
+  advancedAnalytics: boolean;
+  coupons: boolean;
+  liveClasses: boolean;
+  featuredInstructor: boolean;
+  prioritySupport: boolean;
+  unlimitedStorage: boolean;
+  premiumMarketing: boolean;
+}
+
 export interface InstructorSubscriptionPlan {
   _id: string;
+  code?: string;
   name: string;
   type: 'free' | 'paid';
   price: number;
+  discountPrice?: number;
   durationDays: number;
   description: string;
-  features: {
-    freeCoursesLimit: number;
-    unlimitedCourses: boolean;
-    storageLimitMB: number;
-    advancedAnalytics: boolean;
-    coupons: boolean;
-    liveClasses: boolean;
-    featuredInstructor: boolean;
-    prioritySupport: boolean;
-    unlimitedStorage: boolean;
-    premiumMarketing: boolean;
-  };
+  features: InstructorPlanLegacyFeatures;
+  entitlements?: InstructorPlanEntitlements;
   status: 'active' | 'inactive';
+  isDefaultForFree?: boolean;
   totalSubscribers: number;
   sortOrder: number;
   createdAt: string;
@@ -45,12 +84,73 @@ export interface InstructorSubscription {
   _id: string;
   instructor: string;
   plan: InstructorSubscriptionPlan;
+  planSnapshot?: { code?: string; name: string; price: number; durationDays: number };
   payment?: string;
+  paymentReference?: string;
+  razorpaySubscriptionId?: string;
+  razorpayPaymentId?: string;
   startDate: string;
   endDate: string;
-  status: 'active' | 'expired' | 'cancelled' | 'none';
+  status:
+    | 'active'
+    | 'ACTIVE'
+    | 'expired'
+    | 'EXPIRED'
+    | 'cancelled'
+    | 'CANCELLED'
+    | 'none'
+    | 'trial'
+    | 'past_due'
+    | 'suspended';
   autoRenew: boolean;
+  cancelledAt?: string;
   createdAt: string;
+}
+
+export interface InstructorSubscriptionOverview {
+  subscription: InstructorSubscription | null;
+  plan: InstructorSubscriptionPlan | null;
+  status: 'active' | 'expired' | 'none';
+  planCode: string | null;
+  entitlements: InstructorPlanEntitlements;
+  usage: {
+    publishedCourses: number;
+    maxPublishedCourses: number;
+    liveClassesThisMonth: number;
+    maxLiveClasses: number;
+    activeCoupons: number;
+    maxActiveCoupons: number;
+    maxStudents: number;
+    storageLimitGB: number;
+    canCreatePaid: boolean;
+  };
+}
+
+export interface InstructorEntitlementView {
+  status: 'active' | 'trial' | 'pastDue' | 'cancelled' | 'expired' | 'suspended' | 'none';
+  planCode?: string;
+  planName?: string;
+  endDate?: string | null;
+  startDate?: string | null;
+  autoRenew: boolean;
+  entitlements: InstructorPlanEntitlements;
+}
+
+export interface InstructorSubscriptionInitResult {
+  completed: boolean;
+  orderId?: string;
+  amount?: number;
+  currency?: string;
+  key?: string;
+  paymentId?: string;
+  subscription?: InstructorSubscription;
+  plan?: {
+    _id: string;
+    code?: string;
+    name: string;
+    price: number;
+    durationDays: number;
+  };
 }
 
 export interface AffiliateItem {

@@ -35,11 +35,28 @@ export function AnalyticsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64" /></div>
-        <Card><CardHeader><Skeleton className="h-6 w-40" /></CardHeader><CardContent><Skeleton className="h-64 w-full" /></CardContent></Card>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-40" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-64 w-full" />
+          </CardContent>
+        </Card>
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}><CardHeader><Skeleton className="h-6 w-36" /></CardHeader><CardContent><Skeleton className="h-64 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-36" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -171,7 +188,10 @@ export function AnalyticsPage() {
             ) : (
               <div className="divide-y">
                 {courseData.topCourses.slice(0, 5).map((course: any, i: number) => (
-                  <div key={course._id} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30">
+                  <div
+                    key={course._id}
+                    className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                         {i + 1}

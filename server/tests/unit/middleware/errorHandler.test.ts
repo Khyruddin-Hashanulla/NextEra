@@ -8,9 +8,7 @@ describe('errorHandler middleware', () => {
     const res = mockResponse();
     errorHandler(ApiError.notFound('Missing'), mockRequest(), res as never, mockNext());
     expect(res.status).toHaveBeenCalledWith(404);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false, message: 'Missing' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: false, message: 'Missing' }));
   });
 
   it('does not include a stack in non-development environments', () => {
@@ -42,7 +40,7 @@ describe('errorHandler middleware', () => {
       expect.objectContaining({
         success: false,
         message: 'An internal server error occurred',
-      }),
+      })
     );
   });
 
@@ -54,9 +52,7 @@ describe('errorHandler middleware', () => {
       const err = new Error('dev boom');
       errorHandler(err, mockRequest(), res as never, mockNext());
       const payload = res.json.mock.calls[0][0] as Record<string, unknown>;
-      expect(payload).toEqual(
-        expect.objectContaining({ error: 'dev boom', stack: err.stack }),
-      );
+      expect(payload).toEqual(expect.objectContaining({ error: 'dev boom', stack: err.stack }));
     } finally {
       (env as any).nodeEnv = original;
     }
@@ -66,8 +62,6 @@ describe('errorHandler middleware', () => {
     const res = mockResponse();
     errorHandler(ApiError.badRequest('title: too short'), mockRequest(), res as never, mockNext());
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'title: too short' }),
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'title: too short' }));
   });
 });

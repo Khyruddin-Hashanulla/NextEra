@@ -27,10 +27,13 @@ export function TestimonialCarousel({ testimonials, className }: TestimonialCaro
 
   const totalSlides = testimonials.length;
 
-  const goTo = useCallback((index: number) => {
-    setDirection(index > current ? 1 : -1);
-    setCurrent(index);
-  }, [current]);
+  const goTo = useCallback(
+    (index: number) => {
+      setDirection(index > current ? 1 : -1);
+      setCurrent(index);
+    },
+    [current]
+  );
 
   const goNext = useCallback(() => {
     setDirection(1);
@@ -42,21 +45,24 @@ export function TestimonialCarousel({ testimonials, className }: TestimonialCaro
     setCurrent((prev) => (prev - 1 + totalSlides) % totalSlides);
   }, [totalSlides]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      goPrev();
-    } else if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      goNext();
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      goTo(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      goTo(totalSlides - 1);
-    }
-  }, [goPrev, goNext, goTo, totalSlides]);
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(totalSlides - 1);
+      }
+    },
+    [goPrev, goNext, goTo, totalSlides]
+  );
 
   useEffect(() => {
     if (liveRef.current) {
@@ -101,7 +107,13 @@ export function TestimonialCarousel({ testimonials, className }: TestimonialCaro
             >
               <div className="flex justify-center gap-1 mb-6" aria-hidden="true">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={cn('h-5 w-5', i < t.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30')} />
+                  <Star
+                    key={i}
+                    className={cn(
+                      'h-5 w-5',
+                      i < t.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'
+                    )}
+                  />
                 ))}
               </div>
               <blockquote className="text-lg sm:text-xl text-foreground/80 leading-relaxed mb-8">
@@ -110,21 +122,30 @@ export function TestimonialCarousel({ testimonials, className }: TestimonialCaro
               <div className="flex items-center justify-center gap-3">
                 <div className="h-12 w-12 rounded-full overflow-hidden bg-muted">
                   {t.avatar ? (
-                    <OptimizedImage src={t.avatar} alt={`Profile photo of ${t.name}`} placeholderType="avatar" className="object-cover" />
+                    <OptimizedImage
+                      src={t.avatar}
+                      alt={`Profile photo of ${t.name}`}
+                      placeholderType="avatar"
+                      className="object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-sm font-semibold text-muted-foreground">
-                      {t.name.split(' ').map(n => n[0]).join('')}
+                      {t.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')}
                     </div>
                   )}
                 </div>
                 <div className="text-left">
                   <p className="font-semibold text-foreground">{t.name}</p>
-                  <p className="text-sm text-muted-foreground">{t.role}{t.company ? `, ${t.company}` : ''}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {t.role}
+                    {t.company ? `, ${t.company}` : ''}
+                  </p>
                 </div>
               </div>
-              {t.course && (
-                <p className="text-xs text-muted-foreground/70 mt-4">Completed: {t.course}</p>
-              )}
+              {t.course && <p className="text-xs text-muted-foreground/70 mt-4">Completed: {t.course}</p>}
             </motion.div>
           </AnimatePresence>
         </div>

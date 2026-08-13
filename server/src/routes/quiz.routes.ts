@@ -23,12 +23,7 @@ import { authorize } from '../middlewares/authorize.middleware';
 import { verifyQuizAttemptOwnership } from '../middlewares/dataScoping.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { ROLES } from '../constants/roles';
-import {
-  startQuizSchema,
-  submitQuizSchema,
-  resumeQuizSchema,
-  overrideGradeSchema,
-} from '../validators/quiz.validator';
+import { startQuizSchema, submitQuizSchema, resumeQuizSchema, overrideGradeSchema } from '../validators/quiz.validator';
 
 const router = Router();
 
@@ -55,7 +50,12 @@ router.get('/result/:attemptId', verifyQuizAttemptOwnership, getAttemptDetails);
 
 // ─── Instructor / Admin Grading (role enforced) ───────────────────────
 
-router.put('/manual-grade/:attemptId', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), validate(overrideGradeSchema), manualGradeAttempt);
+router.put(
+  '/manual-grade/:attemptId',
+  authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
+  validate(overrideGradeSchema),
+  manualGradeAttempt
+);
 router.put('/publish/:attemptId', authorize(ROLES.INSTRUCTOR, ROLES.ADMIN), publishGrade);
 
 // ─── Instructor / Admin Analytics (role enforced) ─────────────────────

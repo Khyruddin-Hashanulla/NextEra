@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
 import { Package, BookOpen, Clock, ChevronRight } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { formatCurrency } from '@/lib/utils';
 
 export function BundlesListPage() {
   const { data, isLoading } = useQuery({
@@ -26,7 +27,11 @@ export function BundlesListPage() {
         <Package className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
         <h2 className="text-xl font-semibold">No bundles available</h2>
         <p className="mt-2 text-muted-foreground">Check back later for course bundles.</p>
-        <Link to="/courses"><Button variant="outline" className="mt-4">Browse Courses</Button></Link>
+        <Link to="/courses">
+          <Button variant="outline" className="mt-4">
+            Browse Courses
+          </Button>
+        </Link>
       </div>
     );
   }
@@ -48,12 +53,19 @@ export function BundlesListPage() {
             <Card key={bundle._id} className="flex flex-col overflow-hidden transition-shadow hover:shadow-md">
               {bundle.thumbnail?.url && (
                 <div className="h-40 overflow-hidden">
-                  <OptimizedImage src={bundle.thumbnail.url} alt={bundle.title} placeholderType="course" className="object-cover" />
+                  <OptimizedImage
+                    src={bundle.thumbnail.url}
+                    alt={bundle.title}
+                    placeholderType="course"
+                    className="object-cover"
+                  />
                 </div>
               )}
               <CardHeader>
                 <div className="flex items-start justify-between">
-                  <Badge variant="secondary" className="mb-1">Bundle</Badge>
+                  <Badge variant="secondary" className="mb-1">
+                    Bundle
+                  </Badge>
                 </div>
                 <CardTitle className="line-clamp-2 text-lg">{bundle.title}</CardTitle>
                 {bundle.shortDescription && (
@@ -62,24 +74,34 @@ export function BundlesListPage() {
               </CardHeader>
               <CardContent className="flex-1 space-y-3">
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><BookOpen className="h-3 w-3" /> {bundle.courses?.length || 0} courses</span>
-                  {bundle.totalLectures > 0 && <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {bundle.totalLectures} lectures</span>}
+                  <span className="flex items-center gap-1">
+                    <BookOpen className="h-3 w-3" /> {bundle.courses?.length || 0} courses
+                  </span>
+                  {bundle.totalLectures > 0 && (
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {bundle.totalLectures} lectures
+                    </span>
+                  )}
                 </div>
 
                 {bundle.tags?.slice(0, 3).map((tag: string, i: number) => (
-                  <Badge key={i} variant="outline" className="mr-1">{tag}</Badge>
+                  <Badge key={i} variant="outline" className="mr-1">
+                    {tag}
+                  </Badge>
                 ))}
               </CardContent>
               <div className="flex items-center justify-between border-t p-4">
                 <div>
                   {originalPrice ? (
                     <div className="flex items-baseline gap-1.5">
-                      <span className="text-lg font-bold">${displayPrice}</span>
-                      <span className="text-sm text-muted-foreground line-through">${originalPrice}</span>
-                      <Badge variant="secondary" className="text-xs">-{Math.round((savings / originalPrice) * 100)}%</Badge>
+                      <span className="text-lg font-bold">{formatCurrency(displayPrice)}</span>
+                      <span className="text-sm text-muted-foreground line-through">{formatCurrency(originalPrice)}</span>
+                      <Badge variant="secondary" className="text-xs">
+                        -{Math.round((savings / originalPrice) * 100)}%
+                      </Badge>
                     </div>
                   ) : (
-                    <span className="text-lg font-bold">${displayPrice}</span>
+                    <span className="text-lg font-bold">{formatCurrency(displayPrice)}</span>
                   )}
                 </div>
                 <Link to={`/student/bundles/${bundle._id}`}>

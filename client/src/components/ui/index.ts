@@ -37,13 +37,31 @@ export {
   DialogTitle,
   DialogDescription,
 } from './dialog';
-export { Select, SelectGroup, SelectValue, SelectTrigger, SelectContent, SelectLabel, SelectItem, SelectSeparator } from './select';
+export {
+  Select,
+  SelectGroup,
+  SelectValue,
+  SelectTrigger,
+  SelectContent,
+  SelectLabel,
+  SelectItem,
+  SelectSeparator,
+} from './select';
 export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from './tooltip';
 export { Progress } from './progress';
 export { Separator } from './separator';
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './accordion';
 export { Alert, AlertTitle, AlertDescription, AlertIcon } from './alert';
-export { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandShortcut, CommandSeparator } from './command';
+export {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandShortcut,
+  CommandSeparator,
+} from './command';
 export {
   Sheet,
   SheetPortal,
@@ -58,13 +76,4 @@ export {
 } from './sheet';
 export { FileUpload } from './file-upload';
 export { Pagination } from './pagination';
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-} from './table';
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption } from './table';

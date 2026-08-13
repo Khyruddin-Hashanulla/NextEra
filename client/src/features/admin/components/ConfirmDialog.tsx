@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 
 interface ConfirmDialogProps {
@@ -35,7 +42,11 @@ export function ConfirmDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
             {cancelText}
           </Button>
-          <Button variant={variant === 'destructive' ? 'destructive' : 'default'} onClick={onConfirm} disabled={isLoading}>
+          <Button
+            variant={variant === 'destructive' ? 'destructive' : 'default'}
+            onClick={onConfirm}
+            disabled={isLoading}
+          >
             {isLoading ? 'Processing...' : confirmText}
           </Button>
         </DialogFooter>

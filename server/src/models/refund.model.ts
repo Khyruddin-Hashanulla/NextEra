@@ -49,4 +49,20 @@ const refundSchema = new Schema<IRefund>(
   { timestamps: true }
 );
 
+// Backs up the "one active/processed refund per payment" rule enforced by
+// PaymentService.processRefundPayment: at most ONE refund in {pending, approved,
+// processed} may exist per payment. Rejected refunds may be retried, and a fully
+// processed refund leaves the filter set, so this never blocks a same-payment refund
+// that was legitimately rejected first.
+refundSchema.index(
+  { payment: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ['pending', 'approved', 'processed'] } },
+  }
+);
+refundSchema.index({ status: 1, createdAt: -1 });
+refundSchema.index({ user: 1, createdAt: -1 });
+refundSchema.index({ payment: 1, createdAt: -1 });
+
 export const Refund = mongoose.model<IRefund>('Refund', refundSchema);

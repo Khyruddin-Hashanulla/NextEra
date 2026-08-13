@@ -182,7 +182,7 @@ export interface InstructorDashboard {
 export interface InstructorRevenue {
   daily: { _id: string; amount: number; count: number }[];
   total: number;
-  perCourse: { courseTitle: string; amount: number; enrollments: number }[];
+  perCourse: { _id: string; courseTitle: string; amount: number; enrollments: number }[];
 }
 
 export interface InstructorApplication {
@@ -230,6 +230,7 @@ export interface InstructorPayoutsResponse {
 // ─── New Instructor Feature Types ──────────────────────────────
 
 export interface InstructorAnalytics {
+  totalViews: number;
   totalStudents: number;
   totalEnrollments: number;
   totalRevenue: number;
@@ -237,19 +238,17 @@ export interface InstructorAnalytics {
   totalCourses: number;
   enrollmentTrend: { _id: string; count: number }[];
   revenueTrend: { _id: string; amount: number }[];
-  topCourses: { _id: string; title: string; enrollments: number; revenue: number }[];
+  studentGrowth: { month: string; newStudents: number; totalStudents: number }[];
+  topPerformingCourses: { _id: string; title: string; enrollments: number; revenue: number }[];
 }
 
 export interface InstructorStudent {
   _id: string;
-  name: string;
-  email: string;
-  avatar: { url: string };
-  courseTitle: string;
-  enrollmentDate: string;
+  user: { _id: string; name: string; email: string; avatar?: { url: string } };
+  course: { _id: string; title: string };
+  enrolledAt: string;
   progress: number;
-  completedLectures: number;
-  totalLectures: number;
+  isCompleted: boolean;
 }
 
 export interface InstructorCoupon {
@@ -346,12 +345,7 @@ export interface SubscriptionStatus {
 // ─── Assignment Grading ────────────────────────────────────────
 
 export type InstructorAssignmentStatus =
-  | 'submitted'
-  | 'late_submission'
-  | 'under_review'
-  | 'graded'
-  | 'returned_for_resubmission'
-  | 'rejected';
+  'submitted' | 'late_submission' | 'under_review' | 'graded' | 'returned_for_resubmission' | 'rejected';
 
 export interface InstructorAssignmentItem {
   _id: string;
@@ -428,6 +422,18 @@ export interface InstructorSubmissionDetail extends Omit<InstructorSubmissionIte
     gradedBy: { _id: string; name: string };
     gradedAt: string;
   }[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NotificationItem {
+  _id: string;
+  title: string;
+  message: string;
+  type: string;
+  isRead: boolean;
+  link?: string;
+  course?: string;
   createdAt: string;
   updatedAt: string;
 }

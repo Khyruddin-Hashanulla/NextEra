@@ -42,7 +42,7 @@ export function CodeEditor({
 }: CodeEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [lineCount, setLineCount] = useState(1);
-  const filteredLanguages = languageOptions.filter(l => supportedLanguages.includes(l.value));
+  const filteredLanguages = languageOptions.filter((l) => supportedLanguages.includes(l.value));
 
   useEffect(() => {
     if (value && !value.trim()) {
@@ -63,8 +63,10 @@ export function CodeEditor({
           onChange={(e) => onLanguageChange(e.target.value as ProgrammingLanguage)}
           className="bg-zinc-900 text-zinc-100 text-xs rounded px-2 py-1 border border-zinc-700"
         >
-          {filteredLanguages.map(l => (
-            <option key={l.value} value={l.value}>{l.label}</option>
+          {filteredLanguages.map((l) => (
+            <option key={l.value} value={l.value}>
+              {l.label}
+            </option>
           ))}
         </select>
         <span className="text-xs text-zinc-500">{language}</span>

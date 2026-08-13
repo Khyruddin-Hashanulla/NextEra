@@ -163,11 +163,7 @@ describe('AuthProvider', () => {
   it('clears state when the logout API call itself fails', async () => {
     const { http, HttpResponse } = await import('msw');
     const { server } = await import('@/test/mocks/server');
-    server.use(
-      http.post('/api/v1/auth/logout', () =>
-        HttpResponse.json({ message: 'boom' }, { status: 500 }),
-      ),
-    );
+    server.use(http.post('/api/v1/auth/logout', () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
 
     localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, 'token');
     const { result, rerender } = renderAuth();
@@ -185,8 +181,6 @@ describe('AuthProvider', () => {
 
 describe('useAuth', () => {
   it('throws when used outside an AuthProvider', () => {
-    expect(() => renderHook(() => useAuth())).toThrow(
-      'useAuth must be used within an AuthProvider',
-    );
+    expect(() => renderHook(() => useAuth())).toThrow('useAuth must be used within an AuthProvider');
   });
 });

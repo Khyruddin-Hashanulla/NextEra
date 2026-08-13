@@ -8,7 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { QUERY_KEYS } from '@/lib/constants';
 import { motion } from 'framer-motion';
-import { Search, Shield, Ban, Trash2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Ban, Trash2, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const container = {
   hidden: { opacity: 0 },
@@ -29,7 +29,8 @@ export function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin', 'users', page, search, roleFilter],
-    queryFn: ({ signal }) => adminApi.listUsers({ page, limit: 10, search, role: roleFilter }, signal).then((r) => r.data.data),
+    queryFn: ({ signal }) =>
+      adminApi.listUsers({ page, limit: 10, search, role: roleFilter }, signal).then((r) => r.data.data),
   });
 
   const deleteMutation = useMutation({
@@ -43,8 +44,7 @@ export function UsersPage() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      adminApi.updateUserStatus(id, isActive),
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => adminApi.updateUserStatus(id, isActive),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       addToast({ title: 'User status updated', variant: 'success' });
@@ -53,8 +53,7 @@ export function UsersPage() {
   });
 
   const roleMutation = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: string }) =>
-      adminApi.updateUserRole(id, role),
+    mutationFn: ({ id, role }: { id: string; role: string }) => adminApi.updateUserRole(id, role),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       // The affected user's session reflects its role; invalidate the shared
@@ -78,13 +77,19 @@ export function UsersPage() {
           <Input
             placeholder="Search users..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="pl-9"
           />
         </div>
         <select
           value={roleFilter}
-          onChange={(e) => { setRoleFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setRoleFilter(e.target.value);
+            setPage(1);
+          }}
           className="h-10 rounded-lg border border-input bg-background px-3 text-sm"
         >
           <option value="">All Roles</option>
@@ -121,8 +126,12 @@ export function UsersPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Name</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Email</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Role</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Verified</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Verified
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -143,11 +152,13 @@ export function UsersPage() {
                           </select>
                         </td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            user.isActive
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                          }`}>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              user.isActive
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            }`}
+                          >
                             {user.isActive ? 'Active' : 'Banned'}
                           </span>
                         </td>
@@ -185,7 +196,12 @@ export function UsersPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -200,10 +216,20 @@ export function UsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
             <h2 className="text-lg font-semibold">Delete User</h2>
-            <p className="mt-2 text-sm text-muted-foreground">Are you sure you want to delete this user? This action cannot be undone.</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Are you sure you want to delete this user? This action cannot be undone.
+            </p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteId)} loading={deleteMutation.isPending}>Delete</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteMutation.mutate(deleteId)}
+                loading={deleteMutation.isPending}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>

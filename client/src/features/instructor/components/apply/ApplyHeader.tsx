@@ -25,8 +25,8 @@ export function ApplyHeader() {
         </h1>
 
         <p className="mx-auto mt-4 max-w-2xl text-body-lg text-muted-foreground text-balance">
-          Share your expertise with learners worldwide. Build your audience, earn from every
-          sale, and grow with a platform built for educators.
+          Share your expertise with learners worldwide. Build your audience, earn from every sale, and grow with a
+          platform built for educators.
         </p>
 
         <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">

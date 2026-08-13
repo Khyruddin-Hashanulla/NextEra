@@ -15,7 +15,7 @@ describe('Tabs', () => {
         </TabsList>
         <TabsContent value="account">Account settings</TabsContent>
         <TabsContent value="password">Password settings</TabsContent>
-      </Tabs>,
+      </Tabs>
     );
     return { onValueChange };
   }
@@ -59,7 +59,7 @@ describe('Tabs', () => {
         </TabsList>
         <TabsContent value="account">Account settings</TabsContent>
         <TabsContent value="password">Password settings</TabsContent>
-      </Tabs>,
+      </Tabs>
     );
     expect(screen.getByText('Password settings')).toBeInTheDocument();
   });
@@ -71,7 +71,7 @@ describe('Tabs', () => {
           <TabsTrigger value="a">A</TabsTrigger>
         </TabsList>
         <TabsContent value="a">A content</TabsContent>
-      </Tabs>,
+      </Tabs>
     );
     expect(container.querySelector('.custom-list')).toBeInTheDocument();
   });

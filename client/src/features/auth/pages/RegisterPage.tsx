@@ -6,7 +6,11 @@ import { SEO } from '@/components/seo/SEO';
 export function RegisterPage() {
   return (
     <PageTransition>
-      <SEO title="Create Account" description="Create your NextEra account and start learning web development and programming." robots="noindex,nofollow" />
+      <SEO
+        title="Create Account"
+        description="Create your NextEra account and start learning web development and programming."
+        robots="noindex,nofollow"
+      />
       <AuthLayout>
         <RegisterForm />
       </AuthLayout>

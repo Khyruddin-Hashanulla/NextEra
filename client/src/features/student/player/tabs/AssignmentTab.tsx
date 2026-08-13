@@ -36,7 +36,8 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
   const canSubmit = detail?.canSubmit;
 
   const submitMutation = useMutation({
-    mutationFn: () => studentApi.submitAssignment({ courseId, lectureId, content, files: files.length ? files : undefined }),
+    mutationFn: () =>
+      studentApi.submitAssignment({ courseId, lectureId, content, files: files.length ? files : undefined }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'assignment', lectureId] });
       queryClient.invalidateQueries({ queryKey: ['student', 'assignments', 'overview'] });
@@ -74,7 +75,9 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
               </p>
             )}
             {submission.passFail && (
-              <p className={`text-sm font-medium ${submission.passFail === 'pass' ? 'text-success' : 'text-destructive'}`}>
+              <p
+                className={`text-sm font-medium ${submission.passFail === 'pass' ? 'text-success' : 'text-destructive'}`}
+              >
                 {submission.passFail === 'pass' ? 'Passed' : 'Failed'}
               </p>
             )}
@@ -93,7 +96,9 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
                     <span className="truncate text-sm">{f.name}</span>
                   </div>
                   <a href={f.url} target="_blank" rel="noopener noreferrer" download>
-                    <Button variant="ghost" size="sm"><Download className="h-3 w-3" /></Button>
+                    <Button variant="ghost" size="sm">
+                      <Download className="h-3 w-3" />
+                    </Button>
                   </a>
                 </div>
               ))}
@@ -142,13 +147,21 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
 
       <Card>
         <CardContent className="space-y-3 pt-4">
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Write your assignment answer..." rows={6} />
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Write your assignment answer..."
+            rows={6}
+          />
           <FileUpload
             accept=".pdf,.doc,.docx,.zip,.rar,.txt,.md,.c,.cpp,.js,.jsx,.ts,.tsx,.py,.java,.jpeg,.jpg,.png,.webp"
             maxSize={25 * 1024 * 1024}
             label="Upload assignment files (max 5)"
             value={pendingFile}
-            onChange={(f) => { setPendingFile(f); if (f) handleUpload(f); }}
+            onChange={(f) => {
+              setPendingFile(f);
+              if (f) handleUpload(f);
+            }}
             disabled={uploading || files.length >= 5}
           />
           {uploading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
@@ -160,12 +173,20 @@ export function AssignmentTab({ courseId, lectureId }: AssignmentTabProps) {
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="truncate text-sm">{f.name}</span>
                   </div>
-                  <button onClick={() => setFiles((prev) => prev.filter((x) => x.publicId !== f.publicId))} className="text-xs text-destructive hover:underline">Remove</button>
+                  <button
+                    onClick={() => setFiles((prev) => prev.filter((x) => x.publicId !== f.publicId))}
+                    className="text-xs text-destructive hover:underline"
+                  >
+                    Remove
+                  </button>
                 </div>
               ))}
             </div>
           )}
-          <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || (!content.trim() && files.length === 0)}>
+          <Button
+            onClick={() => submitMutation.mutate()}
+            disabled={submitMutation.isPending || (!content.trim() && files.length === 0)}
+          >
             {submitMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
             Submit Assignment
           </Button>

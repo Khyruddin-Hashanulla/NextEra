@@ -57,10 +57,7 @@ describe('config/csrf', () => {
   });
 
   it('rejects a POST with a mismatched CSRF token', async () => {
-    const res = await request(app)
-      .post('/test')
-      .set('Cookie', ['csrf-token=token-a'])
-      .set('X-CSRF-Token', 'token-b');
+    const res = await request(app).post('/test').set('Cookie', ['csrf-token=token-a']).set('X-CSRF-Token', 'token-b');
 
     expect(res.status).toBe(403);
     expect(res.body.code).toBe('CSRF_TOKEN_INVALID');

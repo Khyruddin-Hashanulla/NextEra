@@ -59,7 +59,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   getAssignmentsOverview.mockReset();
   getAssignmentsOverview.mockResolvedValue({ data: { data: overviewData } });
-  useQueryMock.mockImplementation(({ queryFn }: any) => ({
+  useQueryMock.mockImplementation(({ _queryFn }: any) => ({
     data: overviewData,
     isLoading: false,
   }));

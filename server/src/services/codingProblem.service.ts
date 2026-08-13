@@ -77,10 +77,7 @@ export const listProblems = async (options: ListProblemsOptions) => {
   if (options.course) query.course = new mongoose.Types.ObjectId(options.course);
   if (options.search) {
     const escaped = escapeRegex(options.search);
-    query.$or = [
-      { title: { $regex: escaped, $options: 'i' } },
-      { tags: { $regex: escaped, $options: 'i' } },
-    ];
+    query.$or = [{ title: { $regex: escaped, $options: 'i' } }, { tags: { $regex: escaped, $options: 'i' } }];
   }
 
   let sortOption: Record<string, any> = { createdAt: -1 };
@@ -121,7 +118,13 @@ export const listInstructorProblems = async (userId: string, page: number, limit
   };
 };
 
-export const submitCode = async (problemId: string, userId: string, code: string, language: string, isPractice: boolean) => {
+export const submitCode = async (
+  problemId: string,
+  userId: string,
+  code: string,
+  language: string,
+  isPractice: boolean
+) => {
   const problem = await CodingProblem.findById(problemId);
   if (!problem) throw ApiError.notFound('Problem not found');
   if (!problem.isPublished) throw ApiError.forbidden('Problem is not published');
@@ -254,21 +257,31 @@ interface SimulatedResult {
   memoryUsed: number;
 }
 
-function simulateExecution(code: string, language: string, input: string, timeLimitMs: number): SimulatedResult {
+function simulateExecution(code: string, language: string, input: string, _timeLimitMs: number): SimulatedResult {
   const languageHandlers: Record<string, (code: string, input: string) => string> = {
     javascript: (c, inp) => {
-      const args = inp.trim().split('\n').map(l => {
-        const trimmed = l.trim();
-        if (trimmed === 'true') return true;
-        if (trimmed === 'false') return false;
-        if (trimmed === 'null') return null;
-        if (trimmed === 'undefined') return undefined;
-        if (!isNaN(Number(trimmed)) && trimmed !== '') return Number(trimmed);
-        if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
-          try { return JSON.parse(trimmed); } catch { return trimmed; }
-        }
-        return trimmed;
-      });
+      const args = inp
+        .trim()
+        .split('\n')
+        .map((l) => {
+          const trimmed = l.trim();
+          if (trimmed === 'true') return true;
+          if (trimmed === 'false') return false;
+          if (trimmed === 'null') return null;
+          if (trimmed === 'undefined') return undefined;
+          if (!isNaN(Number(trimmed)) && trimmed !== '') return Number(trimmed);
+          if (
+            (trimmed.startsWith('[') && trimmed.endsWith(']')) ||
+            (trimmed.startsWith('{') && trimmed.endsWith('}'))
+          ) {
+            try {
+              return JSON.parse(trimmed);
+            } catch {
+              return trimmed;
+            }
+          }
+          return trimmed;
+        });
       try {
         const fn = new Function('input', ...args.map((_, i) => `arg${i}`), c);
         const result = fn(input, ...args);

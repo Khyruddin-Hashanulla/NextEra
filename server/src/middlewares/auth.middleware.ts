@@ -61,11 +61,7 @@ export const authenticate = async (req: Request, _res: Response, next: NextFunct
  * responses for signed-in users — most importantly to detect whether the
  * current user is enrolled so `isEnrolled` is set correctly.
  */
-export const optionalAuthenticate = async (
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): Promise<void> => {
+export const optionalAuthenticate = async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

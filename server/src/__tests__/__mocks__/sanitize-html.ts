@@ -9,7 +9,7 @@ interface ISanitizeOptions {
 }
 
 function sanitizeHtml(input: string, options: ISanitizeOptions = {}): string {
-  const { allowedTags = [], allowedAttributes = {}, disallowedTagsMode = 'discard' } = options;
+  const { allowedTags = [], allowedAttributes = {}, disallowedTagsMode: _disallowedTagsMode = 'discard' } = options;
 
   // Strip script tags and their content
   let result = input.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');

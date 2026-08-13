@@ -22,13 +22,7 @@ export function formatCompactCount(value: number): string {
   return `${value}`;
 }
 
-export function AnimatedNumber({
-  value,
-  suffix = '',
-  prefix = '',
-  duration = 1400,
-  className,
-}: AnimatedNumberProps) {
+export function AnimatedNumber({ value, suffix = '', prefix = '', duration = 1400, className }: AnimatedNumberProps) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: '-40px' });
   const [display, setDisplay] = useState(0);

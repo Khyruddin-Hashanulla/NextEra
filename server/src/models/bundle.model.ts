@@ -46,7 +46,10 @@ const bundleSchema = new Schema<IBundle>(
 
 bundleSchema.pre('save', function (next) {
   if (this.isModified('title')) {
-    this.slug = this.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    this.slug = this.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
   }
   next();
 });

@@ -1,7 +1,4 @@
-import {
-  createReminderSchema,
-  updateReminderSchema,
-} from '../../../src/validators/studyReminder.validator';
+import { createReminderSchema, updateReminderSchema } from '../../../src/validators/studyReminder.validator';
 
 describe('studyReminder.validator', () => {
   it('validates reminder creation', () => {

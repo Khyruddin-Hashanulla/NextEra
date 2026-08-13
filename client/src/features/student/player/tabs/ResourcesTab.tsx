@@ -57,7 +57,9 @@ export function ResourcesTab({ courseId, lectureId, lecture }: ResourcesTabProps
                   <p className="text-xs text-muted-foreground capitalize">{resource.type || 'Unknown'}</p>
                 </div>
                 <a href={resource.url} target="_blank" rel="noopener noreferrer" download>
-                  <Button variant="outline" size="sm"><Download className="mr-1 h-3 w-3" /> Download</Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="mr-1 h-3 w-3" /> Download
+                  </Button>
                 </a>
               </div>
             ))}
@@ -69,7 +71,9 @@ export function ResourcesTab({ courseId, lectureId, lecture }: ResourcesTabProps
         <Card>
           <CardContent className="space-y-2 pt-4">
             <p className="text-sm font-medium">Useful Links</p>
-            <p className="text-xs text-muted-foreground">Extra reading and helpful resources shared by the instructor.</p>
+            <p className="text-xs text-muted-foreground">
+              Extra reading and helpful resources shared by the instructor.
+            </p>
             {links.map((link) => (
               <a
                 key={link.id || link.url}

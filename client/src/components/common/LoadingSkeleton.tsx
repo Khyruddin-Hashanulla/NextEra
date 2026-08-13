@@ -1,24 +1,33 @@
-import { cn } from '@/lib/utils';
 import { Skeleton, SkeletonCard, SkeletonList, SkeletonText, SkeletonTable } from '@/components/ui/skeleton';
 
 export { SkeletonTable, SkeletonList, SkeletonText, SkeletonCard, Skeleton };
 export { DashboardSkeleton, AnalyticsSkeleton } from '@/components/skeletons/DashboardSkeleton';
 export { CourseDetailSkeleton, CoursePlayerSkeleton } from '@/components/skeletons/CourseDetailSkeleton';
 export { BlogDetailSkeleton, CodingProblemSkeleton } from '@/components/skeletons/BlogDetailSkeleton';
-export { FormSkeleton, ProfileSkeleton, SettingsSkeleton, EditCourseSkeleton } from '@/components/skeletons/FormSkeleton';
-export { CertificateSkeleton, CertificateVerifySkeleton, SubscriptionsSkeleton } from '@/components/skeletons/CertificateSkeleton';
-export { ListSkeleton, TableSkeleton, CardGridSkeleton, NotificationListSkeleton } from '@/components/skeletons/ListSkeleton';
+export {
+  FormSkeleton,
+  ProfileSkeleton,
+  SettingsSkeleton,
+  EditCourseSkeleton,
+} from '@/components/skeletons/FormSkeleton';
+export {
+  CertificateSkeleton,
+  CertificateVerifySkeleton,
+  SubscriptionsSkeleton,
+} from '@/components/skeletons/CertificateSkeleton';
+export {
+  ListSkeleton,
+  TableSkeleton,
+  CardGridSkeleton,
+  NotificationListSkeleton,
+} from '@/components/skeletons/ListSkeleton';
 
 export function CourseCardSkeleton() {
-  return (
-    <SkeletonCard className="overflow-hidden" />
-  );
+  return <SkeletonCard className="overflow-hidden" />;
 }
 
 export function BlogCardSkeleton() {
-  return (
-    <SkeletonCard className="overflow-hidden" />
-  );
+  return <SkeletonCard className="overflow-hidden" />;
 }
 
 export function InstructorCardSkeleton() {

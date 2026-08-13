@@ -1,10 +1,7 @@
 import { doubleCsrf } from 'csrf-csrf';
 import { env } from './env';
 
-export const {
-  generateCsrfToken,
-  doubleCsrfProtection,
-} = doubleCsrf({
+export const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => env.csrfSecret,
   getSessionIdentifier: () => 'nextera-lms-csrf',
   cookieName: 'csrf-token',

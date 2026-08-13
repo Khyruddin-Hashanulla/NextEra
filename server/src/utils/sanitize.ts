@@ -2,12 +2,36 @@ import sanitizeHtml from 'sanitize-html';
 import { Request, Response, NextFunction } from 'express';
 
 const RICH_TEXT_ALLOWED_TAGS = [
-  'b', 'strong', 'i', 'em', 'u', 's',
-  'ul', 'ol', 'li',
-  'a', 'p', 'code', 'pre', 'br',
-  'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'blockquote', 'hr', 'sub', 'sup',
-  'table', 'thead', 'tbody', 'tr', 'th', 'td',
+  'b',
+  'strong',
+  'i',
+  'em',
+  'u',
+  's',
+  'ul',
+  'ol',
+  'li',
+  'a',
+  'p',
+  'code',
+  'pre',
+  'br',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'blockquote',
+  'hr',
+  'sub',
+  'sup',
+  'table',
+  'thead',
+  'tbody',
+  'tr',
+  'th',
+  'td',
   'span',
 ];
 
@@ -64,7 +88,7 @@ function walkAndSanitize(value: unknown, richTextFields: Set<string>, parentKey 
     return sanitizeString(value, isRich);
   }
   if (Array.isArray(value)) {
-    return value.map((item, index) => walkAndSanitize(item, richTextFields, parentKey));
+    return value.map((item, _index) => walkAndSanitize(item, richTextFields, parentKey));
   }
   if (isObject(value)) {
     const result: Record<string, unknown> = {};
@@ -82,10 +106,24 @@ export function sanitizeObject<T>(obj: T, richTextFieldNames: string[] = []): T 
 }
 
 const RICH_TEXT_FIELDS = [
-  'content', 'articleContent', 'description', 'body', 'answer',
-  'message', 'agenda', 'notes', 'welcomeMessage', 'congratulationMessage',
-  'adminNote', 'reason', 'reply', 'instructions', 'explanation',
-  'solutionApproach', 'instructorSolution', 'feedback',
+  'content',
+  'articleContent',
+  'description',
+  'body',
+  'answer',
+  'message',
+  'agenda',
+  'notes',
+  'welcomeMessage',
+  'congratulationMessage',
+  'adminNote',
+  'reason',
+  'reply',
+  'instructions',
+  'explanation',
+  'solutionApproach',
+  'instructorSolution',
+  'feedback',
 ];
 
 export function sanitizeRequestBody(req: Request, _res: Response, next: NextFunction): void {

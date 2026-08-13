@@ -38,12 +38,33 @@ describe('instructor.validator', () => {
       },
     };
     expect(applySchema.parse(valid).email).toBe('jane@example.com');
-    expect(() => applySchema.parse({ fullName: 'J', email: 'bad', phone: '1', address: 'a', qualification: 'q', experience: 'e', teachingCategories: [] })).toThrow();
+    expect(() =>
+      applySchema.parse({
+        fullName: 'J',
+        email: 'bad',
+        phone: '1',
+        address: 'a',
+        qualification: 'q',
+        experience: 'e',
+        teachingCategories: [],
+      })
+    ).toThrow();
   });
 
   it('validates instructor coupons', () => {
-    expect(createCouponSchema.parse({ code: 'save20', discountType: 'fixed', discountValue: 20, expiresAt: 'd', course: 'c', isActive: true }).code).toBe('SAVE20');
-    expect(() => createCouponSchema.parse({ code: 'x', discountType: 'percentage', discountValue: 0, expiresAt: '' })).toThrow();
+    expect(
+      createCouponSchema.parse({
+        code: 'save20',
+        discountType: 'fixed',
+        discountValue: 20,
+        expiresAt: 'd',
+        course: 'c',
+        isActive: true,
+      }).code
+    ).toBe('SAVE20');
+    expect(() =>
+      createCouponSchema.parse({ code: 'x', discountType: 'percentage', discountValue: 0, expiresAt: '' })
+    ).toThrow();
     expect(updateCouponSchema.parse({ discountValue: 15, isActive: false }).discountValue).toBe(15);
   });
 
@@ -51,7 +72,7 @@ describe('instructor.validator', () => {
     expect(replyToReviewSchema.parse({ reply: 'thanks' }).reply).toBe('thanks');
     expect(() => replyToReviewSchema.parse({ reply: '' })).toThrow();
     const valid = {
-      course: 'c1',
+      course: '6a6c5515bf5829ee772c2ce1',
       title: 'Reminder',
       message: 'Class tomorrow',
       attachments: [{ url: 'u', publicId: 'p', name: 'n' }],
@@ -59,6 +80,7 @@ describe('instructor.validator', () => {
     };
     expect(createAnnouncementSchema.parse(valid).title).toBe('Reminder');
     expect(() => createAnnouncementSchema.parse({ course: '', title: '', message: '' })).toThrow();
+    expect(() => createAnnouncementSchema.parse({ course: 'not-an-objectid', title: 't', message: 'm' })).toThrow();
   });
 
   it('validates instructor profile updates', () => {
@@ -77,7 +99,14 @@ describe('instructor.validator', () => {
         identityProof: { url: 'u', publicId: 'p' },
         demoVideo: { url: 'u', publicId: 'p' },
         taxDetails: { pan: 'p', gst: 'g' },
-        bankDetails: { accountHolderName: 'n', accountNumber: '1', ifscCode: 'i', bankName: 'b', branch: 'br', upiId: 'u' },
+        bankDetails: {
+          accountHolderName: 'n',
+          accountNumber: '1',
+          ifscCode: 'i',
+          bankName: 'b',
+          branch: 'br',
+          upiId: 'u',
+        },
         teachingCategories: ['web'],
       },
     };

@@ -36,8 +36,27 @@ describe('StudentService.listInstructors', () => {
   it('returns only active, non-deleted instructors with course stats', async () => {
     mockedUserFind.mockReturnValue(
       chainable([
-        { _id: instructorId, name: 'Priya Sharma', email: 'priya@example.com', avatar: { url: '/a.png', publicId: 'a' }, bio: 'Bio', instructorProfile: { qualification: 'MSc', experience: '8+ years of teaching experience', expertise: ['React'], teachingCategories: [] } },
-        { _id: instructorId2, name: 'Ghost Instructor', email: 'ghost@example.com', avatar: { url: '', publicId: '' }, bio: '', instructorProfile: {} },
+        {
+          _id: instructorId,
+          name: 'Priya Sharma',
+          email: 'priya@example.com',
+          avatar: { url: '/a.png', publicId: 'a' },
+          bio: 'Bio',
+          instructorProfile: {
+            qualification: 'MSc',
+            experience: '8+ years of teaching experience',
+            expertise: ['React'],
+            teachingCategories: [],
+          },
+        },
+        {
+          _id: instructorId2,
+          name: 'Ghost Instructor',
+          email: 'ghost@example.com',
+          avatar: { url: '', publicId: '' },
+          bio: '',
+          instructorProfile: {},
+        },
       ])
     );
     mockedCourseAggregate.mockResolvedValue([

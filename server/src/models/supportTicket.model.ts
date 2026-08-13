@@ -21,20 +21,18 @@ export interface ISupportTicket extends Document {
   updatedAt: Date;
 }
 
-const ticketMessageSchema = new Schema<ITicketMessage>(
-  {
-    sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    message: { type: String, required: true, maxlength: 5000 },
-    attachments: [
-      {
-        url: { type: String, maxlength: 500 },
-        publicId: { type: String, maxlength: 200 },
-        name: { type: String, maxlength: 200 },
-      },
-    ],
-    createdAt: { type: Date, default: Date.now },
-  }
-);
+const ticketMessageSchema = new Schema<ITicketMessage>({
+  sender: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  message: { type: String, required: true, maxlength: 5000 },
+  attachments: [
+    {
+      url: { type: String, maxlength: 500 },
+      publicId: { type: String, maxlength: 200 },
+      name: { type: String, maxlength: 200 },
+    },
+  ],
+  createdAt: { type: Date, default: Date.now },
+});
 
 const supportTicketSchema = new Schema<ISupportTicket>(
   {

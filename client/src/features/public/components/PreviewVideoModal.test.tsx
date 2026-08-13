@@ -18,13 +18,25 @@ describe('PreviewVideoModal', () => {
       <PreviewVideoModal
         open
         onOpenChange={vi.fn()}
-        lecture={lecture({ videoSource: { source: 'youtube', videoId: 'dQw4w9WgXcQ', url: '', thumbnailUrl: '', provider: '', qualities: [], playbackRate: 1 } })}
+        lecture={lecture({
+          videoSource: {
+            source: 'youtube',
+            videoId: 'dQw4w9WgXcQ',
+            url: '',
+            thumbnailUrl: '',
+            provider: '',
+            qualities: [],
+            playbackRate: 1,
+          },
+        })}
       />
     );
 
     const iframe = document.querySelector('iframe');
     expect(iframe).not.toBeNull();
-    expect(iframe!.getAttribute('src')).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1');
+    expect(iframe!.getAttribute('src')).toBe(
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1'
+    );
     expect(iframe!.getAttribute('allowFullScreen')).not.toBeNull();
   });
 
@@ -34,7 +46,15 @@ describe('PreviewVideoModal', () => {
         open
         onOpenChange={vi.fn()}
         lecture={lecture({
-          videoSource: { source: 'bunny', videoId: 'b1', url: 'https://cdn.example.com/stream/index.m3u8', provider: 'bunny', thumbnailUrl: '', qualities: [], playbackRate: 1 },
+          videoSource: {
+            source: 'bunny',
+            videoId: 'b1',
+            url: 'https://cdn.example.com/stream/index.m3u8',
+            provider: 'bunny',
+            thumbnailUrl: '',
+            qualities: [],
+            playbackRate: 1,
+          },
           videoUrl: { url: '', publicId: '' },
         })}
       />
@@ -68,7 +88,10 @@ describe('PreviewVideoModal', () => {
       <PreviewVideoModal
         open
         onOpenChange={vi.fn()}
-        lecture={lecture({ videoSource: { source: 'none', url: '', thumbnailUrl: '', qualities: [], playbackRate: 1 }, videoUrl: { url: '', publicId: '' } })}
+        lecture={lecture({
+          videoSource: { source: 'none', url: '', thumbnailUrl: '', qualities: [], playbackRate: 1 },
+          videoUrl: { url: '', publicId: '' },
+        })}
       />
     );
 

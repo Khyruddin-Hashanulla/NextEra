@@ -98,15 +98,10 @@ describe('student payment controllers', () => {
 
       await verifyPayment(req, res as never, mockNext());
 
-      expect(mockedStudentService.verifyPayment).toHaveBeenCalledWith(
-        userId,
-        'order_test_1',
-        'pay_1',
-        'sig',
-      );
+      expect(mockedStudentService.verifyPayment).toHaveBeenCalledWith(userId, 'order_test_1', 'pay_1', 'sig');
       expect(res.status).toHaveBeenCalledWith(HTTP_STATUS.OK);
       expect(res.json.mock.calls[0][0]).toEqual(
-        expect.objectContaining({ success: true, message: 'Payment verified', data: result }),
+        expect.objectContaining({ success: true, message: 'Payment verified', data: result })
       );
     });
   });
@@ -183,10 +178,7 @@ describe('student payment controllers', () => {
 
       expect(mockedStudentService.generateInvoice).toHaveBeenCalledWith('p1', userId);
       expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/html');
-      expect(res.setHeader).toHaveBeenCalledWith(
-        'Content-Disposition',
-        'attachment; filename="invoice-p1.html"',
-      );
+      expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="invoice-p1.html"');
       expect(res.status).toHaveBeenCalledWith(HTTP_STATUS.OK);
       expect(res.send).toHaveBeenCalledWith('<html>invoice</html>');
     });
@@ -220,12 +212,7 @@ describe('student payment controllers', () => {
 
       await verifyBundlePayment(req, res as never, mockNext());
 
-      expect(mockedStudentService.verifyBundlePayment).toHaveBeenCalledWith(
-        userId,
-        'order_b',
-        'pay_2',
-        'sig',
-      );
+      expect(mockedStudentService.verifyBundlePayment).toHaveBeenCalledWith(userId, 'order_b', 'pay_2', 'sig');
       expect(res.json.mock.calls[0][0].message).toBe('Bundle payment verified');
     });
   });
@@ -258,12 +245,7 @@ describe('student payment controllers', () => {
 
       await verifySubscriptionPayment(req, res as never, mockNext());
 
-      expect(mockedStudentService.verifySubscriptionPayment).toHaveBeenCalledWith(
-        userId,
-        'order_s',
-        'pay_3',
-        'sig',
-      );
+      expect(mockedStudentService.verifySubscriptionPayment).toHaveBeenCalledWith(userId, 'order_s', 'pay_3', 'sig');
       expect(res.json.mock.calls[0][0].message).toBe('Subscription payment verified');
     });
   });

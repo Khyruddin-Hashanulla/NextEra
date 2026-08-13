@@ -27,9 +27,7 @@ export const RatingStars = memo(function RatingStars({ value, size = 16, classNa
             strokeWidth={1.5}
             className={cn(
               'shrink-0',
-              remainder >= 0.5
-                ? 'fill-amber-400 text-amber-400'
-                : 'fill-transparent text-muted-foreground/30'
+              remainder >= 0.5 ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-muted-foreground/30'
             )}
             aria-hidden="true"
           />

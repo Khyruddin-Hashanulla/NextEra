@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { instructorApi } from '@/api/endpoints/instructor';
-import { AdminHeader } from '@/features/admin/components/AdminHeader';
 import { DataTable } from '@/features/admin/components/DataTable';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,21 +42,45 @@ export function CertificatesPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="h-4 w-4" />Issue Certificate</Button>
+            <Button>
+              <Plus className="h-4 w-4" />
+              Issue Certificate
+            </Button>
           </DialogTrigger>
           <DialogContent>
-            <DialogHeader><DialogTitle>Issue Certificate</DialogTitle></DialogHeader>
+            <DialogHeader>
+              <DialogTitle>Issue Certificate</DialogTitle>
+            </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Student ID</Label>
-                <Input value={form.user} onChange={(e) => setForm({ ...form, user: e.target.value })} placeholder="User ID" />
+                <Input
+                  value={form.user}
+                  onChange={(e) => setForm({ ...form, user: e.target.value })}
+                  placeholder="User ID"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Course ID</Label>
-                <Input value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} placeholder="Course ID" />
+                <Input
+                  value={form.course}
+                  onChange={(e) => setForm({ ...form, course: e.target.value })}
+                  placeholder="Course ID"
+                />
               </div>
-              <Button className="w-full" onClick={() => issueMutation.mutate()} disabled={issueMutation.isPending || !form.user || !form.course}>
-                {issueMutation.isPending ? 'Issuing...' : <><Award className="h-4 w-4" />Issue</>}
+              <Button
+                className="w-full"
+                onClick={() => issueMutation.mutate()}
+                disabled={issueMutation.isPending || !form.user || !form.course}
+              >
+                {issueMutation.isPending ? (
+                  'Issuing...'
+                ) : (
+                  <>
+                    <Award className="h-4 w-4" />
+                    Issue
+                  </>
+                )}
               </Button>
             </div>
           </DialogContent>
@@ -71,11 +94,28 @@ export function CertificatesPage() {
           columns={[
             { key: 'user', header: 'Student', render: (item: any) => item.user?.name || item.user?.email },
             { key: 'course', header: 'Course', render: (item: any) => item.course?.title },
-            { key: 'certificateId', header: 'Certificate ID', render: (item: any) => <span className="font-mono text-xs">{item.certificateId}</span> },
-            { key: 'createdAt', header: 'Issued', render: (item: any) => new Date(item.createdAt).toLocaleDateString() },
-            { key: 'certificateUrl', header: '', render: (item: any) => item.certificateUrl ? (
-              <Button variant="ghost" size="sm" asChild><a href={item.certificateUrl} target="_blank" rel="noreferrer"><Download className="h-4 w-4" /></a></Button>
-            ) : null },
+            {
+              key: 'certificateId',
+              header: 'Certificate ID',
+              render: (item: any) => <span className="font-mono text-xs">{item.certificateId}</span>,
+            },
+            {
+              key: 'createdAt',
+              header: 'Issued',
+              render: (item: any) => new Date(item.createdAt).toLocaleDateString(),
+            },
+            {
+              key: 'certificateUrl',
+              header: '',
+              render: (item: any) =>
+                item.certificateUrl ? (
+                  <Button variant="ghost" size="sm" asChild>
+                    <a href={item.certificateUrl} target="_blank" rel="noreferrer">
+                      <Download className="h-4 w-4" />
+                    </a>
+                  </Button>
+                ) : null,
+            },
           ]}
           data={data?.certificates || []}
           pagination={{

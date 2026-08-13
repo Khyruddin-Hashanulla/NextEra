@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { studentService } from '../services/student.service';
-import { quizService } from '../services/quiz.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { HTTP_STATUS } from '../constants/httpStatus';
@@ -54,7 +53,12 @@ export const initiatePayment = asyncHandler(async (req: Request, res: Response) 
 
 export const verifyPayment = asyncHandler(async (req: Request, res: Response) => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-  const data = await studentService.verifyPayment(req.currentUser!.userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
+  const data = await studentService.verifyPayment(
+    req.currentUser!.userId,
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature
+  );
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Payment verified', data));
 });
 
@@ -62,7 +66,11 @@ export const verifyPayment = asyncHandler(async (req: Request, res: Response) =>
 export const updateProgress = asyncHandler(async (req: Request, res: Response) => {
   const { courseId } = req.params;
   const { lectureId, position, completed, duration } = req.body;
-  const data = await studentService.updateProgress(req.currentUser!.userId, courseId, lectureId, { position, completed, duration });
+  const data = await studentService.updateProgress(req.currentUser!.userId, courseId, lectureId, {
+    position,
+    completed,
+    duration,
+  });
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Progress updated', data));
 });
 
@@ -119,7 +127,12 @@ export const createDiscussion = asyncHandler(async (req: Request, res: Response)
 
 export const listDiscussions = asyncHandler(async (req: Request, res: Response) => {
   const { lectureId, page, limit } = req.query as any;
-  const data = await studentService.listDiscussions(req.params.courseId, lectureId, Number(page) || 1, Number(limit) || 20);
+  const data = await studentService.listDiscussions(
+    req.params.courseId,
+    lectureId,
+    Number(page) || 1,
+    Number(limit) || 20
+  );
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Discussions fetched', data));
 });
 
@@ -185,13 +198,7 @@ export const getAssignmentDetail = asyncHandler(async (req: Request, res: Respon
 
 export const submitAssignment = asyncHandler(async (req: Request, res: Response) => {
   const { courseId, lectureId, content, files } = req.body;
-  const data = await studentService.submitAssignment(
-    req.currentUser!.userId,
-    courseId,
-    lectureId,
-    content,
-    files
-  );
+  const data = await studentService.submitAssignment(req.currentUser!.userId, courseId, lectureId, content, files);
   res.status(HTTP_STATUS.CREATED).json(ApiResponse.success('Assignment submitted', data));
 });
 
@@ -221,7 +228,8 @@ export const getCertificateQr = asyncHandler(async (req: Request, res: Response)
 
 export const downloadCertificate = asyncHandler(async (req: Request, res: Response) => {
   const { filePath, filename, contentType } = await studentService.downloadCertificate(
-    req.currentUser!.userId, req.params.certificateId
+    req.currentUser!.userId,
+    req.params.certificateId
   );
   res.setHeader('Content-Type', contentType);
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
@@ -231,7 +239,9 @@ export const downloadCertificate = asyncHandler(async (req: Request, res: Respon
 // ─── Wishlist ─────────────────────────────────────────────────
 export const toggleWishlist = asyncHandler(async (req: Request, res: Response) => {
   const data = await studentService.toggleWishlist(req.currentUser!.userId, req.body.courseId);
-  res.status(HTTP_STATUS.OK).json(ApiResponse.success(data.wishlisted ? 'Added to wishlist' : 'Removed from wishlist', data));
+  res
+    .status(HTTP_STATUS.OK)
+    .json(ApiResponse.success(data.wishlisted ? 'Added to wishlist' : 'Removed from wishlist', data));
 });
 
 export const listWishlist = asyncHandler(async (req: Request, res: Response) => {
@@ -289,6 +299,17 @@ export const markAllNotificationsRead = asyncHandler(async (req: Request, res: R
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('All notifications marked as read', data));
 });
 
+// ─── Announcements ──────────────────────────────────────────────
+export const listAnnouncements = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit } = req.query as any;
+  const data = await studentService.listAnnouncements(
+    req.currentUser!.userId,
+    Number(page) || 1,
+    Number(limit) || 20
+  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Announcements fetched', data));
+});
+
 // ─── Bundles ───────────────────────────────────────────────────
 export const listBundles = asyncHandler(async (req: Request, res: Response) => {
   const { page, limit } = req.query as any;
@@ -309,7 +330,12 @@ export const initiateBundlePayment = asyncHandler(async (req: Request, res: Resp
 
 export const verifyBundlePayment = asyncHandler(async (req: Request, res: Response) => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-  const data = await studentService.verifyBundlePayment(req.currentUser!.userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
+  const data = await studentService.verifyBundlePayment(
+    req.currentUser!.userId,
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature
+  );
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Bundle payment verified', data));
 });
 
@@ -332,6 +358,11 @@ export const initiateSubscriptionPayment = asyncHandler(async (req: Request, res
 
 export const verifySubscriptionPayment = asyncHandler(async (req: Request, res: Response) => {
   const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
-  const data = await studentService.verifySubscriptionPayment(req.currentUser!.userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
+  const data = await studentService.verifySubscriptionPayment(
+    req.currentUser!.userId,
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature
+  );
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Subscription payment verified', data));
 });

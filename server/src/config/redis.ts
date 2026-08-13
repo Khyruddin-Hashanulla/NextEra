@@ -70,7 +70,7 @@ export async function connectRedis(): Promise<void> {
     if (clientInstance.status === 'ready') {
       ready = true;
     }
-  } catch (error) {
+  } catch (_error) {
     ready = false;
     logger.warn('Redis connection failed. Falling back to direct database queries.');
   }
@@ -80,7 +80,7 @@ export async function disconnectRedis(): Promise<void> {
   if (client && client.status !== 'end') {
     try {
       await client.quit();
-    } catch (error) {
+    } catch (_error) {
       logger.warn('Error while disconnecting Redis');
     }
   }

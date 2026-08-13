@@ -121,9 +121,7 @@ export function CoursePlayerPage() {
   }
 
   const course = detail.course!;
-  const completedLectureIds = new Set(
-    detail.enrollment?.completedLectures?.map((id) => String(id)) || []
-  );
+  const completedLectureIds = new Set(detail.enrollment?.completedLectures?.map((id) => String(id)) || []);
   const completionPercent = detail.enrollment?.completionPercentage || 0;
 
   return (
@@ -158,7 +156,11 @@ export function CoursePlayerPage() {
                 onPosition={(position) => progressMutation.mutate({ lectureId: currentLecture._id, position })}
                 onComplete={handleComplete}
               />
-              <LectureInfo lecture={currentLecture} index={currentIdx < 0 ? undefined : currentIdx} total={allLectures.length} />
+              <LectureInfo
+                lecture={currentLecture}
+                index={currentIdx < 0 ? undefined : currentIdx}
+                total={allLectures.length}
+              />
               <LectureNavigation
                 onPrevious={handlePrev}
                 onNext={handleNext}
@@ -167,7 +169,12 @@ export function CoursePlayerPage() {
                 hasNext={currentIdx < allLectures.length - 1}
               />
               <div className="pt-1">
-                <LectureTabs courseId={courseId!} lecture={currentLecture} value={activeTab} onValueChange={setActiveTab} />
+                <LectureTabs
+                  courseId={courseId!}
+                  lecture={currentLecture}
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                />
               </div>
             </>
           ) : allLectures.length === 0 ? (

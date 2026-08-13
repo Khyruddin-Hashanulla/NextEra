@@ -56,9 +56,7 @@ export function OAuthCallbackPage() {
             <>
               <Loader2 className="h-12 w-12 animate-spin text-primary" />
               <h2 className="mt-4 text-xl font-semibold tracking-tight">Completing sign in...</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Please wait while we authenticate your account
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Please wait while we authenticate your account</p>
             </>
           )}
 
@@ -68,9 +66,7 @@ export function OAuthCallbackPage() {
                 <CheckCircle2 className="h-7 w-7 text-success" />
               </div>
               <h2 className="text-xl font-semibold tracking-tight">Signed in successfully!</h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Redirecting to your dashboard...
-              </p>
+              <p className="mt-2 text-sm text-muted-foreground">Redirecting to your dashboard...</p>
             </>
           )}
 
@@ -81,10 +77,7 @@ export function OAuthCallbackPage() {
               </div>
               <h2 className="text-xl font-semibold tracking-tight">Authentication Failed</h2>
               <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-              <Link
-                to={ROUTES.LOGIN}
-                className="mt-6 font-medium text-primary transition-colors hover:text-primary/80"
-              >
+              <Link to={ROUTES.LOGIN} className="mt-6 font-medium text-primary transition-colors hover:text-primary/80">
                 Back to login
               </Link>
             </>

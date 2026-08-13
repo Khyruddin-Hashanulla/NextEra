@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose, { Model } from 'mongoose';
 import { ApiError } from '../utils/ApiError';
-import { ROLES } from '../constants/roles';
 import { Course } from '../models/course.model';
 import { Section } from '../models/section.model';
 import { Lecture } from '../models/lecture.model';

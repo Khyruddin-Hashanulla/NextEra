@@ -25,7 +25,7 @@ describe('LoginForm loading state', () => {
       <GoogleOAuthProvider clientId="test-client-id">
         <LoginForm />
       </GoogleOAuthProvider>,
-      { route: '/auth/login', mockAuth: createAuthValue() },
+      { route: '/auth/login', mockAuth: createAuthValue() }
     );
 
     const button = screen.getByRole('button', { name: 'Sign in' });

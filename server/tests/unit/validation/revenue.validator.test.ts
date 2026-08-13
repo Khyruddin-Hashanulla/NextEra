@@ -5,7 +5,7 @@ import {
   updateAffiliateSchema,
   createFeaturedPromotionSchema,
   updateFeaturedPromotionSchema,
-  purchaseInstructorSubscriptionSchema,
+  verifyInstructorSubscriptionPaymentSchema,
 } from '../../../src/validators/revenue.validator';
 
 describe('revenue.validator', () => {
@@ -38,9 +38,9 @@ describe('revenue.validator', () => {
   });
 
   it('validates subscription plan updates', () => {
-    expect(
-      updateInstructorSubscriptionPlanSchema.parse({ body: { price: 150, status: 'inactive' } }).body.price,
-    ).toBe(150);
+    expect(updateInstructorSubscriptionPlanSchema.parse({ body: { price: 150, status: 'inactive' } }).body.price).toBe(
+      150
+    );
     expect(() => updateInstructorSubscriptionPlanSchema.parse({ body: { durationDays: 0 } })).toThrow();
   });
 
@@ -62,7 +62,7 @@ describe('revenue.validator', () => {
 
   it('validates affiliate updates', () => {
     expect(updateAffiliateSchema.parse({ body: { commissionPercent: 20, status: 'inactive' } }).body.status).toBe(
-      'inactive',
+      'inactive'
     );
     expect(updateAffiliateSchema.parse({ body: { payoutDetails: { paypalEmail: '' } } }).body.payoutDetails).toEqual({
       paypalEmail: '',
@@ -83,14 +83,44 @@ describe('revenue.validator', () => {
       },
     };
     expect(createFeaturedPromotionSchema.parse(valid).body.type).toBe('course');
-    expect(() => createFeaturedPromotionSchema.parse({ body: { type: 'course', startDate: '', endDate: '', price: -1 } })).toThrow();
-    expect(
-      updateFeaturedPromotionSchema.parse({ body: { status: 'active', price: 60, position: 2 } }).body.price,
-    ).toBe(60);
+    expect(() =>
+      createFeaturedPromotionSchema.parse({ body: { type: 'course', startDate: '', endDate: '', price: -1 } })
+    ).toThrow();
+    expect(updateFeaturedPromotionSchema.parse({ body: { status: 'active', price: 60, position: 2 } }).body.price).toBe(
+      60
+    );
   });
 
-  it('validates subscription purchases', () => {
-    expect(purchaseInstructorSubscriptionSchema.parse({ body: { planId: 'p1' } }).body.planId).toBe('p1');
-    expect(() => purchaseInstructorSubscriptionSchema.parse({ body: { planId: '' } })).toThrow();
+  it('requires the full razorpay detail trio to verify an instructor plan payment', () => {
+    const valid = {
+      body: {
+        planId: 'p1',
+        razorpayOrderId: 'order_1',
+        razorpayPaymentId: 'pay_1',
+        razorpaySignature: 'sig_1',
+      },
+    };
+    expect(verifyInstructorSubscriptionPaymentSchema.parse(valid).body.razorpayOrderId).toBe('order_1');
+    const parsed = verifyInstructorSubscriptionPaymentSchema.parse(valid).body;
+    expect(parsed.razorpayPaymentId).toBe('pay_1');
+    expect(parsed.razorpaySignature).toBe('sig_1');
+  });
+
+  it('rejects verification without razorpay payment details', () => {
+    // A legacy Mongo paymentId alone must NOT be accepted (previously a
+    // privilege-escalation vector).
+    expect(() =>
+      verifyInstructorSubscriptionPaymentSchema.parse({ body: { planId: 'p1', paymentId: 'any-payment-id' } })
+    ).toThrow();
+    expect(() =>
+      verifyInstructorSubscriptionPaymentSchema.parse({
+        body: { planId: 'p1', razorpayOrderId: 'order_1' },
+      })
+    ).toThrow();
+    expect(() =>
+      verifyInstructorSubscriptionPaymentSchema.parse({
+        body: { planId: '', razorpayOrderId: 'order_1', razorpayPaymentId: 'pay_1', razorpaySignature: 's' },
+      })
+    ).toThrow();
   });
 });

@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentApi } from '@/api/endpoints/student';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -110,9 +109,7 @@ export function NotificationsPage() {
               variants={item}
               className={cn(
                 'flex items-start gap-3 rounded-xl border p-4 transition-all',
-                !n.isRead
-                  ? 'border-primary/20 bg-gradient-to-r from-primary/5 to-transparent'
-                  : 'bg-card'
+                !n.isRead ? 'border-primary/20 bg-gradient-to-r from-primary/5 to-transparent' : 'bg-card'
               )}
             >
               <div
@@ -126,19 +123,8 @@ export function NotificationsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p
-                      className={cn(
-                        'text-sm',
-                        !n.isRead ? 'font-semibold' : 'text-foreground'
-                      )}
-                    >
-                      {n.title}
-                    </p>
-                    {n.message && (
-                      <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">
-                        {n.message}
-                      </p>
-                    )}
+                    <p className={cn('text-sm', !n.isRead ? 'font-semibold' : 'text-foreground')}>{n.title}</p>
+                    {n.message && <p className="mt-0.5 text-sm text-muted-foreground line-clamp-2">{n.message}</p>}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     {n.link && (
@@ -160,9 +146,7 @@ export function NotificationsPage() {
                     )}
                   </div>
                 </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {new Date(n.createdAt).toLocaleString()}
-                </p>
+                <p className="mt-1 text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleString()}</p>
               </div>
             </motion.div>
           ))}

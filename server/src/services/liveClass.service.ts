@@ -5,12 +5,12 @@ import { LiveClassRecording, COMPLETED_RECORDING_STATUSES, RECORDING_STATUS } fr
 import { WebhookEvent } from '../models/webhookEvent.model';
 import { Enrollment } from '../models/enrollment.model';
 import { Course } from '../models/course.model';
-import { User } from '../models/user.model';
 import { ApiError } from '../utils/ApiError';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { escapeRegex } from '../utils/escapeRegex';
 import { subscriptionPermissionService } from './subscriptionPermission.service';
+import { entitlementService } from './entitlement.service';
 
 export class LiveClassService {
   private async getZoomAccessToken(): Promise<string | null> {
@@ -49,8 +49,13 @@ export class LiveClassService {
   }
 
   private async createZoomMeeting(data: {
-    topic: string; agenda: string; startTime: Date; duration: number;
-    timezone: string; settings: any; password?: string;
+    topic: string;
+    agenda: string;
+    startTime: Date;
+    duration: number;
+    timezone: string;
+    settings: any;
+    password?: string;
   }): Promise<{ meetingId: string; password: string; joinLink: string; startLink: string } | null> {
     const token = await this.getZoomAccessToken();
     if (!token) {
@@ -111,10 +116,17 @@ export class LiveClassService {
     }
   }
 
-  private async updateZoomMeeting(meetingId: string, data: {
-    topic?: string; agenda?: string; startTime?: Date; duration?: number;
-    timezone?: string; settings?: any;
-  }): Promise<boolean> {
+  private async updateZoomMeeting(
+    meetingId: string,
+    data: {
+      topic?: string;
+      agenda?: string;
+      startTime?: Date;
+      duration?: number;
+      timezone?: string;
+      settings?: any;
+    }
+  ): Promise<boolean> {
     const token = await this.getZoomAccessToken();
     if (!token) return false;
 
@@ -176,10 +188,9 @@ export class LiveClassService {
     if (!token) return [];
 
     try {
-      const response = await fetch(
-        `https://api.zoom.us/v2/meetings/${meetingId}/recordings`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await fetch(`https://api.zoom.us/v2/meetings/${meetingId}/recordings`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!response.ok) return [];
 
@@ -265,12 +276,24 @@ export class LiveClassService {
   }
 
   // ─── Create Live Class ─────────────────────────────────────
-  async create(instructorId: string, data: {
-    course: string; title: string; description?: string; topic?: string; agenda?: string;
-    startTime: string; duration: number; timezone?: string;
-    meetingProvider?: string; settings?: any; notifyStudents?: boolean; password?: string;
-    recording?: { autoRecord: boolean };
-  }) {
+  async create(
+    instructorId: string,
+    data: {
+      course: string;
+      title: string;
+      description?: string;
+      topic?: string;
+      agenda?: string;
+      startTime: string;
+      duration: number;
+      timezone?: string;
+      meetingProvider?: string;
+      settings?: any;
+      notifyStudents?: boolean;
+      password?: string;
+      recording?: { autoRecord: boolean };
+    }
+  ) {
     const course = await Course.findById(data.course);
     if (!course) throw ApiError.notFound('Course not found');
     if (course.instructor.toString() !== instructorId) {
@@ -279,12 +302,33 @@ export class LiveClassService {
 
     await subscriptionPermissionService.requireLiveClassPermission(instructorId);
 
+    const { used, limit } = await entitlementService.getMonthlyLiveClassUsage(instructorId);
+    if (limit > 0 && used >= limit) {
+      throw ApiError.forbidden(
+        `You have reached the monthly limit of ${limit} live classes on your plan. Upgrade your instructor plan to host more live classes.`,
+        'LIVE_CLASS_MONTHLY_LIMIT_REACHED'
+      );
+    }
+
+    const maxDuration = entitlementService.getInstructorLimit(
+      await entitlementService.getEntitlementView(instructorId),
+      'liveClass.maxDurationMinutes'
+    );
+    if (maxDuration > 0 && data.duration > maxDuration) {
+      throw ApiError.forbidden(
+        `Your plan allows a maximum of ${maxDuration} minutes per live class. Upgrade your plan to host longer classes.`,
+        'LIVE_CLASS_DURATION_LIMIT_EXCEEDED'
+      );
+    }
+
     const startTime = new Date(data.startTime);
     const endTime = new Date(startTime.getTime() + data.duration * 60000);
 
     let meetingData = {
-      meetingId: '', password: data.password || this.generateMeetingPassword(),
-      joinLink: '', startLink: '',
+      meetingId: '',
+      password: data.password || this.generateMeetingPassword(),
+      joinLink: '',
+      startLink: '',
     };
 
     if (data.meetingProvider === 'zoom' || !data.meetingProvider) {
@@ -339,11 +383,22 @@ export class LiveClassService {
   }
 
   // ─── Update Live Class ─────────────────────────────────────
-  async update(id: string, instructorId: string, data: {
-    title?: string; description?: string; topic?: string; agenda?: string;
-    startTime?: string; duration?: number; timezone?: string;
-    settings?: any; password?: string; recording?: { autoRecord: boolean };
-  }) {
+  async update(
+    id: string,
+    instructorId: string,
+    data: {
+      title?: string;
+      description?: string;
+      topic?: string;
+      agenda?: string;
+      startTime?: string;
+      duration?: number;
+      timezone?: string;
+      settings?: any;
+      password?: string;
+      recording?: { autoRecord: boolean };
+    }
+  ) {
     const liveClass = await LiveClass.findById(id);
     if (!liveClass) throw ApiError.notFound('Live class not found');
     if (liveClass.instructor.toString() !== instructorId) {
@@ -351,6 +406,19 @@ export class LiveClassService {
     }
     if (liveClass.status === 'ended' || liveClass.status === 'cancelled') {
       throw ApiError.badRequest('Cannot update an ended or cancelled class');
+    }
+
+    if (data.duration) {
+      const maxDuration = entitlementService.getInstructorLimit(
+        await entitlementService.getEntitlementView(instructorId),
+        'liveClass.maxDurationMinutes'
+      );
+      if (maxDuration > 0 && data.duration > maxDuration) {
+        throw ApiError.forbidden(
+          `Your plan allows a maximum of ${maxDuration} minutes per live class. Upgrade your plan to host longer classes.`,
+          'LIVE_CLASS_DURATION_LIMIT_EXCEEDED'
+        );
+      }
     }
 
     const updateData: any = {};
@@ -380,14 +448,18 @@ export class LiveClassService {
       if (data.settings.waitingRoom !== undefined) updateData['settings.waitingRoom'] = data.settings.waitingRoom;
       if (data.settings.qa !== undefined) updateData['settings.qa'] = data.settings.qa;
       if (data.settings.chat !== undefined) updateData['settings.chat'] = data.settings.chat;
-      if (data.settings.allowRecording !== undefined) updateData['settings.allowRecording'] = data.settings.allowRecording;
+      if (data.settings.allowRecording !== undefined)
+        updateData['settings.allowRecording'] = data.settings.allowRecording;
     }
 
     if (liveClass.zoomMeetingId && meetingDataAvailable()) {
       await this.updateZoomMeeting(liveClass.zoomMeetingId, {
-        topic: data.title, agenda: data.agenda,
-        startTime: updateData.startTime, duration: data.duration,
-        timezone: data.timezone, settings: data.settings,
+        topic: data.title,
+        agenda: data.agenda,
+        startTime: updateData.startTime,
+        duration: data.duration,
+        timezone: data.timezone,
+        settings: data.settings,
       });
     }
 
@@ -497,9 +569,7 @@ export class LiveClassService {
     const enrollment = await Enrollment.findOne({ user: userId, course: liveClass.course });
     if (!enrollment) throw ApiError.forbidden('You are not enrolled in this course');
 
-    const alreadyJoined = liveClass.participants.find(
-      (p) => p.user.toString() === userId
-    );
+    const alreadyJoined = liveClass.participants.find((p) => p.user.toString() === userId);
 
     if (!alreadyJoined) {
       liveClass.participants.push({ user: userId as any, joinedAt: new Date() });
@@ -521,16 +591,12 @@ export class LiveClassService {
     const liveClass = await LiveClass.findById(id);
     if (!liveClass) throw ApiError.notFound('Live class not found');
 
-    const participant = liveClass.participants.find(
-      (p) => p.user.toString() === userId
-    );
+    const participant = liveClass.participants.find((p) => p.user.toString() === userId);
 
     if (participant) {
       participant.leftAt = new Date();
       if (participant.joinedAt) {
-        participant.duration = Math.round(
-          (participant.leftAt.getTime() - participant.joinedAt.getTime()) / 1000
-        );
+        participant.duration = Math.round((participant.leftAt.getTime() - participant.joinedAt.getTime()) / 1000);
       }
       await liveClass.save();
     }
@@ -560,9 +626,15 @@ export class LiveClassService {
   }
 
   async addRecording(data: {
-    liveClass: string; course: string; instructor: string;
-    title: string; url: string; password?: string; duration?: number;
-    format?: string; thumbnailUrl?: string;
+    liveClass: string;
+    course: string;
+    instructor: string;
+    title: string;
+    url: string;
+    password?: string;
+    duration?: number;
+    format?: string;
+    thumbnailUrl?: string;
   }) {
     return LiveClassRecording.create({
       liveClass: data.liveClass,
@@ -629,21 +701,15 @@ export class LiveClassService {
   // ─── Notify Enrolled Students ──────────────────────────────
   async notifyEnrolledStudents(liveClassId: string) {
     try {
-      const liveClass = await LiveClass.findById(liveClassId)
-        .populate('course', 'title')
-        .lean();
+      const liveClass = await LiveClass.findById(liveClassId).populate('course', 'title').lean();
       if (!liveClass) return;
 
-      const enrollments = await Enrollment.find({ course: liveClass.course })
-        .populate('user', 'email name')
-        .lean();
+      const enrollments = await Enrollment.find({ course: liveClass.course }).populate('user', 'email name').lean();
 
       for (const enrollment of enrollments) {
         const student = enrollment.user as any;
         if (student?.email) {
-          logger.info(
-            `[LiveClass] Notification sent to ${student.email} for class "${liveClass.title}"`
-          );
+          logger.info(`[LiveClass] Notification sent to ${student.email} for class "${liveClass.title}"`);
         }
       }
     } catch (error) {
@@ -675,12 +741,9 @@ export class LiveClassService {
       eventType === 'recording.ready' ||
       eventType === 'recording.completed' ||
       eventType === 'recording.file.completed';
-    const isRecordingDeleted =
-      eventType === 'recording.deleted' || eventType === 'recording.trashed';
+    const isRecordingDeleted = eventType === 'recording.deleted' || eventType === 'recording.trashed';
     const isRecordingTransition =
-      eventType === 'recording.paused' ||
-      eventType === 'recording.resumed' ||
-      eventType === 'recording.started';
+      eventType === 'recording.paused' || eventType === 'recording.resumed' || eventType === 'recording.started';
 
     if (!isRecordingReady && !isRecordingDeleted && !isRecordingTransition) {
       logger.info('Zoom webhook ignored', { event: eventType, eventId });
@@ -727,9 +790,7 @@ export class LiveClassService {
       }
 
       if (isRecordingDeleted) {
-        const fileIds = (object?.recording_files || [])
-          .map((file: any) => file.id)
-          .filter(Boolean);
+        const fileIds = (object?.recording_files || []).map((file: any) => file.id).filter(Boolean);
         const result = await LiveClassRecording.updateMany(
           { $or: [{ zoomRecordingId: { $in: fileIds } }, { meetingId: { $in: [...candidateMeetingIds] } }] },
           { status: RECORDING_STATUS.DELETED },
@@ -762,10 +823,9 @@ export class LiveClassService {
     const token = await this.getZoomAccessToken();
     if (!token) throw ApiError.badRequest('Zoom integration is not configured');
 
-    const response = await fetch(
-      `https://api.zoom.us/v2/meetings/${liveClass.zoomMeetingId}/recordings`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+    const response = await fetch(`https://api.zoom.us/v2/meetings/${liveClass.zoomMeetingId}/recordings`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
     if (!response.ok) {
       logger.error('Zoom recordings sync failed', {
         status: response.status,
@@ -859,9 +919,7 @@ export class LiveClassService {
     if (!recording) throw ApiError.notFound('Recording not found');
     if (ownerId) {
       const instructorId =
-        (recording.instructor as any)?._id?.toString?.() ??
-        (recording.instructor as any)?.toString?.() ??
-        '';
+        (recording.instructor as any)?._id?.toString?.() ?? (recording.instructor as any)?.toString?.() ?? '';
       if (instructorId !== ownerId) {
         throw ApiError.forbidden('You do not own this recording');
       }

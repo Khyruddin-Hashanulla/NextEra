@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { ROLES } from '../constants/roles';
 import { ApiError } from '../utils/ApiError';
 
 jest.mock('../models/course.model');
@@ -160,7 +159,7 @@ describe('Course State Machine', () => {
       mockModels.Course.findById.mockResolvedValue(course);
 
       const { courseService } = await import('../services/course.service');
-      const result = await courseService.approve(COURSE_ID);
+      await courseService.approve(COURSE_ID);
 
       expect(course.status).toBe('approved');
       expect(course.lastActivity).toBeInstanceOf(Date);
@@ -201,7 +200,7 @@ describe('Course State Machine', () => {
       mockModels.Course.findById.mockResolvedValue(course);
 
       const { courseService } = await import('../services/course.service');
-      const result = await courseService.reject(COURSE_ID, 'Incomplete content');
+      await courseService.reject(COURSE_ID, 'Incomplete content');
 
       expect(course.status).toBe('rejected');
       expect(course.rejectionReason).toBe('Incomplete content');

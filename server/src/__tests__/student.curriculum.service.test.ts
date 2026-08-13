@@ -43,9 +43,42 @@ const sections = [
 ];
 
 const lectures = [
-  { _id: 'l1', section: s1, course: courseId, title: 'Intro', type: 'video', duration: 5, order: 1, isFree: true, videoSource: { source: 'youtube', videoId: 'x' }, videoUrl: { url: 'x', publicId: '' } },
-  { _id: 'l2', section: s1, course: courseId, title: 'Components', type: 'video', duration: 12, order: 2, isFree: false, videoSource: { source: 'youtube', videoId: 'y' }, videoUrl: { url: 'y', publicId: '' } },
-  { _id: 'l3', section: s2, course: courseId, title: 'Props', type: 'video', duration: 8, order: 1, isFree: false, videoSource: { source: 'youtube', videoId: 'z' }, videoUrl: { url: 'z', publicId: '' } },
+  {
+    _id: 'l1',
+    section: s1,
+    course: courseId,
+    title: 'Intro',
+    type: 'video',
+    duration: 5,
+    order: 1,
+    isFree: true,
+    videoSource: { source: 'youtube', videoId: 'x' },
+    videoUrl: { url: 'x', publicId: '' },
+  },
+  {
+    _id: 'l2',
+    section: s1,
+    course: courseId,
+    title: 'Components',
+    type: 'video',
+    duration: 12,
+    order: 2,
+    isFree: false,
+    videoSource: { source: 'youtube', videoId: 'y' },
+    videoUrl: { url: 'y', publicId: '' },
+  },
+  {
+    _id: 'l3',
+    section: s2,
+    course: courseId,
+    title: 'Props',
+    type: 'video',
+    duration: 8,
+    order: 1,
+    isFree: false,
+    videoSource: { source: 'youtube', videoId: 'z' },
+    videoUrl: { url: 'z', publicId: '' },
+  },
 ];
 
 function mockCourseQuery(courseDoc: any) {
@@ -63,8 +96,12 @@ describe('StudentService.getCourseWithCurriculum (curriculum visibility)', () =>
 
   it('returns EVERY lecture for a non-enrolled viewer, but exposes playback content only on free lectures', async () => {
     mockCourseFindById.mockReturnValue(mockCourseQuery({ _id: courseId, title: 'C', status: 'published' }));
-    mockSectionFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(sections) }) });
-    mockLectureFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(lectures) }) });
+    mockSectionFind.mockReturnValue({
+      sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(sections) }),
+    });
+    mockLectureFind.mockReturnValue({
+      sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(lectures) }),
+    });
     mockEnrollmentFindOne.mockReturnValue({ lean: jest.fn().mockResolvedValue(null) });
 
     const result = await studentService.getCourseWithCurriculum(courseId);
@@ -95,14 +132,25 @@ describe('StudentService.getCourseWithCurriculum (curriculum visibility)', () =>
   it('returns full lectures and answer-safe quiz data for an enrolled student', async () => {
     const enrolledLectures = [
       {
-        _id: 'l2', section: s1, course: courseId, title: 'Components', type: 'video',
-        duration: 12, order: 2, isFree: false, videoSource: { source: 'youtube', videoId: 'y' },
+        _id: 'l2',
+        section: s1,
+        course: courseId,
+        title: 'Components',
+        type: 'video',
+        duration: 12,
+        order: 2,
+        isFree: false,
+        videoSource: { source: 'youtube', videoId: 'y' },
         quiz: { questions: [{ question: 'q', correctAnswer: 'A' }] },
       },
     ];
     mockCourseFindById.mockReturnValue(mockCourseQuery({ id: courseId, title: 'C', status: 'published' }));
-    mockSectionFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([sections[0]]) }) });
-    mockLectureFind.mockReturnValue({ sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(enrolledLectures) }) });
+    mockSectionFind.mockReturnValue({
+      sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([sections[0]]) }),
+    });
+    mockLectureFind.mockReturnValue({
+      sort: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(enrolledLectures) }),
+    });
     mockEnrollmentFindOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: 'e1' }) });
 
     const result = await studentService.getCourseWithCurriculum(courseId, 'u1');

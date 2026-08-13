@@ -17,11 +17,13 @@ const announcementSchema = new Schema<IAnnouncement>(
     instructor: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, trim: true, maxlength: 200 },
     message: { type: String, required: true, maxlength: 5000 },
-    attachments: [{
-      url: { type: String, maxlength: 500 },
-      publicId: { type: String, maxlength: 200 },
-      name: { type: String, maxlength: 200 },
-    }],
+    attachments: [
+      {
+        url: { type: String, maxlength: 500 },
+        publicId: { type: String, maxlength: 200 },
+        name: { type: String, maxlength: 200 },
+      },
+    ],
     sendEmail: { type: Boolean, default: false },
   },
   { timestamps: true }

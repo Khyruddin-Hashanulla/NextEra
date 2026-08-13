@@ -65,7 +65,10 @@ export function LectureResourcesPanel({
             if (r) {
               onChange({
                 ...value,
-                resources: [...resources, { url: r.url, publicId: r.publicId, name: r.name || 'Resource', type: 'file', size: 0 }],
+                resources: [
+                  ...resources,
+                  { url: r.url, publicId: r.publicId, name: r.name || 'Resource', type: 'file', size: 0 },
+                ],
               });
             }
           }}
@@ -77,9 +80,16 @@ export function LectureResourcesPanel({
               <div key={i} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{r.name}</p>
-                  <a href={r.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">View file</a>
+                  <a href={r.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                    View file
+                  </a>
                 </div>
-                <button type="button" onClick={() => removeResource(i)} className="rounded p-1 text-destructive hover:bg-muted" aria-label={`Remove ${r.name}`}>
+                <button
+                  type="button"
+                  onClick={() => removeResource(i)}
+                  className="rounded p-1 text-destructive hover:bg-muted"
+                  aria-label={`Remove ${r.name}`}
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
@@ -99,8 +109,18 @@ export function LectureResourcesPanel({
         {links.map((l) => (
           <div key={l.id} className="flex items-center gap-2">
             <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <Input value={l.label} onChange={(e) => updateLink(l.id, { label: e.target.value })} placeholder="Label" className="flex-1" />
-            <Input value={l.url} onChange={(e) => updateLink(l.id, { url: e.target.value })} placeholder="https://…" className="flex-1" />
+            <Input
+              value={l.label}
+              onChange={(e) => updateLink(l.id, { label: e.target.value })}
+              placeholder="Label"
+              className="flex-1"
+            />
+            <Input
+              value={l.url}
+              onChange={(e) => updateLink(l.id, { url: e.target.value })}
+              placeholder="https://…"
+              className="flex-1"
+            />
             <Button variant="ghost" size="sm" onClick={() => removeLink(l.id)}>
               <Trash2 className="h-4 w-4 text-destructive" />
             </Button>
@@ -109,7 +129,9 @@ export function LectureResourcesPanel({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="lecture-notes" className="text-sm font-medium">Notes for students</label>
+        <label htmlFor="lecture-notes" className="text-sm font-medium">
+          Notes for students
+        </label>
         <Textarea
           id="lecture-notes"
           value={value.notes || ''}

@@ -22,8 +22,7 @@ export const quizApi = {
   getStudentAnalytics: (lectureId: string, signal?: AbortSignal) =>
     axiosInstance.get<{ data: any }>(`/quiz/analytics/${lectureId}`, { signal }),
 
-  getStudentOverview: (signal?: AbortSignal) =>
-    axiosInstance.get<{ data: any }>('/quiz/overview', { signal }),
+  getStudentOverview: (signal?: AbortSignal) => axiosInstance.get<{ data: any }>('/quiz/overview', { signal }),
 
   getLeaderboard: (lectureId: string, params?: { limit?: number }, signal?: AbortSignal) =>
     axiosInstance.get<{ data: any }>(`/quiz/leaderboard/${lectureId}`, { params, signal }),

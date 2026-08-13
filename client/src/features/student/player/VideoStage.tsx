@@ -15,13 +15,19 @@ function UnavailableVideo({ lecture }: { lecture: PlayerLecture }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/10">
-        {hasVideoMeta ? <Loader2 className="h-7 w-7 animate-spin text-white/80" /> : <PlayCircle className="h-7 w-7 text-white/80" />}
+        {hasVideoMeta ? (
+          <Loader2 className="h-7 w-7 animate-spin text-white/80" />
+        ) : (
+          <PlayCircle className="h-7 w-7 text-white/80" />
+        )}
       </div>
       <p className="text-sm font-medium text-white">
         {hasVideoMeta ? 'Loading video…' : 'This lecture has no published video yet.'}
       </p>
       {!hasVideoMeta && (
-        <p className="max-w-sm text-sm text-white/60">The instructor hasn't uploaded video content for this lecture. Check back soon.</p>
+        <p className="max-w-sm text-sm text-white/60">
+          The instructor hasn't uploaded video content for this lecture. Check back soon.
+        </p>
       )}
     </div>
   );
@@ -39,7 +45,10 @@ function ArticleStage({ lecture }: { lecture: PlayerLecture }) {
   }
   return (
     <div className="rounded-xl border bg-card ring-1 ring-border">
-      <div className="lecture-article-content px-5 py-6 sm:px-8 sm:py-8" dangerouslySetInnerHTML={{ __html: lecture.articleContent }} />
+      <div
+        className="lecture-article-content px-5 py-6 sm:px-8 sm:py-8"
+        dangerouslySetInnerHTML={{ __html: lecture.articleContent }}
+      />
     </div>
   );
 }
@@ -93,8 +102,12 @@ function QuizOverlay({ lecture }: { lecture: PlayerLecture }) {
       <div className="text-center text-white">
         <FileQuestion className="mx-auto h-12 w-12 text-white/70" aria-hidden="true" />
         <p className="mt-3 text-lg font-semibold">{questionCount} Question Quiz</p>
-        {lecture.quiz?.timeLimit ? <p className="mt-1 text-sm text-white/70">{lecture.quiz?.timeLimit} minute time limit</p> : null}
-        {lecture.quiz?.passingScore ? <p className="mt-1 text-sm text-white/70">Pass mark: {lecture.quiz?.passingScore}%</p> : null}
+        {lecture.quiz?.timeLimit ? (
+          <p className="mt-1 text-sm text-white/70">{lecture.quiz?.timeLimit} minute time limit</p>
+        ) : null}
+        {lecture.quiz?.passingScore ? (
+          <p className="mt-1 text-sm text-white/70">Pass mark: {lecture.quiz?.passingScore}%</p>
+        ) : null}
         <p className="mt-3 text-sm text-white/60">Complete the quiz below to finish this lecture.</p>
       </div>
     </div>

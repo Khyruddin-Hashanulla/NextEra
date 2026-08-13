@@ -2,7 +2,7 @@ import { PlatformSettings } from '../models/platformSettings.model';
 
 export class PlatformSettingsService {
   async getPlatformSettings() {
-    let settings = await PlatformSettings.findOne().lean();
+    const settings = await PlatformSettings.findOne().lean();
     if (!settings) {
       const created = await PlatformSettings.create({});
       return created.toObject();
@@ -35,7 +35,10 @@ export class PlatformSettingsService {
     return settings.supportEmail;
   }
 
-  calculateCommission(amount: number, commissionPercent: number): { commissionPercent: number; commissionAmount: number; instructorShare: number } {
+  calculateCommission(
+    amount: number,
+    commissionPercent: number
+  ): { commissionPercent: number; commissionAmount: number; instructorShare: number } {
     const commissionAmount = Math.round((amount * commissionPercent) / 100);
     const instructorShare = amount - commissionAmount;
     return { commissionPercent, commissionAmount, instructorShare };

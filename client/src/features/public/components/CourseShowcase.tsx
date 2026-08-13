@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ROUTES } from '@/lib/constants';
 import { CourseCard } from '@/components/course/CourseCard';
 import { CourseGridSkeleton } from '@/components/common/LoadingSkeleton';
 
@@ -19,8 +18,14 @@ interface CourseShowcaseProps {
 }
 
 export function CourseShowcase({
-  courses, title, subtitle, viewAllHref, viewAllLabel = 'View All',
-  limit, isLoading, className,
+  courses,
+  title,
+  subtitle,
+  viewAllHref,
+  viewAllLabel = 'View All',
+  limit,
+  isLoading,
+  className,
 }: CourseShowcaseProps) {
   const displayCourses = limit ? courses.slice(0, limit) : courses;
 
@@ -33,7 +38,10 @@ export function CourseShowcase({
             {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
           </div>
           {viewAllHref && (
-            <Link to={viewAllHref} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline whitespace-nowrap">
+            <Link
+              to={viewAllHref}
+              className="flex items-center gap-1 text-sm font-medium text-primary hover:underline whitespace-nowrap"
+            >
               {viewAllLabel} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}

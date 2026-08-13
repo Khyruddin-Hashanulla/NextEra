@@ -1,11 +1,23 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  ExternalLink, Download, CheckCircle2, XCircle, GraduationCap, Link2,
-  FileText, CreditCard, MapPin, Phone, Mail, Video, ShieldCheck, Landmark, UserRound,
+  ExternalLink,
+  Download,
+  CheckCircle2,
+  XCircle,
+  GraduationCap,
+  Link2,
+  FileText,
+  CreditCard,
+  MapPin,
+  Phone,
+  Mail,
+  Video,
+  ShieldCheck,
+  Landmark,
+  UserRound,
 } from 'lucide-react';
 import { adminApi } from '@/api/endpoints/admin';
-import { InstructorApplication } from '@/types/admin';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -14,7 +26,11 @@ import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { useToast } from '@/providers/ToastProvider';
@@ -28,8 +44,7 @@ interface Props {
 type Decision = 'approve' | 'reject' | null;
 
 const formatDate = (value?: string) => (value ? new Date(value).toLocaleDateString() : '—');
-const maskAccountNumber = (value?: string) =>
-  value ? `•••• ${value.slice(-4)}` : '—';
+const maskAccountNumber = (value?: string) => (value ? `•••• ${value.slice(-4)}` : '—');
 
 function DetailRow({ label, value }: { label: string; value?: React.ReactNode }) {
   return (
@@ -59,7 +74,10 @@ function FileLink({ url, label }: { url?: string; label: string }) {
 }
 
 function Section({
-  title, icon: Icon, children, className,
+  title,
+  icon: Icon,
+  children,
+  className,
 }: {
   title: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -84,10 +102,15 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
   const [note, setNote] = useState('');
   const [reason, setReason] = useState('');
 
-  const { data: application, isLoading, isError, error, refetch } = useQuery({
+  const {
+    data: application,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['admin', 'instructors', 'detail', applicationId],
-    queryFn: ({ signal }) =>
-      adminApi.getInstructorApplicationDetail(applicationId!, signal).then((r) => r.data.data),
+    queryFn: ({ signal }) => adminApi.getInstructorApplicationDetail(applicationId!, signal).then((r) => r.data.data),
     enabled: !!applicationId,
     retry: 1,
   });
@@ -162,12 +185,29 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
                 <div className="min-w-0 flex-1">
                   <h2 className="truncate text-lg font-semibold">{application.fullName}</h2>
                   <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                    <span className="inline-flex items-center gap-1"><Mail className="h-3.5 w-3.5" />{application.email}</span>
-                    <span className="inline-flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{application.phone}</span>
-                    <span className="inline-flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{application.address}</span>
+                    <span className="inline-flex items-center gap-1">
+                      <Mail className="h-3.5 w-3.5" />
+                      {application.email}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <Phone className="h-3.5 w-3.5" />
+                      {application.phone}
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin className="h-3.5 w-3.5" />
+                      {application.address}
+                    </span>
                   </div>
                 </div>
-                <Badge variant={application.status === 'approved' ? 'success' : application.status === 'rejected' ? 'destructive' : 'warning'}>
+                <Badge
+                  variant={
+                    application.status === 'approved'
+                      ? 'success'
+                      : application.status === 'rejected'
+                        ? 'destructive'
+                        : 'warning'
+                  }
+                >
                   {application.status}
                 </Badge>
               </div>
@@ -191,7 +231,9 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
                 {application.teachingCategories?.length ? (
                   <div className="flex flex-wrap gap-2">
                     {application.teachingCategories.map((cat) => (
-                      <Badge key={cat} variant="secondary">{cat}</Badge>
+                      <Badge key={cat} variant="secondary">
+                        {cat}
+                      </Badge>
                     ))}
                   </div>
                 ) : (
@@ -218,7 +260,9 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
                     <FileLink url={application.resume?.url} label="Resume" />
                   </div>
                   <div>
-                    <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">Identity proof</p>
+                    <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Identity proof
+                    </p>
                     <FileLink url={application.identityProof?.url} label="Identity proof" />
                   </div>
                   <div>
@@ -232,10 +276,66 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
 
               <Section title="Links" icon={Link2}>
                 <dl className="grid gap-4 sm:grid-cols-2">
-                  <DetailRow label="LinkedIn" value={application.linkedin ? <a className="text-primary underline" href={application.linkedin} target="_blank" rel="noreferrer">{application.linkedin}</a> : undefined} />
-                  <DetailRow label="GitHub" value={application.github ? <a className="text-primary underline" href={application.github} target="_blank" rel="noreferrer">{application.github}</a> : undefined} />
-                  <DetailRow label="Portfolio" value={application.portfolio ? <a className="text-primary underline" href={application.portfolio} target="_blank" rel="noreferrer">{application.portfolio}</a> : undefined} />
-                  <DetailRow label="Website" value={application.website ? <a className="text-primary underline" href={application.website} target="_blank" rel="noreferrer">{application.website}</a> : undefined} />
+                  <DetailRow
+                    label="LinkedIn"
+                    value={
+                      application.linkedin ? (
+                        <a
+                          className="text-primary underline"
+                          href={application.linkedin}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {application.linkedin}
+                        </a>
+                      ) : undefined
+                    }
+                  />
+                  <DetailRow
+                    label="GitHub"
+                    value={
+                      application.github ? (
+                        <a
+                          className="text-primary underline"
+                          href={application.github}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {application.github}
+                        </a>
+                      ) : undefined
+                    }
+                  />
+                  <DetailRow
+                    label="Portfolio"
+                    value={
+                      application.portfolio ? (
+                        <a
+                          className="text-primary underline"
+                          href={application.portfolio}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {application.portfolio}
+                        </a>
+                      ) : undefined
+                    }
+                  />
+                  <DetailRow
+                    label="Website"
+                    value={
+                      application.website ? (
+                        <a
+                          className="text-primary underline"
+                          href={application.website}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {application.website}
+                        </a>
+                      ) : undefined
+                    }
+                  />
                 </dl>
               </Section>
 
@@ -249,7 +349,10 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
                     </p>
                     <dl className="space-y-2 text-sm">
                       <DetailRow label="Account holder" value={application.bankDetails?.accountHolderName} />
-                      <DetailRow label="Account number" value={maskAccountNumber(application.bankDetails?.accountNumber)} />
+                      <DetailRow
+                        label="Account number"
+                        value={maskAccountNumber(application.bankDetails?.accountNumber)}
+                      />
                       <DetailRow label="IFSC" value={application.bankDetails?.ifscCode} />
                       <DetailRow label="Bank" value={application.bankDetails?.bankName} />
                       <DetailRow label="Branch" value={application.bankDetails?.branch} />
@@ -309,65 +412,69 @@ export function InstructorApplicationReviewModal({ applicationId, onOpenChange }
               </DialogFooter>
             </div>
           )}
-        <Dialog open={decision === 'approve'} onOpenChange={(open) => !open && setDecision(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Approve application</DialogTitle>
-              <DialogDescription>
-                The applicant will be promoted to instructor and notified. Add an optional internal note.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2">
-              <Label htmlFor="approve-note">Admin note (optional)</Label>
-              <Textarea
-                id="approve-note"
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder="e.g. Verified qualification and identity documents"
-                rows={3}
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDecision(null)}>Cancel</Button>
-              <Button onClick={() => approveMutation.mutate(note.trim())} loading={approveMutation.isPending}>
-                <CheckCircle2 className="mr-1.5 h-4 w-4" /> Approve
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          <Dialog open={decision === 'approve'} onOpenChange={(open) => !open && setDecision(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Approve application</DialogTitle>
+                <DialogDescription>
+                  The applicant will be promoted to instructor and notified. Add an optional internal note.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="approve-note">Admin note (optional)</Label>
+                <Textarea
+                  id="approve-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="e.g. Verified qualification and identity documents"
+                  rows={3}
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDecision(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => approveMutation.mutate(note.trim())} loading={approveMutation.isPending}>
+                  <CheckCircle2 className="mr-1.5 h-4 w-4" /> Approve
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
 
-        <Dialog open={decision === 'reject'} onOpenChange={(open) => !open && setDecision(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Reject application</DialogTitle>
-              <DialogDescription>
-                A rejection reason is required. The applicant will be notified with this reason.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-2">
-              <Label htmlFor="reject-reason">Rejection reason</Label>
-              <Textarea
-                id="reject-reason"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="e.g. Required teaching qualification was not provided"
-                rows={3}
-              />
-              <p className="text-xs text-muted-foreground">This reason will be shared with the applicant.</p>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDecision(null)}>Cancel</Button>
-              <Button
-                variant="destructive"
-                onClick={() => rejectMutation.mutate(reason.trim())}
-                disabled={!reason.trim()}
-                loading={rejectMutation.isPending}
-              >
-                <XCircle className="mr-1.5 h-4 w-4" /> Reject
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+          <Dialog open={decision === 'reject'} onOpenChange={(open) => !open && setDecision(null)}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Reject application</DialogTitle>
+                <DialogDescription>
+                  A rejection reason is required. The applicant will be notified with this reason.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <Label htmlFor="reject-reason">Rejection reason</Label>
+                <Textarea
+                  id="reject-reason"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="e.g. Required teaching qualification was not provided"
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">This reason will be shared with the applicant.</p>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setDecision(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => rejectMutation.mutate(reason.trim())}
+                  disabled={!reason.trim()}
+                  loading={rejectMutation.isPending}
+                >
+                  <XCircle className="mr-1.5 h-4 w-4" /> Reject
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </DialogContent>
       </Dialog>
     </>

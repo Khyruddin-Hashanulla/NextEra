@@ -83,7 +83,9 @@ describe('returnForResubmissionSchema', () => {
   });
 
   it('accepts a valid ISO deadline', () => {
-    expect(returnForResubmissionSchema.safeParse({ body: { resubmissionDeadline: '2026-08-10T12:00:00.000Z' } }).success).toBe(true);
+    expect(
+      returnForResubmissionSchema.safeParse({ body: { resubmissionDeadline: '2026-08-10T12:00:00.000Z' } }).success
+    ).toBe(true);
   });
 
   it('rejects a non-ISO deadline', () => {
@@ -107,11 +109,15 @@ describe('overrideGradeSchema', () => {
 
 describe('submitAssignmentSchema', () => {
   it('accepts content only', () => {
-    expect(submitAssignmentSchema.safeParse({ body: { courseId: 'c', lectureId: 'l', content: 'Hi' } }).success).toBe(true);
+    expect(submitAssignmentSchema.safeParse({ body: { courseId: 'c', lectureId: 'l', content: 'Hi' } }).success).toBe(
+      true
+    );
   });
 
   it('accepts files only (no content)', () => {
-    expect(submitAssignmentSchema.safeParse({ body: { courseId: 'c', lectureId: 'l', files: [VALID_FILE] } }).success).toBe(true);
+    expect(
+      submitAssignmentSchema.safeParse({ body: { courseId: 'c', lectureId: 'l', files: [VALID_FILE] } }).success
+    ).toBe(true);
   });
 
   it('rejects missing courseId', () => {
@@ -123,7 +129,9 @@ describe('submitAssignmentSchema', () => {
   });
 
   it('rejects malformed file entry', () => {
-    expect(submitAssignmentSchema.safeParse({ body: { courseId: 'c', lectureId: 'l', files: [{ url: 'u' }] } }).success).toBe(false);
+    expect(
+      submitAssignmentSchema.safeParse({ body: { courseId: 'c', lectureId: 'l', files: [{ url: 'u' }] } }).success
+    ).toBe(false);
   });
 
   it('rejects more than 5 files', () => {
@@ -166,7 +174,11 @@ describe('assignmentsOverviewQuerySchema', () => {
 
 describe('submissionsListQuerySchema', () => {
   it('accepts valid filters', () => {
-    expect(submissionsListQuerySchema.safeParse({ query: { status: 'late_submission', sort: '-submittedAt', search: 'alice' } }).success).toBe(true);
+    expect(
+      submissionsListQuerySchema.safeParse({
+        query: { status: 'late_submission', sort: '-submittedAt', search: 'alice' },
+      }).success
+    ).toBe(true);
   });
 
   it('rejects invalid sort key', () => {

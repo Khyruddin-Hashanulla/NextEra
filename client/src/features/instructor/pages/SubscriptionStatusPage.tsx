@@ -26,9 +26,15 @@ export function SubscriptionStatusPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-center gap-2 text-center">
               {isActive ? (
-                <><Crown className="h-6 w-6 text-yellow-500" />Active Subscription</>
+                <>
+                  <Crown className="h-6 w-6 text-yellow-500" />
+                  Active Subscription
+                </>
               ) : (
-                <><AlertCircle className="h-6 w-6 text-yellow-500" />No Active Subscription</>
+                <>
+                  <AlertCircle className="h-6 w-6 text-yellow-500" />
+                  No Active Subscription
+                </>
               )}
             </CardTitle>
           </CardHeader>

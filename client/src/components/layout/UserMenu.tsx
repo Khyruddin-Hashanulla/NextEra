@@ -11,13 +11,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
-import {
-  getDashboardRoute,
-  getMyCoursesRoute,
-  getProfileRoute,
-  getSettingsRoute,
-  ROUTES,
-} from '@/lib/constants';
+import { getDashboardRoute, getMyCoursesRoute, getProfileRoute, getSettingsRoute, ROUTES } from '@/lib/constants';
 
 export function UserMenu() {
   const { user, logout } = useAuth();

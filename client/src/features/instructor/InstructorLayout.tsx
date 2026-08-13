@@ -1,9 +1,26 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import {
-  LayoutDashboard, BookOpen, PlusCircle, ChevronLeft, Menu, X,
-  BarChart3, Users, DollarSign, Banknote, Tag, Star, Megaphone,
-  UserCircle, Video, GraduationCap, ShieldCheck, ClipboardList, ArrowLeft,
+  LayoutDashboard,
+  BookOpen,
+  PlusCircle,
+  ChevronLeft,
+  Menu,
+  X,
+  BarChart3,
+  Users,
+  DollarSign,
+  Banknote,
+  Tag,
+  Star,
+  Megaphone,
+  UserCircle,
+  Video,
+  GraduationCap,
+  ShieldCheck,
+  ClipboardList,
+  ArrowLeft,
+  Bell,
 } from 'lucide-react';
 import { useState, useEffect, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -32,6 +49,7 @@ const navItems: NavItem[] = [
   { href: '/instructor/coupons', label: 'Coupons', icon: Tag },
   { href: '/instructor/reviews', label: 'Reviews', icon: Star },
   { href: '/instructor/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/instructor/notifications', label: 'Notifications', icon: Bell },
   { href: '/instructor/subscription', label: 'Subscription', icon: ShieldCheck },
   { href: '/instructor/profile', label: 'Profile', icon: UserCircle },
 ];
@@ -70,119 +88,123 @@ export function InstructorLayout() {
           )}
         </AnimatePresence>
 
-      <AnimatePresence>
-        {mobileOpen && (
-          <motion.aside
-            variants={sidebarVariants}
-            initial="closed"
-            animate="open"
-            exit="closed"
-            id={mobileMenuId}
-            className="fixed left-0 top-0 z-50 h-screen w-64 border-r bg-background lg:hidden"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Mobile navigation menu"
-          >
-            <MobileSidebarContent items={navItems} onClose={() => setMobileOpen(false)} />
-          </motion.aside>
-        )}
-      </AnimatePresence>
-
-      <aside
-        className={cn(
-          'hidden border-r bg-background transition-all duration-300 lg:sticky lg:top-0 lg:block lg:h-screen',
-          collapsed ? 'w-16' : 'w-60'
-        )}
-      >
-        <div className="flex h-full flex-col">
-          <div className={cn('flex items-center border-b px-4 py-3', collapsed && 'justify-center')}>
-            {!collapsed && (
-              <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Menu</span>
-            )}
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={cn(
-                'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent',
-                collapsed && 'mx-auto'
-              )}
-              aria-label={collapsed ? 'Expand' : 'Collapse'}
+        <AnimatePresence>
+          {mobileOpen && (
+            <motion.aside
+              variants={sidebarVariants}
+              initial="closed"
+              animate="open"
+              exit="closed"
+              id={mobileMenuId}
+              className="fixed left-0 top-0 z-50 h-screen w-64 border-r bg-background lg:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Mobile navigation menu"
             >
-              <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
-            </button>
-          </div>
-          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={cn(
-                    'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                    isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
-                  )}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="sidebar-active"
-                      className="absolute inset-0 rounded-lg bg-primary/10"
-                      transition={{ type: 'spring' as const, stiffness: 400, damping: 30 }}
-                    />
-                  )}
-                  <item.icon className="relative z-10 h-5 w-5 shrink-0" />
-                  {!collapsed && <span className="relative z-10">{item.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-          {!collapsed && (
-            <div className="border-t px-3 py-2">
-              <Link
-                to="/instructor/subscription"
-                className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              <MobileSidebarContent items={navItems} onClose={() => setMobileOpen(false)} />
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        <aside
+          className={cn(
+            'hidden border-r bg-background transition-all duration-300 lg:sticky lg:top-0 lg:block lg:h-screen',
+            collapsed ? 'w-16' : 'w-60'
+          )}
+        >
+          <div className="flex h-full flex-col">
+            <div className={cn('flex items-center border-b px-4 py-3', collapsed && 'justify-center')}>
+              {!collapsed && (
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Menu</span>
+              )}
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                className={cn(
+                  'flex h-7 w-7 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent',
+                  collapsed && 'mx-auto'
+                )}
+                aria-label={collapsed ? 'Expand' : 'Collapse'}
               >
-                <ShieldCheck className="h-3.5 w-3.5" />
-                <span>Subscription</span>
-                <span className="ml-auto"><SubscriptionBadge /></span>
+                <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
+              </button>
+            </div>
+            <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={cn(
+                      'relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
+                      isActive
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                    )}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="sidebar-active"
+                        className="absolute inset-0 rounded-lg bg-primary/10"
+                        transition={{ type: 'spring' as const, stiffness: 400, damping: 30 }}
+                      />
+                    )}
+                    <item.icon className="relative z-10 h-5 w-5 shrink-0" />
+                    {!collapsed && <span className="relative z-10">{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </nav>
+            {!collapsed && (
+              <div className="border-t px-3 py-2">
+                <Link
+                  to="/instructor/subscription"
+                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <span>Subscription</span>
+                  <span className="ml-auto">
+                    <SubscriptionBadge />
+                  </span>
+                </Link>
+              </div>
+            )}
+            <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
+              <Link
+                to="/"
+                className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <GraduationCap className="h-4 w-4" />
+                {!collapsed && <span>Back to site</span>}
               </Link>
             </div>
-          )}
-          <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
-            <Link
-              to="/"
-              className="flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
+              <SidebarLogoutButton collapsed={collapsed} />
+            </div>
+          </div>
+        </aside>
+
+        <div className={cn('flex flex-1 flex-col', 'lg:pl-0')}>
+          <div className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-sm lg:hidden">
+            <button
+              onClick={() => setMobileOpen(true)}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Open menu"
+              aria-expanded={mobileOpen}
+              aria-controls={mobileMenuId}
+              aria-haspopup="dialog"
             >
-              <GraduationCap className="h-4 w-4" />
-              {!collapsed && <span>Back to site</span>}
-            </Link>
+              <Menu className="h-5 w-5" aria-hidden="true" />
+            </button>
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-sm font-semibold leading-none">{activeItem?.label || 'Dashboard'}</h2>
+            </div>
           </div>
-          <div className={cn('border-t p-3', collapsed && 'flex justify-center')}>
-            <SidebarLogoutButton collapsed={collapsed} />
-          </div>
-        </div>
-      </aside>
 
-      <div className={cn('flex flex-1 flex-col', 'lg:pl-0')}>
-        <div className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-sm lg:hidden">
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="Open menu"
-            aria-expanded={mobileOpen}
-            aria-controls={mobileMenuId}
-            aria-haspopup="dialog"
-          >
-            <Menu className="h-5 w-5" aria-hidden="true" />
-          </button>
-          <div className="min-w-0 flex-1">
-            <h2 className="truncate text-sm font-semibold leading-none">{activeItem?.label || 'Dashboard'}</h2>
+          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+            <Outlet />
           </div>
         </div>
-
-        <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
-          <Outlet />
-        </div>
-      </div>
       </div>
     </PageContainer>
   );
@@ -211,7 +233,9 @@ function MobileSidebarContent({ items, onClose }: { items: NavItem[]; onClose: (
               to={item.href}
               className={cn(
                 'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                isActive
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
               <item.icon className="h-5 w-5 shrink-0" />

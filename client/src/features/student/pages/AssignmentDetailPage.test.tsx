@@ -178,7 +178,9 @@ describe('AssignmentDetailPage', () => {
         files: undefined,
       });
     });
-    expect(addToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Assignment submitted', variant: 'success' }));
+    expect(addToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Assignment submitted', variant: 'success' })
+    );
   });
 
   it('renders skeleton while loading', () => {

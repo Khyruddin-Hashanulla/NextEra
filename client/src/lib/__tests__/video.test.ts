@@ -25,7 +25,9 @@ describe('YouTube ID extraction', () => {
     ];
     for (const url of urls) {
       expect(extractYouTubeId(url)).toBe('dQw4w9WgXcQ');
-      expect(resolveYouTubeEmbedUrl(url)).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1');
+      expect(resolveYouTubeEmbedUrl(url)).toBe(
+        'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1'
+      );
     }
   });
 
@@ -40,7 +42,7 @@ describe('Thumbnail generation', () => {
   it('builds a maxresdefault thumbnail URL and allows hqdefault fallback', () => {
     expect(buildYouTubeThumbnailUrl('dQw4w9WgXcQ')).toBe('https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg');
     expect(youtubeThumbnailFallback('https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg')).toBe(
-      'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
+      'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg'
     );
   });
 });

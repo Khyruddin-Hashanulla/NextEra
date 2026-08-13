@@ -4,11 +4,7 @@ import { TokenService } from '../../../src/services/token.service';
 import { User } from '../../../src/models/user.model';
 import { Session } from '../../../src/models/session.model';
 import { RevokedToken } from '../../../src/models/revokedToken.model';
-import {
-  generateAccessToken,
-  generateOpaqueRefreshToken,
-  hashRefreshToken,
-} from '../../../src/utils/generateToken';
+import { generateAccessToken, generateOpaqueRefreshToken, hashRefreshToken } from '../../../src/utils/generateToken';
 
 vi.mock('../../../src/models/user.model', () => ({
   User: { findById: vi.fn(), findByIdAndUpdate: vi.fn() },
@@ -61,7 +57,7 @@ describe('generateTokens', () => {
         refreshTokenHash: 'hashed-1',
         userAgent: 'vitest',
         ipAddress: '127.0.0.1',
-      }),
+      })
     );
   });
 
@@ -69,9 +65,7 @@ describe('generateTokens', () => {
     vi.mocked(User.findById as never).mockResolvedValue(null);
     vi.mocked(generateOpaqueRefreshToken).mockReturnValue('refresh-1');
     await service.generateTokens('u1', 'a@b.com', 'student', deviceInfo);
-    expect(generateAccessToken).toHaveBeenCalledWith(
-      expect.objectContaining({ tokenVersion: 0 }),
-    );
+    expect(generateAccessToken).toHaveBeenCalledWith(expect.objectContaining({ tokenVersion: 0 }));
   });
 });
 
@@ -107,7 +101,7 @@ describe('refreshAccessToken', () => {
       isRevoked: false,
     });
     expect(Session.create).toHaveBeenCalledWith(
-      expect.objectContaining({ refreshTokenHash: 'hashed-2', userAgent: 'vitest' }),
+      expect.objectContaining({ refreshTokenHash: 'hashed-2', userAgent: 'vitest' })
     );
   });
 
@@ -123,10 +117,7 @@ describe('refreshAccessToken', () => {
       statusCode: 401,
       message: MESSAGES.ERROR.SESSION_EXPIRED,
     });
-    expect(Session.updateMany).toHaveBeenCalledWith(
-      expect.objectContaining({ isRevoked: false }),
-      { isRevoked: true },
-    );
+    expect(Session.updateMany).toHaveBeenCalledWith(expect.objectContaining({ isRevoked: false }), { isRevoked: true });
   });
 
   it('throws INVALID_REFRESH_TOKEN when no session exists', async () => {
@@ -165,9 +156,7 @@ describe('refreshAccessToken', () => {
 
     await service.refreshAccessToken('token', deviceInfo);
 
-    expect(generateAccessToken).toHaveBeenCalledWith(
-      expect.objectContaining({ tokenVersion: 0 }),
-    );
+    expect(generateAccessToken).toHaveBeenCalledWith(expect.objectContaining({ tokenVersion: 0 }));
   });
 });
 
@@ -180,17 +169,14 @@ describe('revokeSession / revokeAllSessions / revokeAccessToken / revokeAllAcces
     await service.revokeSession('token', 'u1');
     expect(Session.findOneAndUpdate).toHaveBeenCalledWith(
       { refreshTokenHash: 'hashed', userId: 'u1', isRevoked: false },
-      { isRevoked: true },
+      { isRevoked: true }
     );
   });
 
   it('revokes all non-revoked sessions for a user', async () => {
     vi.mocked(Session.updateMany as never).mockResolvedValue({ modifiedCount: 2 });
     await service.revokeAllSessions('u1');
-    expect(Session.updateMany).toHaveBeenCalledWith(
-      { userId: 'u1', isRevoked: false },
-      { isRevoked: true },
-    );
+    expect(Session.updateMany).toHaveBeenCalledWith({ userId: 'u1', isRevoked: false }, { isRevoked: true });
   });
 
   it('creates a RevokedToken entry for an access token', async () => {
@@ -202,11 +188,7 @@ describe('revokeSession / revokeAllSessions / revokeAccessToken / revokeAllAcces
   it('increments tokenVersion to revoke all access tokens', async () => {
     vi.mocked(User.findByIdAndUpdate as never).mockResolvedValue({ tokenVersion: 4 });
     await service.revokeAllAccessTokens('u1');
-    expect(User.findByIdAndUpdate).toHaveBeenCalledWith(
-      'u1',
-      { $inc: { tokenVersion: 1 } },
-      { new: true },
-    );
+    expect(User.findByIdAndUpdate).toHaveBeenCalledWith('u1', { $inc: { tokenVersion: 1 } }, { new: true });
   });
 
   it('still resolves when the user is missing for revokeAllAccessTokens', async () => {

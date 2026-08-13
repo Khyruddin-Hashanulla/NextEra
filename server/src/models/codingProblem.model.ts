@@ -31,12 +31,15 @@ export interface ICodingProblem extends Document {
   updatedAt: Date;
 }
 
-const testCaseSchema = new Schema<ITestCase>({
-  input: { type: String, required: true, maxlength: 5000 },
-  expectedOutput: { type: String, required: true, maxlength: 5000 },
-  isSample: { type: Boolean, default: false },
-  explanation: { type: String, maxlength: 2000 },
-}, { _id: false });
+const testCaseSchema = new Schema<ITestCase>(
+  {
+    input: { type: String, required: true, maxlength: 5000 },
+    expectedOutput: { type: String, required: true, maxlength: 5000 },
+    isSample: { type: Boolean, default: false },
+    explanation: { type: String, maxlength: 2000 },
+  },
+  { _id: false }
+);
 
 const codingProblemSchema = new Schema<ICodingProblem>(
   {
@@ -46,7 +49,14 @@ const codingProblemSchema = new Schema<ICodingProblem>(
     difficulty: { type: String, enum: ['easy', 'medium', 'hard'], required: true },
     tags: [{ type: String, trim: true, lowercase: true, maxlength: 50 }],
     categories: [{ type: String, trim: true, lowercase: true, maxlength: 50 }],
-    supportedLanguages: [{ type: String, enum: ['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust'], default: ['javascript', 'python'], maxlength: 20 }],
+    supportedLanguages: [
+      {
+        type: String,
+        enum: ['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust'],
+        default: ['javascript', 'python'],
+        maxlength: 20,
+      },
+    ],
     timeLimit: { type: Number, default: 2, min: 1, max: 60 },
     memoryLimit: { type: Number, default: 256, min: 16, max: 1024 },
     testCases: [testCaseSchema],

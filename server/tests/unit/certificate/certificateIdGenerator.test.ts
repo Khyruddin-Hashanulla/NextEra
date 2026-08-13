@@ -1,7 +1,4 @@
-import {
-  generateCertificateId,
-  CertificateCounter,
-} from '../../../src/utils/certificateIdGenerator';
+import { generateCertificateId, CertificateCounter } from '../../../src/utils/certificateIdGenerator';
 
 describe('generateCertificateId', () => {
   beforeEach(() => {
@@ -60,7 +57,7 @@ describe('generateCertificateId', () => {
     expect(spy).toHaveBeenCalledWith(
       `cert_${year}_MK`,
       { $inc: { seq: 1 } },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
     );
   });
 

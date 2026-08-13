@@ -1,7 +1,8 @@
 import { cloudinary } from '../config/cloudinary';
 import { ApiError } from '../utils/ApiError';
 import { logger } from '../utils/logger';
-import { FileCategory, UPLOAD_POLICIES } from '../config/upload';
+import { env } from '../config/env';
+import { FileCategory } from '../config/upload';
 import { validateCloudinaryResponse, validateUploadedFile, getPolicyForCategory } from '../utils/upload';
 
 export class UploadService {
@@ -16,19 +17,29 @@ export class UploadService {
     return Math.min(UploadService.MAX_UPLOAD_TIMEOUT_MS, Math.max(UploadService.MIN_UPLOAD_TIMEOUT_MS, timeout));
   }
 
+  private assertStorageConfigured(): void {
+    if (!env.cloudinaryCloudName || !env.cloudinaryApiKey || !env.cloudinaryApiSecret) {
+      logger.error('Cloudinary is not configured. Set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET.');
+      throw ApiError.internal('File upload is temporarily unavailable. Please try again later.');
+    }
+  }
+
   private translateCloudinaryError(error: unknown): ApiError {
     if (error instanceof ApiError) return error;
 
     const httpCode = (error as { http_code?: unknown })?.http_code;
     const name = (error as { name?: unknown })?.name;
-    const message = typeof (error as { message?: unknown })?.message === 'string' ? (error as { message: string }).message : '';
+    const message =
+      typeof (error as { message?: unknown })?.message === 'string' ? (error as { message: string }).message : '';
 
     if (httpCode === 400 && /file size too large/i.test(message)) {
       const sizeMatch = message.match(/Maximum is (\d+)/);
       const maxBytes = sizeMatch ? parseInt(sizeMatch[1], 10) : null;
       const maxMB = maxBytes ? Math.round(maxBytes / (1024 * 1024)) : null;
       return ApiError.badRequest(
-        maxMB ? `File is too large. The upload service supports files up to ${maxMB}MB.` : 'File is too large for the upload service.'
+        maxMB
+          ? `File is too large. The upload service supports files up to ${maxMB}MB.`
+          : 'File is too large for the upload service.'
       );
     }
 
@@ -37,7 +48,9 @@ export class UploadService {
     }
 
     if (httpCode === 499 || name === 'TimeoutError' || /request timeou?t/i.test(message)) {
-      return ApiError.internal('File upload timed out. The file may be too large or the upload service is slow. Please try again with a smaller file.');
+      return ApiError.internal(
+        'File upload timed out. The file may be too large or the upload service is slow. Please try again with a smaller file.'
+      );
     }
 
     return ApiError.internal('File upload failed');
@@ -49,7 +62,7 @@ export class UploadService {
     return this.uploadToCloudinary(file, policy.cloudinaryFolder, { resource_type: 'image' });
   }
 
-  async uploadVideo(file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
+  async uploadVideo(file: Express.Multer.File): Promise<{ url: string; publicId: string; duration?: number }> {
     const policy = getPolicyForCategory(FileCategory.VIDEO);
     validateUploadedFile(file, policy);
     return this.uploadToCloudinary(file, policy.cloudinaryFolder, { resource_type: 'video' });
@@ -79,17 +92,15 @@ export class UploadService {
     file: Express.Multer.File,
     folder: string,
     options: Record<string, any> = {}
-  ): Promise<{ url: string; publicId: string }> {
+  ): Promise<{ url: string; publicId: string; duration?: number }> {
+    this.assertStorageConfigured();
     const timeout = this.calculateUploadTimeout(file.size);
     try {
       const result = await new Promise<any>((resolve, reject) => {
-        const uploadStream = cloudinary.uploader.upload_stream(
-          { folder, ...options, timeout },
-          (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
-          }
-        );
+        const uploadStream = cloudinary.uploader.upload_stream({ folder, ...options, timeout }, (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        });
         uploadStream.end(file.buffer);
       });
       return validateCloudinaryResponse(result);
@@ -105,6 +116,25 @@ export class UploadService {
       await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
     } catch (error) {
       logger.error('Cloudinary delete failed:', error);
+    }
+  }
+
+  /**
+   * Fetches the authoritative duration (seconds) for a previously uploaded
+   * video from Cloudinary. Returns null when the asset cannot be found or the
+   * lookup fails so callers can fall back gracefully.
+   */
+  async getVideoDuration(publicId: string): Promise<number | null> {
+    if (!publicId) return null;
+    try {
+      const resource = await cloudinary.api.resource(publicId, { resource_type: 'video' });
+      if (typeof resource?.duration === 'number' && Number.isFinite(resource.duration) && resource.duration >= 0) {
+        return Math.round(resource.duration);
+      }
+      return null;
+    } catch (error) {
+      logger.error('Cloudinary duration lookup failed for publicId:', publicId, error);
+      return null;
     }
   }
 }

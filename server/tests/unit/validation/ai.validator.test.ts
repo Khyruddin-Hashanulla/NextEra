@@ -9,14 +9,19 @@ describe('ai.validator', () => {
   it('validates description generation', () => {
     const valid = { body: { title: 'Intro to AI', category: 'AI', level: 'beginner', keywords: ['ml'] } };
     expect(generateDescriptionSchema.parse(valid).body.keywords).toEqual(['ml']);
-    expect(generateDescriptionSchema.parse({ body: { title: 'x', category: 'y', level: 'z' } }).body.keywords).toEqual([]);
+    expect(generateDescriptionSchema.parse({ body: { title: 'x', category: 'y', level: 'z' } }).body.keywords).toEqual(
+      []
+    );
     expect(() => generateDescriptionSchema.parse({ body: { title: '', category: '', level: '' } })).toThrow();
   });
 
   it('validates quiz generation with defaults', () => {
     const valid = { body: { topic: 'Math', count: 10, difficulty: 'hard' } };
     expect(generateQuizSchema.parse(valid).body.count).toBe(10);
-    expect(generateQuizSchema.parse({ body: { topic: 'Math' } }).body).toMatchObject({ count: 5, difficulty: 'medium' });
+    expect(generateQuizSchema.parse({ body: { topic: 'Math' } }).body).toMatchObject({
+      count: 5,
+      difficulty: 'medium',
+    });
     expect(() => generateQuizSchema.parse({ body: { topic: 'Math', count: 21 } })).toThrow();
     expect(() => generateQuizSchema.parse({ body: { topic: '' } })).toThrow();
   });

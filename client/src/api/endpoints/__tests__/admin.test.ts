@@ -14,7 +14,7 @@ beforeAll(() => {
         return HttpResponse.arrayBuffer(new ArrayBuffer(8));
       }
       return HttpResponse.json({ data: {}, success: true });
-    }),
+    })
   );
 });
 
@@ -25,13 +25,10 @@ afterEach(() => {
 afterAll(() => server.resetHandlers());
 
 describe('adminApi endpoint sweep', () => {
-  it.each(Object.entries(adminApi))(
-    '%s dispatches a request and resolves',
-    async (_name, fn) => {
-      const before = recorded.length;
-      const result = await (fn as (...args: unknown[]) => Promise<unknown>)();
-      expect(result).toBeDefined();
-      expect(recorded.length).toBeGreaterThan(before);
-    },
-  );
+  it.each(Object.entries(adminApi))('%s dispatches a request and resolves', async (_name, fn) => {
+    const before = recorded.length;
+    const result = await (fn as (...args: unknown[]) => Promise<unknown>)();
+    expect(result).toBeDefined();
+    expect(recorded.length).toBeGreaterThan(before);
+  });
 });

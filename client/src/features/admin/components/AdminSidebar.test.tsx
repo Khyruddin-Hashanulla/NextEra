@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AdminSidebar } from '@/features/admin/components/AdminSidebar';
@@ -33,7 +33,7 @@ function renderAdminSidebar(logout: () => Promise<void> = vi.fn(async () => {}))
     {
       initialEntries: ['/admin'],
       mockAuth: createAuthValue({ user: adminUser, isAuthenticated: true, logout }),
-    },
+    }
   );
 }
 

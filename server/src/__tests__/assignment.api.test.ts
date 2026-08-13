@@ -127,7 +127,11 @@ describe('PATCH /api/v1/instructor/assignments/submissions/:id/grade', () => {
       .patch(`/api/v1/instructor/assignments/submissions/${SUBMISSION_ID}/grade`)
       .send({ grade: 85, feedback: 'Good work', publish: true });
     expect(res.status).toBe(200);
-    expect(mockAssignmentService.gradeSubmission).toHaveBeenCalledWith(INSTRUCTOR_ID, SUBMISSION_ID, expect.objectContaining({ grade: 85, publish: true }));
+    expect(mockAssignmentService.gradeSubmission).toHaveBeenCalledWith(
+      INSTRUCTOR_ID,
+      SUBMISSION_ID,
+      expect.objectContaining({ grade: 85, publish: true })
+    );
     expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'ASSIGNMENT_GRADED' }));
   });
 
@@ -217,9 +221,15 @@ describe('GET /api/v1/instructor/assignments/:lectureId/submissions', () => {
     asUser(ROLES.INSTRUCTOR);
     mockAssignmentService.getLectureSubmissions.mockResolvedValue({ submissions: [] });
     const lectureId = new mongoose.Types.ObjectId().toString();
-    const res = await request(buildApp()).get(`/api/v1/instructor/assignments/${lectureId}/submissions?status=submitted&page=1&limit=10`);
+    const res = await request(buildApp()).get(
+      `/api/v1/instructor/assignments/${lectureId}/submissions?status=submitted&page=1&limit=10`
+    );
     expect(res.status).toBe(200);
-    expect(mockAssignmentService.getLectureSubmissions).toHaveBeenCalledWith(INSTRUCTOR_ID, lectureId, expect.objectContaining({ status: 'submitted' }));
+    expect(mockAssignmentService.getLectureSubmissions).toHaveBeenCalledWith(
+      INSTRUCTOR_ID,
+      lectureId,
+      expect.objectContaining({ status: 'submitted' })
+    );
   });
 
   it('rejects invalid status filter with 400', async () => {
@@ -235,22 +245,37 @@ describe('POST /api/v1/student/assignments', () => {
     asUser(ROLES.STUDENT, STUDENT_ID);
     const courseId = new mongoose.Types.ObjectId().toString();
     const lectureId = new mongoose.Types.ObjectId().toString();
-    mockStudentService.submitAssignment.mockResolvedValue({ _id: SUBMISSION_ID, submissionVersion: 1, status: 'submitted' });
+    mockStudentService.submitAssignment.mockResolvedValue({
+      _id: SUBMISSION_ID,
+      submissionVersion: 1,
+      status: 'submitted',
+    });
     const res = await request(buildApp())
       .post('/api/v1/student/assignments')
       .send({ courseId, lectureId, content: 'My answer' });
     expect(res.status).toBe(201);
-    expect(mockStudentService.submitAssignment).toHaveBeenCalledWith(STUDENT_ID, courseId, lectureId, 'My answer', undefined);
+    expect(mockStudentService.submitAssignment).toHaveBeenCalledWith(
+      STUDENT_ID,
+      courseId,
+      lectureId,
+      'My answer',
+      undefined
+    );
     await flush();
     expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'ASSIGNMENT_SUBMITTED' }));
   });
 
   it('audits ASSIGNMENT_UPDATED on resubmission (version > 1)', async () => {
     asUser(ROLES.STUDENT, STUDENT_ID);
-    mockStudentService.submitAssignment.mockResolvedValue({ _id: SUBMISSION_ID, submissionVersion: 2, status: 'submitted' });
-    await request(buildApp())
-      .post('/api/v1/student/assignments')
-      .send({ courseId: new mongoose.Types.ObjectId().toString(), lectureId: new mongoose.Types.ObjectId().toString() });
+    mockStudentService.submitAssignment.mockResolvedValue({
+      _id: SUBMISSION_ID,
+      submissionVersion: 2,
+      status: 'submitted',
+    });
+    await request(buildApp()).post('/api/v1/student/assignments').send({
+      courseId: new mongoose.Types.ObjectId().toString(),
+      lectureId: new mongoose.Types.ObjectId().toString(),
+    });
     await flush();
     expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({ action: 'ASSIGNMENT_UPDATED' }));
   });
@@ -267,9 +292,11 @@ describe('POST /api/v1/student/assignments', () => {
   it('rejects more than 5 files with 400', async () => {
     asUser(ROLES.STUDENT, STUDENT_ID);
     const files = Array.from({ length: 6 }, (_, i) => ({ url: `u${i}`, publicId: `p${i}`, name: `f${i}` }));
-    const res = await request(buildApp())
-      .post('/api/v1/student/assignments')
-      .send({ courseId: new mongoose.Types.ObjectId().toString(), lectureId: new mongoose.Types.ObjectId().toString(), files });
+    const res = await request(buildApp()).post('/api/v1/student/assignments').send({
+      courseId: new mongoose.Types.ObjectId().toString(),
+      lectureId: new mongoose.Types.ObjectId().toString(),
+      files,
+    });
     expect(res.status).toBe(400);
   });
 });
@@ -277,7 +304,10 @@ describe('POST /api/v1/student/assignments', () => {
 describe('GET /api/v1/student/assignments/overview', () => {
   it('returns overview for enrolled student', async () => {
     asUser(ROLES.STUDENT, STUDENT_ID);
-    mockStudentService.getAssignmentsOverview.mockResolvedValue({ assignments: [], pagination: { page: 1, limit: 20, total: 0, pages: 0 } });
+    mockStudentService.getAssignmentsOverview.mockResolvedValue({
+      assignments: [],
+      pagination: { page: 1, limit: 20, total: 0, pages: 0 },
+    });
     const res = await request(buildApp()).get('/api/v1/student/assignments/overview');
     expect(res.status).toBe(200);
     expect(mockStudentService.getAssignmentsOverview).toHaveBeenCalledWith(STUDENT_ID, 1, 20, undefined, undefined);
@@ -285,7 +315,10 @@ describe('GET /api/v1/student/assignments/overview', () => {
 
   it('accepts and forwards the "overdue" status filter', async () => {
     asUser(ROLES.STUDENT, STUDENT_ID);
-    mockStudentService.getAssignmentsOverview.mockResolvedValue({ assignments: [], pagination: { page: 1, limit: 12, total: 0, pages: 0 } });
+    mockStudentService.getAssignmentsOverview.mockResolvedValue({
+      assignments: [],
+      pagination: { page: 1, limit: 12, total: 0, pages: 0 },
+    });
     const res = await request(buildApp()).get('/api/v1/student/assignments/overview?page=1&limit=12&status=overdue');
     expect(res.status).toBe(200);
     expect(mockStudentService.getAssignmentsOverview).toHaveBeenCalledWith(STUDENT_ID, 1, 12, undefined, 'overdue');

@@ -1,21 +1,15 @@
 process.env.NODE_ENV = process.env.NODE_ENV ?? 'test';
 
-process.env.MONGODB_URI =
-  process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/nextera_test';
+process.env.MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/nextera_test';
 
-process.env.JWT_ACCESS_SECRET =
-  process.env.JWT_ACCESS_SECRET ?? 'test-access-secret-0123456789';
-process.env.JWT_REFRESH_SECRET =
-  process.env.JWT_REFRESH_SECRET ?? 'test-refresh-secret-0123456789';
+process.env.JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET ?? 'test-access-secret-0123456789';
+process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET ?? 'test-refresh-secret-0123456789';
 process.env.JWT_ACCESS_EXPIRES_IN = process.env.JWT_ACCESS_EXPIRES_IN ?? '15m';
 process.env.JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRES_IN ?? '7d';
 
-process.env.CSRF_SECRET =
-  process.env.CSRF_SECRET ??
-  'test-csrf-secret-0123456789abcdef0123456789abcdef';
+process.env.CSRF_SECRET = process.env.CSRF_SECRET ?? 'test-csrf-secret-0123456789abcdef0123456789abcdef';
 
-process.env.CERTIFICATE_SECRET =
-  process.env.CERTIFICATE_SECRET ?? 'test-certificate-secret';
+process.env.CERTIFICATE_SECRET = process.env.CERTIFICATE_SECRET ?? 'test-certificate-secret';
 
 process.env.CLIENT_URL = process.env.CLIENT_URL ?? 'http://localhost:5173';
 process.env.SERVER_URL = process.env.SERVER_URL ?? 'http://localhost:5000';

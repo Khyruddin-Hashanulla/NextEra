@@ -128,7 +128,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
   html {
@@ -157,11 +157,15 @@
   }
 
   .animate-in {
-    animation: fade-in 0.3s ease-out, slide-in-from-bottom 0.3s ease-out;
+    animation:
+      fade-in 0.3s ease-out,
+      slide-in-from-bottom 0.3s ease-out;
   }
 
   .animate-out {
-    animation: fade-out 0.2s ease-in, slide-in-from-top 0.2s ease-in;
+    animation:
+      fade-out 0.2s ease-in,
+      slide-in-from-top 0.2s ease-in;
   }
 
   .scrollbar-hide {

@@ -16,7 +16,10 @@ const lectureAttachmentSchema = z.object({
   publicId: z.string().max(FIELD_SIZES.URL),
   name: z.string().max(FIELD_SIZES.TITLE),
   type: z.string().max(FIELD_SIZES.NAME).default('file'),
-  size: z.number().max(200 * 1024 * 1024).default(0),
+  size: z
+    .number()
+    .max(200 * 1024 * 1024)
+    .default(0),
 });
 
 const resourceSchema = z.object({
@@ -24,7 +27,10 @@ const resourceSchema = z.object({
   publicId: z.string().max(FIELD_SIZES.URL),
   name: z.string().max(FIELD_SIZES.TITLE),
   type: z.string().max(FIELD_SIZES.NAME).default('file'),
-  size: z.number().max(200 * 1024 * 1024).default(0),
+  size: z
+    .number()
+    .max(200 * 1024 * 1024)
+    .default(0),
 });
 
 const lectureLinkSchema = z.object({
@@ -60,7 +66,10 @@ const QUESTION_TYPES = ['single', 'multiple', 'boolean', 'fill_blank', 'matching
 const questionSchema = z
   .object({
     question: z.string().min(1).max(FIELD_SIZES.QUESTION),
-    options: z.array(z.string().min(1).max(FIELD_SIZES.SHORT_DESCRIPTION)).max(ARRAY_LIMITS.OPTIONS_PER_QUESTION).optional(),
+    options: z
+      .array(z.string().min(1).max(FIELD_SIZES.SHORT_DESCRIPTION))
+      .max(ARRAY_LIMITS.OPTIONS_PER_QUESTION)
+      .optional(),
     correctAnswer: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
     explanation: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
     marks: z.number().min(0).max(1000).optional(),
@@ -73,10 +82,18 @@ const questionSchema = z
     const type = q.type ?? 'single';
     const needsOptions = type === 'single' || type === 'multiple' || type === 'boolean';
     if (needsOptions && (!q.options || q.options.length < 2)) {
-      ctx.addIssue({ code: 'custom', path: ['options'], message: 'At least 2 options required for this question type' });
+      ctx.addIssue({
+        code: 'custom',
+        path: ['options'],
+        message: 'At least 2 options required for this question type',
+      });
     }
     if (type !== 'coding' && type !== 'essay' && !q.correctAnswer) {
-      ctx.addIssue({ code: 'custom', path: ['correctAnswer'], message: 'Correct answer is required for this question type' });
+      ctx.addIssue({
+        code: 'custom',
+        path: ['correctAnswer'],
+        message: 'Correct answer is required for this question type',
+      });
     }
   });
 
@@ -91,12 +108,18 @@ const assignmentSchema = z.object({
   penaltyPercent: z.number().min(0).max(100).optional(),
 });
 
-const sourceCodeSchema = z.object({
-  url: z.string().max(FIELD_SIZES.URL).default(''),
-  publicId: z.string().max(FIELD_SIZES.URL).default(''),
-  name: z.string().max(FIELD_SIZES.TITLE).default(''),
-  size: z.number().max(200 * 1024 * 1024).default(0),
-}).nullable().optional();
+const sourceCodeSchema = z
+  .object({
+    url: z.string().max(FIELD_SIZES.URL).default(''),
+    publicId: z.string().max(FIELD_SIZES.URL).default(''),
+    name: z.string().max(FIELD_SIZES.TITLE).default(''),
+    size: z
+      .number()
+      .max(200 * 1024 * 1024)
+      .default(0),
+  })
+  .nullable()
+  .optional();
 
 const quizSchema = z.object({
   timeLimit: z.number().min(0).max(1440).optional(),
@@ -160,10 +183,12 @@ const createLectureBaseSchema = z.object({
   slug: z.string().max(FIELD_SIZES.SLUG).optional(),
   description: z.string().max(FIELD_SIZES.DESCRIPTION).optional(),
   duration: z.number().min(0).max(86400).optional(),
-  videoUrl: z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-  }).optional(),
+  videoUrl: z
+    .object({
+      url: z.string().max(FIELD_SIZES.URL),
+      publicId: z.string().max(FIELD_SIZES.URL),
+    })
+    .optional(),
   resources: z.array(resourceSchema).max(ARRAY_LIMITS.RESOURCES_PER_LECTURE).optional(),
   links: z.array(lectureLinkSchema).max(ARRAY_LIMITS.RESOURCES_PER_LECTURE).optional(),
   attachments: z.array(lectureAttachmentSchema).max(ARRAY_LIMITS.ATTACHMENTS_PER_LECTURE).optional(),
@@ -230,17 +255,39 @@ export const updateLectureSchema = z.union([
 ]);
 
 export const reorderSectionsSchema = z.object({
-  sectionOrder: z.array(z.object({
-    sectionId: z.string().max(FIELD_SIZES.URL),
-    order: z.number().min(0).max(1000),
-  })).max(ARRAY_LIMITS.SECTIONS),
+  sectionOrder: z
+    .array(
+      z.object({
+        sectionId: z.string().min(1).max(FIELD_SIZES.URL),
+        order: z.number().min(0).max(1000),
+      })
+    )
+    .min(1, 'Reorder list cannot be empty')
+    .max(ARRAY_LIMITS.SECTIONS)
+    .superRefine((items, ctx) => {
+      const ids = items.map((item) => item.sectionId);
+      if (new Set(ids).size !== ids.length) {
+        ctx.addIssue({ code: 'custom', path: ['sectionOrder'], message: 'Reorder list contains duplicate sections' });
+      }
+    }),
 });
 
 export const reorderLecturesSchema = z.object({
-  lectureOrder: z.array(z.object({
-    lectureId: z.string().max(FIELD_SIZES.URL),
-    order: z.number().min(0).max(1000),
-  })).max(ARRAY_LIMITS.LECTURES_PER_SECTION),
+  lectureOrder: z
+    .array(
+      z.object({
+        lectureId: z.string().min(1).max(FIELD_SIZES.URL),
+        order: z.number().min(0).max(1000),
+      })
+    )
+    .min(1, 'Reorder list cannot be empty')
+    .max(ARRAY_LIMITS.LECTURES_PER_SECTION)
+    .superRefine((items, ctx) => {
+      const ids = items.map((item) => item.lectureId);
+      if (new Set(ids).size !== ids.length) {
+        ctx.addIssue({ code: 'custom', path: ['lectureOrder'], message: 'Reorder list contains duplicate lectures' });
+      }
+    }),
 });
 
 export const moveLectureSchema = z.object({

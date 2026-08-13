@@ -176,17 +176,11 @@ describe('admin payment routes', () => {
       const refund = { _id: 'r1', status: 'approved' };
       mockedAdminService.approveRefund.mockResolvedValue(refund as never);
 
-      const res = await request(app)
-        .put('/api/v1/admin/refunds/r1/approve')
-        .send({ adminNote: 'looks legit' });
+      const res = await request(app).put('/api/v1/admin/refunds/r1/approve').send({ adminNote: 'looks legit' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Refund approved');
-      expect(mockedAdminService.approveRefund).toHaveBeenCalledWith(
-        'r1',
-        '65f1a1b2c3d4e5f6a7b8c9d2',
-        'looks legit',
-      );
+      expect(mockedAdminService.approveRefund).toHaveBeenCalledWith('r1', '65f1a1b2c3d4e5f6a7b8c9d2', 'looks legit');
     });
 
     it('accepts an empty body (note optional)', async () => {
@@ -195,11 +189,7 @@ describe('admin payment routes', () => {
       const res = await request(app).put('/api/v1/admin/refunds/r1/approve').send({});
 
       expect(res.status).toBe(200);
-      expect(mockedAdminService.approveRefund).toHaveBeenCalledWith(
-        'r1',
-        '65f1a1b2c3d4e5f6a7b8c9d2',
-        undefined,
-      );
+      expect(mockedAdminService.approveRefund).toHaveBeenCalledWith('r1', '65f1a1b2c3d4e5f6a7b8c9d2', undefined);
     });
   });
 
@@ -207,17 +197,11 @@ describe('admin payment routes', () => {
     it('rejects a refund with an optional note', async () => {
       mockedAdminService.rejectRefund.mockResolvedValue({ _id: 'r1' } as never);
 
-      const res = await request(app)
-        .put('/api/v1/admin/refunds/r1/reject')
-        .send({ adminNote: 'not eligible' });
+      const res = await request(app).put('/api/v1/admin/refunds/r1/reject').send({ adminNote: 'not eligible' });
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Refund rejected');
-      expect(mockedAdminService.rejectRefund).toHaveBeenCalledWith(
-        'r1',
-        '65f1a1b2c3d4e5f6a7b8c9d2',
-        'not eligible',
-      );
+      expect(mockedAdminService.rejectRefund).toHaveBeenCalledWith('r1', '65f1a1b2c3d4e5f6a7b8c9d2', 'not eligible');
     });
   });
 
@@ -238,12 +222,12 @@ describe('admin payment routes', () => {
         'student_request',
         'partial',
         '65f1a1b2c3d4e5f6a7b8c9d2',
-        'ok',
+        'ok'
       );
     });
 
     it('defaults refundType to full', async () => {
-      const { refundType, ...body } = validBody;
+      const { refundType: _refundType, ...body } = validBody;
       mockedPaymentService.processRefundPayment.mockResolvedValue({} as never);
 
       await request(app).post('/api/v1/admin/payments/p1/refund').send(body);
@@ -254,7 +238,7 @@ describe('admin payment routes', () => {
         'student_request',
         'full',
         '65f1a1b2c3d4e5f6a7b8c9d2',
-        'ok',
+        'ok'
       );
     });
 

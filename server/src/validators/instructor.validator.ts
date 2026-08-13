@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FIELD_SIZES, ARRAY_LIMITS } from '../utils/validation';
+import { objectIdSchema } from './common';
 
 export const applySchema = z.object({
   fullName: z.string().min(2).max(FIELD_SIZES.NAME).trim(),
@@ -17,11 +18,15 @@ export const applySchema = z.object({
   bio: z.string().max(FIELD_SIZES.BIO).optional(),
   teachingCategories: z.array(z.string().max(FIELD_SIZES.URL)).min(1).max(ARRAY_LIMITS.CATEGORIES),
   demoVideo: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
-  identityProof: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
-  taxDetails: z.object({
-    pan: z.string().max(FIELD_SIZES.NAME).optional(),
-    gst: z.string().max(FIELD_SIZES.NAME).optional(),
-  }).optional(),
+  identityProof: z
+    .object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) })
+    .optional(),
+  taxDetails: z
+    .object({
+      pan: z.string().max(FIELD_SIZES.NAME).optional(),
+      gst: z.string().max(FIELD_SIZES.NAME).optional(),
+    })
+    .optional(),
   bankDetails: z.object({
     accountHolderName: z.string().min(1).max(FIELD_SIZES.NAME),
     accountNumber: z.string().min(1).max(FIELD_SIZES.NAME),
@@ -58,14 +63,19 @@ export const replyToReviewSchema = z.object({
 });
 
 export const createAnnouncementSchema = z.object({
-  course: z.string().min(1).max(FIELD_SIZES.URL),
+  course: objectIdSchema,
   title: z.string().min(1).max(FIELD_SIZES.TITLE),
   message: z.string().min(1).max(FIELD_SIZES.ANNOUNCEMENT),
-  attachments: z.array(z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-    name: z.string().max(FIELD_SIZES.TITLE),
-  })).max(ARRAY_LIMITS.ATTACHMENTS_PER_LECTURE).optional(),
+  attachments: z
+    .array(
+      z.object({
+        url: z.string().max(FIELD_SIZES.URL),
+        publicId: z.string().max(FIELD_SIZES.URL),
+        name: z.string().max(FIELD_SIZES.TITLE),
+      })
+    )
+    .max(ARRAY_LIMITS.ATTACHMENTS_PER_LECTURE)
+    .optional(),
   sendEmail: z.boolean().optional(),
 });
 
@@ -75,32 +85,44 @@ export const updateProfileSchema = z.object({
   phone: z.string().max(FIELD_SIZES.PHONE).optional(),
   address: z.string().max(FIELD_SIZES.ADDRESS).optional(),
   avatar: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
-  socialLinks: z.object({
-    youtube: z.string().max(FIELD_SIZES.URL).optional(),
-    twitter: z.string().max(FIELD_SIZES.URL).optional(),
-    linkedin: z.string().max(FIELD_SIZES.URL).optional(),
-    github: z.string().max(FIELD_SIZES.URL).optional(),
-    portfolio: z.string().max(FIELD_SIZES.URL).optional(),
-    website: z.string().max(FIELD_SIZES.URL).optional(),
-  }).optional(),
-  instructorProfile: z.object({
-    qualification: z.string().max(FIELD_SIZES.QUALIFICATION).optional(),
-    experience: z.string().max(FIELD_SIZES.EXPERIENCE).optional(),
-    expertise: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.EXPERTISE).optional(),
-    resume: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
-    identityProof: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
-    demoVideo: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
-    taxDetails: z.object({ pan: z.string().max(FIELD_SIZES.NAME).optional(), gst: z.string().max(FIELD_SIZES.NAME).optional() }).optional(),
-    bankDetails: z.object({
-      accountHolderName: z.string().max(FIELD_SIZES.NAME).optional(),
-      accountNumber: z.string().max(FIELD_SIZES.NAME).optional(),
-      ifscCode: z.string().max(FIELD_SIZES.NAME).optional(),
-      bankName: z.string().max(FIELD_SIZES.NAME).optional(),
-      branch: z.string().max(FIELD_SIZES.NAME).optional(),
-      upiId: z.string().max(FIELD_SIZES.NAME).optional(),
-    }).optional(),
-    teachingCategories: z.array(z.string().max(FIELD_SIZES.URL)).max(ARRAY_LIMITS.CATEGORIES).optional(),
-  }).optional(),
+  socialLinks: z
+    .object({
+      youtube: z.string().max(FIELD_SIZES.URL).optional(),
+      twitter: z.string().max(FIELD_SIZES.URL).optional(),
+      linkedin: z.string().max(FIELD_SIZES.URL).optional(),
+      github: z.string().max(FIELD_SIZES.URL).optional(),
+      portfolio: z.string().max(FIELD_SIZES.URL).optional(),
+      website: z.string().max(FIELD_SIZES.URL).optional(),
+    })
+    .optional(),
+  instructorProfile: z
+    .object({
+      qualification: z.string().max(FIELD_SIZES.QUALIFICATION).optional(),
+      experience: z.string().max(FIELD_SIZES.EXPERIENCE).optional(),
+      expertise: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.EXPERTISE).optional(),
+      resume: z.object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) }).optional(),
+      identityProof: z
+        .object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) })
+        .optional(),
+      demoVideo: z
+        .object({ url: z.string().max(FIELD_SIZES.URL), publicId: z.string().max(FIELD_SIZES.URL) })
+        .optional(),
+      taxDetails: z
+        .object({ pan: z.string().max(FIELD_SIZES.NAME).optional(), gst: z.string().max(FIELD_SIZES.NAME).optional() })
+        .optional(),
+      bankDetails: z
+        .object({
+          accountHolderName: z.string().max(FIELD_SIZES.NAME).optional(),
+          accountNumber: z.string().max(FIELD_SIZES.NAME).optional(),
+          ifscCode: z.string().max(FIELD_SIZES.NAME).optional(),
+          bankName: z.string().max(FIELD_SIZES.NAME).optional(),
+          branch: z.string().max(FIELD_SIZES.NAME).optional(),
+          upiId: z.string().max(FIELD_SIZES.NAME).optional(),
+        })
+        .optional(),
+      teachingCategories: z.array(z.string().max(FIELD_SIZES.URL)).max(ARRAY_LIMITS.CATEGORIES).optional(),
+    })
+    .optional(),
 });
 
 export const issueCertificateSchema = z.object({

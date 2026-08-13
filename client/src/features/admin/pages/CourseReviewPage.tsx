@@ -14,7 +14,24 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/providers/ToastProvider';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { motion } from 'framer-motion';
-import { Link, ArrowLeft, CheckCircle, XCircle, Clock, User, DollarSign, Tag, BookOpen, Video, FileText, AlertTriangle, ExternalLink, Menu, MessageSquare, Loader2, Archive, RotateCcw, RefreshCw, Globe, Lock } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+  Clock,
+  User,
+  DollarSign,
+  Tag,
+  BookOpen,
+  Video,
+  FileText,
+  AlertTriangle,
+  Archive,
+  RotateCcw,
+  RefreshCw,
+  Globe,
+  Lock,
+} from 'lucide-react';
 
 const statusColors: Record<string, string> = {
   draft: 'bg-muted text-muted-foreground',
@@ -64,7 +81,7 @@ export function CourseReviewPage() {
       addToast({ title: 'Course approved successfully', variant: 'success' });
     },
     onError: (error: any) => {
-      addToast({ title: error.response?.data?.message || 'Failed to approve course', variant: 'destructive' });
+      addToast({ title: error.response?.data?.message || 'Failed to approve course', variant: 'error' });
     },
   });
 
@@ -78,7 +95,7 @@ export function CourseReviewPage() {
       setRejectReason('');
     },
     onError: (error: any) => {
-      addToast({ title: error.response?.data?.message || 'Failed to reject course', variant: 'destructive' });
+      addToast({ title: error.response?.data?.message || 'Failed to reject course', variant: 'error' });
     },
   });
 
@@ -90,7 +107,7 @@ export function CourseReviewPage() {
       addToast({ title: 'Course published', variant: 'success' });
     },
     onError: (error: any) => {
-      addToast({ title: error.response?.data?.message || 'Failed to publish course', variant: 'destructive' });
+      addToast({ title: error.response?.data?.message || 'Failed to publish course', variant: 'error' });
     },
   });
 
@@ -102,7 +119,7 @@ export function CourseReviewPage() {
       addToast({ title: 'Course unpublished', variant: 'success' });
     },
     onError: (error: any) => {
-      addToast({ title: error.response?.data?.message || 'Failed to unpublish course', variant: 'destructive' });
+      addToast({ title: error.response?.data?.message || 'Failed to unpublish course', variant: 'error' });
     },
   });
 
@@ -114,7 +131,7 @@ export function CourseReviewPage() {
       addToast({ title: 'Course archived', variant: 'success' });
     },
     onError: (error: any) => {
-      addToast({ title: error.response?.data?.message || 'Failed to archive course', variant: 'destructive' });
+      addToast({ title: error.response?.data?.message || 'Failed to archive course', variant: 'error' });
     },
   });
 
@@ -126,7 +143,7 @@ export function CourseReviewPage() {
       addToast({ title: 'Course restored to draft', variant: 'success' });
     },
     onError: (error: any) => {
-      addToast({ title: error.response?.data?.message || 'Failed to restore course', variant: 'destructive' });
+      addToast({ title: error.response?.data?.message || 'Failed to restore course', variant: 'error' });
     },
   });
 
@@ -189,7 +206,13 @@ export function CourseReviewPage() {
     setPendingAction(null);
   };
 
-  const isAnyPending = approveMutation.isPending || rejectMutation.isPending || publishMutation.isPending || unpublishMutation.isPending || archiveMutation.isPending || restoreMutation.isPending;
+  const isAnyPending =
+    approveMutation.isPending ||
+    rejectMutation.isPending ||
+    publishMutation.isPending ||
+    unpublishMutation.isPending ||
+    archiveMutation.isPending ||
+    restoreMutation.isPending;
 
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -234,14 +257,21 @@ export function CourseReviewPage() {
                 <div className="flex items-start gap-4">
                   <div className="h-32 w-48 shrink-0 overflow-hidden rounded-lg bg-muted">
                     {course.thumbnail?.url ? (
-                      <OptimizedImage src={course.thumbnail.url} alt={course.title} placeholderType="course" className="object-cover" />
+                      <OptimizedImage
+                        src={course.thumbnail.url}
+                        alt={course.title}
+                        placeholderType="course"
+                        className="object-cover"
+                      />
                     ) : (
                       <div className="flex h-full items-center justify-center text-muted-foreground">No thumbnail</div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-2">
                     <h3 className="font-semibold truncate">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{course.description || 'No description provided'}</p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">
+                      {course.description || 'No description provided'}
+                    </p>
                     <div className="flex flex-wrap gap-2">
                       <Badge variant="secondary" className={statusColors[course.status]}>
                         {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
@@ -323,7 +353,12 @@ export function CourseReviewPage() {
                     <div className="flex items-center gap-4">
                       <div className="h-16 w-16 rounded-full overflow-hidden bg-muted shrink-0">
                         {course.instructor.avatar?.url ? (
-                          <OptimizedImage src={course.instructor.avatar.url} alt={course.instructor.name} placeholderType="avatar" className="object-cover" />
+                          <OptimizedImage
+                            src={course.instructor.avatar.url}
+                            alt={course.instructor.name}
+                            placeholderType="avatar"
+                            className="object-cover"
+                          />
                         ) : (
                           <div className="flex h-full items-center justify-center text-muted-foreground">No avatar</div>
                         )}
@@ -349,7 +384,9 @@ export function CourseReviewPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="text-muted-foreground">Subscription</p>
-                        <Badge variant="outline" className="capitalize">{course.instructor.instructorProfile?.subscriptionStatus || 'none'}</Badge>
+                        <Badge variant="outline" className="capitalize">
+                          {course.instructor.instructorProfile?.subscriptionStatus || 'none'}
+                        </Badge>
                       </div>
                     </div>
                     {course.instructor.bio && (
@@ -373,7 +410,9 @@ export function CourseReviewPage() {
               <CardTitle className="flex items-center justify-between">
                 Course Curriculum
                 {curriculum && curriculum.length > 0 && (
-                  <Badge variant="secondary">{curriculum.reduce((acc: number, s: any) => acc + (s.lectures?.length || 0), 0)} lectures</Badge>
+                  <Badge variant="secondary">
+                    {curriculum.reduce((acc: number, s: any) => acc + (s.lectures?.length || 0), 0)} lectures
+                  </Badge>
                 )}
               </CardTitle>
             </CardHeader>
@@ -381,7 +420,13 @@ export function CourseReviewPage() {
               {curriculum && curriculum.length > 0 ? (
                 <div className="space-y-4">
                   {curriculum.map((section: any, sIndex: number) => (
-                    <motion.div key={section._id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: sIndex * 0.05 }} className="border rounded-lg overflow-hidden">
+                    <motion.div
+                      key={section._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: sIndex * 0.05 }}
+                      className="border rounded-lg overflow-hidden"
+                    >
                       <div className="bg-muted/50 px-4 py-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-medium text-muted-foreground">Section {sIndex + 1}</span>
@@ -394,29 +439,42 @@ export function CourseReviewPage() {
                       </div>
                       <div className="divide-y p-2">
                         {section.lectures?.map((lecture: any, lIndex: number) => {
-                            const LectureIcon = {
+                          const LectureIcon = (
+                            {
                               video: Video,
                               article: FileText,
                               assignment: FileText,
                               quiz: AlertTriangle,
-                            }[lecture.type];
-                            return (
-                              <div key={lecture._id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <span className="text-sm text-muted-foreground w-6 text-right">{lIndex + 1}.</span>
-                                  {LectureIcon && <LectureIcon className="h-4 w-4 text-muted-foreground shrink-0" />}
-                                  <div className="min-w-0">
-                                    <p className="font-medium truncate">{lecture.title}</p>
-                                    <p className="text-xs text-muted-foreground capitalize">{lecture.type}</p>
-                                  </div>
-                                  {lecture.isFree && <Badge variant="secondary" className="text-xs">Free Preview</Badge>}
+                            } as Record<string, any>
+                          )[lecture.type];
+                          return (
+                            <div
+                              key={lecture._id}
+                              className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <span className="text-sm text-muted-foreground w-6 text-right">{lIndex + 1}.</span>
+                                {LectureIcon && <LectureIcon className="h-4 w-4 text-muted-foreground shrink-0" />}
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate">{lecture.title}</p>
+                                  <p className="text-xs text-muted-foreground capitalize">{lecture.type}</p>
                                 </div>
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
-                                  {lecture.duration > 0 && <span>{Math.floor(lecture.duration / 60)}:{String(lecture.duration % 60).padStart(2, '0')}</span>}
-                                </div>
+                                {lecture.isFree && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    Free Preview
+                                  </Badge>
+                                )}
                               </div>
-                            );
-                          })}
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground shrink-0">
+                                {lecture.duration > 0 && (
+                                  <span>
+                                    {Math.floor(lecture.duration / 60)}:{String(lecture.duration % 60).padStart(2, '0')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </motion.div>
                   ))}
@@ -478,7 +536,9 @@ export function CourseReviewPage() {
                 <CardTitle className="flex items-center gap-2">Description</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="prose max-w-none text-sm">{course.description || <p className="text-muted-foreground">No description provided</p>}</div>
+                <div className="prose max-w-none text-sm">
+                  {course.description || <p className="text-muted-foreground">No description provided</p>}
+                </div>
               </CardContent>
             </Card>
 
@@ -494,7 +554,9 @@ export function CourseReviewPage() {
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm text-muted-foreground">SEO Description</p>
-                    <p className="text-sm line-clamp-2">{course.seoDescription || 'Not set (will use short description)'}</p>
+                    <p className="text-sm line-clamp-2">
+                      {course.seoDescription || 'Not set (will use short description)'}
+                    </p>
                   </div>
                 </div>
                 {course.meta?.seoKeywords && course.meta.seoKeywords.length > 0 && (
@@ -502,7 +564,9 @@ export function CourseReviewPage() {
                     <p className="text-sm text-muted-foreground">Keywords</p>
                     <div className="flex flex-wrap gap-2">
                       {course.meta.seoKeywords.map((kw: string, i: number) => (
-                        <Badge key={i} variant="outline">{kw}</Badge>
+                        <Badge key={i} variant="outline">
+                          {kw}
+                        </Badge>
                       ))}
                     </div>
                   </div>
@@ -535,7 +599,9 @@ export function CourseReviewPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="text-sm text-muted-foreground">Passing Criteria</p>
-                      <p className="font-medium capitalize">{course.certificateSettings.passingCriteria?.replace('_', ' ')}</p>
+                      <p className="font-medium capitalize">
+                        {course.certificateSettings.passingCriteria?.replace('_', ' ')}
+                      </p>
                     </div>
                     {course.certificateSettings.minimumQuizScore && (
                       <div className="space-y-1">
@@ -559,7 +625,10 @@ export function CourseReviewPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Current status: <strong className={statusColors[course.status]}>{course.status.charAt(0).toUpperCase() + course.status.slice(1)}</strong>
+                Current status:{' '}
+                <strong className={statusColors[course.status]}>
+                  {course.status.charAt(0).toUpperCase() + course.status.slice(1)}
+                </strong>
               </p>
               <div className="flex flex-wrap gap-3">
                 {canApprove && (
@@ -637,7 +706,9 @@ export function CourseReviewPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                   <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
                     <h2 className="text-lg font-semibold">Reject Course</h2>
-                    <p className="mt-2 text-sm text-muted-foreground">Please provide a reason for rejecting this course. The instructor will see this feedback.</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Please provide a reason for rejecting this course. The instructor will see this feedback.
+                    </p>
                     <Textarea
                       className="mt-4"
                       value={rejectReason}
@@ -646,8 +717,21 @@ export function CourseReviewPage() {
                       rows={4}
                     />
                     <div className="mt-6 flex justify-end gap-3">
-                      <Button variant="outline" onClick={() => { setShowRejectDialog(false); setRejectReason(''); }}>Cancel</Button>
-                      <Button variant="destructive" onClick={() => rejectMutation.mutate()} loading={rejectMutation.isPending} disabled={!rejectReason.trim()}>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowRejectDialog(false);
+                          setRejectReason('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => rejectMutation.mutate()}
+                        loading={rejectMutation.isPending}
+                        disabled={!rejectReason.trim()}
+                      >
                         Reject Course
                       </Button>
                     </div>
@@ -662,7 +746,11 @@ export function CourseReviewPage() {
               <CardTitle className="flex items-center gap-2">Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start" onClick={() => navigate(`/admin/courses/${id}`)}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() => navigate(`/admin/courses/${id}`)}
+              >
                 <RefreshCw className="mr-2 h-4 w-4" />
                 Refresh Course Data
               </Button>
@@ -684,18 +772,43 @@ function CourseReviewSkeleton() {
       <Skeleton className="h-10 w-48" />
       <div className="grid gap-6 md:grid-cols-3">
         <Card className="md:col-span-2">
-          <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex gap-4"><Skeleton className="h-32 w-48 rounded" /><div className="flex-1 space-y-4"><Skeleton className="h-6 w-3/4" /><Skeleton className="h-4 w-full" /><Skeleton className="h-4 w-1/2" /></div></div>
+              <div className="flex gap-4">
+                <Skeleton className="h-32 w-48 rounded" />
+                <div className="flex-1 space-y-4">
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </div>
               <Skeleton className="h-4 w-full" />
-              <div className="grid gap-4 sm:grid-cols-2"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Skeleton className="h-16" />
+                <Skeleton className="h-16" />
+                <Skeleton className="h-16" />
+                <Skeleton className="h-16" />
+                <Skeleton className="h-16" />
+                <Skeleton className="h-16" />
+              </div>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><Skeleton className="h-6 w-48" /></CardHeader>
-          <CardContent><div className="space-y-4"><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /><Skeleton className="h-16" /></div></CardContent>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>

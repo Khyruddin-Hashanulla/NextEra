@@ -40,17 +40,26 @@ export function CourseManagementPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-courses', page, search, statusFilter],
-    queryFn: ({ signal }) => adminApi.listCourses({ page, limit: 10, search, status: statusFilter || undefined }, signal),
+    queryFn: ({ signal }) =>
+      adminApi.listCourses({ page, limit: 10, search, status: statusFilter || undefined }, signal),
   });
 
   const approveMutation = useMutation({
     mutationFn: (id: string) => adminApi.approveCourse(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-courses'] }); addToast({ title: 'Course approved', variant: 'success' }); setConfirmAction(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      addToast({ title: 'Course approved', variant: 'success' });
+      setConfirmAction(null);
+    },
   });
 
   const rejectMutation = useMutation({
     mutationFn: (id: string) => adminApi.rejectCourse(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['admin-courses'] }); addToast({ title: 'Course rejected', variant: 'success' }); setConfirmAction(null); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-courses'] });
+      addToast({ title: 'Course rejected', variant: 'success' });
+      setConfirmAction(null);
+    },
   });
 
   const courses = data?.data?.data?.courses || [];
@@ -66,13 +75,29 @@ export function CourseManagementPage() {
       <motion.div variants={item} className="flex flex-wrap items-center gap-3">
         <div className="relative max-w-sm flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search courses..." value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-9" />
+          <Input
+            placeholder="Search courses..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="pl-9"
+          />
         </div>
       </motion.div>
 
       <motion.div variants={item} className="flex flex-wrap gap-2">
         {['', 'review', 'published', 'draft', 'archived'].map((s) => (
-          <Button key={s} size="sm" variant={statusFilter === s ? 'default' : 'outline'} onClick={() => { setStatusFilter(s); setPage(1); }}>
+          <Button
+            key={s}
+            size="sm"
+            variant={statusFilter === s ? 'default' : 'outline'}
+            onClick={() => {
+              setStatusFilter(s);
+              setPage(1);
+            }}
+          >
             {s || 'All'}
           </Button>
         ))}
@@ -102,12 +127,20 @@ export function CourseManagementPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Course</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Category</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Course
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Category
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Level</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Price</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Enrollments</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Enrollments
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -117,7 +150,14 @@ export function CourseManagementPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div className="h-10 w-16 shrink-0 overflow-hidden rounded bg-muted">
-                              {c.thumbnail?.url && <OptimizedImage src={c.thumbnail.url} alt={c.title || 'Course thumbnail'} placeholderType="course" className="object-cover" />}
+                              {c.thumbnail?.url && (
+                                <OptimizedImage
+                                  src={c.thumbnail.url}
+                                  alt={c.title || 'Course thumbnail'}
+                                  placeholderType="course"
+                                  className="object-cover"
+                                />
+                              )}
                             </div>
                             <div className="min-w-0">
                               <p className="max-w-[200px] truncate font-medium">{c.title}</p>
@@ -129,20 +169,38 @@ export function CourseManagementPage() {
                         <td className="px-4 py-3 capitalize">{c.level}</td>
                         <td className="px-4 py-3">{isFreeCourse(c) ? 'Free' : `₹${c.price?.toLocaleString() ?? 0}`}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[c.status] || ''}`}>{c.status}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[c.status] || ''}`}
+                          >
+                            {c.status}
+                          </span>
                         </td>
                         <td className="px-4 py-3">{c.totalEnrollments || 0}</td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.ADMIN_COURSE_DETAIL(c._id))}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => navigate(ROUTES.ADMIN_COURSE_DETAIL(c._id))}
+                            >
                               <Eye className="h-4 w-4" />
                             </Button>
                             {c.status === 'review' && (
                               <>
-                                <Button variant="ghost" size="sm" className="text-green-600" onClick={() => setConfirmAction({ id: c._id, action: 'approve' })}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-green-600"
+                                  onClick={() => setConfirmAction({ id: c._id, action: 'approve' })}
+                                >
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>
-                                <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setConfirmAction({ id: c._id, action: 'reject' })}>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-destructive"
+                                  onClick={() => setConfirmAction({ id: c._id, action: 'reject' })}
+                                >
                                   <XCircle className="h-4 w-4" />
                                 </Button>
                               </>
@@ -163,7 +221,12 @@ export function CourseManagementPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -184,7 +247,9 @@ export function CourseManagementPage() {
               Are you sure you want to {confirmAction.action} this course?
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setConfirmAction(null)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setConfirmAction(null)}>
+                Cancel
+              </Button>
               <Button
                 variant={confirmAction.action === 'reject' ? 'destructive' : 'default'}
                 onClick={() => {

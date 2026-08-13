@@ -65,15 +65,24 @@ describe('admin.validator', () => {
   it('validates coupon creation and updates', () => {
     const valid = { code: 'save10', discountType: 'percentage', discountValue: 10, expiresAt: '2026-01-01' };
     expect(createCouponSchema.parse(valid).code).toBe('SAVE10');
-    expect(() => createCouponSchema.parse({ code: 'x', discountType: 'fixed', discountValue: 0, expiresAt: '' })).toThrow();
+    expect(() =>
+      createCouponSchema.parse({ code: 'x', discountType: 'fixed', discountValue: 0, expiresAt: '' })
+    ).toThrow();
     expect(updateCouponSchema.parse({ isActive: false, discountValue: 25 }).discountValue).toBe(25);
   });
 
   it('validates notifications', () => {
     expect(
-      createNotificationSchema.parse({ user: 'u1', title: 'Hi', message: 'msg', type: 'system', link: 'l' }).type,
+      createNotificationSchema.parse({
+        user: '6a6c5515bf5829ee772c2ce1',
+        title: 'Hi',
+        message: 'msg',
+        type: 'system',
+        link: 'l',
+      }).type
     ).toBe('system');
     expect(() => createNotificationSchema.parse({ user: '', title: '', message: '' })).toThrow();
+    expect(() => createNotificationSchema.parse({ user: 'not-an-objectid', title: 'Hi', message: 'msg' })).toThrow();
     expect(sendBulkNotificationSchema.parse({ title: 'Hi', message: 'msg' }).message).toBe('msg');
     expect(() => sendBulkNotificationSchema.parse({ title: '', message: '' })).toThrow();
   });
@@ -129,7 +138,9 @@ describe('admin.validator', () => {
       status: 'active',
     };
     expect(createSubscriptionPlanSchema.parse(valid).level).toBe('premium');
-    expect(() => createSubscriptionPlanSchema.parse({ name: '', price: -1, durationDays: 0, features: [], level: 'x' })).toThrow();
+    expect(() =>
+      createSubscriptionPlanSchema.parse({ name: '', price: -1, durationDays: 0, features: [], level: 'x' })
+    ).toThrow();
     expect(updateSubscriptionPlanSchema.parse({ price: 120, level: 'standard' }).price).toBe(120);
   });
 
@@ -143,9 +154,12 @@ describe('admin.validator', () => {
       order: 1,
     };
     expect(createBannerSchema.parse(valid).position).toBe('hero');
-    expect(() => createBannerSchema.parse({ title: '', image: { url: 'u', publicId: 'p' }, position: 'hero' })).toThrow();
+    expect(() =>
+      createBannerSchema.parse({ title: '', image: { url: 'u', publicId: 'p' }, position: 'hero' })
+    ).toThrow();
     expect(
-      updateBannerSchema.parse({ title: 'New', position: 'promo', isActive: true, startDate: 'd', endDate: 'e' }).isActive,
+      updateBannerSchema.parse({ title: 'New', position: 'promo', isActive: true, startDate: 'd', endDate: 'e' })
+        .isActive
     ).toBe(true);
   });
 

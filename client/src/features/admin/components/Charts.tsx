@@ -1,7 +1,19 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell, Legend, PieLabelRenderProps,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  PieLabelRenderProps,
 } from 'recharts';
 
 interface RevenueChartProps {
@@ -87,15 +99,7 @@ export function RolePieChart({ data }: RolePieChartProps) {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                dataKey="count"
-                nameKey="_id"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={renderPieLabel}
-              >
+              <Pie data={data} dataKey="count" nameKey="_id" cx="50%" cy="50%" outerRadius={100} label={renderPieLabel}>
                 {data.map((_, index) => (
                   <Cell key={index} fill={COLORS[index % COLORS.length]} />
                 ))}
@@ -124,15 +128,7 @@ export function CourseStatusChart({ data }: CourseStatusChartProps) {
         <div className="h-[300px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie
-                data={data}
-                dataKey="count"
-                nameKey="_id"
-                cx="50%"
-                cy="50%"
-                outerRadius={100}
-                label={renderPieLabel}
-              >
+              <Pie data={data} dataKey="count" nameKey="_id" cx="50%" cy="50%" outerRadius={100} label={renderPieLabel}>
                 {data.map((_, index) => (
                   <Cell key={index} fill={COLORS[index % COLORS.length]} />
                 ))}

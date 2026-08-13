@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { GraduationCap, Briefcase, type LucideIcon } from 'lucide-react';
-import type { InstructorProfile } from './types';
 
 interface InstructorExperienceTimelineProps {
   qualification?: string;

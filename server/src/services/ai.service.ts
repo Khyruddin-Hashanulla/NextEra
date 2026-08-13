@@ -35,7 +35,12 @@ async function callOpenAI(messages: OpenAIMessage[], temperature = 0.7, maxToken
   return data.choices[0]?.message?.content || '';
 }
 
-export async function generateCourseDescription(title: string, category: string, level: string, keywords: string[]): Promise<string> {
+export async function generateCourseDescription(
+  title: string,
+  category: string,
+  level: string,
+  keywords: string[]
+): Promise<string> {
   const aiEnabled = await isFeatureEnabled('ai_features');
   if (!aiEnabled) throw ApiError.badRequest('AI features are disabled');
 
@@ -52,10 +57,14 @@ Include:
 
 Format the response with markdown headers.`;
 
-  return callOpenAI([
-    { role: 'system', content: 'You are an expert course content creator for an EdTech platform.' },
-    { role: 'user', content: prompt },
-  ], 0.7, 1500);
+  return callOpenAI(
+    [
+      { role: 'system', content: 'You are an expert course content creator for an EdTech platform.' },
+      { role: 'user', content: prompt },
+    ],
+    0.7,
+    1500
+  );
 }
 
 export async function generateQuizQuestions(topic: string, count: number, difficulty: string): Promise<string> {
@@ -80,10 +89,14 @@ D) [Option D]
 **Correct Answer:** [Letter]
 **Explanation:** [Explanation]`;
 
-  return callOpenAI([
-    { role: 'system', content: 'You are an expert quiz generator for educational content.' },
-    { role: 'user', content: prompt },
-  ], 0.5, 2500);
+  return callOpenAI(
+    [
+      { role: 'system', content: 'You are an expert quiz generator for educational content.' },
+      { role: 'user', content: prompt },
+    ],
+    0.5,
+    2500
+  );
 }
 
 export async function generateAssignment(topic: string, duration: string, skills: string[]): Promise<string> {
@@ -104,10 +117,14 @@ Include:
 
 Make it practical and hands-on.`;
 
-  return callOpenAI([
-    { role: 'system', content: 'You are an expert technical instructor creating hands-on assignments.' },
-    { role: 'user', content: prompt },
-  ], 0.6, 2000);
+  return callOpenAI(
+    [
+      { role: 'system', content: 'You are an expert technical instructor creating hands-on assignments.' },
+      { role: 'user', content: prompt },
+    ],
+    0.6,
+    2000
+  );
 }
 
 export async function chatWithAI(message: string, history: { role: string; content: string }[]): Promise<string> {
@@ -117,7 +134,8 @@ export async function chatWithAI(message: string, history: { role: string; conte
   const messages: OpenAIMessage[] = [
     {
       role: 'system',
-      content: 'You are an AI learning assistant for the NextEra EdTech platform. You help students with course-related questions, explain concepts, provide coding help, and suggest learning resources. Be concise, accurate, and encouraging.',
+      content:
+        'You are an AI learning assistant for the NextEra EdTech platform. You help students with course-related questions, explain concepts, provide coding help, and suggest learning resources. Be concise, accurate, and encouraging.',
     },
     ...history.map((h) => ({
       role: h.role as 'user' | 'assistant',

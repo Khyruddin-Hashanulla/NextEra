@@ -5,24 +5,21 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DataTable } from '@/features/admin/components/DataTable';
 import type { Column } from '@/features/admin/components/DataTable';
 import type { AuditLogItem } from '@/types/admin';
-import {
-  Search, Download, FileJson, X, Filter, ArrowUpDown, ShieldAlert,
-} from 'lucide-react';
+import { Search, Download, FileJson, X, Filter, ArrowUpDown, ShieldAlert } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 function actionColor(action: string): string {
-  if (action.includes('DELETE') || action.includes('REJECT') || action.includes('REVOKE')) return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
-  if (action.includes('CREATE') || action.includes('APPROVE') || action.includes('GENERATE')) return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
-  if (action.includes('UPDATE') || action.includes('CHANGE') || action.includes('MODERATE')) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+  if (action.includes('DELETE') || action.includes('REJECT') || action.includes('REVOKE'))
+    return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+  if (action.includes('CREATE') || action.includes('APPROVE') || action.includes('GENERATE'))
+    return 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400';
+  if (action.includes('UPDATE') || action.includes('CHANGE') || action.includes('MODERATE'))
+    return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
   return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
 }
 
@@ -31,14 +28,46 @@ function formatAction(action: string): string {
 }
 
 function toCSV(logs: AuditLogItem[]): string {
-  const headers = ['Timestamp', 'Admin', 'Email', 'Action', 'Resource Type', 'Resource ID', 'Resource Name', 'Success', 'Status Code', 'Method', 'URL', 'IP', 'Browser', 'OS', 'Device', 'Error'];
-  const rows = logs.map((l) => [
-    l.timestamp, l.adminName, l.adminEmail, l.action, l.resourceType,
-    l.resourceId || '', l.resourceName || '', l.success ? 'Yes' : 'No',
-    l.statusCode || '', l.requestMethod || '', l.requestUrl || '',
-    l.ipAddress || '', l.browser || '', l.operatingSystem || '', l.deviceType || '',
-    l.errorMessage || '',
-  ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(','));
+  const headers = [
+    'Timestamp',
+    'Admin',
+    'Email',
+    'Action',
+    'Resource Type',
+    'Resource ID',
+    'Resource Name',
+    'Success',
+    'Status Code',
+    'Method',
+    'URL',
+    'IP',
+    'Browser',
+    'OS',
+    'Device',
+    'Error',
+  ];
+  const rows = logs.map((l) =>
+    [
+      l.timestamp,
+      l.adminName,
+      l.adminEmail,
+      l.action,
+      l.resourceType,
+      l.resourceId || '',
+      l.resourceName || '',
+      l.success ? 'Yes' : 'No',
+      l.statusCode || '',
+      l.requestMethod || '',
+      l.requestUrl || '',
+      l.ipAddress || '',
+      l.browser || '',
+      l.operatingSystem || '',
+      l.deviceType || '',
+      l.errorMessage || '',
+    ]
+      .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+      .join(',')
+  );
   return [headers.join(','), ...rows].join('\n');
 }
 
@@ -99,21 +128,27 @@ function DetailModal({ log, open, onClose }: { log: AuditLogItem | null; open: b
               <h4 className="font-medium text-sm mb-1">Changed Fields</h4>
               <div className="flex flex-wrap gap-1">
                 {log.changedFields.map((f) => (
-                  <Badge key={f} variant="outline">{f}</Badge>
+                  <Badge key={f} variant="outline">
+                    {f}
+                  </Badge>
                 ))}
               </div>
             </div>
           )}
-          {sections.map((s) => s.data && Object.keys(s.data).length > 0 && (
-            <div key={s.label}>
-              <h4 className="font-medium text-sm mb-1 flex items-center gap-1">
-                <FileJson className="h-4 w-4" /> {s.label}
-              </h4>
-              <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto max-h-60">
-                {JSON.stringify(s.data, null, 2)}
-              </pre>
-            </div>
-          ))}
+          {sections.map(
+            (s) =>
+              s.data &&
+              Object.keys(s.data).length > 0 && (
+                <div key={s.label}>
+                  <h4 className="font-medium text-sm mb-1 flex items-center gap-1">
+                    <FileJson className="h-4 w-4" /> {s.label}
+                  </h4>
+                  <pre className="rounded-md bg-muted p-3 text-xs overflow-x-auto max-h-60">
+                    {JSON.stringify(s.data, null, 2)}
+                  </pre>
+                </div>
+              )
+          )}
         </div>
       </DialogContent>
     </Dialog>
@@ -132,17 +167,20 @@ export function AuditLogsPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
-  const queryParams = useMemo(() => ({
-    page,
-    limit: 20,
-    search: search || undefined,
-    action: actionFilter || undefined,
-    resourceType: resourceTypeFilter || undefined,
-    success: successFilter || undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    sortOrder,
-  }), [page, search, actionFilter, resourceTypeFilter, successFilter, startDate, endDate, sortOrder]);
+  const queryParams = useMemo(
+    () => ({
+      page,
+      limit: 20,
+      search: search || undefined,
+      action: actionFilter || undefined,
+      resourceType: resourceTypeFilter || undefined,
+      success: successFilter || undefined,
+      startDate: startDate || undefined,
+      endDate: endDate || undefined,
+      sortOrder,
+    }),
+    [page, search, actionFilter, resourceTypeFilter, successFilter, startDate, endDate, sortOrder]
+  );
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin-audit-logs', queryParams],
@@ -172,9 +210,16 @@ export function AuditLogsPage() {
       accessor: (l) => (
         <div className="flex items-center gap-2">
           <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center text-xs font-medium overflow-hidden">
-            {l.adminId?.avatar?.url
-              ? <OptimizedImage src={l.adminId.avatar.url} alt={l.adminName || 'Admin'} placeholderType="avatar" className="object-cover" />
-              : l.adminName?.charAt(0)?.toUpperCase() || '?'}
+            {l.adminId?.avatar?.url ? (
+              <OptimizedImage
+                src={l.adminId.avatar.url}
+                alt={l.adminName || 'Admin'}
+                placeholderType="avatar"
+                className="object-cover"
+              />
+            ) : (
+              l.adminName?.charAt(0)?.toUpperCase() || '?'
+            )}
           </div>
           <span className="font-medium">{l.adminName || l.adminEmail || 'System'}</span>
         </div>
@@ -201,7 +246,10 @@ export function AuditLogsPage() {
     {
       header: 'Status',
       accessor: (l) => (
-        <Badge variant={l.success ? 'default' : 'destructive'} className={l.success ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}>
+        <Badge
+          variant={l.success ? 'default' : 'destructive'}
+          className={l.success ? 'bg-green-100 text-green-700 hover:bg-green-100' : ''}
+        >
           {l.success ? 'Success' : 'Failed'}
         </Badge>
       ),
@@ -280,37 +328,68 @@ export function AuditLogsPage() {
               <Input
                 placeholder="Keyword..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
               />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Action</label>
-              <Select value={actionFilter} onValueChange={(v) => { setActionFilter(v); setPage(1); }}>
-                <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+              <Select
+                value={actionFilter}
+                onValueChange={(v) => {
+                  setActionFilter(v);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value=" ">All</SelectItem>
                   {actions.map((a) => (
-                    <SelectItem key={a} value={a}>{formatAction(a)}</SelectItem>
+                    <SelectItem key={a} value={a}>
+                      {formatAction(a)}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Resource</label>
-              <Select value={resourceTypeFilter} onValueChange={(v) => { setResourceTypeFilter(v); setPage(1); }}>
-                <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+              <Select
+                value={resourceTypeFilter}
+                onValueChange={(v) => {
+                  setResourceTypeFilter(v);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value=" ">All</SelectItem>
                   {resourceTypes.map((r) => (
-                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                    <SelectItem key={r} value={r}>
+                      {r}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Status</label>
-              <Select value={successFilter} onValueChange={(v) => { setSuccessFilter(v); setPage(1); }}>
-                <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
+              <Select
+                value={successFilter}
+                onValueChange={(v) => {
+                  setSuccessFilter(v);
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value=" ">All</SelectItem>
                   <SelectItem value="true">Success</SelectItem>
@@ -320,11 +399,25 @@ export function AuditLogsPage() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">Start Date</label>
-              <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} />
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setPage(1);
+                }}
+              />
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1 block">End Date</label>
-              <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} />
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setPage(1);
+                }}
+              />
             </div>
           </div>
         </Card>
@@ -335,7 +428,10 @@ export function AuditLogsPage() {
         <Input
           placeholder="Search by admin name, email, action, resource..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-10"
         />
       </div>

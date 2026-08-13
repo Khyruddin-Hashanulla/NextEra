@@ -10,14 +10,11 @@ import { Pagination } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Search, Filter, ChevronDown, Users, Star, Award, Code } from 'lucide-react';
+import { Search, Filter, Users } from 'lucide-react';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { breadcrumbListSchema } from '@/lib/schema';
 import { Section, Container } from '@/components/common/Section';
-import { cn } from '@/lib/utils';
-import { formatNumber } from '@/lib/utils';
 
 interface Instructor {
   _id: string;
@@ -42,17 +39,18 @@ export function InstructorsPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['public-instructors'],
-    queryFn: ({ signal }) => studentApi.listInstructors(signal).then(r => r.data.data || []),
+    queryFn: ({ signal }) => studentApi.listInstructors(signal).then((r) => r.data.data || []),
     placeholderData: (previousData) => previousData,
   });
 
   const allInstructors = data || [];
 
   const filteredInstructors = allInstructors
-    .filter((instructor: Instructor) =>
-      !search ||
-      instructor.name?.toLowerCase().includes(search.toLowerCase()) ||
-      instructor.specialties?.some((s: string) => s.toLowerCase().includes(search.toLowerCase()))
+    .filter(
+      (instructor: Instructor) =>
+        !search ||
+        instructor.name?.toLowerCase().includes(search.toLowerCase()) ||
+        instructor.specialties?.some((s: string) => s.toLowerCase().includes(search.toLowerCase()))
     )
     .filter((instructor: Instructor) => !specialty || instructor.specialties?.includes(specialty));
 
@@ -99,13 +97,19 @@ export function InstructorsPage() {
 
   return (
     <div className="min-h-screen">
-      <SEO title="Our Instructors" description="Learn from industry professionals with real-world experience at top companies worldwide." canonical="/instructors" />
-      <StructuredData schemas={[
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Instructors', path: '/instructors' },
-        ]),
-      ]} />
+      <SEO
+        title="Our Instructors"
+        description="Learn from industry professionals with real-world experience at top companies worldwide."
+        canonical="/instructors"
+      />
+      <StructuredData
+        schemas={[
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Instructors', path: '/instructors' },
+          ]),
+        ]}
+      />
       {/* Page Header */}
       <Section size="sm" background="gradient">
         <Container>
@@ -142,7 +146,9 @@ export function InstructorsPage() {
               >
                 {/* Search */}
                 <div>
-                  <label htmlFor="search" className="label-base">Search Instructors</label>
+                  <label htmlFor="search" className="label-base">
+                    Search Instructors
+                  </label>
                   <div className="relative mt-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -158,18 +164,19 @@ export function InstructorsPage() {
                 {/* Specialty Filter */}
                 {specialties.length > 0 && (
                   <div>
-                    <label htmlFor="specialty" className="label-base">Specialty</label>
-                    <Select
-                      value={specialty}
-                      onValueChange={(value) => handleFilterChange('specialty', value)}
-                    >
+                    <label htmlFor="specialty" className="label-base">
+                      Specialty
+                    </label>
+                    <Select value={specialty} onValueChange={(value) => handleFilterChange('specialty', value)}>
                       <SelectTrigger id="specialty" className="mt-1">
                         <SelectValue placeholder="All Specialties" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">All Specialties</SelectItem>
                         {specialties.map((spec) => (
-                          <SelectItem key={spec} value={spec}>{spec}</SelectItem>
+                          <SelectItem key={spec} value={spec}>
+                            {spec}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -178,11 +185,10 @@ export function InstructorsPage() {
 
                 {/* Sort */}
                 <div>
-                  <label htmlFor="sort" className="label-base">Sort By</label>
-                  <Select
-                    value={sort}
-                    onValueChange={(value) => handleFilterChange('sort', value)}
-                  >
+                  <label htmlFor="sort" className="label-base">
+                    Sort By
+                  </label>
+                  <Select value={sort} onValueChange={(value) => handleFilterChange('sort', value)}>
                     <SelectTrigger id="sort" className="mt-1">
                       <SelectValue placeholder="Most Popular" />
                     </SelectTrigger>
@@ -196,9 +202,17 @@ export function InstructorsPage() {
 
                 {/* Clear Filters */}
                 {(search || specialty || sort !== 'popular') && (
-                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {
-                    setSearch(''); setSpecialty(''); setSort('popular'); setPage(1);
-                  }}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setSearch('');
+                      setSpecialty('');
+                      setSort('popular');
+                      setPage(1);
+                    }}
+                  >
                     <Filter className="h-4 w-4" />
                     Clear All Filters
                   </Button>
@@ -240,7 +254,14 @@ export function InstructorsPage() {
                     className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
                   >
                     {instructors.map((instructor: Instructor, index: number) => (
-                      <motion.div key={instructor._id} className="h-full" variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { delay: index * 0.05, duration: 0.3 } } }}>
+                      <motion.div
+                        key={instructor._id}
+                        className="h-full"
+                        variants={{
+                          hidden: { opacity: 0, y: 20 },
+                          show: { opacity: 1, y: 0, transition: { delay: index * 0.05, duration: 0.3 } },
+                        }}
+                      >
                         <InstructorCard instructor={instructor} />
                       </motion.div>
                     ))}
@@ -249,11 +270,7 @@ export function InstructorsPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-10"
-                  >
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-10">
                     <Pagination
                       currentPage={page}
                       totalPages={totalPages}
@@ -274,7 +291,9 @@ export function InstructorsPage() {
         <Container>
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-heading-md font-semibold">Want to teach on NextEra?</h2>
-            <p className="mt-3 text-muted-foreground">Join our community of expert instructors and share your knowledge with thousands of learners.</p>
+            <p className="mt-3 text-muted-foreground">
+              Join our community of expert instructors and share your knowledge with thousands of learners.
+            </p>
             <Button asChild variant="outline" className="mt-4" size="lg">
               <a href="/instructor/apply">Become an Instructor</a>
             </Button>

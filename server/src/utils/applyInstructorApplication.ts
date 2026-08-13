@@ -10,10 +10,7 @@ import { IInstructorApplication } from '../models/instructorApplication.model';
  * Idempotent: non-empty application values win, existing user values are kept
  * when the application did not provide one.
  */
-export function mergeInstructorApplicationIntoUser(
-  user: IUser,
-  application: Partial<IInstructorApplication>
-): void {
+export function mergeInstructorApplicationIntoUser(user: IUser, application: Partial<IInstructorApplication>): void {
   if (application.fullName) user.name = application.fullName;
   if (application.phone) user.phone = application.phone;
   if (application.address) user.address = application.address;

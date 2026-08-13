@@ -111,7 +111,8 @@ describe('AuditService', () => {
         adminEmail: 'admin@test.com',
         action: 'ADMIN_LOGIN',
         resourceType: 'Auth',
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        userAgent:
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       });
       const call = mockCreate.mock.calls[0][0];
       expect(call.browser).toBe('Chrome');
@@ -121,13 +122,15 @@ describe('AuditService', () => {
 
     it('never throws — fire-and-forget on failure', async () => {
       mockCreate.mockRejectedValue(new Error('DB error'));
-      await expect(auditService.log({
-        adminId,
-        adminName: 'Admin',
-        adminEmail: 'admin@test.com',
-        action: 'TEST',
-        resourceType: 'Test',
-      })).resolves.toBeUndefined();
+      await expect(
+        auditService.log({
+          adminId,
+          adminName: 'Admin',
+          adminEmail: 'admin@test.com',
+          action: 'TEST',
+          resourceType: 'Test',
+        })
+      ).resolves.toBeUndefined();
     });
   });
 

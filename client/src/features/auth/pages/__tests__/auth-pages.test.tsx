@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { screen } from '@testing-library/react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { renderWithProviders } from '@/test/render/renderWithProviders';
 import { createAuthValue } from '@/test/mocks/providers';
@@ -12,10 +11,7 @@ import { VerifyEmailPage } from '@/features/auth/pages/VerifyEmailPage';
 import { OAuthCallbackPage } from '@/features/auth/pages/OAuthCallbackPage';
 
 function wrap(ui: React.ReactNode, options: Parameters<typeof renderWithProviders>[1] = {}) {
-  return renderWithProviders(
-    <GoogleOAuthProvider clientId="test-client-id">{ui}</GoogleOAuthProvider>,
-    options,
-  );
+  return renderWithProviders(<GoogleOAuthProvider clientId="test-client-id">{ui}</GoogleOAuthProvider>, options);
 }
 
 describe('Auth pages', () => {

@@ -3,11 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 
-const { getCourseDetail, enrollFreeCourse, navigateMock, isAuthenticatedRef } = vi.hoisted(() => ({
+const { getCourseDetail, enrollFreeCourse, navigateMock, isAuthenticatedRef, courseDetailDataRef } = vi.hoisted(() => ({
   getCourseDetail: vi.fn(),
   enrollFreeCourse: vi.fn(),
   navigateMock: vi.fn(),
   isAuthenticatedRef: { current: false },
+  courseDetailDataRef: { current: null as null | Record<string, unknown> },
 }));
 
 const invalidateQueries = vi.fn();
@@ -18,8 +19,13 @@ vi.mock('react-router-dom', async (importOriginal) => {
 });
 
 vi.mock('@tanstack/react-query', () => ({
-  useQuery: vi.fn(),
+  useQuery: vi.fn(({ queryKey }: { queryKey: readonly unknown[] }) =>
+    queryKey[0] === 'course-detail' && courseDetailDataRef.current
+      ? courseDetailDataRef.current
+      : { data: [], isLoading: false, error: null }
+  ),
   useQueryClient: () => ({ invalidateQueries }),
+  useMutation: () => ({ mutateAsync: vi.fn(), isPending: false, variables: undefined }),
 }));
 
 vi.mock('@/api/endpoints/student', () => ({
@@ -37,15 +43,18 @@ vi.mock('@/providers/ToastProvider', () => ({
   useToast: () => ({ addToast: vi.fn() }),
 }));
 
-import { useQuery } from '@tanstack/react-query';
 import { CourseDetailPage } from '../CourseDetailPage';
-
-const useQueryMock = useQuery as unknown as ReturnType<typeof vi.fn>;
 
 function courseData(patch: {
   courseType?: string;
   price?: number;
-  pricing?: { originalPrice: number; discountPercent: number; hasDiscount: boolean; gstPercent: number; gstInclusive: boolean };
+  pricing?: {
+    originalPrice: number;
+    discountPercent: number;
+    hasDiscount: boolean;
+    gstPercent: number;
+    gstInclusive: boolean;
+  };
 }) {
   return {
     course: {
@@ -115,11 +124,15 @@ beforeEach(() => {
 
 describe('CourseDetailPage pricing', () => {
   it('shows Free with an Enroll for Free button for a free course, even when originalPrice is set', async () => {
-    useQueryMock.mockReturnValue({
-      data: courseData({ courseType: 'free', price: 0, pricing: { originalPrice: 1999, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true } }),
+    courseDetailDataRef.current = {
+      data: courseData({
+        courseType: 'free',
+        price: 0,
+        pricing: { originalPrice: 1999, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true },
+      }),
       isLoading: false,
       error: null,
-    });
+    };
 
     renderPage();
 
@@ -129,11 +142,15 @@ describe('CourseDetailPage pricing', () => {
   });
 
   it('shows the correct price for a paid course without discount', async () => {
-    useQueryMock.mockReturnValue({
-      data: courseData({ courseType: 'paid', price: 1999, pricing: { originalPrice: 0, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true } }),
+    courseDetailDataRef.current = {
+      data: courseData({
+        courseType: 'paid',
+        price: 1999,
+        pricing: { originalPrice: 0, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true },
+      }),
       isLoading: false,
       error: null,
-    });
+    };
 
     renderPage();
     await screen.findByText('Pricing Test Course');
@@ -143,11 +160,15 @@ describe('CourseDetailPage pricing', () => {
   });
 
   it('shows original price strike-through and Save badge only when discounted', async () => {
-    useQueryMock.mockReturnValue({
-      data: courseData({ courseType: 'paid', price: 1499, pricing: { originalPrice: 1999, discountPercent: 25, hasDiscount: true, gstPercent: 18, gstInclusive: true } }),
+    courseDetailDataRef.current = {
+      data: courseData({
+        courseType: 'paid',
+        price: 1499,
+        pricing: { originalPrice: 1999, discountPercent: 25, hasDiscount: true, gstPercent: 18, gstInclusive: true },
+      }),
       isLoading: false,
       error: null,
-    });
+    };
 
     renderPage();
     await screen.findByText('Pricing Test Course');
@@ -156,11 +177,15 @@ describe('CourseDetailPage pricing', () => {
   });
 
   it('calls enroll exactly once on double-click and navigates to the learning page', async () => {
-    useQueryMock.mockReturnValue({
-      data: courseData({ courseType: 'free', price: 0, pricing: { originalPrice: 1999, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true } }),
+    courseDetailDataRef.current = {
+      data: courseData({
+        courseType: 'free',
+        price: 0,
+        pricing: { originalPrice: 1999, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true },
+      }),
       isLoading: false,
       error: null,
-    });
+    };
     enrollFreeCourse.mockResolvedValue({ data: { data: { alreadyEnrolled: false } } });
     isAuthenticatedRef.current = true;
 
@@ -171,12 +196,7 @@ describe('CourseDetailPage pricing', () => {
     fireEvent.click(button);
 
     expect(enrollFreeCourse).toHaveBeenCalledTimes(1);
-    await waitFor(() =>
-      expect(navigateMock).toHaveBeenCalledWith(
-        '/student/courses/c1/learn',
-        { replace: true },
-      ),
-    );
+    await waitFor(() => expect(navigateMock).toHaveBeenCalledWith('/student/courses/c1/learn', { replace: true }));
     // The stale course-detail cache is invalidated so the page reflects enrollment on return.
     expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['course-detail', 'c1'] });
   });
@@ -185,7 +205,7 @@ describe('CourseDetailPage pricing', () => {
 describe('CourseDetailPage curriculum visibility', () => {
   async function openCurriculum(data: any) {
     const user = userEvent.setup();
-    useQueryMock.mockReturnValue({ data, isLoading: false, error: null });
+    courseDetailDataRef.current = { data, isLoading: false, error: null };
     renderPage();
     await screen.findByText('Pricing Test Course');
     await user.click(screen.getByRole('tab', { name: /Curriculum/i }));
@@ -194,7 +214,13 @@ describe('CourseDetailPage curriculum visibility', () => {
   }
 
   it('shows ALL lectures before enrollment, locking only non-free ones', async () => {
-    await openCurriculum(courseData({ courseType: 'paid', price: 1999, pricing: { originalPrice: 0, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true } }));
+    await openCurriculum(
+      courseData({
+        courseType: 'paid',
+        price: 1999,
+        pricing: { originalPrice: 0, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true },
+      })
+    );
 
     // Every lecture is visible, free and locked alike
     expect(await screen.findByText('Intro')).toBeInTheDocument();
@@ -205,7 +231,11 @@ describe('CourseDetailPage curriculum visibility', () => {
   });
 
   it('unlocks every lecture for an enrolled student (no lock, playable)', async () => {
-    const data = courseData({ courseType: 'paid', price: 1999, pricing: { originalPrice: 0, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true } });
+    const data = courseData({
+      courseType: 'paid',
+      price: 1999,
+      pricing: { originalPrice: 0, discountPercent: 0, hasDiscount: false, gstPercent: 18, gstInclusive: true },
+    });
     data.isEnrolled = true;
 
     await openCurriculum(data);

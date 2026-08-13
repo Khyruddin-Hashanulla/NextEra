@@ -1,14 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  Code2,
-  Palette,
-  Database,
-  Brain,
-  Briefcase,
-  ShieldCheck,
-  type LucideIcon,
-} from 'lucide-react';
+import { Code2, Palette, Database, Brain, Briefcase, ShieldCheck, type LucideIcon } from 'lucide-react';
 
 import { studentApi } from '@/api/endpoints/student';
 import { blogApi } from '@/api/endpoints/blog';
@@ -89,14 +81,7 @@ const CATEGORY_KEYWORDS: { keywords: string[]; meta: CategoryMeta }[] = [
   { keywords: ['security', 'cloud', 'devops', 'network'], meta: CANONICAL_CATEGORIES[5] },
 ];
 
-const CANONICAL_FALLBACK_NAMES = [
-  'Programming',
-  'Development',
-  'Design',
-  'Data Science',
-  'AI',
-  'Business',
-];
+const CANONICAL_FALLBACK_NAMES = ['Programming', 'Development', 'Design', 'Data Science', 'AI', 'Business'];
 
 function getCategoryMeta(name: string, index: number): CategoryMeta {
   const normalized = name.toLowerCase();
@@ -117,14 +102,12 @@ function getCourseCategoryName(course: MockCourse): string {
 export function useHomePageData() {
   const featuredCoursesQuery = useQuery({
     queryKey: QUERY_KEYS.courses.list({ home: 'featured', limit: 6 }),
-    queryFn: ({ signal }) =>
-      studentApi.listCourses({ featured: 'true', limit: 6 }, signal).then((r) => r.data.data),
+    queryFn: ({ signal }) => studentApi.listCourses({ featured: 'true', limit: 6 }, signal).then((r) => r.data.data),
   });
 
   const allCoursesQuery = useQuery({
     queryKey: QUERY_KEYS.courses.list({ home: 'all', limit: 100 }),
-    queryFn: ({ signal }) =>
-      studentApi.listCourses({ limit: 100 }, signal).then((r) => r.data.data),
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then((r) => r.data.data),
   });
 
   const featuredBlogsQuery = useQuery({
@@ -134,13 +117,10 @@ export function useHomePageData() {
 
   const featuredCourses: MockCourse[] = useMemo(
     () => featuredCoursesQuery.data?.courses ?? [],
-    [featuredCoursesQuery.data],
+    [featuredCoursesQuery.data]
   );
 
-  const allCourses: MockCourse[] = useMemo(
-    () => allCoursesQuery.data?.courses ?? [],
-    [allCoursesQuery.data],
-  );
+  const allCourses: MockCourse[] = useMemo(() => allCoursesQuery.data?.courses ?? [], [allCoursesQuery.data]);
 
   const categories: HomeCategory[] = useMemo(() => {
     if (allCourses.length === 0) {
@@ -240,7 +220,8 @@ export function useHomePageData() {
         name: 'Rahul Sharma',
         role: 'Frontend Developer',
         avatarUrl: undefined,
-        content: 'NextEra LMS helped me become a frontend developer. The projects felt real and the feedback was invaluable.',
+        content:
+          'NextEra LMS helped me become a frontend developer. The projects felt real and the feedback was invaluable.',
         rating: 5,
         course: 'Full Stack Development',
         date: '2026-04-02',
@@ -257,7 +238,7 @@ export function useHomePageData() {
         date: '2026-05-15',
       },
     ],
-    [],
+    []
   );
 
   return {

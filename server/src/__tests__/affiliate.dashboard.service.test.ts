@@ -88,9 +88,7 @@ describe('AffiliateService.getDashboard', () => {
     (ReferralTransaction.find as jest.Mock).mockReturnValue(
       chainable([{ _id: 'tx1', amount: 100, type: 'commission', status: 'approved' }])
     );
-    (ReferralClick.find as jest.Mock).mockReturnValue(
-      chainable([{ _id: 'c1', ip: '1.1.1.1', clickedAt: new Date() }])
-    );
+    (ReferralClick.find as jest.Mock).mockReturnValue(chainable([{ _id: 'c1', ip: '1.1.1.1', clickedAt: new Date() }]));
 
     const result = await affiliateService.getDashboard(affiliateDoc.user.toString());
 

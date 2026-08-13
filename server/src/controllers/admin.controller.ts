@@ -211,6 +211,11 @@ export const processPayout = asyncHandler(async (req: Request, res: Response) =>
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Payout processed', data));
 });
 
+export const approvePayout = asyncHandler(async (req: Request, res: Response) => {
+  const data = await paymentService.approvePayout(req.params.id, req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Payout approved', data));
+});
+
 export const processAllPendingPayouts = asyncHandler(async (_req: Request, res: Response) => {
   const data = await paymentService.processAllPendingPayouts();
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Pending payouts processed', data));
@@ -464,9 +469,17 @@ export const listAuditLogs = asyncHandler(async (req: Request, res: Response) =>
   const sortBy = (req.query.sortBy as string) || 'createdAt';
   const sortOrder = (req.query.sortOrder as 'asc' | 'desc') || 'desc';
   const data = await auditService.search({
-    page, limit, action, adminId, resourceType, search,
+    page,
+    limit,
+    action,
+    adminId,
+    resourceType,
+    search,
     success: success !== undefined ? success === 'true' : undefined,
-    startDate, endDate, sortBy, sortOrder,
+    startDate,
+    endDate,
+    sortBy,
+    sortOrder,
   });
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Audit logs fetched', data));
 });

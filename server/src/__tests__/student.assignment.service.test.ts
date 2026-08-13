@@ -88,7 +88,14 @@ describe('StudentService.submitAssignment', () => {
     expect(result.status).toBe('submitted');
     expect(result.submissionVersion).toBe(1);
     expect(AssignmentSubmission.create).toHaveBeenCalledWith(
-      expect.objectContaining({ user: USER_ID, course: COURSE_ID, lecture: LECTURE_ID, status: 'submitted', lateSubmission: false, penaltyPercent: 0 })
+      expect.objectContaining({
+        user: USER_ID,
+        course: COURSE_ID,
+        lecture: LECTURE_ID,
+        status: 'submitted',
+        lateSubmission: false,
+        penaltyPercent: 0,
+      })
     );
   });
 
@@ -111,7 +118,12 @@ describe('StudentService.submitAssignment', () => {
     expect(result.penaltyPercent).toBe(3);
     expect(result.penaltyApplied).toBe(true);
     expect(AssignmentSubmission.create).toHaveBeenCalledWith(
-      expect.objectContaining({ status: 'late_submission', lateSubmission: true, penaltyPercent: 3, penaltyApplied: true })
+      expect.objectContaining({
+        status: 'late_submission',
+        lateSubmission: true,
+        penaltyPercent: 3,
+        penaltyApplied: true,
+      })
     );
   });
 
@@ -195,8 +207,18 @@ describe('StudentService.getAssignmentsOverview', () => {
     const pastDue = new Date(Date.now() - 86400000);
     const futureDue = new Date(Date.now() + 86400000);
     const lectures = [
-      { _id: LECTURE_ID, title: 'Past', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: pastDue.toISOString() } },
-      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Future', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: futureDue.toISOString() } },
+      {
+        _id: LECTURE_ID,
+        title: 'Past',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: pastDue.toISOString() },
+      },
+      {
+        _id: '6a6c5515bf5829ee772c2ce4',
+        title: 'Future',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: futureDue.toISOString() },
+      },
     ];
     (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
     (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([]));
@@ -212,8 +234,18 @@ describe('StudentService.getAssignmentsOverview', () => {
     const pastDue = new Date(Date.now() - 86400000);
     const futureDue = new Date(Date.now() + 86400000);
     const lectures = [
-      { _id: LECTURE_ID, title: 'Past', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: pastDue.toISOString() } },
-      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Future', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: futureDue.toISOString() } },
+      {
+        _id: LECTURE_ID,
+        title: 'Past',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: pastDue.toISOString() },
+      },
+      {
+        _id: '6a6c5515bf5829ee772c2ce4',
+        title: 'Future',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: futureDue.toISOString() },
+      },
     ];
     (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
     (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([]));
@@ -230,8 +262,18 @@ describe('StudentService.getAssignmentsOverview', () => {
     const pastDue = new Date(Date.now() - 86400000);
     const futureDue = new Date(Date.now() + 86400000);
     const lectures = [
-      { _id: LECTURE_ID, title: 'Past', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: pastDue.toISOString() } },
-      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Future', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: futureDue.toISOString() } },
+      {
+        _id: LECTURE_ID,
+        title: 'Past',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: pastDue.toISOString() },
+      },
+      {
+        _id: '6a6c5515bf5829ee772c2ce4',
+        title: 'Future',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: futureDue.toISOString() },
+      },
     ];
     (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
     (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([]));
@@ -246,13 +288,23 @@ describe('StudentService.getAssignmentsOverview', () => {
   it('filters by a stored submission status', async () => {
     (Enrollment.find as jest.Mock).mockReturnValue(chainable([{ course: COURSE_ID }]));
     const lectures = [
-      { _id: LECTURE_ID, title: 'Graded', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: null } },
-      { _id: '6a6c5515bf5829ee772c2ce4', title: 'Pending', course: { _id: COURSE_ID, title: 'C1' }, assignment: { totalMarks: 100, dueDate: null } },
+      {
+        _id: LECTURE_ID,
+        title: 'Graded',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: null },
+      },
+      {
+        _id: '6a6c5515bf5829ee772c2ce4',
+        title: 'Pending',
+        course: { _id: COURSE_ID, title: 'C1' },
+        assignment: { totalMarks: 100, dueDate: null },
+      },
     ];
     (Lecture.find as jest.Mock).mockReturnValue(chainable(lectures));
-    (AssignmentSubmission.find as jest.Mock).mockReturnValue(chainable([
-      { _id: '5f9c7f9c7f9c7f9c7f9c7f9c', lecture: LECTURE_ID, status: 'graded' },
-    ]));
+    (AssignmentSubmission.find as jest.Mock).mockReturnValue(
+      chainable([{ _id: '5f9c7f9c7f9c7f9c7f9c7f9c', lecture: LECTURE_ID, status: 'graded' }])
+    );
 
     const overview = await service.getAssignmentsOverview(USER_ID, 1, 20, undefined, 'graded');
 

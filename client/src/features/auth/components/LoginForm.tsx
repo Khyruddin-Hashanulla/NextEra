@@ -28,12 +28,13 @@ const item = {
 };
 
 const EMAIL_NOT_VERIFIED_MESSAGE = 'Please verify your email before logging in.';
-const ACCOUNT_LOCKED_MESSAGE = 'Your account is temporarily locked due to multiple failed login attempts. Please try again later.';
+const ACCOUNT_LOCKED_MESSAGE =
+  'Your account is temporarily locked due to multiple failed login attempts. Please try again later.';
 
 export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
-  const [accountLocked, setAccountLocked] = useState(false);
+  const [_accountLocked, setAccountLocked] = useState(false);
   const loginMutation = useLoginMutation();
   const sendOTPMutation = useSendOTPMutation();
   const { addToast } = useToast();
@@ -93,23 +94,18 @@ export function LoginForm() {
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item} className="text-center">
         <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Sign in to your NextEra account
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Sign in to your NextEra account</p>
       </motion.div>
 
       {unverifiedEmail && (
-        <motion.div
-          variants={item}
-          className="rounded-lg border border-warning/30 bg-warning/5 p-4"
-        >
+        <motion.div variants={item} className="rounded-lg border border-warning/30 bg-warning/5 p-4">
           <div className="flex gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
             <div className="space-y-2 text-sm">
               <p className="font-medium text-foreground">Email verification required</p>
               <p className="text-muted-foreground">
-                Please verify your email address (<span className="font-medium text-foreground">{unverifiedEmail}</span>)
-                before signing in. Check your inbox for the verification code.
+                Please verify your email address (<span className="font-medium text-foreground">{unverifiedEmail}</span>
+                ) before signing in. Check your inbox for the verification code.
               </p>
               <Button
                 type="button"
@@ -178,12 +174,7 @@ export function LoginForm() {
           )}
         </div>
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          loading={loginMutation.isPending}
-        >
+        <Button type="submit" fullWidth size="lg" loading={loginMutation.isPending}>
           Sign in
         </Button>
       </motion.form>

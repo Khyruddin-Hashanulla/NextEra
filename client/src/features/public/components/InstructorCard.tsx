@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
-import { Star, Users, Award, BookOpen } from 'lucide-react';
+import { Star, Users, BookOpen } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 
 interface Instructor {
@@ -21,7 +21,12 @@ interface InstructorCardProps {
 }
 
 export function InstructorCard({ instructor, className }: InstructorCardProps) {
-  const initials = instructor.name?.split(' ').map(n => n[0]).join('').toUpperCase() || '?';
+  const initials =
+    instructor.name
+      ?.split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase() || '?';
 
   return (
     <Link
@@ -33,7 +38,13 @@ export function InstructorCard({ instructor, className }: InstructorCardProps) {
     >
       <div className="relative mx-auto w-20 h-20 mb-4">
         {instructor.avatar ? (
-          <OptimizedImage src={instructor.avatar} alt={instructor.name} placeholderType="avatar" className="rounded-full object-cover" lazy />
+          <OptimizedImage
+            src={instructor.avatar}
+            alt={instructor.name}
+            placeholderType="avatar"
+            className="rounded-full object-cover"
+            lazy
+          />
         ) : (
           <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center text-lg font-bold text-primary">
             {initials}
@@ -45,15 +56,9 @@ export function InstructorCard({ instructor, className }: InstructorCardProps) {
           </span>
         )}
       </div>
-      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-        {instructor.name}
-      </h3>
-      {instructor.title && (
-        <p className="text-sm text-muted-foreground mt-0.5">{instructor.title}</p>
-      )}
-      {instructor.bio && (
-        <p className="text-sm text-muted-foreground/70 mt-2 line-clamp-2">{instructor.bio}</p>
-      )}
+      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{instructor.name}</h3>
+      {instructor.title && <p className="text-sm text-muted-foreground mt-0.5">{instructor.title}</p>}
+      {instructor.bio && <p className="text-sm text-muted-foreground/70 mt-2 line-clamp-2">{instructor.bio}</p>}
       <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1">
           <BookOpen className="h-3.5 w-3.5" /> {instructor.coursesCount ?? 0} courses
@@ -65,7 +70,10 @@ export function InstructorCard({ instructor, className }: InstructorCardProps) {
       {instructor.specialties && instructor.specialties.length > 0 && (
         <div className="flex flex-wrap justify-center gap-1.5 mt-4">
           {instructor.specialties.slice(0, 3).map((specialty) => (
-            <span key={specialty} className="text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border border-border">
+            <span
+              key={specialty}
+              className="text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border border-border"
+            >
               {specialty}
             </span>
           ))}

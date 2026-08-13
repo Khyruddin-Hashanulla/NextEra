@@ -9,7 +9,20 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
-import { Save, User, Mail, Phone, MapPin, BookOpen, Award, Briefcase, Hash, Globe, Link as LinkIcon, Camera, Loader2 } from 'lucide-react';
+import {
+  Save,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  BookOpen,
+  Award,
+  Briefcase,
+  Hash,
+  Globe,
+  Link as LinkIcon,
+  Camera,
+} from 'lucide-react';
 
 const container = {
   hidden: { opacity: 0 },
@@ -65,7 +78,11 @@ export function EditProfilePage() {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: profile, isLoading, refetch } = useQuery({
+  const {
+    data: profile,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['instructor', 'profile'],
     queryFn: ({ signal }) => instructorApi.getProfile(signal).then((r) => r.data.data),
   });
@@ -121,7 +138,11 @@ export function EditProfilePage() {
       addToast({ title: 'Profile updated', description: 'All changes have been saved.', variant: 'success' });
     },
     onError: (error: any) => {
-      addToast({ title: 'Update failed', description: error?.response?.data?.message || 'Failed to save profile.', variant: 'error' });
+      addToast({
+        title: 'Update failed',
+        description: error?.response?.data?.message || 'Failed to save profile.',
+        variant: 'error',
+      });
     },
     onSettled: () => {
       setIsSaving(false);
@@ -130,13 +151,22 @@ export function EditProfilePage() {
 
   const avatarMutation = useMutation({
     mutationFn: (formData: FormData) => instructorApi.uploadAvatar(formData),
-    onSuccess: async (response) => {
+    onSuccess: async (_response) => {
       await queryClient.invalidateQueries({ queryKey: ['instructor', 'profile'] });
       await refetch();
       setAvatarVersion(Date.now());
-      addToast({ title: 'Profile picture updated', description: 'Your avatar has been successfully updated.', variant: 'success' });
+      addToast({
+        title: 'Profile picture updated',
+        description: 'Your avatar has been successfully updated.',
+        variant: 'success',
+      });
     },
-    onError: () => addToast({ title: 'Upload failed', description: 'Failed to upload profile picture. Please try again.', variant: 'error' }),
+    onError: () =>
+      addToast({
+        title: 'Upload failed',
+        description: 'Failed to upload profile picture. Please try again.',
+        variant: 'error',
+      }),
   });
 
   const update = (field: string, value: string) => {
@@ -161,9 +191,13 @@ export function EditProfilePage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i}>
-              <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
               <CardContent className="space-y-4">
-                {[...Array(3)].map((_, j) => <Skeleton key={j} className="h-10 w-full" />)}
+                {[...Array(3)].map((_, j) => (
+                  <Skeleton key={j} className="h-10 w-full" />
+                ))}
               </CardContent>
             </Card>
           ))}
@@ -192,24 +226,48 @@ export function EditProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label><User className="mr-1 inline h-3 w-3" /> Name</Label>
+              <Label>
+                <User className="mr-1 inline h-3 w-3" /> Name
+              </Label>
               <Input value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Full name" />
             </div>
             <div className="space-y-2">
-              <Label><Mail className="mr-1 inline h-3 w-3" /> Email</Label>
-              <Input value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email address" type="email" />
+              <Label>
+                <Mail className="mr-1 inline h-3 w-3" /> Email
+              </Label>
+              <Input
+                value={form.email}
+                onChange={(e) => update('email', e.target.value)}
+                placeholder="Email address"
+                type="email"
+              />
             </div>
             <div className="space-y-2">
-              <Label><Phone className="mr-1 inline h-3 w-3" /> Phone</Label>
-              <Input value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="Phone number" type="tel" />
+              <Label>
+                <Phone className="mr-1 inline h-3 w-3" /> Phone
+              </Label>
+              <Input
+                value={form.phone}
+                onChange={(e) => update('phone', e.target.value)}
+                placeholder="Phone number"
+                type="tel"
+              />
             </div>
             <div className="space-y-2">
-              <Label><MapPin className="mr-1 inline h-3 w-3" /> Address</Label>
+              <Label>
+                <MapPin className="mr-1 inline h-3 w-3" /> Address
+              </Label>
               <Input value={form.address} onChange={(e) => update('address', e.target.value)} placeholder="Address" />
             </div>
             <div className="space-y-2">
               <Label>Bio</Label>
-              <Textarea value={form.bio} onChange={(e) => update('bio', e.target.value)} rows={3} placeholder="Tell students about yourself..." maxLength={500} />
+              <Textarea
+                value={form.bio}
+                onChange={(e) => update('bio', e.target.value)}
+                rows={3}
+                placeholder="Tell students about yourself..."
+                maxLength={500}
+              />
               <p className="text-xs text-muted-foreground text-right">{form.bio.length}/500</p>
             </div>
             <div className="space-y-2 pt-2 border-t">
@@ -220,11 +278,7 @@ export function EditProfilePage() {
                 <div className="relative">
                   <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-3xl font-bold text-primary overflow-hidden relative">
                     {avatarUrl ? (
-                      <img
-                        src={avatarUrl}
-                        alt="Profile"
-                        className="h-full w-full object-cover"
-                      />
+                      <img src={avatarUrl} alt="Profile" className="h-full w-full object-cover" />
                     ) : (
                       profile?.name?.[0]?.toUpperCase() || '?'
                     )}
@@ -240,12 +294,20 @@ export function EditProfilePage() {
                         if (!file) return;
 
                         if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-                          addToast({ title: 'Invalid file type', description: 'Please upload a JPG, PNG, or WebP image.', variant: 'error' });
+                          addToast({
+                            title: 'Invalid file type',
+                            description: 'Please upload a JPG, PNG, or WebP image.',
+                            variant: 'error',
+                          });
                           return;
                         }
 
                         if (file.size > 2 * 1024 * 1024) {
-                          addToast({ title: 'File too large', description: 'Image must be less than 2MB.', variant: 'error' });
+                          addToast({
+                            title: 'File too large',
+                            description: 'Image must be less than 2MB.',
+                            variant: 'error',
+                          });
                           return;
                         }
 
@@ -276,18 +338,30 @@ export function EditProfilePage() {
                             canvas.height = height;
                             ctx.drawImage(img, 0, 0, width, height);
 
-                            canvas.toBlob(async (blob) => {
-                              if (!blob) return;
-                              const formData = new FormData();
-                              formData.append('avatar', blob, file.name);
+                            canvas.toBlob(
+                              async (blob) => {
+                                if (!blob) return;
+                                const formData = new FormData();
+                                formData.append('avatar', blob, file.name);
 
-                              try {
-                                addToast({ title: 'Uploading...', description: 'Your profile picture is being uploaded.', variant: 'info' });
-                                await avatarMutation.mutateAsync(formData);
-                              } catch (error) {
-                                addToast({ title: 'Upload failed', description: 'Failed to upload profile picture. Please try again.', variant: 'error' });
-                              }
-                            }, 'image/jpeg', 0.9);
+                                try {
+                                  addToast({
+                                    title: 'Uploading...',
+                                    description: 'Your profile picture is being uploaded.',
+                                    variant: 'info',
+                                  });
+                                  await avatarMutation.mutateAsync(formData);
+                                } catch (_error) {
+                                  addToast({
+                                    title: 'Upload failed',
+                                    description: 'Failed to upload profile picture. Please try again.',
+                                    variant: 'error',
+                                  });
+                                }
+                              },
+                              'image/jpeg',
+                              0.9
+                            );
                           };
                           img.src = event.target?.result as string;
                         };
@@ -311,23 +385,43 @@ export function EditProfilePage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>LinkedIn</Label>
-              <Input value={form.socialLinks?.linkedin || ''} onChange={(e) => update('socialLinks.linkedin', e.target.value)} placeholder="https://linkedin.com/in/..." />
+              <Input
+                value={form.socialLinks?.linkedin || ''}
+                onChange={(e) => update('socialLinks.linkedin', e.target.value)}
+                placeholder="https://linkedin.com/in/..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Twitter</Label>
-              <Input value={form.socialLinks?.twitter || ''} onChange={(e) => update('socialLinks.twitter', e.target.value)} placeholder="https://twitter.com/..." />
+              <Input
+                value={form.socialLinks?.twitter || ''}
+                onChange={(e) => update('socialLinks.twitter', e.target.value)}
+                placeholder="https://twitter.com/..."
+              />
             </div>
             <div className="space-y-2">
               <Label>GitHub</Label>
-              <Input value={form.socialLinks?.github || ''} onChange={(e) => update('socialLinks.github', e.target.value)} placeholder="https://github.com/..." />
+              <Input
+                value={form.socialLinks?.github || ''}
+                onChange={(e) => update('socialLinks.github', e.target.value)}
+                placeholder="https://github.com/..."
+              />
             </div>
             <div className="space-y-2">
               <Label>Portfolio</Label>
-              <Input value={form.socialLinks?.portfolio || ''} onChange={(e) => update('socialLinks.portfolio', e.target.value)} placeholder="https://yourportfolio.com" />
+              <Input
+                value={form.socialLinks?.portfolio || ''}
+                onChange={(e) => update('socialLinks.portfolio', e.target.value)}
+                placeholder="https://yourportfolio.com"
+              />
             </div>
             <div className="space-y-2">
               <Label>Website</Label>
-              <Input value={form.socialLinks?.website || ''} onChange={(e) => update('socialLinks.website', e.target.value)} placeholder="https://yourwebsite.com" />
+              <Input
+                value={form.socialLinks?.website || ''}
+                onChange={(e) => update('socialLinks.website', e.target.value)}
+                placeholder="https://yourwebsite.com"
+              />
             </div>
           </CardContent>
         </Card>
@@ -340,16 +434,35 @@ export function EditProfilePage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label><BookOpen className="mr-1 inline h-3 w-3" /> Qualification</Label>
-              <Input value={form.qualification} onChange={(e) => update('qualification', e.target.value)} placeholder="e.g., PhD in Computer Science" />
+              <Label>
+                <BookOpen className="mr-1 inline h-3 w-3" /> Qualification
+              </Label>
+              <Input
+                value={form.qualification}
+                onChange={(e) => update('qualification', e.target.value)}
+                placeholder="e.g., PhD in Computer Science"
+              />
             </div>
             <div className="space-y-2">
-              <Label><Briefcase className="mr-1 inline h-3 w-3" /> Experience</Label>
-              <Textarea value={form.experience} onChange={(e) => update('experience', e.target.value)} rows={2} placeholder="Years of experience and highlights" />
+              <Label>
+                <Briefcase className="mr-1 inline h-3 w-3" /> Experience
+              </Label>
+              <Textarea
+                value={form.experience}
+                onChange={(e) => update('experience', e.target.value)}
+                rows={2}
+                placeholder="Years of experience and highlights"
+              />
             </div>
             <div className="space-y-2">
-              <Label><Hash className="mr-1 inline h-3 w-3" /> Expertise (comma-separated)</Label>
-              <Input value={form.expertise} onChange={(e) => update('expertise', e.target.value)} placeholder="React, Node.js, TypeScript, AWS" />
+              <Label>
+                <Hash className="mr-1 inline h-3 w-3" /> Expertise (comma-separated)
+              </Label>
+              <Input
+                value={form.expertise}
+                onChange={(e) => update('expertise', e.target.value)}
+                placeholder="React, Node.js, TypeScript, AWS"
+              />
             </div>
           </CardContent>
         </Card>
@@ -366,11 +479,21 @@ export function EditProfilePage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>PAN</Label>
-                  <Input value={form.pan} onChange={(e) => update('pan', e.target.value)} placeholder="ABCDE1234F" maxLength={10} />
+                  <Input
+                    value={form.pan}
+                    onChange={(e) => update('pan', e.target.value)}
+                    placeholder="ABCDE1234F"
+                    maxLength={10}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>GST</Label>
-                  <Input value={form.gst} onChange={(e) => update('gst', e.target.value)} placeholder="27ABCDE1234F1Z5" maxLength={15} />
+                  <Input
+                    value={form.gst}
+                    onChange={(e) => update('gst', e.target.value)}
+                    placeholder="27ABCDE1234F1Z5"
+                    maxLength={15}
+                  />
                 </div>
               </div>
             </div>
@@ -378,26 +501,47 @@ export function EditProfilePage() {
               <h4 className="mb-3 text-sm font-semibold text-muted-foreground">Bank Details</h4>
               <div className="space-y-2">
                 <Label>Account Holder Name</Label>
-                <Input value={form.accountHolderName} onChange={(e) => update('accountHolderName', e.target.value)} placeholder="As per bank records" />
+                <Input
+                  value={form.accountHolderName}
+                  onChange={(e) => update('accountHolderName', e.target.value)}
+                  placeholder="As per bank records"
+                />
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Account Number</Label>
-                  <Input value={form.accountNumber} onChange={(e) => update('accountNumber', e.target.value)} placeholder="1234567890" />
+                  <Input
+                    value={form.accountNumber}
+                    onChange={(e) => update('accountNumber', e.target.value)}
+                    placeholder="1234567890"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>IFSC Code</Label>
-                  <Input value={form.ifscCode} onChange={(e) => update('ifscCode', e.target.value)} placeholder="SBIN0001234" maxLength={11} />
+                  <Input
+                    value={form.ifscCode}
+                    onChange={(e) => update('ifscCode', e.target.value)}
+                    placeholder="SBIN0001234"
+                    maxLength={11}
+                  />
                 </div>
               </div>
               <div className="mt-4 grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Bank Name</Label>
-                  <Input value={form.bankName} onChange={(e) => update('bankName', e.target.value)} placeholder="State Bank of India" />
+                  <Input
+                    value={form.bankName}
+                    onChange={(e) => update('bankName', e.target.value)}
+                    placeholder="State Bank of India"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Branch</Label>
-                  <Input value={form.branch} onChange={(e) => update('branch', e.target.value)} placeholder="Main Branch" />
+                  <Input
+                    value={form.branch}
+                    onChange={(e) => update('branch', e.target.value)}
+                    placeholder="Main Branch"
+                  />
                 </div>
               </div>
               <div className="mt-4 space-y-2">

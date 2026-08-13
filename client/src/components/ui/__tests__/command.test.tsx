@@ -25,7 +25,7 @@ describe('Command', () => {
             <CommandItem>Search</CommandItem>
           </CommandGroup>
         </CommandList>
-      </Command>,
+      </Command>
     );
     expect(screen.getByPlaceholderText('Search…')).toBeInTheDocument();
     expect(screen.getByText('Calendar')).toBeInTheDocument();
@@ -42,7 +42,7 @@ describe('Command', () => {
             <CommandItem value="email">Email</CommandItem>
           </CommandGroup>
         </CommandList>
-      </Command>,
+      </Command>
     );
     await user.type(screen.getByPlaceholderText('Search…'), 'cal');
     expect(screen.getByText('Calendar')).toBeInTheDocument();
@@ -59,7 +59,7 @@ describe('Command', () => {
             <CommandItem value="calendar">Calendar</CommandItem>
           </CommandGroup>
         </CommandList>
-      </Command>,
+      </Command>
     );
     await user.type(screen.getByPlaceholderText('Search…'), 'zzzz');
     expect(screen.getByText('No results found.')).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('Command', () => {
             </CommandItem>
           </CommandGroup>
         </CommandList>
-      </Command>,
+      </Command>
     );
     await user.click(screen.getByText('Calendar'));
     expect(onSelect).toHaveBeenCalledWith('calendar');
@@ -95,7 +95,7 @@ describe('Command', () => {
           </CommandGroup>
           <CommandSeparator />
         </CommandList>
-      </Command>,
+      </Command>
     );
     expect(screen.getByText('⌘C')).toBeInTheDocument();
     expect(screen.getByRole('separator')).toBeInTheDocument();
@@ -116,7 +116,7 @@ describe('Command', () => {
             </CommandItem>
           </CommandGroup>
         </CommandList>
-      </Command>,
+      </Command>
     );
     await user.click(screen.getByText('One'));
     await user.keyboard('{ArrowDown}{Enter}');

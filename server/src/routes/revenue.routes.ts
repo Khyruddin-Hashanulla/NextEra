@@ -1,23 +1,34 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import {
-  getRevenueDashboard, getRevenueSummary,
-  listInstructorSubscriptionPlans, createInstructorSubscriptionPlan,
-  updateInstructorSubscriptionPlan, deleteInstructorSubscriptionPlan,
+  getRevenueDashboard,
+  getRevenueSummary,
+  listInstructorSubscriptionPlans,
+  createInstructorSubscriptionPlan,
+  updateInstructorSubscriptionPlan,
+  deleteInstructorSubscriptionPlan,
   getInstructorSubscriptionStats,
-  listAffiliates, createAffiliate, updateAffiliate, deleteAffiliate,
+  listAffiliates,
+  createAffiliate,
+  updateAffiliate,
+  deleteAffiliate,
   getAffiliateStats,
-  listFeaturedPromotions, createFeaturedPromotion, updateFeaturedPromotion,
-  deleteFeaturedPromotion, getFeaturedPromotionStats,
-  trackAffiliateClick, getAffiliateInfo,
+  listFeaturedPromotions,
+  createFeaturedPromotion,
+  updateFeaturedPromotion,
+  deleteFeaturedPromotion,
+  getFeaturedPromotionStats,
 } from '../controllers/revenue.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { authorize } from '../middlewares/authorize.middleware';
 import { validate } from '../middlewares/validate.middleware';
 import { ROLES } from '../constants/roles';
 import {
-  createInstructorSubscriptionPlanSchema, updateInstructorSubscriptionPlanSchema,
-  createAffiliateSchema, updateAffiliateSchema,
-  createFeaturedPromotionSchema, updateFeaturedPromotionSchema,
+  createInstructorSubscriptionPlanSchema,
+  updateInstructorSubscriptionPlanSchema,
+  createAffiliateSchema,
+  updateAffiliateSchema,
+  createFeaturedPromotionSchema,
+  updateFeaturedPromotionSchema,
 } from '../validators/revenue.validator';
 
 const router = Router();

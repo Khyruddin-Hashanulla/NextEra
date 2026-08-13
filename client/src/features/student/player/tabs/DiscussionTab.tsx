@@ -52,8 +52,15 @@ export function DiscussionTab({ courseId, lectureId }: DiscussionTabProps) {
       <CardContent className="space-y-4 pt-4">
         <div className="space-y-2 rounded-lg border p-3">
           <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Question title" />
-          <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Your question..." rows={3} />
-          <Button onClick={() => createMutation.mutate()} disabled={!title.trim() || !content.trim()}>Post Question</Button>
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Your question..."
+            rows={3}
+          />
+          <Button onClick={() => createMutation.mutate()} disabled={!title.trim() || !content.trim()}>
+            Post Question
+          </Button>
         </div>
         {!discussionList?.length ? (
           <EmptyState
@@ -74,7 +81,9 @@ export function DiscussionTab({ courseId, lectureId }: DiscussionTabProps) {
                 <div key={i} className="ml-4 mt-2 border-l-2 pl-3">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-medium">{reply.user?.name || 'Anonymous'}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(reply.createdAt).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(reply.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                   <p className="text-sm">{reply.content}</p>
                 </div>
@@ -86,11 +95,16 @@ export function DiscussionTab({ courseId, lectureId }: DiscussionTabProps) {
                   placeholder="Write a reply..."
                   className="flex-1"
                 />
-                <Button size="sm" onClick={() => {
-                  if (replyContent[d._id]?.trim()) {
-                    replyMutation.mutate({ id: d._id, content: replyContent[d._id] });
-                  }
-                }}>Reply</Button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    if (replyContent[d._id]?.trim()) {
+                      replyMutation.mutate({ id: d._id, content: replyContent[d._id] });
+                    }
+                  }}
+                >
+                  Reply
+                </Button>
               </div>
             </div>
           ))

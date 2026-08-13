@@ -12,7 +12,9 @@ export interface AuditOptions {
   getNewData?: (req: Request, result: any) => Record<string, any> | undefined;
 }
 
-export function previousDataLoader(model: mongoose.Model<any>): (req: Request) => Promise<Record<string, any> | undefined> {
+export function previousDataLoader(
+  model: mongoose.Model<any>
+): (req: Request) => Promise<Record<string, any> | undefined> {
   return async (req: Request) => {
     const id = req.params.id;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) return undefined;
@@ -41,9 +43,7 @@ export function auditMiddleware(req: Request, res: Response, next: NextFunction)
 
     const resourceId = typeof opts.resourceId === 'function' ? opts.resourceId(req) : opts.resourceId || req.params.id;
     const resourceName =
-      typeof opts.resourceName === 'function'
-        ? opts.resourceName(req)
-        : opts.resourceName || undefined;
+      typeof opts.resourceName === 'function' ? opts.resourceName(req) : opts.resourceName || undefined;
 
     const prevPromise = opts.getPreviousData ? opts.getPreviousData(req) : Promise.resolve(undefined);
 
@@ -66,7 +66,7 @@ export function auditMiddleware(req: Request, res: Response, next: NextFunction)
           route: req.route?.path || req.baseUrl + (req.route?.path || ''),
           statusCode: res.statusCode,
           success: res.statusCode >= 200 && res.statusCode < 400,
-          errorMessage: res.statusCode >= 400 ? (body?.message || 'Unknown error') : undefined,
+          errorMessage: res.statusCode >= 400 ? body?.message || 'Unknown error' : undefined,
           ipAddress: getIp(req),
           userAgent: getUserAgent(req),
           requestId: (req as any).id,

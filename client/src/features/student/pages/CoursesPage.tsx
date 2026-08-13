@@ -5,6 +5,7 @@ import { studentApi } from '@/api/endpoints/student';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { WishlistButton } from '@/components/course/WishlistButton';
 import { Search, Star, Users, Clock, BookOpen } from 'lucide-react';
 import { isFreeCourse } from '@/lib/coursePricing';
 import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
@@ -17,7 +18,8 @@ export function CoursesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['student', 'courses', search, level, page],
-    queryFn: () => studentApi.listCourses({ search, level: level || undefined, page, limit: 12 }).then((r: any) => r.data.data),
+    queryFn: () =>
+      studentApi.listCourses({ search, level: level || undefined, page, limit: 12 }).then((r: any) => r.data.data),
   });
 
   return (
@@ -32,13 +34,22 @@ export function CoursesPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search courses..."
             className="pl-9"
           />
         </div>
-        <select value={level} onChange={(e) => { setLevel(e.target.value); setPage(1); }}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm">
+        <select
+          value={level}
+          onChange={(e) => {
+            setLevel(e.target.value);
+            setPage(1);
+          }}
+          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+        >
           <option value="">All Levels</option>
           <option value="beginner">Beginner</option>
           <option value="intermediate">Intermediate</option>
@@ -50,7 +61,9 @@ export function CoursesPage() {
         <CardGridSkeleton />
       ) : !data?.courses?.length ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">No courses found. Try adjusting your search.</CardContent>
+          <CardContent className="py-12 text-center text-muted-foreground">
+            No courses found. Try adjusting your search.
+          </CardContent>
         </Card>
       ) : (
         <>
@@ -58,34 +71,57 @@ export function CoursesPage() {
             {data.courses.map((course: any) => (
               <Card key={course._id} className="overflow-hidden transition-shadow hover:shadow-md">
                 <Link to={`/student/courses/${course._id}`}>
-                  <div className="aspect-video w-full overflow-hidden bg-muted">
+                  <div className="relative aspect-video w-full overflow-hidden bg-muted">
                     {course.thumbnail?.url ? (
-                      <OptimizedImage src={course.thumbnail.url} alt={course.title} placeholderType="course" className="object-cover" />
+                      <OptimizedImage
+                        src={course.thumbnail.url}
+                        alt={course.title}
+                        placeholderType="course"
+                        className="object-cover"
+                      />
                     ) : (
-                      <div className="flex h-full items-center justify-center text-muted-foreground"><BookOpen className="h-8 w-8" /></div>
+                      <div className="flex h-full items-center justify-center text-muted-foreground">
+                        <BookOpen className="h-8 w-8" />
+                      </div>
                     )}
+                    <WishlistButton courseId={course._id} variant="icon" className="absolute right-2 top-2" />
                   </div>
                 </Link>
                 <CardHeader className="pb-2">
                   <CardTitle className="line-clamp-1 text-base">
-                    <Link to={`/student/courses/${course._id}`} className="hover:text-primary">{course.title}</Link>
+                    <Link to={`/student/courses/${course._id}`} className="hover:text-primary">
+                      {course.title}
+                    </Link>
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">{course.instructor?.name || 'Unknown'}</p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     {course.averageRating > 0 && (
-                      <span className="flex items-center gap-1"><Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />{course.averageRating}</span>
+                      <span className="flex items-center gap-1">
+                        <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                        {course.averageRating}
+                      </span>
                     )}
-                    <span className="flex items-center gap-1"><Users className="h-3 w-3" />{course.totalEnrollments}</span>
-                    <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{course.totalDuration || 0}h</span>
+                    <span className="flex items-center gap-1">
+                      <Users className="h-3 w-3" />
+                      {course.totalEnrollments}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {course.totalDuration || 0}h
+                    </span>
                   </div>
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-lg font-bold">{isFreeCourse(course) ? 'Free' : `₹${course.price.toLocaleString()}`}</span>
+                    <span className="text-lg font-bold">
+                      {isFreeCourse(course) ? 'Free' : `₹${course.price.toLocaleString()}`}
+                    </span>
                     <span className="rounded bg-muted px-2 py-0.5 text-xs capitalize">{course.level}</span>
                   </div>
                   <Link to={`/student/courses/${course._id}`}>
-                    <Button className="mt-3 w-full" size="sm">View Course</Button>
+                    <Button className="mt-3 w-full" size="sm">
+                      View Course
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -93,9 +129,15 @@ export function CoursesPage() {
           </div>
           {data.totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-2">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-              <span className="text-sm text-muted-foreground">Page {page} of {data.totalPages}</span>
-              <Button variant="outline" size="sm" disabled={page >= data.totalPages} onClick={() => setPage(page + 1)}>Next</Button>
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+                Previous
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {data.totalPages}
+              </span>
+              <Button variant="outline" size="sm" disabled={page >= data.totalPages} onClick={() => setPage(page + 1)}>
+                Next
+              </Button>
             </div>
           )}
         </>

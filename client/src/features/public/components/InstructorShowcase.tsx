@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ROUTES } from '@/lib/constants';
 import { InstructorCard } from './InstructorCard';
 import { InstructorGridSkeleton } from '@/components/common/LoadingSkeleton';
 
@@ -29,8 +28,14 @@ interface InstructorShowcaseProps {
 }
 
 export function InstructorShowcase({
-  instructors, title, subtitle, viewAllHref, viewAllLabel = 'View All',
-  limit, isLoading, className,
+  instructors,
+  title,
+  subtitle,
+  viewAllHref,
+  viewAllLabel = 'View All',
+  limit,
+  isLoading,
+  className,
 }: InstructorShowcaseProps) {
   const displayInstructors = limit ? instructors.slice(0, limit) : instructors;
 
@@ -43,7 +48,10 @@ export function InstructorShowcase({
             {subtitle && <p className="text-muted-foreground mt-2">{subtitle}</p>}
           </div>
           {viewAllHref && (
-            <Link to={viewAllHref} className="flex items-center gap-1 text-sm font-medium text-primary hover:underline whitespace-nowrap">
+            <Link
+              to={viewAllHref}
+              className="flex items-center gap-1 text-sm font-medium text-primary hover:underline whitespace-nowrap"
+            >
               {viewAllLabel} <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           )}

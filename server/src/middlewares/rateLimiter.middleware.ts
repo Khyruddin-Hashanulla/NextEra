@@ -18,7 +18,7 @@ function emailIpKeyGenerator(req: Request): string {
 function createAuthLimiter(
   windowMs: number,
   max: number,
-  keyGenerator?: (req: Request) => string,
+  keyGenerator?: (req: Request) => string
 ): RateLimitRequestHandler {
   return rateLimit({
     windowMs,
@@ -55,3 +55,13 @@ export const zoomWebhookLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const razorpayWebhookLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  message: standardMessage,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const uploadLimiter = createAuthLimiter(15 * 60 * 1000, isDev ? 50 : 10);

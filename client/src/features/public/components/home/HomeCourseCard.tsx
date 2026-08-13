@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { Star, Users, Clock, BookOpen } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { ROUTES } from '@/lib/constants';
@@ -20,15 +20,14 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
       : typeof course.category === 'string'
         ? course.category
         : undefined;
-  const level =
-    course.level?.charAt(0).toUpperCase() + course.level?.slice(1) || undefined;
+  const level = course.level?.charAt(0).toUpperCase() + course.level?.slice(1) || undefined;
 
   return (
     <Link
       to={ROUTES.COURSE_DETAIL(course._id)}
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        className,
+        className
       )}
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
@@ -68,9 +67,7 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
           {course.title}
         </h3>
 
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          {course.instructor?.name || 'Expert instructor'}
-        </p>
+        <p className="mt-1.5 text-sm text-muted-foreground">{course.instructor?.name || 'Expert instructor'}</p>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
@@ -97,12 +94,10 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
               <span className="text-lg font-bold text-foreground">Free</span>
             ) : (
               <>
-                <span className="text-lg font-bold text-foreground">
-                  ${pricing.price.toFixed(0)}
-                </span>
+                <span className="text-lg font-bold text-foreground">{formatCurrency(pricing.price)}</span>
                 {pricing.hasDiscount && (
                   <span className="text-sm text-muted-foreground line-through">
-                    ${pricing.originalPrice.toFixed(0)}
+                    {formatCurrency(pricing.originalPrice)}
                   </span>
                 )}
               </>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { codingApi } from '@/api/endpoints/coding';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -23,7 +23,8 @@ export function CodingProblemsPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['coding-problems', page, search, difficulty],
-    queryFn: () => codingApi.listProblems({ page, limit: 20, search, difficulty: difficulty || undefined }).then(r => r.data),
+    queryFn: () =>
+      codingApi.listProblems({ page, limit: 20, search, difficulty: difficulty || undefined }).then((r) => r.data),
   });
 
   const problems = data?.problems || [];
@@ -42,7 +43,10 @@ export function CodingProblemsPage() {
           <Input
             placeholder="Search problems..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="pl-9"
           />
         </div>
@@ -51,7 +55,10 @@ export function CodingProblemsPage() {
             key={d}
             variant={difficulty === d ? 'default' : 'outline'}
             size="sm"
-            onClick={() => { setDifficulty(d); setPage(1); }}
+            onClick={() => {
+              setDifficulty(d);
+              setPage(1);
+            }}
           >
             {d ? d.charAt(0).toUpperCase() + d.slice(1) : 'All'}
           </Button>
@@ -74,20 +81,27 @@ export function CodingProblemsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium truncate">{problem.title}</h3>
-                      <Badge variant="outline" className={`text-xs ${difficultyColors[problem.difficulty as Difficulty] || ''}`}>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${difficultyColors[problem.difficulty as Difficulty] || ''}`}
+                      >
                         {problem.difficulty}
                       </Badge>
                     </div>
                     {problem.tags?.length > 0 && (
                       <div className="flex gap-1 mt-1.5 flex-wrap">
                         {problem.tags.slice(0, 4).map((tag: string) => (
-                          <span key={tag} className="text-xs bg-muted px-2 py-0.5 rounded">{tag}</span>
+                          <span key={tag} className="text-xs bg-muted px-2 py-0.5 rounded">
+                            {tag}
+                          </span>
                         ))}
                       </div>
                     )}
                   </div>
                   <div className="text-right text-sm text-muted-foreground ml-4 shrink-0">
-                    <div>{problem.acceptedSubmissions || 0} / {problem.totalSubmissions || 0}</div>
+                    <div>
+                      {problem.acceptedSubmissions || 0} / {problem.totalSubmissions || 0}
+                    </div>
                     <div className="text-xs">solved</div>
                   </div>
                 </CardContent>
@@ -99,12 +113,19 @@ export function CodingProblemsPage() {
 
       {pagination && pagination.pages > 1 && (
         <div className="flex items-center justify-between pt-4">
-          <p className="text-sm text-muted-foreground">Page {pagination.page} of {pagination.pages}</p>
+          <p className="text-sm text-muted-foreground">
+            Page {pagination.page} of {pagination.pages}
+          </p>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
+            <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="outline" disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page >= pagination.pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

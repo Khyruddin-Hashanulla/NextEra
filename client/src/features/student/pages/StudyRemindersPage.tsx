@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { studyReminderApi, StudyReminder } from '@/api/endpoints/studyReminder';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { studyReminderApi } from '@/api/endpoints/studyReminder';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,11 +23,18 @@ export function StudyRemindersPage() {
   const queryClient = useQueryClient();
   const { addToast } = useToast();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<{ title: string; description: string; type: string; dayOfWeek: number; time: string; course: string }>({ title: '', description: '', type: 'daily', dayOfWeek: 1, time: '09:00', course: '' });
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    type: string;
+    dayOfWeek: number;
+    time: string;
+    course: string;
+  }>({ title: '', description: '', type: 'daily', dayOfWeek: 1, time: '09:00', course: '' });
 
   const { data, isLoading } = useQuery({
     queryKey: ['study-reminders'],
-    queryFn: () => studyReminderApi.list().then(r => r.data.data),
+    queryFn: () => studyReminderApi.list().then((r) => r.data.data),
   });
 
   const createMutation = useMutation({
@@ -65,7 +72,9 @@ export function StudyRemindersPage() {
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button><Plus className="mr-1 h-4 w-4" /> New Reminder</Button>
+            <Button>
+              <Plus className="mr-1 h-4 w-4" /> New Reminder
+            </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
@@ -74,11 +83,19 @@ export function StudyRemindersPage() {
             <div className="space-y-4">
               <div>
                 <Label>Title</Label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Study time!" />
+                <Input
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Study time!"
+                />
               </div>
               <div>
                 <Label>Description (optional)</Label>
-                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Review Chapter 5" />
+                <Input
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Review Chapter 5"
+                />
               </div>
               <div>
                 <Label>Type</Label>
@@ -101,7 +118,9 @@ export function StudyRemindersPage() {
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                   >
                     {dayNames.map((name, i) => (
-                      <option key={i} value={i}>{name}</option>
+                      <option key={i} value={i}>
+                        {name}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -110,7 +129,11 @@ export function StudyRemindersPage() {
                 <Label>Time</Label>
                 <Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} />
               </div>
-              <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !form.title.trim()} className="w-full">
+              <Button
+                onClick={() => createMutation.mutate()}
+                disabled={createMutation.isPending || !form.title.trim()}
+                className="w-full"
+              >
                 {createMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 Create Reminder
               </Button>
@@ -125,7 +148,9 @@ export function StudyRemindersPage() {
         <div className="rounded-lg border p-12 text-center text-muted-foreground">
           <Bell className="mx-auto h-8 w-8 mb-2" />
           <p>No study reminders set</p>
-          <Button variant="link" onClick={() => setOpen(true)}>Create your first reminder</Button>
+          <Button variant="link" onClick={() => setOpen(true)}>
+            Create your first reminder
+          </Button>
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -137,10 +162,7 @@ export function StudyRemindersPage() {
                     <div className="flex items-center gap-2">
                       {typeIcons[reminder.type] || <Bell className="h-4 w-4" />}
                       <h3 className="font-medium truncate">{reminder.title}</h3>
-                      <Switch
-                        checked={reminder.isActive}
-                        onCheckedChange={() => toggleMutation.mutate(reminder._id)}
-                      />
+                      <Switch checked={reminder.isActive} onCheckedChange={() => toggleMutation.mutate(reminder._id)} />
                     </div>
                     {reminder.description && (
                       <p className="text-sm text-muted-foreground mt-1">{reminder.description}</p>
@@ -150,15 +172,16 @@ export function StudyRemindersPage() {
                         <Clock className="h-3 w-3" /> {reminder.time}
                       </span>
                       <span className="capitalize">{reminder.type}</span>
-                      {reminder.type === 'weekly' && (
-                        <span>{dayNames[reminder.dayOfWeek]}</span>
-                      )}
-                      {reminder.course?.title && (
-                        <span>· {reminder.course.title}</span>
-                      )}
+                      {reminder.type === 'weekly' && <span>{dayNames[reminder.dayOfWeek]}</span>}
+                      {reminder.course?.title && <span>· {reminder.course.title}</span>}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" className="text-red-500 h-auto p-1 shrink-0 ml-2" onClick={() => deleteMutation.mutate(reminder._id)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 h-auto p-1 shrink-0 ml-2"
+                    onClick={() => deleteMutation.mutate(reminder._id)}
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>

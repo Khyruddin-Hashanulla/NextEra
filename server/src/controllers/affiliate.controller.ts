@@ -44,10 +44,12 @@ export const getPayouts = asyncHandler(async (req: Request, res: Response) => {
 export const generateLink = asyncHandler(async (req: Request, res: Response) => {
   const affiliate = await affiliateService.getOrCreateAffiliate(req.currentUser!.userId);
   const link = affiliateService.generateReferralLink(affiliate.code, req.body.productPath);
-  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Link generated', {
-    code: affiliate.code,
-    referralLink: link,
-  }));
+  res.status(HTTP_STATUS.OK).json(
+    ApiResponse.success('Link generated', {
+      code: affiliate.code,
+      referralLink: link,
+    })
+  );
 });
 
 export const requestPayout = asyncHandler(async (req: Request, res: Response) => {

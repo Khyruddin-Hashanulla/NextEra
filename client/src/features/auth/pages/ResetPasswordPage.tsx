@@ -6,7 +6,11 @@ import { SEO } from '@/components/seo/SEO';
 export function ResetPasswordPage() {
   return (
     <PageTransition>
-      <SEO title="Reset Password" description="Set a new password for your NextEra account." robots="noindex,nofollow" />
+      <SEO
+        title="Reset Password"
+        description="Set a new password for your NextEra account."
+        robots="noindex,nofollow"
+      />
       <AuthLayout>
         <ResetPasswordForm />
       </AuthLayout>

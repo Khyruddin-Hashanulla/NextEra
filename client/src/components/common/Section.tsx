@@ -9,13 +9,7 @@ interface SectionProps {
   id?: string;
 }
 
-export function Section({
-  children,
-  className,
-  size = 'md',
-  background = 'default',
-  id,
-}: SectionProps) {
+export function Section({ children, className, size = 'md', background = 'default', id }: SectionProps) {
   const sizeClasses = {
     sm: 'py-12 sm:py-16 lg:py-20',
     md: 'py-16 sm:py-24 lg:py-32',
@@ -31,15 +25,7 @@ export function Section({
   };
 
   return (
-    <section
-      id={id}
-      className={cn(
-        'w-full',
-        sizeClasses[size],
-        backgroundClasses[background],
-        className
-      )}
-    >
+    <section id={id} className={cn('w-full', sizeClasses[size], backgroundClasses[background], className)}>
       <div className="container-custom">{children}</div>
     </section>
   );
@@ -60,9 +46,5 @@ export function Container({ children, className, size = 'lg' }: ContainerProps) 
     full: 'max-w-full',
   };
 
-  return (
-    <div className={cn('mx-auto px-4 sm:px-6 lg:px-8', sizeClasses[size], className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn('mx-auto px-4 sm:px-6 lg:px-8', sizeClasses[size], className)}>{children}</div>;
 }

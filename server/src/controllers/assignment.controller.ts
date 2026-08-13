@@ -40,11 +40,7 @@ export const updateSubmissionStatus = asyncHandler(async (req: Request, res: Res
 });
 
 export const gradeSubmission = asyncHandler(async (req: Request, res: Response) => {
-  const result = await assignmentService.gradeSubmission(
-    req.currentUser!.userId,
-    req.params.submissionId,
-    req.body
-  );
+  const result = await assignmentService.gradeSubmission(req.currentUser!.userId, req.params.submissionId, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Submission graded', result));
 });
 
@@ -70,11 +66,7 @@ export const getSubmissionForAdmin = asyncHandler(async (req: Request, res: Resp
 });
 
 export const overrideGrade = asyncHandler(async (req: Request, res: Response) => {
-  const result = await assignmentService.overrideGrade(
-    req.currentUser!.userId,
-    req.params.submissionId,
-    req.body
-  );
+  const result = await assignmentService.overrideGrade(req.currentUser!.userId, req.params.submissionId, req.body);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Grade overridden', result));
 });
 

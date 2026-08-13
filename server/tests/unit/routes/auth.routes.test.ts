@@ -299,9 +299,7 @@ describe('auth routes (API-level)', () => {
       vi.mocked(RevokedToken.findOne as never).mockResolvedValue(null);
       vi.mocked(service.logoutAllDevices).mockResolvedValue(undefined);
 
-      const res = await request(app)
-        .post('/api/v1/auth/logout-all')
-        .set('Authorization', `Bearer ${token}`);
+      const res = await request(app).post('/api/v1/auth/logout-all').set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(HTTP_STATUS.OK);
       expect(res.body).toEqual({ success: true, message: MESSAGES.AUTH.LOGOUT_SUCCESS, data: null });
@@ -406,9 +404,7 @@ describe('auth routes (API-level)', () => {
     });
 
     it('returns 400 for a malformed OTP', async () => {
-      const res = await request(app)
-        .post('/api/v1/auth/verify-email')
-        .send({ email: 'jane@example.com', otp: '12' });
+      const res = await request(app).post('/api/v1/auth/verify-email').send({ email: 'jane@example.com', otp: '12' });
 
       expect(res.status).toBe(HTTP_STATUS.BAD_REQUEST);
       expect(res.body.success).toBe(false);
@@ -433,7 +429,7 @@ describe('auth routes (API-level)', () => {
 
     it('returns 401 for an invalid credential', async () => {
       vi.mocked(service.googleAuthWithCredential).mockRejectedValue(
-        ApiError.unauthorized(MESSAGES.ERROR.INVALID_TOKEN),
+        ApiError.unauthorized(MESSAGES.ERROR.INVALID_TOKEN)
       );
       const res = await request(app).post('/api/v1/auth/google').send({ credential: 'bad-credential' });
 

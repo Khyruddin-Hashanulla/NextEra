@@ -1,42 +1,86 @@
 import { Router } from 'express';
 import {
-  getDashboard, listCourses, getCourseDetail, getMyCourses, enrollFreeCourse,
-  listInstructors, getInstructorProfile,
-  initiatePayment, verifyPayment, retryPayment,
-  updateProgress, getProgress, getWatchHistory,
-  createNote, listNotes, updateNote, deleteNote,
-  toggleBookmark, listBookmarks,
-  createDiscussion, listDiscussions, replyToDiscussion,
-  createReview, updateReview, listReviews,
-  submitAssignment, getAssignments, getAssignmentsOverview, getAssignmentDetail,
-  generateCertificate, getCertificates, verifyCertificate, getCertificateQr, downloadCertificate,
-  toggleWishlist, listWishlist,
-  listMyPayments, getPaymentById, generateInvoice,
+  getDashboard,
+  listCourses,
+  getCourseDetail,
+  getMyCourses,
+  enrollFreeCourse,
+  listInstructors,
+  getInstructorProfile,
+  initiatePayment,
+  verifyPayment,
+  retryPayment,
+  updateProgress,
+  getProgress,
+  getWatchHistory,
+  createNote,
+  listNotes,
+  updateNote,
+  deleteNote,
+  toggleBookmark,
+  listBookmarks,
+  createDiscussion,
+  listDiscussions,
+  replyToDiscussion,
+  createReview,
+  updateReview,
+  listReviews,
+  submitAssignment,
+  getAssignments,
+  getAssignmentsOverview,
+  getAssignmentDetail,
+  generateCertificate,
+  getCertificates,
+  verifyCertificate,
+  getCertificateQr,
+  downloadCertificate,
+  toggleWishlist,
+  listWishlist,
+  listMyPayments,
+  getPaymentById,
+  generateInvoice,
   getLectureResources,
-  listNotifications, markNotificationRead, markAllNotificationsRead,
-  listBundles, getBundleById, initiateBundlePayment, verifyBundlePayment,
-  listSubscriptionPlans, getMySubscription, initiateSubscriptionPayment, verifySubscriptionPayment,
+  listNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  listAnnouncements,
+  listBundles,
+  getBundleById,
+  initiateBundlePayment,
+  verifyBundlePayment,
+  listSubscriptionPlans,
+  getMySubscription,
+  initiateSubscriptionPayment,
+  verifySubscriptionPayment,
 } from '../controllers/student.controller';
 import {
-  submitQuiz, getStudentQuizAttempts, startQuiz, getAttemptDetails, resumeQuiz, autoSubmitQuiz,
+  submitQuiz,
+  getStudentQuizAttempts,
+  startQuiz,
+  getAttemptDetails,
+  resumeQuiz,
+  autoSubmitQuiz,
 } from '../controllers/quiz.controller';
-import { authenticate, optionalAuthenticate } from '../middlewares/auth.middleware';import { validate } from '../middlewares/validate.middleware';
+import { authenticate, optionalAuthenticate } from '../middlewares/auth.middleware';
+import { validate } from '../middlewares/validate.middleware';
 import { audit, auditMiddleware } from '../middlewares/audit.middleware';
+import { verifyNoteOwnership, verifyReviewOwnership } from '../middlewares/ownership.middleware';
 import {
-  verifyNoteOwnership,
-  verifyReviewOwnership,
-} from '../middlewares/ownership.middleware';
-import {
-  initiatePaymentSchema, verifyPaymentSchema, updateProgressSchema,
-  createNoteSchema, updateNoteSchema, toggleBookmarkSchema,
-  createDiscussionSchema, replyToDiscussionSchema, createReviewSchema,
-  submitQuizSchema, submitAssignmentSchema,
+  initiatePaymentSchema,
+  verifyPaymentSchema,
+  updateProgressSchema,
+  createNoteSchema,
+  updateNoteSchema,
+  toggleBookmarkSchema,
+  createDiscussionSchema,
+  replyToDiscussionSchema,
+  createReviewSchema,
+  submitQuizSchema,
+  submitAssignmentSchema,
 } from '../validators/student.validator';
 import { assignmentsOverviewQuerySchema } from '../validators/assignment.validator';
-import {
-  startQuizSchema,
-  resumeQuizSchema,
-} from '../validators/quiz.validator';
+import { startQuizSchema, resumeQuizSchema } from '../validators/quiz.validator';
+import { notificationIdParamSchema } from '../validators/common';
 import { z } from 'zod';
 
 const router = Router();
@@ -87,7 +131,8 @@ router.put('/reviews/:id', verifyReviewOwnership, validate(createReviewSchema), 
 router.get('/reviews/:courseId', listReviews);
 
 // Assignment
-router.post('/assignments',
+router.post(
+  '/assignments',
   audit({
     action: (req, body) => {
       const version = body?.data?.data?.submissionVersion ?? body?.data?.submissionVersion ?? 1;
@@ -119,7 +164,11 @@ router.get('/certificates', getCertificates);
 router.get('/certificates/download/:certificateId', downloadCertificate);
 
 // Wishlist
-router.post('/wishlist', validate(z.object({ body: z.object({ courseId: z.string().min(1) }) })), toggleWishlist);
+router.post(
+  '/wishlist',
+  validate(z.object({ body: z.object({ courseId: z.string().regex(/^[0-9a-fA-F]{24}$/) }) })),
+  toggleWishlist
+);
 router.get('/wishlist', listWishlist);
 
 // Order History
@@ -146,7 +195,10 @@ router.post('/subscriptions/payments/verify', verifySubscriptionPayment);
 
 // Notifications
 router.get('/notifications', listNotifications);
-router.put('/notifications/:id/read', markNotificationRead);
+router.put('/notifications/:id/read', validate(notificationIdParamSchema, 'params'), markNotificationRead);
 router.put('/notifications/read-all', markAllNotificationsRead);
+
+// Announcements
+router.get('/announcements', listAnnouncements);
 
 export default router;

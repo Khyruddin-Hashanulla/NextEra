@@ -54,7 +54,7 @@ export function CategoriesSection({ categories, isLoading, className }: Categori
                     <span
                       className={cn(
                         'flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-md transition-transform duration-300 group-hover:scale-110',
-                        category.gradient,
+                        category.gradient
                       )}
                     >
                       <Icon className="h-6 w-6" aria-hidden="true" />

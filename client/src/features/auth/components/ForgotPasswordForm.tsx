@@ -74,9 +74,7 @@ export function ForgotPasswordForm() {
         >
           <motion.div variants={item} className="text-center">
             <h1 className="text-2xl font-bold tracking-tight">Forgot password?</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Enter your email and we&apos;ll send you a reset link
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">Enter your email and we&apos;ll send you a reset link</p>
           </motion.div>
 
           <motion.form variants={item} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -91,12 +89,7 @@ export function ForgotPasswordForm() {
               {...register('email')}
             />
 
-            <Button
-              type="submit"
-              fullWidth
-              size="lg"
-              loading={forgotPasswordMutation.isPending}
-            >
+            <Button type="submit" fullWidth size="lg" loading={forgotPasswordMutation.isPending}>
               Send reset link
             </Button>
           </motion.form>

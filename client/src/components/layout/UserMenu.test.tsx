@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { UserMenu } from '@/components/layout/UserMenu';
@@ -29,7 +29,15 @@ function LocationProbe() {
 function renderMenu(user: User, logout?: () => Promise<void>) {
   return renderWithProviders(
     <Routes>
-      <Route path="/" element={<><UserMenu /><LocationProbe /></>} />
+      <Route
+        path="/"
+        element={
+          <>
+            <UserMenu />
+            <LocationProbe />
+          </>
+        }
+      />
       <Route path="/student" element={<LocationProbe />} />
       <Route path="/student/profile" element={<LocationProbe />} />
       <Route path="/student/my-courses" element={<LocationProbe />} />
@@ -44,7 +52,7 @@ function renderMenu(user: User, logout?: () => Promise<void>) {
     {
       route: '/',
       mockAuth: createAuthValue({ user, isAuthenticated: true, ...(logout ? { logout } : {}) }),
-    },
+    }
   );
 }
 

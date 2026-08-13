@@ -5,6 +5,8 @@ import { cacheKeys } from '../cache/cacheKeys';
 import { Course } from '../models/course.model';
 import { Enrollment } from '../models/enrollment.model';
 import { Payment } from '../models/payment.model';
+import { Review } from '../models/review.model';
+import { User } from '../models/user.model';
 
 jest.mock('../services/subscriptionPermission.service', () => ({
   subscriptionPermissionService: {
@@ -17,17 +19,29 @@ jest.mock('../models/course.model', () => ({
 }));
 
 jest.mock('../models/enrollment.model', () => ({
-  Enrollment: { aggregate: jest.fn() },
+  Enrollment: { aggregate: jest.fn(), find: jest.fn(), countDocuments: jest.fn() },
+}));
+
+jest.mock('../models/user.model', () => ({
+  User: { find: jest.fn() },
 }));
 
 jest.mock('../models/payment.model', () => ({
   Payment: { aggregate: jest.fn() },
 }));
 
+jest.mock('../models/review.model', () => ({
+  Review: { aggregate: jest.fn() },
+}));
+
 const mockedCourseAggregate = Course.aggregate as jest.Mock;
 const mockedCourseFind = Course.find as jest.Mock;
 const mockedEnrollmentAggregate = Enrollment.aggregate as jest.Mock;
+const mockedEnrollmentFind = (Enrollment as any).find as jest.Mock;
+const mockedEnrollmentCount = (Enrollment as any).countDocuments as jest.Mock;
+const mockedUserFind = (User as any).find as jest.Mock;
 const mockedPaymentAggregate = Payment.aggregate as jest.Mock;
+const mockedReviewAggregate = (Review as any).aggregate as jest.Mock;
 
 function chainable(result: unknown) {
   const chain: any = {
@@ -71,7 +85,11 @@ describe('InstructorService.getDashboard', () => {
   it('returns aggregated dashboard values from a single set of queries', async () => {
     mockedCourseAggregate.mockResolvedValue(courseFacetResult());
     mockedEnrollmentAggregate.mockResolvedValue([
-      { _id: null, total: 5, students: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()] },
+      {
+        _id: null,
+        total: 5,
+        students: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()],
+      },
     ]);
     mockedPaymentAggregate.mockResolvedValue([{ _id: null, total: 4200 }]);
 
@@ -121,7 +139,7 @@ describe('InstructorService.getDashboard', () => {
     });
   });
 
-  it('aggregates revenue only from successful payments for the instructor courses', async () => {
+  it('aggregates revenue only from the instructor net share of successful payments', async () => {
     mockedCourseAggregate.mockResolvedValue(courseFacetResult());
     mockedEnrollmentAggregate.mockResolvedValue([{ _id: null, total: 0, students: [] }]);
     mockedPaymentAggregate.mockResolvedValue([{ _id: null, total: 999 }]);
@@ -129,8 +147,17 @@ describe('InstructorService.getDashboard', () => {
     await instructorService.getDashboard(instructorId.toString());
 
     const [paymentPipeline] = mockedPaymentAggregate.mock.calls[0];
-    expect(paymentPipeline[0]).toEqual({ $match: { status: 'success', course: { $in: [courseId1, courseId2] } } });
-    expect(paymentPipeline[1].$group).toEqual({ _id: null, total: { $sum: '$amount' } });
+    expect(paymentPipeline[0]).toEqual({
+      $match: { status: 'success', 'commissionSplits.instructor': instructorId },
+    });
+    expect(paymentPipeline[1]).toEqual({ $unwind: '$commissionSplits' });
+    expect(paymentPipeline[2]).toEqual({
+      $match: { 'commissionSplits.instructor': instructorId },
+    });
+    expect(paymentPipeline[3].$group).toEqual({
+      _id: null,
+      total: { $sum: '$commissionSplits.instructorShare' },
+    });
   });
 
   it('returns zeroed stats when the instructor has no courses', async () => {
@@ -189,7 +216,12 @@ describe('InstructorService.getRevenue', () => {
   });
 
   it('merges daily and per-course revenue into a single $facet payment aggregation', async () => {
-    mockedCourseFind.mockReturnValue(chainable([{ _id: courseId1, title: 'Course A' }, { _id: courseId2, title: 'Course B' }]));
+    mockedCourseFind.mockReturnValue(
+      chainable([
+        { _id: courseId1, title: 'Course A' },
+        { _id: courseId2, title: 'Course B' },
+      ])
+    );
     mockedPaymentAggregate.mockResolvedValue([
       {
         daily: [
@@ -211,8 +243,8 @@ describe('InstructorService.getRevenue', () => {
       { _id: '2026-08-02', amount: 200, count: 1 },
     ]);
     expect(result.perCourse).toEqual([
-      { courseTitle: 'Course A', amount: 150, enrollments: 2 },
-      { courseTitle: 'Course B', amount: 150, enrollments: 1 },
+      { _id: courseId1, courseTitle: 'Course A', amount: 150, enrollments: 2 },
+      { _id: courseId2, courseTitle: 'Course B', amount: 150, enrollments: 1 },
     ]);
     expect(mockedCourseFind).toHaveBeenCalledTimes(1);
     expect(mockedPaymentAggregate).toHaveBeenCalledTimes(1);
@@ -246,32 +278,148 @@ describe('InstructorService.getAnalytics', () => {
   });
 
   it('combines enrollment trend and student growth in one facet and keeps revenue/top-courses queries', async () => {
-    mockedCourseFind
-      .mockReturnValueOnce(chainable([{ _id: courseId1 }, { _id: courseId2 }]))
-      .mockReturnValueOnce(
-        chainable([{ _id: courseId1, title: 'Course A', totalEnrollments: 3, averageRating: 4.5, price: 999, totalRevenue: 3000 }])
-      );
+    mockedCourseFind.mockReturnValueOnce(chainable([{ _id: courseId1 }, { _id: courseId2 }])).mockReturnValueOnce(
+      chainable([
+        {
+          _id: courseId1,
+          title: 'Course A',
+          totalEnrollments: 3,
+          averageRating: 4.5,
+          price: 999,
+          totalRevenue: 3000,
+        },
+      ])
+    );
     mockedEnrollmentAggregate.mockResolvedValue([
       {
+        stats: [
+          {
+            _id: null,
+            total: 2,
+            students: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()],
+          },
+        ],
         enrollmentTrend: [{ _id: '2026-08', count: 2 }],
-        studentGrowth: [{ _id: '2026-08', newStudents: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()] }],
+        studentGrowth: [
+          { _id: '2026-08', newStudents: [new mongoose.Types.ObjectId(), new mongoose.Types.ObjectId()] },
+        ],
       },
     ]);
     mockedPaymentAggregate.mockResolvedValue([{ _id: '2026-08', amount: 100, count: 1 }]);
+    mockedReviewAggregate.mockResolvedValue([{ _id: null, averageRating: 4.5 }]);
 
     const result = await instructorService.getAnalytics(instructorId.toString());
 
     expect(result.totalViews).toBe(3);
+    expect(result.totalStudents).toBe(2);
+    expect(result.totalEnrollments).toBe(2);
+    expect(result.totalRevenue).toBe(100);
+    expect(result.averageRating).toBe(4.5);
+    expect(result.totalCourses).toBe(2);
     expect(result.enrollmentTrend).toEqual([{ _id: '2026-08', count: 2 }]);
     expect(result.revenueTrend).toEqual([{ _id: '2026-08', amount: 100, count: 1 }]);
     expect(result.studentGrowth).toEqual([{ month: '2026-08', newStudents: 2, totalStudents: 2 }]);
     expect(result.topPerformingCourses).toHaveLength(1);
+    expect(result.topPerformingCourses[0]).toEqual({
+      _id: courseId1,
+      title: 'Course A',
+      enrollments: 3,
+      revenue: 0,
+    });
     expect(mockedCourseFind).toHaveBeenCalledTimes(2);
     expect(mockedEnrollmentAggregate).toHaveBeenCalledTimes(1);
-    expect(mockedPaymentAggregate).toHaveBeenCalledTimes(1);
+    expect(mockedPaymentAggregate).toHaveBeenCalledTimes(2);
 
     const pipeline = mockedEnrollmentAggregate.mock.calls[0][0];
+    expect(pipeline[1].$facet).toHaveProperty('stats');
     expect(pipeline[1].$facet).toHaveProperty('enrollmentTrend');
     expect(pipeline[1].$facet).toHaveProperty('studentGrowth');
+  });
+});
+
+describe('InstructorService.getStudents', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  function enrollmentQueryChain(result: unknown) {
+    const chain: any = {
+      populate: jest.fn().mockReturnThis(),
+      sort: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      limit: jest.fn().mockReturnThis(),
+      lean: jest.fn().mockResolvedValue(result),
+    };
+    return chain;
+  }
+
+  it('returns enrollments scoped to the instructor courses with the nested student contract', async () => {
+    mockedCourseFind.mockReturnValue(chainable([{ _id: courseId1 }, { _id: courseId2 }]));
+    const user = {
+      _id: new mongoose.Types.ObjectId(),
+      name: 'Alice',
+      email: 'alice@test.com',
+      avatar: { url: 'a.jpg' },
+    };
+    const enrollment = {
+      _id: new mongoose.Types.ObjectId(),
+      user,
+      course: { _id: courseId1, title: 'Course A' },
+      enrolledAt: new Date('2026-08-01T10:00:00Z'),
+      completionPercentage: 42,
+      isCompleted: false,
+    };
+    mockedEnrollmentFind.mockReturnValue(enrollmentQueryChain([enrollment]));
+    mockedEnrollmentCount.mockResolvedValue(1);
+
+    const result = await instructorService.getStudents(instructorId.toString(), { page: 1, limit: 10 });
+
+    expect(mockedCourseFind).toHaveBeenCalledTimes(1);
+    const courseMatch = mockedCourseFind.mock.calls[0][0];
+    expect(courseMatch).toEqual({ instructor: instructorId.toString() });
+    const match = mockedEnrollmentFind.mock.calls[0][0];
+    expect(match).toEqual({ course: { $in: [courseId1, courseId2] } });
+    expect(result.students[0]).toEqual({
+      _id: enrollment._id,
+      user,
+      course: { _id: courseId1, title: 'Course A' },
+      enrolledAt: expect.any(Date),
+      progress: 42,
+      isCompleted: false,
+    });
+    expect(result.pagination).toEqual({ page: 1, limit: 10, total: 1, pages: 1 });
+  });
+
+  it('filters students by name/email search scoped to matching users', async () => {
+    mockedCourseFind.mockReturnValue(chainable([{ _id: courseId1 }]));
+    const userId = new mongoose.Types.ObjectId();
+    mockedUserFind.mockReturnValue(chainable([{ _id: userId }]));
+    mockedEnrollmentFind.mockReturnValue(enrollmentQueryChain([]));
+    mockedEnrollmentCount.mockResolvedValue(0);
+
+    const result = await instructorService.getStudents(instructorId.toString(), {
+      page: 1,
+      limit: 10,
+      search: 'ali',
+    });
+
+    const match = mockedEnrollmentFind.mock.calls[0][0];
+    expect(match).toEqual({ course: { $in: [courseId1] }, user: { $in: [userId] } });
+    expect(result.students).toEqual([]);
+  });
+
+  it('paginates and computes total pages from the scoped count', async () => {
+    mockedCourseFind.mockReturnValue(chainable([{ _id: courseId1 }]));
+    const enrollmentChain = enrollmentQueryChain([]);
+    mockedEnrollmentFind.mockReturnValue(enrollmentChain);
+    mockedEnrollmentCount.mockResolvedValue(25);
+
+    const result = await instructorService.getStudents(instructorId.toString(), { page: 3, limit: 10 });
+
+    expect(mockedEnrollmentCount).toHaveBeenCalledWith({ course: { $in: [courseId1] } });
+    expect(enrollmentChain.sort).toHaveBeenCalledWith({ enrolledAt: -1 });
+    expect(enrollmentChain.skip).toHaveBeenCalledWith(20);
+    expect(enrollmentChain.limit).toHaveBeenCalledWith(10);
+    expect(result.pagination).toEqual({ page: 3, limit: 10, total: 25, pages: 3 });
   });
 });

@@ -5,6 +5,7 @@ export interface UploadedFile {
   url: string;
   publicId: string;
   name?: string;
+  duration?: number;
 }
 
 export const uploadApi = {
@@ -22,7 +23,6 @@ async function uploadFile(path: string, file: File, onProgress?: (percent: numbe
 
   const res = await axiosInstance.post<ApiResponse<UploadedFile>>(path, formData, {
     signal,
-    headers: { 'Content-Type': 'multipart/form-data' },
     onUploadProgress: (e) => {
       if (onProgress && e.total) {
         onProgress(Math.round((e.loaded / e.total) * 100));

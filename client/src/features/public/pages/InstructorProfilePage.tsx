@@ -60,7 +60,11 @@ export function InstructorProfilePage() {
     enabled: !!id,
   });
 
-  const { data: instructorData, isLoading: instructorLoading, error } = useQuery({
+  const {
+    data: instructorData,
+    isLoading: instructorLoading,
+    error,
+  } = useQuery({
     queryKey: ['instructor-profile', id],
     queryFn: ({ signal }) => studentApi.getInstructorProfile(id!, signal).then((r) => r.data.data),
     enabled: !!id,
@@ -185,9 +189,7 @@ export function InstructorProfilePage() {
             <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
               Ready to learn from {instructor.name}?
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              Explore their courses and start building new skills today.
-            </p>
+            <p className="mt-3 text-muted-foreground">Explore their courses and start building new skills today.</p>
             <Button asChild variant="outline" size="lg" className="mt-4">
               <Link to={ROUTES.COURSES}>Browse All Courses</Link>
             </Button>

@@ -24,7 +24,14 @@ export function CouponsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState({ code: '', discountType: 'percentage' as const, discountValue: 0, minAmount: 0, maxUses: 0, expiresAt: '' });
+  const [form, setForm] = useState({
+    code: '',
+    discountType: 'percentage' as const,
+    discountValue: 0,
+    minAmount: 0,
+    maxUses: 0,
+    expiresAt: '',
+  });
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
@@ -72,8 +79,11 @@ export function CouponsPage() {
   const openEdit = (c: any) => {
     setEditingId(c._id);
     setForm({
-      code: c.code, discountType: c.discountType, discountValue: c.discountValue,
-      minAmount: c.minAmount, maxUses: c.maxUses,
+      code: c.code,
+      discountType: c.discountType,
+      discountValue: c.discountValue,
+      minAmount: c.minAmount,
+      maxUses: c.maxUses,
       expiresAt: new Date(c.expiresAt).toISOString().split('T')[0],
     });
     setShowForm(true);
@@ -94,7 +104,12 @@ export function CouponsPage() {
           <h1 className="text-2xl font-bold tracking-tight">Coupons</h1>
           <p className="mt-1 text-muted-foreground">Manage discount coupons</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowForm(true); }}>
+        <Button
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+        >
           <Plus className="mr-1.5 h-4 w-4" /> Add Coupon
         </Button>
       </motion.div>
@@ -126,8 +141,12 @@ export function CouponsPage() {
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Code</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Type</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Usage</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Expires</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Active</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Expires
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Active
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -137,15 +156,22 @@ export function CouponsPage() {
                         <td className="px-4 py-3 font-mono font-bold">{coupon.code}</td>
                         <td className="px-4 py-3">
                           <span className="capitalize">
-                            {coupon.discountType === 'percentage' ? '%' : '₹'} {coupon.discountValue}{coupon.discountType === 'percentage' ? '%' : ''}
+                            {coupon.discountType === 'percentage' ? '%' : '₹'} {coupon.discountValue}
+                            {coupon.discountType === 'percentage' ? '%' : ''}
                           </span>
                         </td>
-                        <td className="px-4 py-3">{coupon.usedCount} / {coupon.maxUses || '∞'}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(coupon.expiresAt).toLocaleDateString()}</td>
                         <td className="px-4 py-3">
-                          {coupon.isActive
-                            ? <span className="text-green-600">Yes</span>
-                            : <span className="text-muted-foreground">No</span>}
+                          {coupon.usedCount} / {coupon.maxUses || '∞'}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(coupon.expiresAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-4 py-3">
+                          {coupon.isActive ? (
+                            <span className="text-green-600">Yes</span>
+                          ) : (
+                            <span className="text-muted-foreground">No</span>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
@@ -171,7 +197,12 @@ export function CouponsPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -187,45 +218,77 @@ export function CouponsPage() {
           <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">{editingId ? 'Edit Coupon' : 'Add Coupon'}</h2>
-              <Button variant="ghost" size="sm" onClick={resetForm}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={resetForm}>
+                Close
+              </Button>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Code</Label>
-                <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="SAVE20" disabled={!!editingId} />
+                <Input
+                  value={form.code}
+                  onChange={(e) => setForm({ ...form, code: e.target.value })}
+                  placeholder="SAVE20"
+                  disabled={!!editingId}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Type</Label>
-                  <select value={form.discountType} onChange={(e) => setForm({ ...form, discountType: e.target.value as any })}
-                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                  <select
+                    value={form.discountType}
+                    onChange={(e) => setForm({ ...form, discountType: e.target.value as any })}
+                    className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  >
                     <option value="percentage">Percentage</option>
                     <option value="fixed">Fixed</option>
                   </select>
                 </div>
                 <div className="space-y-2">
                   <Label>Value</Label>
-                  <Input type="number" value={form.discountValue} onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.discountValue}
+                    onChange={(e) => setForm({ ...form, discountValue: Number(e.target.value) })}
+                  />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Min Amount</Label>
-                  <Input type="number" value={form.minAmount} onChange={(e) => setForm({ ...form, minAmount: Number(e.target.value) })} />
+                  <Input
+                    type="number"
+                    value={form.minAmount}
+                    onChange={(e) => setForm({ ...form, minAmount: Number(e.target.value) })}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Max Uses</Label>
-                  <Input type="number" value={form.maxUses} onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })} placeholder="0 = unlimited" />
+                  <Input
+                    type="number"
+                    value={form.maxUses}
+                    onChange={(e) => setForm({ ...form, maxUses: Number(e.target.value) })}
+                    placeholder="0 = unlimited"
+                  />
                 </div>
               </div>
               <div className="space-y-2">
                 <Label>Expiry Date</Label>
-                <Input type="date" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
+                <Input
+                  type="date"
+                  value={form.expiresAt}
+                  onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
+                />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button onClick={handleSubmit} disabled={!form.code || createMutation.isPending || updateMutation.isPending}>
+              <Button variant="outline" onClick={resetForm}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!form.code || createMutation.isPending || updateMutation.isPending}
+              >
                 {editingId ? 'Update' : 'Create'}
               </Button>
             </div>
@@ -239,8 +302,16 @@ export function CouponsPage() {
             <h2 className="text-lg font-semibold">Delete Coupon</h2>
             <p className="mt-2 text-sm text-muted-foreground">Are you sure?</p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteId)} loading={deleteMutation.isPending}>Delete</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteMutation.mutate(deleteId)}
+                loading={deleteMutation.isPending}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>

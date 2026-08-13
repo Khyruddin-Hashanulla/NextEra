@@ -35,10 +35,7 @@ afterEach(() => {
 afterAll(() => server.resetHandlers());
 
 function expectRequested(path: string, method: string) {
-  const match = recorded.find(
-    (r) =>
-      (r.url === `${API_BASE_URL}${path}` || r.url === path) && r.method === method,
-  );
+  const match = recorded.find((r) => (r.url === `${API_BASE_URL}${path}` || r.url === path) && r.method === method);
   expect(match).toBeDefined();
 }
 

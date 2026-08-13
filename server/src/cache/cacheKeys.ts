@@ -28,6 +28,8 @@ export const CACHE_TTL = {
   REVENUE_DASHBOARD: 60,
   REVENUE_SUMMARY: 60,
   INSTRUCTOR_SUBSCRIPTION_STATS: 60,
+  INSTRUCTOR_ENTITLEMENTS: 30,
+  INSTRUCTOR_PLAN_CATALOG: 60,
 } as const;
 
 function hashParams(params: Record<string, unknown>): string {
@@ -93,7 +95,13 @@ export const cacheKeys = {
     return `student:dashboard:${userId}`;
   },
 
-  studentCourseList(params: { search?: string; category?: string; level?: string; page?: number; limit?: number }): string {
+  studentCourseList(params: {
+    search?: string;
+    category?: string;
+    level?: string;
+    page?: number;
+    limit?: number;
+  }): string {
     return `student:courses:${hashParams(params)}`;
   },
 
@@ -135,6 +143,14 @@ export const cacheKeys = {
 
   instructorSubscriptionStats(): string {
     return 'revenue:subscriptions:stats';
+  },
+
+  instructorEntitlements(instructorId: string): string {
+    return `instructor:entitlements:${instructorId}`;
+  },
+
+  instructorPlanCatalog(): string {
+    return 'instructor:plans:catalog';
   },
 
   instructorRevenueDetail(instructorId: string): string {

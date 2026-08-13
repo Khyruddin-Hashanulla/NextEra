@@ -21,17 +21,29 @@ export function LectureTabs({ courseId, lecture, value, onValueChange }: Lecture
   return (
     <Tabs value={value} onValueChange={onValueChange}>
       <TabsList className="h-full w-full flex-wrap items-center gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1 sm:h-10">
-        <TabsTrigger value="notes"><StickyNote className="mr-1 h-4 w-4" aria-hidden="true" /> Notes</TabsTrigger>
-        <TabsTrigger value="discussion"><MessageSquare className="mr-1 h-4 w-4" aria-hidden="true" /> Discussion</TabsTrigger>
-        <TabsTrigger value="resources"><Download className="mr-1 h-4 w-4" aria-hidden="true" /> Resources</TabsTrigger>
+        <TabsTrigger value="notes">
+          <StickyNote className="mr-1 h-4 w-4" aria-hidden="true" /> Notes
+        </TabsTrigger>
+        <TabsTrigger value="discussion">
+          <MessageSquare className="mr-1 h-4 w-4" aria-hidden="true" /> Discussion
+        </TabsTrigger>
+        <TabsTrigger value="resources">
+          <Download className="mr-1 h-4 w-4" aria-hidden="true" /> Resources
+        </TabsTrigger>
         {isAssignmentLecture && (
           <>
-            <TabsTrigger value="quiz"><FileQuestion className="mr-1 h-4 w-4" aria-hidden="true" /> Quiz</TabsTrigger>
-            <TabsTrigger value="assignment"><FileCheck className="mr-1 h-4 w-4" aria-hidden="true" /> Assignment</TabsTrigger>
+            <TabsTrigger value="quiz">
+              <FileQuestion className="mr-1 h-4 w-4" aria-hidden="true" /> Quiz
+            </TabsTrigger>
+            <TabsTrigger value="assignment">
+              <FileCheck className="mr-1 h-4 w-4" aria-hidden="true" /> Assignment
+            </TabsTrigger>
           </>
         )}
         {isQuizLecture && (
-          <TabsTrigger value="quiz"><FileQuestion className="mr-1 h-4 w-4" aria-hidden="true" /> Quiz</TabsTrigger>
+          <TabsTrigger value="quiz">
+            <FileQuestion className="mr-1 h-4 w-4" aria-hidden="true" /> Quiz
+          </TabsTrigger>
         )}
       </TabsList>
 

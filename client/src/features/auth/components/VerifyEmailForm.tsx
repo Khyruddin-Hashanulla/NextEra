@@ -95,9 +95,7 @@ export function VerifyEmailForm() {
           <CheckCircle2 className="h-7 w-7 text-success" />
         </div>
         <h1 className="text-xl font-bold tracking-tight">Email verified!</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          You're signed in. Redirecting to your dashboard...
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">You're signed in. Redirecting to your dashboard...</p>
         <Button asChild className="mt-6">
           <Link to={getDashboardRoute(user?.role)}>Continue to dashboard</Link>
         </Button>
@@ -171,12 +169,7 @@ export function VerifyEmailForm() {
               {resendCooldown > 0 ? `Send OTP (${resendCooldown}s)` : 'Send OTP'}
             </Button>
           ) : (
-            <Button
-              type="submit"
-              fullWidth
-              size="lg"
-              loading={verifyEmailMutation.isPending}
-            >
+            <Button type="submit" fullWidth size="lg" loading={verifyEmailMutation.isPending}>
               Verify email
             </Button>
           )}

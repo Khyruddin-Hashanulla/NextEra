@@ -15,7 +15,11 @@ export const createCodingProblemSchema = z.object({
     difficulty: z.enum(['easy', 'medium', 'hard']),
     tags: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.TAGS).optional().default([]),
     categories: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.CATEGORIES).optional().default([]),
-    supportedLanguages: z.array(z.enum(['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust'])).max(ARRAY_LIMITS.SUPPORTED_LANGUAGES).optional().default(['javascript', 'python']),
+    supportedLanguages: z
+      .array(z.enum(['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust']))
+      .max(ARRAY_LIMITS.SUPPORTED_LANGUAGES)
+      .optional()
+      .default(['javascript', 'python']),
     timeLimit: z.number().min(1).max(60).optional().default(2),
     memoryLimit: z.number().min(16).max(1024).optional().default(256),
     testCases: z.array(testCaseSchema).min(1).max(ARRAY_LIMITS.TEST_CASES),
@@ -35,7 +39,10 @@ export const updateCodingProblemSchema = z.object({
     difficulty: z.enum(['easy', 'medium', 'hard']).optional(),
     tags: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.TAGS).optional(),
     categories: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.CATEGORIES).optional(),
-    supportedLanguages: z.array(z.enum(['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust'])).max(ARRAY_LIMITS.SUPPORTED_LANGUAGES).optional(),
+    supportedLanguages: z
+      .array(z.enum(['javascript', 'python', 'java', 'cpp', 'typescript', 'go', 'rust']))
+      .max(ARRAY_LIMITS.SUPPORTED_LANGUAGES)
+      .optional(),
     timeLimit: z.number().min(1).max(60).optional(),
     memoryLimit: z.number().min(16).max(1024).optional(),
     testCases: z.array(testCaseSchema).min(1).max(ARRAY_LIMITS.TEST_CASES).optional(),

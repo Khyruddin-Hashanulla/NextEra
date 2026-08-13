@@ -7,10 +7,7 @@ interface PageBackgroundProps {
   className?: string;
 }
 
-const config: Record<
-  PageBackgroundVariant,
-  { wash: string; grid: string; orbs: [string, string] }
-> = {
+const config: Record<PageBackgroundVariant, { wash: string; grid: string; orbs: [string, string] }> = {
   hero: {
     wash: 'bg-gradient-to-br from-primary/[0.07] via-background to-background',
     grid: 'opacity-[0.4] dark:opacity-[0.25]',

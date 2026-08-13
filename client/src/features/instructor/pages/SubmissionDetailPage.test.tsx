@@ -60,7 +60,7 @@ const baseSubmission = {
   lecture: { _id: 'lecture-1', assignment: { totalMarks: 100 } },
 };
 
-function mutationMock(publishValue: boolean | null) {
+function mutationMock(_publishValue: boolean | null) {
   return ({ mutationFn, onSuccess, onError }: any) => ({
     mutate: (arg?: any) => {
       Promise.resolve(mutationFn(arg))
@@ -134,7 +134,10 @@ describe('SubmissionDetailPage', () => {
     fireEvent.click(publishButton);
 
     await waitFor(() => {
-      expect(gradeSubmission).toHaveBeenCalledWith('sub-1', expect.objectContaining({ grade: 92, publish: true, feedback: 'Excellent' }));
+      expect(gradeSubmission).toHaveBeenCalledWith(
+        'sub-1',
+        expect.objectContaining({ grade: 92, publish: true, feedback: 'Excellent' })
+      );
     });
     expect(addToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Grade saved', variant: 'success' }));
   });
@@ -155,7 +158,9 @@ describe('SubmissionDetailPage', () => {
     await waitFor(() => {
       expect(returnForResubmission).toHaveBeenCalledWith('sub-1', { feedback: 'Please redo the analysis' });
     });
-    expect(addToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Returned for resubmission', variant: 'success' }));
+    expect(addToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Returned for resubmission', variant: 'success' })
+    );
   });
 
   it('rejects a submission', async () => {
@@ -171,7 +176,9 @@ describe('SubmissionDetailPage', () => {
     await waitFor(() => {
       expect(updateSubmissionStatus).toHaveBeenCalledWith('sub-1', { status: 'rejected' });
     });
-    expect(addToast).toHaveBeenCalledWith(expect.objectContaining({ title: 'Submission rejected', variant: 'success' }));
+    expect(addToast).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Submission rejected', variant: 'success' })
+    );
   });
 
   it('renders skeleton while loading', () => {

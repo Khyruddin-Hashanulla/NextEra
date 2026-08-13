@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Users, BookOpen, Clock, MapPin, ArrowRight } from 'lucide-react';
+import { Users, BookOpen, Clock, MapPin, ArrowRight } from 'lucide-react';
 import { cn, getInitials } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -37,10 +37,7 @@ export const InstructorCard = memo(function InstructorCard({ instructor, classNa
 
       <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-primary/10">
         {/* Cover strip */}
-        <div
-          className="relative h-24 bg-gradient-to-br from-primary via-primary/70 to-aura-primary"
-          aria-hidden="true"
-        >
+        <div className="relative h-24 bg-gradient-to-br from-primary via-primary/70 to-aura-primary" aria-hidden="true">
           <div className="absolute inset-0 bg-grid-pattern opacity-30" />
           <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent" />
         </div>
@@ -49,9 +46,7 @@ export const InstructorCard = memo(function InstructorCard({ instructor, classNa
         <div className="relative -mt-12 px-6">
           <div className="relative mx-auto w-24 h-24 rounded-full bg-gradient-to-tr from-primary via-primary/60 to-aura-primary p-1 shadow-lg shadow-primary/20">
             <Avatar className="h-full w-full ring-4 ring-card">
-              {avatar ? (
-                <AvatarImage src={avatar} alt={`Profile photo of ${instructor.name}`} />
-              ) : null}
+              {avatar ? <AvatarImage src={avatar} alt={`Profile photo of ${instructor.name}`} /> : null}
               <AvatarFallback className="bg-background text-xl font-bold text-primary">
                 {getInitials(instructor.name)}
               </AvatarFallback>
@@ -76,13 +71,14 @@ export const InstructorCard = memo(function InstructorCard({ instructor, classNa
         {/* Body */}
         <div className="flex flex-1 flex-col px-6 pb-6 pt-3 text-center">
           <h3 className="text-lg font-bold text-foreground transition-colors group-hover:text-primary">
-            <Link to={`/instructors/${instructor._id}`} className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm">
+            <Link
+              to={`/instructors/${instructor._id}`}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+            >
               {instructor.name}
             </Link>
           </h3>
-          {instructor.title && (
-            <p className="mt-0.5 text-sm font-medium text-primary">{instructor.title}</p>
-          )}
+          {instructor.title && <p className="mt-0.5 text-sm font-medium text-primary">{instructor.title}</p>}
 
           {instructor.bio && (
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-2">{instructor.bio}</p>

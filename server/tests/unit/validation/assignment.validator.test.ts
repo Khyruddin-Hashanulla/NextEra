@@ -32,7 +32,7 @@ describe('assignment.validator', () => {
 
   it('validates submission status updates', () => {
     expect(updateSubmissionStatusSchema.parse({ body: { status: 'rejected', privateNotes: 'n' } }).body.status).toBe(
-      'rejected',
+      'rejected'
     );
     expect(() => updateSubmissionStatusSchema.parse({ body: { status: 'nope' } })).toThrow();
   });
@@ -42,9 +42,7 @@ describe('assignment.validator', () => {
       body: { feedback: 'redo', privateNotes: 'n', resubmissionDeadline: '2026-01-01T00:00:00.000Z' },
     };
     expect(returnForResubmissionSchema.parse(valid).body.feedback).toBe('redo');
-    expect(() =>
-      returnForResubmissionSchema.parse({ body: { resubmissionDeadline: 'not-a-date' } }),
-    ).toThrow();
+    expect(() => returnForResubmissionSchema.parse({ body: { resubmissionDeadline: 'not-a-date' } })).toThrow();
   });
 
   it('validates grade override', () => {
@@ -70,14 +68,14 @@ describe('assignment.validator', () => {
       limit: 20,
     });
     expect(
-      assignmentsOverviewQuerySchema.parse({ query: { courseId: 'c1', status: 'submitted' } }).query.courseId,
+      assignmentsOverviewQuerySchema.parse({ query: { courseId: 'c1', status: 'submitted' } }).query.courseId
     ).toBe('c1');
   });
 
   it('validates submissions list query', () => {
     expect(submissionsListQuerySchema.parse({ query: {} }).query).toMatchObject({ page: 1, limit: 20 });
     expect(
-      submissionsListQuerySchema.parse({ query: { status: 'graded', search: 'x', sort: '-grade' } }).query.sort,
+      submissionsListQuerySchema.parse({ query: { status: 'graded', search: 'x', sort: '-grade' } }).query.sort
     ).toBe('-grade');
     expect(() => submissionsListQuerySchema.parse({ query: { sort: 'bogus' } })).toThrow();
   });

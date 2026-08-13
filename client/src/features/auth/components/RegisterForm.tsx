@@ -49,9 +49,7 @@ export function RegisterForm() {
     <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item} className="text-center">
         <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Join NextEra and start learning
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Join NextEra and start learning</p>
       </motion.div>
 
       <motion.form variants={item} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -141,12 +139,7 @@ export function RegisterForm() {
           )}
         </div>
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          loading={registerMutation.isPending}
-        >
+        <Button type="submit" fullWidth size="lg" loading={registerMutation.isPending}>
           Create account
         </Button>
       </motion.form>

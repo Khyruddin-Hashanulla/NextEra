@@ -27,7 +27,7 @@ describe('Select', () => {
             <SelectItem value="banana">Banana</SelectItem>
           </SelectGroup>
         </SelectContent>
-      </Select>,
+      </Select>
     );
     return { onValueChange };
   }
@@ -49,14 +49,16 @@ describe('Select', () => {
   });
 
   it('renders the selected value label after selection', async () => {
-    render(<Select value="apple">
-      <SelectTrigger>
-        <SelectValue placeholder="Pick a fruit" />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="apple">Apple</SelectItem>
-      </SelectContent>
-    </Select>);
+    render(
+      <Select value="apple">
+        <SelectTrigger>
+          <SelectValue placeholder="Pick a fruit" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="apple">Apple</SelectItem>
+        </SelectContent>
+      </Select>
+    );
     expect(screen.getByRole('combobox')).toHaveTextContent('Apple');
   });
 

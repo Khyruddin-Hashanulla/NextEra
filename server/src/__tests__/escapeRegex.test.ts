@@ -1,9 +1,4 @@
-import {
-  escapeRegex,
-  validateSearchInput,
-  buildSafeRegex,
-  buildSafeRegexPattern,
-} from '../utils/escapeRegex';
+import { escapeRegex, validateSearchInput, buildSafeRegex, buildSafeRegexPattern } from '../utils/escapeRegex';
 
 describe('escapeRegex', () => {
   it('escapes dot', () => {

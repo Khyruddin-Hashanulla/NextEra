@@ -56,7 +56,13 @@ export interface MockCourse {
   level: 'beginner' | 'intermediate' | 'advanced';
   language: string;
   price: number;
-  pricing: { originalPrice: number; discountPercent: number; hasDiscount: boolean; gstPercent: number; gstInclusive: boolean };
+  pricing: {
+    originalPrice: number;
+    discountPercent: number;
+    hasDiscount: boolean;
+    gstPercent: number;
+    gstInclusive: boolean;
+  };
   totalDuration: number;
   totalLectures: number;
   totalSections: number;
@@ -193,7 +199,15 @@ export interface MockAnalytics {
 
 export interface MockInstructorApplication {
   _id: string;
-  user: { _id: string; name: string; email: string; avatar: string; isEmailVerified: boolean; isActive: boolean; isDeleted: boolean };
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar: string;
+    isEmailVerified: boolean;
+    isActive: boolean;
+    isDeleted: boolean;
+  };
   fullName: string;
   email: string;
   phone: string;

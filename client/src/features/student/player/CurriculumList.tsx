@@ -18,7 +18,12 @@ function findSectionIdForLecture(sections: PlayerSection[], lectureId?: string):
   return sections.find((section) => section.lectures.some((lecture) => lecture._id === lectureId))?._id;
 }
 
-function SectionRow({ section, completedLectureIds, currentLectureId, onSelect }: {
+function SectionRow({
+  section,
+  completedLectureIds,
+  currentLectureId,
+  onSelect,
+}: {
   section: PlayerSection;
   completedLectureIds: Set<string>;
   currentLectureId?: string;
@@ -36,9 +41,7 @@ function SectionRow({ section, completedLectureIds, currentLectureId, onSelect }
             <span className="text-xs text-muted-foreground">
               {section.lectures.length} lecture{section.lectures.length === 1 ? '' : 's'}
             </span>
-            {progress > 0 && (
-              <span className="text-xs text-muted-foreground">· {progress}% complete</span>
-            )}
+            {progress > 0 && <span className="text-xs text-muted-foreground">· {progress}% complete</span>}
           </div>
           <div
             className="mt-2 h-1 w-full overflow-hidden rounded-full bg-secondary"
@@ -48,7 +51,10 @@ function SectionRow({ section, completedLectureIds, currentLectureId, onSelect }
             aria-valuemax={100}
             aria-valuenow={progress}
           >
-            <div className="h-full rounded-full bg-primary transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+              style={{ width: `${progress}%` }}
+            />
           </div>
         </div>
       </AccordionTrigger>
@@ -79,7 +85,12 @@ function SectionRow({ section, completedLectureIds, currentLectureId, onSelect }
                   {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <PlayCircle className="h-5 w-5" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className={cn('block truncate text-sm', isActive ? 'font-medium text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground')}>
+                  <span
+                    className={cn(
+                      'block truncate text-sm',
+                      isActive ? 'font-medium text-primary' : isCompleted ? 'text-foreground' : 'text-muted-foreground'
+                    )}
+                  >
                     {lecture.title}
                     {isCompleted && <span className="sr-only">, completed</span>}
                     {isActive && <span className="sr-only">, currently playing</span>}
@@ -124,12 +135,7 @@ export function CurriculumList({ sections, completedLectureIds, currentLectureId
   }
 
   return (
-    <Accordion
-      type="multiple"
-      value={openSections}
-      onValueChange={setOpenSections}
-      className="space-y-2 px-2"
-    >
+    <Accordion type="multiple" value={openSections} onValueChange={setOpenSections} className="space-y-2 px-2">
       {sections.map((section) => (
         <SectionRow
           key={section._id}

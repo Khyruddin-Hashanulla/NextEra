@@ -177,7 +177,9 @@ describe('generateId', () => {
 
 describe('classNames', () => {
   it('joins truthy values', () => {
-    expect(classNames('a', true && 'b', false && 'c', null, undefined)).toBe('a b');
+    const keep = true;
+    const drop = false;
+    expect(classNames('a', keep && 'b', drop && 'c', null, undefined)).toBe('a b');
   });
 });
 

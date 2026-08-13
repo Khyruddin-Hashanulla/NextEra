@@ -235,7 +235,7 @@ describe('admin payment controllers', () => {
         'student_request',
         'partial',
         adminId,
-        'ok',
+        'ok'
       );
       expect(res.status).toHaveBeenCalledWith(HTTP_STATUS.OK);
       expect(res.json.mock.calls[0][0]).toEqual({
@@ -246,7 +246,7 @@ describe('admin payment controllers', () => {
     });
 
     it('defaults the refund type to full', async () => {
-      const { refundType, ...body } = baseBody;
+      const { refundType: _refundType, ...body } = baseBody;
       mockedPaymentService.processRefundPayment.mockResolvedValue({} as never);
 
       const req = adminReq({ params: { id: 'p1' }, body });
@@ -260,7 +260,7 @@ describe('admin payment controllers', () => {
         'student_request',
         'full',
         adminId,
-        'ok',
+        'ok'
       );
     });
 

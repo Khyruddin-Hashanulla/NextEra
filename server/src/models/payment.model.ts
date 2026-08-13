@@ -26,11 +26,12 @@ export interface IPayment extends Document {
   user: mongoose.Types.ObjectId;
   referredBy?: mongoose.Types.ObjectId;
   affiliateCommission?: number;
-  type: 'course' | 'bundle' | 'subscription';
+  type: 'course' | 'bundle' | 'subscription' | 'instructor_subscription';
   course?: mongoose.Types.ObjectId;
   bundle?: mongoose.Types.ObjectId;
   subscription?: mongoose.Types.ObjectId;
   subscriptionEnrollment?: mongoose.Types.ObjectId;
+  instructorSubscription?: mongoose.Types.ObjectId;
   razorpayOrderId: string;
   razorpayPaymentId?: string;
   razorpaySignature?: string;
@@ -78,7 +79,7 @@ const paymentSchema = new Schema<IPayment>(
     affiliateCommission: { type: Number, default: 0 },
     type: {
       type: String,
-      enum: ['course', 'bundle', 'subscription'],
+      enum: ['course', 'bundle', 'subscription', 'instructor_subscription'],
       required: true,
       default: 'course',
     },
@@ -97,6 +98,10 @@ const paymentSchema = new Schema<IPayment>(
     subscriptionEnrollment: {
       type: Schema.Types.ObjectId,
       ref: 'SubscriptionEnrollment',
+    },
+    instructorSubscription: {
+      type: Schema.Types.ObjectId,
+      ref: 'InstructorSubscription',
     },
     razorpayOrderId: {
       type: String,
@@ -157,5 +162,9 @@ const paymentSchema = new Schema<IPayment>(
 paymentSchema.index({ status: 1, course: 1 });
 paymentSchema.index({ status: 1, type: 1 });
 paymentSchema.index({ status: 1, createdAt: -1 });
+paymentSchema.index({ user: 1, createdAt: -1 });
+paymentSchema.index({ status: 1, type: 1, createdAt: -1 });
+paymentSchema.index({ 'commissionSplits.instructor': 1, status: 1, createdAt: -1 });
+paymentSchema.index({ razorpayPaymentId: 1 });
 
 export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);

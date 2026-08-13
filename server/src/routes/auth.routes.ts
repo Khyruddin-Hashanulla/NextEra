@@ -41,14 +41,17 @@ const router = Router();
 router.post('/register', registerLimiter, validate(registerSchema), register);
 router.post('/login', loginLimiter, validate(loginSchema), login);
 router.post('/google', googleLoginLimiter, validate(googleAuthSchema), googleAuth);
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'], session: false }));
 router.get(
   '/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: `${env.clientUrl}/login` }),
   (req, res) => {
     const result = req.user as any;
+    const oauthState = (req as any).oauthState;
+    const redirectTarget =
+      oauthState && typeof oauthState.redirect === 'string' ? oauthState.redirect : `${env.clientUrl}/auth/callback`;
     setRefreshTokenCookie(res, result.refreshToken);
-    res.redirect(`${env.clientUrl}/auth/callback?accessToken=${result.accessToken}`);
+    res.redirect(`${redirectTarget}?accessToken=${result.accessToken}`);
   }
 );
 router.post('/send-otp', resendOTPLimiter, validate(sendOTPSchema), sendOTP);

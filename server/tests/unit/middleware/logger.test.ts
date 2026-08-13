@@ -26,9 +26,7 @@ describe('requestLogger middleware', () => {
     const handler = res.on.mock.calls[0][1];
     handler();
 
-    expect(logger.info).toHaveBeenCalledWith(
-      expect.stringContaining('GET /api/courses 200'),
-    );
+    expect(logger.info).toHaveBeenCalledWith(expect.stringContaining('GET /api/courses 200'));
   });
 
   it('works when next is a plain function', () => {

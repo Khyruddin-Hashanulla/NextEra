@@ -16,47 +16,53 @@ interface ResourceNotFoundProps {
   className?: string;
 }
 
-const resourceConfig: Record<ResourceType, { icon: typeof BookOpen; defaultTitle: string; defaultMessage: string; backLink: { label: string; href: string } }> = {
+const resourceConfig: Record<
+  ResourceType,
+  { icon: typeof BookOpen; defaultTitle: string; defaultMessage: string; backLink: { label: string; href: string } }
+> = {
   course: {
     icon: BookOpen,
     defaultTitle: 'Course Not Found',
-    defaultMessage: 'This course doesn\'t exist or has been removed. It may have been unpublished by the instructor or deleted.',
+    defaultMessage:
+      "This course doesn't exist or has been removed. It may have been unpublished by the instructor or deleted.",
     backLink: { label: 'Browse Courses', href: ROUTES.COURSES },
   },
   blog: {
     icon: FileQuestion,
     defaultTitle: 'Article Not Found',
-    defaultMessage: 'This article doesn\'t exist or has been removed. It may have been deleted or the link is broken.',
+    defaultMessage: "This article doesn't exist or has been removed. It may have been deleted or the link is broken.",
     backLink: { label: 'Back to Blog', href: '/blog' },
   },
   instructor: {
     icon: User,
     defaultTitle: 'Instructor Not Found',
-    defaultMessage: 'This instructor profile doesn\'t exist or has been removed. They may no longer be teaching on our platform.',
+    defaultMessage:
+      "This instructor profile doesn't exist or has been removed. They may no longer be teaching on our platform.",
     backLink: { label: 'Browse Instructors', href: '/instructors' },
   },
   bundle: {
     icon: Layers,
     defaultTitle: 'Bundle Not Found',
-    defaultMessage: 'This bundle doesn\'t exist or has been removed. It may have been unpublished or deleted.',
+    defaultMessage: "This bundle doesn't exist or has been removed. It may have been unpublished or deleted.",
     backLink: { label: 'Browse Bundles', href: ROUTES.BUNDLES },
   },
   lesson: {
     icon: BookOpen,
     defaultTitle: 'Lesson Not Found',
-    defaultMessage: 'This lesson doesn\'t exist or has been removed. It may have been deleted or the course has been updated.',
+    defaultMessage:
+      "This lesson doesn't exist or has been removed. It may have been deleted or the course has been updated.",
     backLink: { label: 'Back to Courses', href: ROUTES.COURSES },
   },
   page: {
     icon: FileQuestion,
     defaultTitle: 'Page Not Found',
-    defaultMessage: 'The page you\'re looking for doesn\'t exist or has been moved.',
+    defaultMessage: "The page you're looking for doesn't exist or has been moved.",
     backLink: { label: 'Go Home', href: ROUTES.HOME },
   },
   resource: {
     icon: Search,
     defaultTitle: 'Resource Not Found',
-    defaultMessage: 'The requested resource doesn\'t exist or has been removed.',
+    defaultMessage: "The requested resource doesn't exist or has been removed.",
     backLink: { label: 'Go Home', href: ROUTES.HOME },
   },
 };

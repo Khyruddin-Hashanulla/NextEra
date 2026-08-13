@@ -16,10 +16,33 @@ const item = {
 };
 
 const statCards = [
-  { key: 'users', label: 'Total Users', icon: Users, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400', subKey: 'total' },
-  { key: 'courses', label: 'Total Courses', icon: BookOpen, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400', subKey: 'total' },
-  { key: 'enrollments', label: 'Total Enrollments', icon: GraduationCap, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400' },
-  { key: 'revenue', label: 'Total Revenue', icon: DollarSign, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400', prefix: '₹' },
+  {
+    key: 'users',
+    label: 'Total Users',
+    icon: Users,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+    subKey: 'total',
+  },
+  {
+    key: 'courses',
+    label: 'Total Courses',
+    icon: BookOpen,
+    color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+    subKey: 'total',
+  },
+  {
+    key: 'enrollments',
+    label: 'Total Enrollments',
+    icon: GraduationCap,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+  },
+  {
+    key: 'revenue',
+    label: 'Total Revenue',
+    icon: DollarSign,
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+    prefix: '₹',
+  },
 ];
 
 export function DashboardPage() {
@@ -31,15 +54,29 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 2 }).map((_, i) => (
-            <Card key={i}><CardHeader><Skeleton className="h-6 w-40" /></CardHeader><CardContent><Skeleton className="h-64 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -88,7 +125,8 @@ export function DashboardPage() {
               ₹{(stats?.revenue || 0).toLocaleString()}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              {stats?.users?.students || 0} students · {stats?.users?.instructors || 0} instructors · {stats?.users?.admins || 0} admins
+              {stats?.users?.students || 0} students · {stats?.users?.instructors || 0} instructors ·{' '}
+              {stats?.users?.admins || 0} admins
             </p>
           </CardContent>
         </Card>
@@ -99,9 +137,7 @@ export function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-bold tracking-tight text-orange-600">
-              {stats?.courses?.total || 0} total
-            </p>
+            <p className="text-3xl font-bold tracking-tight text-orange-600">{stats?.courses?.total || 0} total</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {stats?.courses?.published || 0} published · {stats?.courses?.pending || 0} pending review
             </p>
@@ -165,8 +201,12 @@ export function DashboardPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">User</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Amount</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Amount
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -175,11 +215,17 @@ export function DashboardPage() {
                         <td className="px-4 py-3">{payment.user?.name || 'N/A'}</td>
                         <td className="px-4 py-3 font-medium">₹{payment.amount}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            payment.status === 'success' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                            payment.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' :
-                            'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          }`}>{payment.status}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              payment.status === 'success'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : payment.status === 'failed'
+                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}
+                          >
+                            {payment.status}
+                          </span>
                         </td>
                       </tr>
                     ))}

@@ -16,7 +16,11 @@ import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell, TableCap
 
 describe('Button', () => {
   it('renders children and applies variants', () => {
-    render(<Button variant="destructive" size="lg">Delete</Button>);
+    render(
+      <Button variant="destructive" size="lg">
+        Delete
+      </Button>
+    );
     const btn = screen.getByRole('button', { name: 'Delete' });
     expect(btn).toHaveClass('bg-destructive');
     expect(btn).toHaveClass('h-11');
@@ -37,8 +41,16 @@ describe('Button', () => {
   });
 
   it('renders a left and right icon', () => {
-    render(<Button icon={<span data-testid="l">L</span>} iconPosition="left">Go</Button>);
-    render(<Button icon={<span data-testid="r">R</span>} iconPosition="right">Go2</Button>);
+    render(
+      <Button icon={<span data-testid="l">L</span>} iconPosition="left">
+        Go
+      </Button>
+    );
+    render(
+      <Button icon={<span data-testid="r">R</span>} iconPosition="right">
+        Go2
+      </Button>
+    );
     expect(screen.getByTestId('l')).toBeInTheDocument();
     expect(screen.getByTestId('r')).toBeInTheDocument();
   });
@@ -52,7 +64,7 @@ describe('Button', () => {
     render(
       <Button asChild>
         <a href="/courses">Link</a>
-      </Button>,
+      </Button>
     );
     const link = screen.getByRole('link', { name: 'Link' });
     expect(link.tagName).toBe('A');
@@ -88,7 +100,7 @@ describe('Card', () => {
         </CardHeader>
         <CardContent>Body</CardContent>
         <CardFooter>Footer</CardFooter>
-      </Card>,
+      </Card>
     );
     expect(screen.getByText('Title')).toBeInTheDocument();
     expect(screen.getByText('Desc')).toBeInTheDocument();
@@ -111,7 +123,7 @@ describe('Alert', () => {
         <AlertIcon variant="destructive" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>Something failed</AlertDescription>
-      </Alert>,
+      </Alert>
     );
     expect(screen.getByText('Error')).toBeInTheDocument();
     expect(screen.getByText('Something failed')).toBeInTheDocument();
@@ -131,7 +143,7 @@ describe('Label', () => {
       <>
         <Label htmlFor="email">Email</Label>
         <Input id="email" />
-      </>,
+      </>
     );
     expect(screen.getByText('Email')).toHaveAttribute('for', 'email');
   });
@@ -150,7 +162,7 @@ describe('Skeleton', () => {
         <SkeletonTable rows={2} columns={3} />
         <SkeletonList items={2} />
         <SkeletonText lines={2} />
-      </>,
+      </>
     );
     expect(document.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
   });
@@ -162,7 +174,7 @@ describe('Avatar', () => {
       <Avatar>
         <AvatarImage src="https://img.example/a.jpg" alt="Jane" />
         <AvatarFallback>JD</AvatarFallback>
-      </Avatar>,
+      </Avatar>
     );
     expect(screen.getByText('JD')).toBeInTheDocument();
   });
@@ -207,7 +219,7 @@ describe('Table', () => {
             <TableCell>Jane</TableCell>
           </TableRow>
         </TableBody>
-      </Table>,
+      </Table>
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();

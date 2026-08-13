@@ -1,14 +1,16 @@
-import {
-  updateProfileSchema,
-  changePasswordSchema,
-} from '../../../src/validators/user.validator';
+import { updateProfileSchema, changePasswordSchema } from '../../../src/validators/user.validator';
 
 describe('user.validator', () => {
   it('validates profile updates', () => {
     const valid = {
       name: 'Jane Doe',
       bio: 'bio',
-      socialLinks: { youtube: 'https://y.com', twitter: 'https://x.com', linkedin: 'https://in.com', github: 'https://gh.com' },
+      socialLinks: {
+        youtube: 'https://y.com',
+        twitter: 'https://x.com',
+        linkedin: 'https://in.com',
+        github: 'https://gh.com',
+      },
       avatar: { url: 'u', publicId: 'p' },
     };
     expect(updateProfileSchema.parse(valid).name).toBe('Jane Doe');

@@ -13,13 +13,16 @@ jest.mock('../config/cloudinary', () => ({
       },
       destroy: jest.fn().mockResolvedValue({}),
     },
+    api: {
+      resource: jest.fn(),
+    },
   },
 }));
 
 const uploadService = new UploadService();
 
 const SUCCESS_RESULT = {
-  secure_url: 'https://res.cloudinary.com/test/image/upload/v1/abc.jpg',
+  secure_url: 'https://res.cloudinary.com/dp0o3faxz/image/upload/v1/abc.jpg',
   public_id: 'abc',
   resource_type: 'image',
   format: 'jpg',
@@ -150,5 +153,66 @@ describe('UploadService error translation', () => {
       statusCode: 500,
       message: 'File upload failed',
     });
+  });
+});
+
+describe('UploadService video duration', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns the Cloudinary video duration from the upload response', async () => {
+    const file = createMockFile({ originalname: 'video.mp4', mimetype: 'video/mp4' });
+    const promise = uploadService.uploadVideo(file);
+
+    const options = lastUploadOptions();
+    expect(options.resource_type).toBe('video');
+
+    resolveUpload({
+      secure_url: 'https://res.cloudinary.com/dp0o3faxz/video/upload/v1/video.mp4',
+      public_id: 'video',
+      resource_type: 'video',
+      format: 'mp4',
+      duration: 1122.6,
+    });
+
+    await expect(promise).resolves.toMatchObject({ url: expect.stringContaining('video.mp4'), publicId: 'video', duration: 1123 });
+  });
+
+  it('omits duration when Cloudinary does not provide one', async () => {
+    const file = createMockFile({ originalname: 'video.mp4', mimetype: 'video/mp4' });
+    const promise = uploadService.uploadVideo(file);
+
+    resolveUpload({
+      secure_url: 'https://res.cloudinary.com/dp0o3faxz/video/upload/v1/video.mp4',
+      public_id: 'video',
+      resource_type: 'video',
+      format: 'mp4',
+    });
+
+    await expect(promise).resolves.toEqual({
+      url: expect.stringContaining('video.mp4'),
+      publicId: 'video',
+    });
+  });
+
+  it('returns null when no publicId is provided', async () => {
+    await expect(uploadService.getVideoDuration('')).resolves.toBeNull();
+    expect(require('../config/cloudinary').cloudinary.api.resource).not.toHaveBeenCalled();
+  });
+
+  it('resolves the authoritative duration from the Cloudinary API', async () => {
+    const { cloudinary } = require('../config/cloudinary');
+    (cloudinary.api.resource as jest.Mock).mockResolvedValue({ public_id: 'video', resource_type: 'video', duration: 1122 });
+
+    await expect(uploadService.getVideoDuration('video')).resolves.toBe(1122);
+    expect(cloudinary.api.resource).toHaveBeenCalledWith('video', { resource_type: 'video' });
+  });
+
+  it('returns null when the Cloudinary API lookup fails', async () => {
+    const { cloudinary } = require('../config/cloudinary');
+    (cloudinary.api.resource as jest.Mock).mockRejectedValue(new Error('Not found'));
+
+    await expect(uploadService.getVideoDuration('video')).resolves.toBeNull();
   });
 });

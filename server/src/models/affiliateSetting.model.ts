@@ -37,7 +37,4 @@ const affiliateSettingSchema = new Schema<IAffiliateSetting>(
   { timestamps: true }
 );
 
-export const AffiliateSetting = mongoose.model<IAffiliateSetting>(
-  'AffiliateSetting',
-  affiliateSettingSchema
-);
+export const AffiliateSetting = mongoose.model<IAffiliateSetting>('AffiliateSetting', affiliateSettingSchema);

@@ -134,9 +134,7 @@ describe('validateCloudinaryResponse', () => {
   });
 
   it('throws when the public id is missing', () => {
-    expect(() =>
-      validateCloudinaryResponse({ secure_url: 'https://res.cloudinary.com/x.png' }),
-    ).toThrow(ApiError);
+    expect(() => validateCloudinaryResponse({ secure_url: 'https://res.cloudinary.com/x.png' })).toThrow(ApiError);
   });
 
   it('throws on unexpected resource type', () => {
@@ -145,7 +143,7 @@ describe('validateCloudinaryResponse', () => {
         secure_url: 'https://res.cloudinary.com/x.png',
         public_id: 'abc',
         resource_type: 'font',
-      }),
+      })
     ).toThrow(ApiError);
   });
 
@@ -155,7 +153,7 @@ describe('validateCloudinaryResponse', () => {
         secure_url: 'https://res.cloudinary.com/x.png',
         public_id: 'abc',
         format: 'exe',
-      }),
+      })
     ).toThrow(ApiError);
   });
 
@@ -186,27 +184,19 @@ describe('validateUploadedFile', () => {
   });
 
   it('rejects oversized files', () => {
-    expect(() =>
-      validateUploadedFile({ ...baseFile, size: 5 * 1024 * 1024 + 1 }, imagePolicy),
-    ).toThrow(ApiError);
+    expect(() => validateUploadedFile({ ...baseFile, size: 5 * 1024 * 1024 + 1 }, imagePolicy)).toThrow(ApiError);
   });
 
   it('rejects disallowed mime types', () => {
-    expect(() => validateUploadedFile({ ...baseFile, mimetype: 'text/html' }, imagePolicy)).toThrow(
-      ApiError,
-    );
+    expect(() => validateUploadedFile({ ...baseFile, mimetype: 'text/html' }, imagePolicy)).toThrow(ApiError);
   });
 
   it('rejects disallowed extensions', () => {
-    expect(() =>
-      validateUploadedFile({ ...baseFile, originalname: 'avatar.js' }, imagePolicy),
-    ).toThrow(ApiError);
+    expect(() => validateUploadedFile({ ...baseFile, originalname: 'avatar.js' }, imagePolicy)).toThrow(ApiError);
   });
 
   it('rejects unsafe filenames', () => {
-    expect(() =>
-      validateUploadedFile({ ...baseFile, originalname: 'evil.php' }, imagePolicy),
-    ).toThrow(ApiError);
+    expect(() => validateUploadedFile({ ...baseFile, originalname: 'evil.php' }, imagePolicy)).toThrow(ApiError);
   });
 
   it('accepts a valid file', () => {

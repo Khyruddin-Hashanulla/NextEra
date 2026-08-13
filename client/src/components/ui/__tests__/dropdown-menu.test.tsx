@@ -27,7 +27,7 @@ describe('DropdownMenu', () => {
           <DropdownMenuItem>Profile</DropdownMenuItem>
           <DropdownMenuItem>Settings</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     expect(screen.queryByRole('menu')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
@@ -47,7 +47,7 @@ describe('DropdownMenu', () => {
         <DropdownMenuContent>
           <DropdownMenuItem onSelect={onSelect}>Profile</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await user.click(await screen.findByText('Profile'));
@@ -67,7 +67,7 @@ describe('DropdownMenu', () => {
             Profile <DropdownMenuShortcut>⌘P</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await screen.findByRole('menu');
@@ -88,7 +88,7 @@ describe('DropdownMenu', () => {
             Show avatars
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await user.click(await screen.findByRole('menuitemcheckbox'));
@@ -108,7 +108,7 @@ describe('DropdownMenu', () => {
             <DropdownMenuRadioItem value="large">Large</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await user.click(await screen.findByRole('menuitemradio', { name: 'Large' }));
@@ -124,7 +124,7 @@ describe('DropdownMenu', () => {
         <DropdownMenuContent>
           <DropdownMenuItem>Profile</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await screen.findByRole('menu');

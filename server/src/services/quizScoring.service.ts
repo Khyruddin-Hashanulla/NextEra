@@ -1,4 +1,3 @@
-import { Lecture } from '../models/lecture.model';
 import { IQuizAttemptDetail, QuestionType, QuestionStatus, EvaluationStatus } from '../models/quizAttempt.model';
 import { computeLetterGrade } from '../utils/grading';
 
@@ -54,7 +53,13 @@ export interface QuizConfig {
 
 function normalizeLegacyQuestions(legacyJson: string): NormalizedQuestion[] {
   try {
-    const parsed = JSON.parse(legacyJson) as { question: string; options: string[]; correctAnswer: string; explanation?: string; marks?: number }[];
+    const parsed = JSON.parse(legacyJson) as {
+      question: string;
+      options: string[];
+      correctAnswer: string;
+      explanation?: string;
+      marks?: number;
+    }[];
     return parsed.map((q, idx) => ({
       questionId: `legacy_${idx}`,
       question: q.question,
@@ -72,7 +77,10 @@ function normalizeLegacyQuestions(legacyJson: string): NormalizedQuestion[] {
   }
 }
 
-export function resolveQuizQuestions(lecture: { quiz?: ILectureQuiz; assignment?: { question: string } }): NormalizedQuestion[] {
+export function resolveQuizQuestions(lecture: {
+  quiz?: ILectureQuiz;
+  assignment?: { question: string };
+}): NormalizedQuestion[] {
   const quiz = lecture.quiz;
   if (quiz && quiz.questions && quiz.questions.length > 0) {
     return quiz.questions.map((q, idx) => ({
@@ -94,12 +102,6 @@ export function resolveQuizQuestions(lecture: { quiz?: ILectureQuiz; assignment?
   return [];
 }
 
-function serializeAnswer(answer: string | string[] | Record<string, string>): string {
-  if (Array.isArray(answer)) return JSON.stringify(answer);
-  if (typeof answer === 'object') return JSON.stringify(answer);
-  return answer;
-}
-
 function parseAnswer(answer: string): string | string[] | Record<string, string> {
   try {
     const parsed = JSON.parse(answer);
@@ -110,7 +112,12 @@ function parseAnswer(answer: string): string | string[] | Record<string, string>
   }
 }
 
-function compareAnswers(selected: string, correct: string, type: QuestionType, partialMarking: boolean): { isCorrect: boolean; partialScore?: number } {
+function compareAnswers(
+  selected: string,
+  correct: string,
+  type: QuestionType,
+  partialMarking: boolean
+): { isCorrect: boolean; partialScore?: number } {
   const selectedParsed = parseAnswer(selected);
   const correctParsed = parseAnswer(correct);
 
@@ -125,13 +132,11 @@ function compareAnswers(selected: string, correct: string, type: QuestionType, p
       const correctArr = Array.isArray(correctParsed) ? correctParsed : [correctParsed];
       const correctSet = new Set(correctArr.map(String));
       const selectedSet = new Set(selectedArr.map(String));
-      const isExact = correctSet.size === selectedSet.size && [...correctSet].every(v => selectedSet.has(v));
+      const isExact = correctSet.size === selectedSet.size && [...correctSet].every((v) => selectedSet.has(v));
       if (partialMarking) {
         let correctCount = 0;
-        let incorrectCount = 0;
         for (const sel of selectedArr) {
           if (correctSet.has(String(sel))) correctCount++;
-          else incorrectCount++;
         }
         const partial = correctArr.length > 0 ? correctCount / correctArr.length : 0;
         return { isCorrect: isExact, partialScore: partial };
@@ -141,16 +146,18 @@ function compareAnswers(selected: string, correct: string, type: QuestionType, p
     case 'fill_blank': {
       const selectedStr = String(selectedParsed).trim().toLowerCase();
       const correctArr = Array.isArray(correctParsed) ? correctParsed : [correctParsed];
-      const matched = correctArr.some(c => String(c).trim().toLowerCase() === selectedStr);
+      const matched = correctArr.some((c) => String(c).trim().toLowerCase() === selectedStr);
       if (partialMarking) {
-        const maxSimilarity = Math.max(...correctArr.map(c => {
-          const cs = String(c).trim().toLowerCase();
-          let matches = 0;
-          for (let i = 0; i < Math.min(cs.length, selectedStr.length); i++) {
-            if (cs[i] === selectedStr[i]) matches++;
-          }
-          return matches / Math.max(cs.length, selectedStr.length, 1);
-        }));
+        const maxSimilarity = Math.max(
+          ...correctArr.map((c) => {
+            const cs = String(c).trim().toLowerCase();
+            let matches = 0;
+            for (let i = 0; i < Math.min(cs.length, selectedStr.length); i++) {
+              if (cs[i] === selectedStr[i]) matches++;
+            }
+            return matches / Math.max(cs.length, selectedStr.length, 1);
+          })
+        );
         return { isCorrect: matched, partialScore: matched ? 1 : maxSimilarity };
       }
       return { isCorrect: matched };
@@ -202,7 +209,12 @@ export function gradeQuestion(
     };
   }
 
-  const { isCorrect, partialScore } = compareAnswers(selectedAnswer, question.correctAnswer, question.type, config.partialMarking);
+  const { isCorrect, partialScore } = compareAnswers(
+    selectedAnswer,
+    question.correctAnswer,
+    question.type,
+    config.partialMarking
+  );
   let marksObtained = 0;
 
   if (isCorrect) {
@@ -262,9 +274,12 @@ export function computeAttemptResult(
   const details: IQuizAttemptDetail[] = [];
 
   for (const q of questions) {
-    const submitted = answers.find(a => a.questionId === q.questionId || a.question === q.question);
+    const submitted = answers.find((a) => a.questionId === q.questionId || a.question === q.question);
     const selectedAnswer = submitted?.selectedAnswer || '';
-    const gradeResult = gradeQuestion(q, selectedAnswer, { negativeMarking: config.negativeMarking, partialMarking: config.partialMarking });
+    const gradeResult = gradeQuestion(q, selectedAnswer, {
+      negativeMarking: config.negativeMarking,
+      partialMarking: config.partialMarking,
+    });
     const isBonus = q.isBonus;
 
     if (!isBonus) {
@@ -338,16 +353,19 @@ export function computeAttemptScoreByPolicy(
   if (!attempts.length) return { score: 0, totalMarks: 0, percentage: 0 };
   switch (policy) {
     case 'best':
-      return attempts.reduce((best, a) => a.percentage > best.percentage ? a : best, attempts[0]);
+      return attempts.reduce((best, a) => (a.percentage > best.percentage ? a : best), attempts[0]);
     case 'latest':
       return attempts[attempts.length - 1];
     case 'average': {
-      const sum = attempts.reduce((acc, a) => ({ score: acc.score + a.score, totalMarks: acc.totalMarks + a.totalMarks, percentage: 0 }), { score: 0, totalMarks: 0, percentage: 0 });
+      const sum = attempts.reduce(
+        (acc, a) => ({ score: acc.score + a.score, totalMarks: acc.totalMarks + a.totalMarks, percentage: 0 }),
+        { score: 0, totalMarks: 0, percentage: 0 }
+      );
       sum.percentage = sum.totalMarks > 0 ? Math.round((sum.score / sum.totalMarks) * 10000) / 100 : 0;
       return sum;
     }
     case 'highest':
-      return attempts.reduce((best, a) => a.score > best.score ? a : best, attempts[0]);
+      return attempts.reduce((best, a) => (a.score > best.score ? a : best), attempts[0]);
     default:
       return attempts[0];
   }
@@ -381,32 +399,30 @@ export function generateCsvHeaders(): string[] {
   ];
 }
 
-export function attemptToCsvRow(
-  attempt: {
-    _id: string;
-    user: { _id: string; name: string; email: string };
-    course: { _id: string; title: string };
-    lecture: { _id: string; title: string };
-    quizTitle?: string;
-    attemptNumber: number;
-    score: number;
-    totalMarks: number;
-    percentage: number;
-    passed: boolean;
-    letterGrade?: string;
-    correctAnswers: number;
-    incorrectAnswers: number;
-    skippedQuestions: number;
-    timeTaken?: number;
-    timeLimit?: number;
-    autoSubmitted: boolean;
-    evaluationStatus: EvaluationStatus;
-    startedAt: Date;
-    submittedAt?: Date;
-    gradedBy?: { _id: string; name: string } | string;
-    publishedAt?: Date;
-  }
-): string[] {
+export function attemptToCsvRow(attempt: {
+  _id: string;
+  user: { _id: string; name: string; email: string };
+  course: { _id: string; title: string };
+  lecture: { _id: string; title: string };
+  quizTitle?: string;
+  attemptNumber: number;
+  score: number;
+  totalMarks: number;
+  percentage: number;
+  passed: boolean;
+  letterGrade?: string;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  skippedQuestions: number;
+  timeTaken?: number;
+  timeLimit?: number;
+  autoSubmitted: boolean;
+  evaluationStatus: EvaluationStatus;
+  startedAt: Date;
+  submittedAt?: Date;
+  gradedBy?: { _id: string; name: string } | string;
+  publishedAt?: Date;
+}): string[] {
   return [
     attempt._id,
     attempt.user._id,

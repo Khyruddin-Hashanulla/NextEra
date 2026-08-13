@@ -1,14 +1,34 @@
 import {
-  CircleDollarSign, Clock3, Users, BadgeCheck, FileText, ShieldCheck,
-  Sparkles, Lock, Headphones, Star,
+  CircleDollarSign,
+  Clock3,
+  Users,
+  BadgeCheck,
+  FileText,
+  ShieldCheck,
+  Sparkles,
+  Lock,
+  Headphones,
+  Star,
 } from 'lucide-react';
 import { PageBackground } from '@/components/layout/PageBackground';
 
 const benefits = [
-  { icon: CircleDollarSign, title: 'Earn on every sale', description: 'Get paid for every enrolled student, with transparent payouts.' },
+  {
+    icon: CircleDollarSign,
+    title: 'Earn on every sale',
+    description: 'Get paid for every enrolled student, with transparent payouts.',
+  },
   { icon: Clock3, title: 'Flexible schedule', description: 'Teach from anywhere, at your own pace, on your own time.' },
-  { icon: Users, title: 'Global audience', description: 'Reach learners in 120+ countries ready to grow their skills.' },
-  { icon: BadgeCheck, title: 'Grow your brand', description: 'Build a personal brand as a recognized industry expert.' },
+  {
+    icon: Users,
+    title: 'Global audience',
+    description: 'Reach learners in 120+ countries ready to grow their skills.',
+  },
+  {
+    icon: BadgeCheck,
+    title: 'Grow your brand',
+    description: 'Build a personal brand as a recognized industry expert.',
+  },
 ];
 
 const steps = [
@@ -68,9 +88,7 @@ export function InstructorBenefits() {
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-muted/40 text-foreground">
                   <step.icon className="h-4 w-4" aria-hidden="true" />
                 </div>
-                {index < steps.length - 1 && (
-                  <span className="mt-1 h-full w-px bg-border" aria-hidden="true" />
-                )}
+                {index < steps.length - 1 && <span className="mt-1 h-full w-px bg-border" aria-hidden="true" />}
               </div>
               <div className="pb-1">
                 <p className="text-sm font-semibold text-foreground">{step.title}</p>

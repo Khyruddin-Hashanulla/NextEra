@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { blogApi } from '@/api/endpoints/blog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/providers/ToastProvider';
 import { BlogDetailSkeleton } from '@/components/skeletons/BlogDetailSkeleton';
-import { Loader2, Calendar, Clock, Bookmark, Heart, MessageCircle, Share2, ChevronLeft, Eye, ThumbsUp } from 'lucide-react';
+import { Loader2, Calendar, Clock, Bookmark, MessageCircle, Share2, ChevronLeft, Eye, ThumbsUp } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { useAuth } from '@/providers/AuthProvider';
 
@@ -24,19 +24,18 @@ export function BlogDetailPage() {
 
   const { data: blogData, isLoading } = useQuery({
     queryKey: ['blog', slug],
-    queryFn: ({ signal }) => blogApi.getBySlug(slug!, signal).then(r => r.data.data),
+    queryFn: ({ signal }) => blogApi.getBySlug(slug!, signal).then((r) => r.data.data),
     enabled: !!slug,
   });
 
   const { data: commentsData } = useQuery({
     queryKey: ['blog-comments', blogData?._id],
-    queryFn: ({ signal }) => blogApi.getComments(blogData!._id, undefined, signal).then(r => r.data),
+    queryFn: ({ signal }) => blogApi.getComments(blogData!._id, undefined, signal).then((r) => r.data),
     enabled: !!blogData?._id,
   });
 
   const commentMutation = useMutation({
-    mutationFn: (data: { content: string; parent?: string }) =>
-      blogApi.createComment(blogData!._id, data),
+    mutationFn: (data: { content: string; parent?: string }) => blogApi.createComment(blogData!._id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['blog-comments', blogData!._id] });
       setCommentText('');
@@ -79,7 +78,11 @@ export function BlogDetailPage() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         Article not found
-        <div className="mt-2"><Button variant="link" asChild><Link to="/blog">Back to blog</Link></Button></div>
+        <div className="mt-2">
+          <Button variant="link" asChild>
+            <Link to="/blog">Back to blog</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -89,23 +92,34 @@ export function BlogDetailPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8 space-y-8">
       <Button variant="ghost" size="sm" asChild>
-        <Link to="/blog"><ChevronLeft className="h-4 w-4 mr-1" /> Back to blog</Link>
+        <Link to="/blog">
+          <ChevronLeft className="h-4 w-4 mr-1" /> Back to blog
+        </Link>
       </Button>
 
       <article className="space-y-6">
         {blogData.featuredImage?.url && (
           <div className="aspect-video rounded-lg overflow-hidden bg-muted">
-            <OptimizedImage src={blogData.featuredImage.url} alt={blogData.title} placeholderType="blog" className="object-cover" />
+            <OptimizedImage
+              src={blogData.featuredImage.url}
+              alt={blogData.title}
+              placeholderType="blog"
+              className="object-cover"
+            />
           </div>
         )}
 
         <div className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
             {blogData.categories?.map((cat: string) => (
-              <Badge key={cat} variant="secondary">{cat}</Badge>
+              <Badge key={cat} variant="secondary">
+                {cat}
+              </Badge>
             ))}
             {blogData.tags?.map((tag: string) => (
-              <Badge key={tag} variant="outline" className="text-xs">#{tag}</Badge>
+              <Badge key={tag} variant="outline" className="text-xs">
+                #{tag}
+              </Badge>
             ))}
           </div>
 
@@ -119,9 +133,18 @@ export function BlogDetailPage() {
               </Avatar>
               <span>{blogData.author?.name}</span>
             </div>
-            <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{new Date(blogData.publishedAt).toLocaleDateString()}</span>
-            <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{blogData.readingTime} min read</span>
-            <span className="flex items-center gap-1"><Eye className="h-4 w-4" />{blogData.readCount} views</span>
+            <span className="flex items-center gap-1">
+              <Calendar className="h-4 w-4" />
+              {new Date(blogData.publishedAt).toLocaleDateString()}
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              {blogData.readingTime} min read
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="h-4 w-4" />
+              {blogData.readCount} views
+            </span>
           </div>
         </div>
 
@@ -132,15 +155,28 @@ export function BlogDetailPage() {
               {blogData.isBookmarked ? 'Bookmarked' : 'Bookmark'}
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(window.location.href); addToast({ title: 'Link copied', variant: 'success' }); }}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              addToast({ title: 'Link copied', variant: 'success' });
+            }}
+          >
             <Share2 className="h-4 w-4 mr-1" /> Share
           </Button>
         </div>
 
         <div className="prose prose-gray max-w-none">
-          {blogData.content.split('\n').map((line: string, i: number) => (
-            line.trim() ? <p key={i} className="text-base leading-relaxed">{line}</p> : <br key={i} />
-          ))}
+          {blogData.content.split('\n').map((line: string, i: number) =>
+            line.trim() ? (
+              <p key={i} className="text-base leading-relaxed">
+                {line}
+              </p>
+            ) : (
+              <br key={i} />
+            )
+          )}
         </div>
       </article>
 
@@ -155,20 +191,29 @@ export function BlogDetailPage() {
             <Textarea
               placeholder={replyTo ? `Replying to ${replyTo.name}...` : 'Write a comment...'}
               value={replyTo ? replyText : commentText}
-              onChange={(e) => replyTo ? setReplyText(e.target.value) : setCommentText(e.target.value)}
+              onChange={(e) => (replyTo ? setReplyText(e.target.value) : setCommentText(e.target.value))}
               rows={3}
             />
             <div className="flex gap-2">
               <Button
                 size="sm"
-                onClick={() => commentMutation.mutate({ content: replyTo ? replyText : commentText, parent: replyTo?.id })}
+                onClick={() =>
+                  commentMutation.mutate({ content: replyTo ? replyText : commentText, parent: replyTo?.id })
+                }
                 disabled={commentMutation.isPending || !(replyTo ? replyText : commentText).trim()}
               >
                 {commentMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Post
               </Button>
               {replyTo && (
-                <Button variant="ghost" size="sm" onClick={() => { setReplyTo(null); setReplyText(''); }}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setReplyTo(null);
+                    setReplyText('');
+                  }}
+                >
                   Cancel reply
                 </Button>
               )}
@@ -176,7 +221,10 @@ export function BlogDetailPage() {
           </div>
         ) : (
           <p className="text-sm text-muted-foreground mb-8">
-            <Link to="/login" className="text-primary hover:underline">Sign in</Link> to leave a comment
+            <Link to="/login" className="text-primary hover:underline">
+              Sign in
+            </Link>{' '}
+            to leave a comment
           </p>
         )}
 
@@ -193,22 +241,41 @@ export function BlogDetailPage() {
                       <AvatarFallback className="text-xs">{comment.user?.name?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium">{comment.user?.name}</span>
-                    <span className="text-xs text-muted-foreground">{new Date(comment.createdAt).toLocaleDateString()}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(comment.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                   {user && (user._id === comment.user?._id || user.role === 'admin') && (
-                    <Button variant="ghost" size="sm" className="text-xs text-red-500 h-auto p-1" onClick={() => deleteCommentMutation.mutate(comment._id)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs text-red-500 h-auto p-1"
+                      onClick={() => deleteCommentMutation.mutate(comment._id)}
+                    >
                       Delete
                     </Button>
                   )}
                 </div>
                 <p className="text-sm">{comment.content}</p>
                 <div className="flex items-center gap-3">
-                  <Button variant="ghost" size="sm" className="text-xs h-auto p-1" onClick={() => likeMutation.mutate(comment._id)}>
-                    <ThumbsUp className={`h-3 w-3 mr-1 ${comment.likes?.includes(user?._id) ? 'fill-primary text-primary' : ''}`} />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs h-auto p-1"
+                    onClick={() => likeMutation.mutate(comment._id)}
+                  >
+                    <ThumbsUp
+                      className={`h-3 w-3 mr-1 ${comment.likes?.includes(user?._id) ? 'fill-primary text-primary' : ''}`}
+                    />
                     {comment.likeCount}
                   </Button>
                   {user && (
-                    <Button variant="ghost" size="sm" className="text-xs h-auto p-1" onClick={() => setReplyTo({ id: comment._id, name: comment.user?.name })}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-xs h-auto p-1"
+                      onClick={() => setReplyTo({ id: comment._id, name: comment.user?.name })}
+                    >
                       Reply
                     </Button>
                   )}
@@ -223,7 +290,9 @@ export function BlogDetailPage() {
                             <AvatarFallback className="text-xs">{reply.user?.name?.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <span className="text-sm font-medium">{reply.user?.name}</span>
-                          <span className="text-xs text-muted-foreground">{new Date(reply.createdAt).toLocaleDateString()}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(reply.createdAt).toLocaleDateString()}
+                          </span>
                         </div>
                         <p className="text-sm">{reply.content}</p>
                       </div>
@@ -245,7 +314,12 @@ export function BlogDetailPage() {
                 <Card className="h-full hover:border-primary/50 transition-colors">
                   {post.featuredImage?.url && (
                     <div className="aspect-video bg-muted">
-                      <OptimizedImage src={post.featuredImage.url} alt={post.title} placeholderType="blog" className="object-cover" />
+                      <OptimizedImage
+                        src={post.featuredImage.url}
+                        alt={post.title}
+                        placeholderType="blog"
+                        className="object-cover"
+                      />
                     </div>
                   )}
                   <CardContent className="p-3 space-y-1">

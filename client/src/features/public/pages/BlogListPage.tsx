@@ -8,32 +8,14 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { Pagination } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Section, Container } from '@/components/common/Section';
 import { PageTransition } from '@/components/common/PageTransition';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { breadcrumbListSchema } from '@/lib/schema';
-import {
-  Search,
-  Calendar,
-  Clock,
-  ChevronLeft,
-  ChevronRight,
-  BookOpen,
-  Filter,
-  ArrowRight,
-  X,
-} from 'lucide-react';
-import { ROUTES } from '@/lib/constants';
+import { Search, BookOpen, X } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import type { BlogPost } from '@/types/blog';
@@ -46,20 +28,30 @@ export function BlogListPage() {
   const [category, setCategory] = useState('All');
   const [sort, setSort] = useState('newest');
 
-  const { data: featuredData, isLoading: featuredLoading } = useQuery({
+  const { data: featuredData } = useQuery({
     queryKey: ['blog-featured'],
     queryFn: ({ signal }) => blogApi.getFeatured(3, signal).then((r) => r.data.blogs),
   });
 
-  const { data: blogsData, isLoading: blogsLoading, error, refetch } = useQuery({
+  const {
+    data: blogsData,
+    isLoading: blogsLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['blog-list', page, search, category, sort],
     queryFn: ({ signal }) =>
-      blogApi.listPublished({
-        page,
-        limit: 6,
-        search: search || undefined,
-        category: category === 'All' ? undefined : category,
-      } as Parameters<typeof blogApi.listPublished>[0] & Record<string, unknown>, signal).then((r) => r.data),
+      blogApi
+        .listPublished(
+          {
+            page,
+            limit: 6,
+            search: search || undefined,
+            category: category === 'All' ? undefined : category,
+          } as Parameters<typeof blogApi.listPublished>[0] & Record<string, unknown>,
+          signal
+        )
+        .then((r) => r.data),
     placeholderData: (prev) => prev,
   });
 
@@ -98,13 +90,19 @@ export function BlogListPage() {
 
   return (
     <PageTransition>
-      <SEO title="Blog" description="Insights, tutorials, and stories from the NextEra learning community." canonical="/blog" />
-      <StructuredData schemas={[
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Blog', path: '/blog' },
-        ]),
-      ]} />
+      <SEO
+        title="Blog"
+        description="Insights, tutorials, and stories from the NextEra learning community."
+        canonical="/blog"
+      />
+      <StructuredData
+        schemas={[
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Blog', path: '/blog' },
+          ]),
+        ]}
+      />
       <div className="min-h-screen">
         <Section size="sm" className="bg-gradient-to-br from-primary/10 via-background to-background">
           <Container>
@@ -113,9 +111,7 @@ export function BlogListPage() {
               animate={{ opacity: 1, y: 0 }}
               className="max-w-3xl mx-auto text-center"
             >
-              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">
-                NextEra Blog
-              </h1>
+              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">NextEra Blog</h1>
               <p className="mt-4 text-lg text-muted-foreground">
                 Insights, tutorials, and stories from the learning community.
               </p>
@@ -126,11 +122,7 @@ export function BlogListPage() {
         {featured.length > 0 && !search && category === 'All' && page === 1 && (
           <Section size="md">
             <Container>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-              >
+              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
                 <h2 className="text-2xl font-bold text-foreground mb-8">Featured Articles</h2>
                 <div className="flex flex-col lg:flex-row gap-6">
                   <div className="lg:w-2/3">
@@ -145,7 +137,9 @@ export function BlogListPage() {
                           />
                         </div>
                         <div className="p-5">
-                          <span className="text-xs text-muted-foreground/70">{formatDate(bigFeatured.publishedAt || bigFeatured.createdAt)}</span>
+                          <span className="text-xs text-muted-foreground/70">
+                            {formatDate(bigFeatured.publishedAt || bigFeatured.createdAt)}
+                          </span>
                           <div className="mt-2">
                             {bigFeatured.categories?.slice(0, 1).map((cat) => (
                               <span
@@ -159,9 +153,7 @@ export function BlogListPage() {
                           <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors text-lg">
                             {bigFeatured.title}
                           </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                            {bigFeatured.excerpt}
-                          </p>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{bigFeatured.excerpt}</p>
                           <span className="text-xs text-muted-foreground/70 mt-3 block">
                             {bigFeatured.readingTime} min read
                           </span>
@@ -182,7 +174,9 @@ export function BlogListPage() {
                             />
                           </div>
                           <div className="p-5">
-                            <span className="text-xs text-muted-foreground/70">{formatDate(blog.publishedAt || blog.createdAt)}</span>
+                            <span className="text-xs text-muted-foreground/70">
+                              {formatDate(blog.publishedAt || blog.createdAt)}
+                            </span>
                             <div className="mt-2">
                               {blog.categories?.slice(0, 1).map((cat) => (
                                 <span
@@ -196,9 +190,7 @@ export function BlogListPage() {
                             <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
                               {blog.title}
                             </h3>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                              {blog.excerpt}
-                            </p>
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{blog.excerpt}</p>
                             <span className="text-xs text-muted-foreground/70 mt-3 block">
                               {blog.readingTime} min read
                             </span>
@@ -256,7 +248,13 @@ export function BlogListPage() {
 
                   <div>
                     <p className="text-sm font-medium text-foreground/80 mb-3">Sort By</p>
-                    <Select value={sort} onValueChange={(value) => { setSort(value); setPage(1); }}>
+                    <Select
+                      value={sort}
+                      onValueChange={(value) => {
+                        setSort(value);
+                        setPage(1);
+                      }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Sort by" />
                       </SelectTrigger>
@@ -342,9 +340,7 @@ export function BlogListPage() {
                                   <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
                                     {blog.title}
                                   </h3>
-                                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                                    {blog.excerpt}
-                                  </p>
+                                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{blog.excerpt}</p>
                                   <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
                                     {blog.author?.avatar?.url ? (
                                       <OptimizedImage
@@ -358,7 +354,9 @@ export function BlogListPage() {
                                       <div className="h-6 w-6 rounded-full bg-muted" />
                                     )}
                                     <span className="text-sm text-muted-foreground">{blog.author?.name}</span>
-                                    <span className="text-xs text-muted-foreground/70">{blog.readingTime} min read</span>
+                                    <span className="text-xs text-muted-foreground/70">
+                                      {blog.readingTime} min read
+                                    </span>
                                   </div>
                                 </div>
                               </article>

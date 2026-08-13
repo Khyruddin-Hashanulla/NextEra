@@ -19,7 +19,7 @@ export class TokenService {
     userId: string,
     email: string,
     role: string,
-    deviceInfo: DeviceInfo,
+    deviceInfo: DeviceInfo
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const user = await User.findById(userId);
     const payload: TokenPayload = {
@@ -46,7 +46,7 @@ export class TokenService {
 
   async refreshAccessToken(
     token: string,
-    deviceInfo: DeviceInfo,
+    deviceInfo: DeviceInfo
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const hashedToken = hashRefreshToken(token);
 
@@ -59,10 +59,7 @@ export class TokenService {
     if (!session) {
       const existing = await Session.findOne({ refreshTokenHash: hashedToken });
       if (existing) {
-        await Session.updateMany(
-          { userId: existing.userId, isRevoked: false },
-          { isRevoked: true },
-        );
+        await Session.updateMany({ userId: existing.userId, isRevoked: false }, { isRevoked: true });
         logger.warn('Refresh token reuse detected — all sessions revoked', {
           userId: existing.userId.toString(),
           sessionId: existing._id.toString(),
@@ -113,7 +110,7 @@ export class TokenService {
     const hashedToken = hashRefreshToken(token);
     const session = await Session.findOneAndUpdate(
       { refreshTokenHash: hashedToken, userId, isRevoked: false },
-      { isRevoked: true },
+      { isRevoked: true }
     );
     if (session) {
       logger.info('Session logged out', {
@@ -126,10 +123,7 @@ export class TokenService {
   }
 
   async revokeAllSessions(userId: string): Promise<void> {
-    const result = await Session.updateMany(
-      { userId, isRevoked: false },
-      { isRevoked: true },
-    );
+    const result = await Session.updateMany({ userId, isRevoked: false }, { isRevoked: true });
     logger.info('All sessions revoked', {
       userId,
       count: result.modifiedCount,

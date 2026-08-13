@@ -7,6 +7,8 @@ export interface INotification extends Document {
   type: 'system' | 'course' | 'payment' | 'enrollment' | 'approval' | 'referral' | 'assignment';
   isRead: boolean;
   link?: string;
+  course?: mongoose.Types.ObjectId;
+  announcement?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,8 +39,19 @@ const notificationSchema = new Schema<INotification>(
       default: false,
     },
     link: String,
+    course: {
+      type: Schema.Types.ObjectId,
+      ref: 'Course',
+      index: true,
+    },
+    announcement: {
+      type: Schema.Types.ObjectId,
+      ref: 'Announcement',
+    },
   },
   { timestamps: true }
 );
+
+notificationSchema.index({ user: 1, isRead: 1, createdAt: -1 });
 
 export const Notification = mongoose.model<INotification>('Notification', notificationSchema);

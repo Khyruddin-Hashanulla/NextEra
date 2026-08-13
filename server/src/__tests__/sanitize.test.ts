@@ -163,7 +163,9 @@ describe('sanitizeRequestBody middleware', () => {
   function mockReq(body: any, query: any = {}, params: any = {}): Partial<Request> {
     return { body, query, params } as any;
   }
-  function mockRes(): Partial<Response> { return {}; }
+  function mockRes(): Partial<Response> {
+    return {};
+  }
 
   it('sanitizes req.body strings', () => {
     const req = mockReq({ name: '<script>alert(1)</script>' }) as Request;

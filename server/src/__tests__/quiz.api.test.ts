@@ -26,15 +26,17 @@ jest.mock('../middlewares/auth.middleware', () => {
 jest.mock('../middlewares/authorize.middleware', () => {
   const { ApiError } = jest.requireActual('../utils/ApiError');
   return {
-    authorize: (...allowedRoles: string[]) => (req: any, _res: any, next: any) => {
-      if (!req.currentUser) {
-        return next(ApiError.unauthorized('Token required'));
-      }
-      if (!allowedRoles.includes(req.currentUser.role)) {
-        return next(ApiError.forbidden('Forbidden'));
-      }
-      next();
-    },
+    authorize:
+      (...allowedRoles: string[]) =>
+      (req: any, _res: any, next: any) => {
+        if (!req.currentUser) {
+          return next(ApiError.unauthorized('Token required'));
+        }
+        if (!allowedRoles.includes(req.currentUser.role)) {
+          return next(ApiError.forbidden('Forbidden'));
+        }
+        next();
+      },
   };
 });
 
@@ -215,9 +217,7 @@ describe('PUT /api/v1/quiz/manual-grade/:attemptId (Instructor/Admin only)', () 
 
   it('denies a student from manual grading', async () => {
     asUser(ROLES.STUDENT, STUDENT_ID);
-    const res = await request(buildApp())
-      .put(`/api/v1/quiz/manual-grade/${ATTEMPT_ID}`)
-      .send({ grade: 80 });
+    const res = await request(buildApp()).put(`/api/v1/quiz/manual-grade/${ATTEMPT_ID}`).send({ grade: 80 });
     expect(res.status).toBe(403);
   });
 });

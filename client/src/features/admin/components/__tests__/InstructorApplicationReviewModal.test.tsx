@@ -25,7 +25,15 @@ vi.mock('@/providers/ToastProvider', () => ({
 
 const mockApp = {
   _id: 'application-01',
-  user: { _id: 'instructor-03', name: 'Fatima Rahman', email: 'fatima.rahman@example.com', avatar: null, isEmailVerified: true, isActive: true, isDeleted: false },
+  user: {
+    _id: 'instructor-03',
+    name: 'Fatima Rahman',
+    email: 'fatima.rahman@example.com',
+    avatar: null,
+    isEmailVerified: true,
+    isActive: true,
+    isDeleted: false,
+  },
   fullName: 'Fatima Rahman',
   email: 'fatima.rahman@example.com',
   phone: '+91 98765 43210',

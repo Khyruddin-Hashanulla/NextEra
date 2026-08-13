@@ -15,6 +15,10 @@ jest.mock('../models/enrollment.model', () => ({
   Enrollment: { findOne: jest.fn(), create: jest.fn() },
 }));
 
+jest.mock('../services/entitlement.service', () => ({
+  entitlementService: { requireStudentCapacity: jest.fn().mockResolvedValue(undefined) },
+}));
+
 jest.mock('../cache/cacheManager', () => ({
   cacheManager: {
     invalidateStudentCache: jest.fn().mockResolvedValue(undefined),
@@ -43,6 +47,7 @@ function courseDoc(overrides: Record<string, unknown> = {}) {
     courseType: 'free',
     status: 'published',
     isApproved: true,
+    instructor: new mongoose.Types.ObjectId(),
     ...overrides,
   };
 }
@@ -99,14 +104,13 @@ describe('StudentService.enrollFreeCourse', () => {
 
     expect(result.alreadyEnrolled).toBe(false);
     expect(result.enrollment._id).toEqual(enrollmentId);
-    expect(mockedEnrollmentCreate).toHaveBeenCalledWith(
-      [{ user: userId, course: courseId }],
-      { session: { __fakeSession: true } },
-    );
+    expect(mockedEnrollmentCreate).toHaveBeenCalledWith([{ user: userId, course: courseId }], {
+      session: { __fakeSession: true },
+    });
     expect(mockedCourseFindByIdAndUpdate).toHaveBeenCalledWith(
       courseId,
       { $inc: { totalEnrollments: 1 } },
-      { session: { __fakeSession: true } },
+      { session: { __fakeSession: true } }
     );
   });
 

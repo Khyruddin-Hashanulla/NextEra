@@ -5,12 +5,20 @@ import { useAuth } from '@/providers/AuthProvider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/common/ErrorState';
 import {
-  BookOpen, DollarSign, GraduationCap, Users, TrendingUp,
-  ArrowRight, PlusCircle, ChevronRight, BarChart3,
+  BookOpen,
+  DollarSign,
+  GraduationCap,
+  Users,
+  TrendingUp,
+  ArrowRight,
+  PlusCircle,
+  ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import SubscriptionBadge from '@/components/instructor/SubscriptionBadge';
 
 const container = {
@@ -23,16 +31,36 @@ const item = {
 };
 
 const statCards = [
-  { key: 'totalCourses', label: 'Total Courses', icon: BookOpen, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
-  { key: 'publishedCourses', label: 'Published', icon: TrendingUp, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' },
-  { key: 'totalEnrollments', label: 'Total Enrollments', icon: GraduationCap, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400' },
-  { key: 'totalStudents', label: 'Students', icon: Users, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400' },
+  {
+    key: 'totalCourses',
+    label: 'Total Courses',
+    icon: BookOpen,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+  },
+  {
+    key: 'publishedCourses',
+    label: 'Published',
+    icon: TrendingUp,
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+  },
+  {
+    key: 'totalEnrollments',
+    label: 'Total Enrollments',
+    icon: GraduationCap,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+  },
+  {
+    key: 'totalStudents',
+    label: 'Students',
+    icon: Users,
+    color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+  },
 ];
 
 export function DashboardPage() {
   const { user } = useAuth();
 
-  const { data: dashboard, isLoading } = useQuery({
+  const { data: dashboard, isLoading, error, refetch } = useQuery({
     queryKey: ['instructor', 'dashboard'],
     queryFn: ({ signal }) => instructorApi.getDashboard(signal).then((r) => r.data.data),
   });
@@ -40,13 +68,31 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-4 w-96" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Unable to load dashboard"
+        message="We couldn't fetch your dashboard data. Please try again."
+        onRetry={refetch}
+        showHomeLink={false}
+      />
     );
   }
 
@@ -96,7 +142,7 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold tracking-tight text-green-600">
-              ₹{(dashboard?.totalRevenue || 0).toLocaleString()}
+              {formatCurrency(dashboard?.totalRevenue ?? 0)}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">Total earnings from your courses</p>
             <Link
@@ -174,11 +220,17 @@ export function DashboardPage() {
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{course.title}</p>
                       <div className="mt-1 flex items-center gap-2">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                          course.status === 'published' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
-                          course.status === 'review' ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400' :
-                          'bg-muted text-muted-foreground'
-                        }`}>{course.status}</span>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                            course.status === 'published'
+                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                              : course.status === 'review'
+                                ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {course.status}
+                        </span>
                         <span className="text-xs text-muted-foreground">
                           {course.totalEnrollments || 0} enrollment{course.totalEnrollments !== 1 ? 's' : ''}
                         </span>

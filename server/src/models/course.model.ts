@@ -178,7 +178,10 @@ const courseSchema = new Schema<ICourse>(
 
 courseSchema.pre('save', function (next) {
   if (this.isModified('title') && !this.slug) {
-    this.slug = this.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    this.slug = this.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
   }
 
   if (this.isModified('status') || this.isNew) {

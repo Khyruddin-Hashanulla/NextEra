@@ -35,11 +35,8 @@ function setupAuthenticatedUser(overrides: Partial<{ isActive: boolean; tokenVer
 function buildApp(): Express {
   const app = express();
   app.get('/student-only', authenticate, authorize('student'), (_req, res) => res.status(200).json({ ok: true }));
-  app.get(
-    '/instructor-only',
-    authenticate,
-    authorize('instructor', 'admin'),
-    (_req, res) => res.status(200).json({ ok: true }),
+  app.get('/instructor-only', authenticate, authorize('instructor', 'admin'), (_req, res) =>
+    res.status(200).json({ ok: true })
   );
   app.get('/admin-only', authenticate, authorize('admin'), (_req, res) => res.status(200).json({ ok: true }));
 
@@ -73,7 +70,9 @@ describe('RBAC + authentication at the route level', () => {
     setupAuthenticatedUser();
     vi.mocked(RevokedToken.findOne as never).mockResolvedValue({ jti: 'revoked-jti' });
 
-    const res = await request(app).get('/student-only').set('Authorization', `Bearer ${tokenFor('student')}`);
+    const res = await request(app)
+      .get('/student-only')
+      .set('Authorization', `Bearer ${tokenFor('student')}`);
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe(MESSAGES.ERROR.SESSION_EXPIRED);
@@ -82,7 +81,9 @@ describe('RBAC + authentication at the route level', () => {
   it('rejects an inactive user', async () => {
     setupAuthenticatedUser({ isActive: false });
 
-    const res = await request(app).get('/student-only').set('Authorization', `Bearer ${tokenFor('student')}`);
+    const res = await request(app)
+      .get('/student-only')
+      .set('Authorization', `Bearer ${tokenFor('student')}`);
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe(MESSAGES.ERROR.UNAUTHORIZED);
@@ -91,7 +92,9 @@ describe('RBAC + authentication at the route level', () => {
   it('rejects a stale token after the token version is bumped', async () => {
     setupAuthenticatedUser({ tokenVersion: 2 });
 
-    const res = await request(app).get('/student-only').set('Authorization', `Bearer ${tokenFor('student', 1)}`);
+    const res = await request(app)
+      .get('/student-only')
+      .set('Authorization', `Bearer ${tokenFor('student', 1)}`);
 
     expect(res.status).toBe(401);
     expect(res.body.message).toBe(MESSAGES.ERROR.SESSION_EXPIRED);
@@ -99,14 +102,18 @@ describe('RBAC + authentication at the route level', () => {
 
   it('allows a student on a student-only route', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/student-only').set('Authorization', `Bearer ${tokenFor('student')}`);
+    const res = await request(app)
+      .get('/student-only')
+      .set('Authorization', `Bearer ${tokenFor('student')}`);
 
     expect(res.status).toBe(200);
   });
 
   it('denies a student on an instructor-only route (403)', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/instructor-only').set('Authorization', `Bearer ${tokenFor('student')}`);
+    const res = await request(app)
+      .get('/instructor-only')
+      .set('Authorization', `Bearer ${tokenFor('student')}`);
 
     expect(res.status).toBe(403);
     expect(res.body).toEqual({ success: false, message: MESSAGES.ERROR.FORBIDDEN });
@@ -114,35 +121,45 @@ describe('RBAC + authentication at the route level', () => {
 
   it('denies a student on an admin-only route (403)', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/admin-only').set('Authorization', `Bearer ${tokenFor('student')}`);
+    const res = await request(app)
+      .get('/admin-only')
+      .set('Authorization', `Bearer ${tokenFor('student')}`);
 
     expect(res.status).toBe(403);
   });
 
   it('denies an instructor on a student-only route (403)', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/student-only').set('Authorization', `Bearer ${tokenFor('instructor')}`);
+    const res = await request(app)
+      .get('/student-only')
+      .set('Authorization', `Bearer ${tokenFor('instructor')}`);
 
     expect(res.status).toBe(403);
   });
 
   it('allows an instructor on an instructor-only route', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/instructor-only').set('Authorization', `Bearer ${tokenFor('instructor')}`);
+    const res = await request(app)
+      .get('/instructor-only')
+      .set('Authorization', `Bearer ${tokenFor('instructor')}`);
 
     expect(res.status).toBe(200);
   });
 
   it('allows an admin on an instructor-only route', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/instructor-only').set('Authorization', `Bearer ${tokenFor('admin')}`);
+    const res = await request(app)
+      .get('/instructor-only')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`);
 
     expect(res.status).toBe(200);
   });
 
   it('allows an admin on an admin-only route', async () => {
     setupAuthenticatedUser();
-    const res = await request(app).get('/admin-only').set('Authorization', `Bearer ${tokenFor('admin')}`);
+    const res = await request(app)
+      .get('/admin-only')
+      .set('Authorization', `Bearer ${tokenFor('admin')}`);
 
     expect(res.status).toBe(200);
   });

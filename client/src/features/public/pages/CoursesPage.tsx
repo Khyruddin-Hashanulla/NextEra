@@ -10,10 +10,8 @@ import { Pagination } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Search, Filter, ChevronDown, BookOpen, Star, Users, Clock } from 'lucide-react';
+import { Search, Filter, BookOpen } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
-import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { Link } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
@@ -30,14 +28,20 @@ export function CoursesPage() {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['public-courses', page, search, level, category, sort],
-    queryFn: ({ signal }) => studentApi.listCourses({ 
-      search, 
-      level: level || undefined, 
-      category: category || undefined,
-      sort,
-      page, 
-      limit: 12 
-    }, signal).then(r => r.data.data),
+    queryFn: ({ signal }) =>
+      studentApi
+        .listCourses(
+          {
+            search,
+            level: level || undefined,
+            category: category || undefined,
+            sort,
+            page,
+            limit: 12,
+          },
+          signal
+        )
+        .then((r) => r.data.data),
     placeholderData: (previousData) => previousData,
   });
 
@@ -47,14 +51,15 @@ export function CoursesPage() {
 
   const { data: categoriesData } = useQuery({
     queryKey: ['course-categories'],
-    queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then(r => {
-      const cats = new Set<string>();
-      r.data.data.courses.forEach((c: any) => {
-        if (c.category?.name) cats.add(c.category.name);
-        else if (typeof c.category === 'string') cats.add(c.category);
-      });
-      return Array.from(cats).sort();
-    }),
+    queryFn: ({ signal }) =>
+      studentApi.listCourses({ limit: 100 }, signal).then((r) => {
+        const cats = new Set<string>();
+        r.data.data.courses.forEach((c: any) => {
+          if (c.category?.name) cats.add(c.category.name);
+          else if (typeof c.category === 'string') cats.add(c.category);
+        });
+        return Array.from(cats).sort();
+      }),
   });
 
   const categories = categoriesData || [];
@@ -91,13 +96,19 @@ export function CoursesPage() {
 
   return (
     <div className="min-h-screen">
-      <SEO title="Courses" description="Browse our comprehensive catalog of web development, programming, and technology courses." canonical={ROUTES.COURSES} />
-      <StructuredData schemas={[
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Courses', path: '/courses' },
-        ]),
-      ]} />
+      <SEO
+        title="Courses"
+        description="Browse our comprehensive catalog of web development, programming, and technology courses."
+        canonical={ROUTES.COURSES}
+      />
+      <StructuredData
+        schemas={[
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Courses', path: '/courses' },
+          ]),
+        ]}
+      />
       {/* Page Header */}
       <Section size="sm" background="gradient">
         <Container>
@@ -134,7 +145,9 @@ export function CoursesPage() {
               >
                 {/* Search */}
                 <div>
-                  <label htmlFor="search" className="label-base">Search Courses</label>
+                  <label htmlFor="search" className="label-base">
+                    Search Courses
+                  </label>
                   <div className="relative mt-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -149,11 +162,10 @@ export function CoursesPage() {
 
                 {/* Level Filter */}
                 <div>
-                  <label htmlFor="level" className="label-base">Level</label>
-                  <Select
-                    value={level}
-                    onValueChange={(value) => handleFilterChange('level', value)}
-                  >
+                  <label htmlFor="level" className="label-base">
+                    Level
+                  </label>
+                  <Select value={level} onValueChange={(value) => handleFilterChange('level', value)}>
                     <SelectTrigger id="level" className="mt-1">
                       <SelectValue placeholder="All Levels" />
                     </SelectTrigger>
@@ -169,18 +181,19 @@ export function CoursesPage() {
                 {/* Category Filter */}
                 {categories.length > 0 && (
                   <div>
-                    <label htmlFor="category" className="label-base">Category</label>
-                    <Select
-                      value={category}
-                      onValueChange={(value) => handleFilterChange('category', value)}
-                    >
+                    <label htmlFor="category" className="label-base">
+                      Category
+                    </label>
+                    <Select value={category} onValueChange={(value) => handleFilterChange('category', value)}>
                       <SelectTrigger id="category" className="mt-1">
                         <SelectValue placeholder="All Categories" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">All Categories</SelectItem>
                         {categories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                          <SelectItem key={cat} value={cat}>
+                            {cat}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -189,11 +202,10 @@ export function CoursesPage() {
 
                 {/* Sort */}
                 <div>
-                  <label htmlFor="sort" className="label-base">Sort By</label>
-                  <Select
-                    value={sort}
-                    onValueChange={(value) => handleFilterChange('sort', value)}
-                  >
+                  <label htmlFor="sort" className="label-base">
+                    Sort By
+                  </label>
+                  <Select value={sort} onValueChange={(value) => handleFilterChange('sort', value)}>
                     <SelectTrigger id="sort" className="mt-1">
                       <SelectValue placeholder="Popular" />
                     </SelectTrigger>
@@ -210,9 +222,18 @@ export function CoursesPage() {
 
                 {/* Clear Filters */}
                 {(search || level || category || sort !== 'popular') && (
-                  <Button variant="ghost" size="sm" className="w-full justify-start" onClick={() => {
-                    setSearch(''); setLevel(''); setCategory(''); setSort('popular'); setPage(1);
-                  }}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setSearch('');
+                      setLevel('');
+                      setCategory('');
+                      setSort('popular');
+                      setPage(1);
+                    }}
+                  >
                     <Filter className="h-4 w-4" />
                     Clear All Filters
                   </Button>
@@ -269,11 +290,7 @@ export function CoursesPage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-10"
-                  >
+                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-10">
                     <Pagination
                       currentPage={page}
                       totalPages={totalPages}
@@ -294,7 +311,9 @@ export function CoursesPage() {
         <Container>
           <div className="max-w-2xl mx-auto text-center">
             <h2 className="text-heading-md font-semibold">Can't find what you're looking for?</h2>
-            <p className="mt-3 text-muted-foreground">Request a course topic and we'll notify you when it's available.</p>
+            <p className="mt-3 text-muted-foreground">
+              Request a course topic and we'll notify you when it's available.
+            </p>
             <Button asChild variant="outline" className="mt-4" size="lg">
               <Link to="/contact">Request a Course</Link>
             </Button>

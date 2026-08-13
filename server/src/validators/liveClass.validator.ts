@@ -13,18 +13,22 @@ export const createLiveClassSchema = z.object({
     timezone: z.string().max(FIELD_SIZES.NAME).optional().default('UTC'),
     meetingProvider: z.enum(['zoom', 'google_meet', 'other']).optional().default('zoom'),
     password: z.string().max(FIELD_SIZES.TOKEN).optional(),
-    settings: z.object({
-      muteOnEntry: z.boolean().optional(),
-      approvalType: z.enum(['automatic', 'manual']).optional(),
-      waitingRoom: z.boolean().optional(),
-      qa: z.boolean().optional(),
-      chat: z.boolean().optional(),
-      allowRecording: z.boolean().optional(),
-    }).optional(),
+    settings: z
+      .object({
+        muteOnEntry: z.boolean().optional(),
+        approvalType: z.enum(['automatic', 'manual']).optional(),
+        waitingRoom: z.boolean().optional(),
+        qa: z.boolean().optional(),
+        chat: z.boolean().optional(),
+        allowRecording: z.boolean().optional(),
+      })
+      .optional(),
     notifyStudents: z.boolean().optional().default(true),
-    recording: z.object({
-      autoRecord: z.boolean().optional().default(false),
-    }).optional(),
+    recording: z
+      .object({
+        autoRecord: z.boolean().optional().default(false),
+      })
+      .optional(),
   }),
 });
 
@@ -38,17 +42,21 @@ export const updateLiveClassSchema = z.object({
     duration: z.number().int().min(1).max(1440).optional(),
     timezone: z.string().max(FIELD_SIZES.NAME).optional(),
     password: z.string().max(FIELD_SIZES.TOKEN).optional(),
-    settings: z.object({
-      muteOnEntry: z.boolean().optional(),
-      approvalType: z.enum(['automatic', 'manual']).optional(),
-      waitingRoom: z.boolean().optional(),
-      qa: z.boolean().optional(),
-      chat: z.boolean().optional(),
-      allowRecording: z.boolean().optional(),
-    }).optional(),
-    recording: z.object({
-      autoRecord: z.boolean().optional(),
-    }).optional(),
+    settings: z
+      .object({
+        muteOnEntry: z.boolean().optional(),
+        approvalType: z.enum(['automatic', 'manual']).optional(),
+        waitingRoom: z.boolean().optional(),
+        qa: z.boolean().optional(),
+        chat: z.boolean().optional(),
+        allowRecording: z.boolean().optional(),
+      })
+      .optional(),
+    recording: z
+      .object({
+        autoRecord: z.boolean().optional(),
+      })
+      .optional(),
   }),
 });
 

@@ -74,10 +74,18 @@ export function ReviewsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Student</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Course</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Rating</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Review</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Student
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Course
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Rating
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Review
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Date</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Reply</th>
                     </tr>
@@ -88,7 +96,13 @@ export function ReviewsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {review.user?.avatar?.url && (
-                              <OptimizedImage src={review.user.avatar.url} alt={`Profile photo of ${review.user?.name || 'reviewer'}`} placeholderType="avatar" className="rounded-full object-cover" containerClassName="h-7 w-7" />
+                              <OptimizedImage
+                                src={review.user.avatar.url}
+                                alt={`Profile photo of ${review.user?.name || 'reviewer'}`}
+                                placeholderType="avatar"
+                                className="rounded-full object-cover"
+                                containerClassName="h-7 w-7"
+                              />
                             )}
                             <span className="font-medium">{review.user?.name}</span>
                           </div>
@@ -97,15 +111,22 @@ export function ReviewsPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1">
                             {Array.from({ length: 5 }).map((_, i) => (
-                              <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
+                              <Star
+                                key={i}
+                                className={`h-4 w-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`}
+                              />
                             ))}
                           </div>
                         </td>
                         <td className="max-w-[200px] truncate px-4 py-3">{review.review}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(review.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3">
                           {review.instructorReply ? (
-                            <div className="max-w-[180px] truncate text-xs text-muted-foreground">{review.instructorReply.reply}</div>
+                            <div className="max-w-[180px] truncate text-xs text-muted-foreground">
+                              {review.instructorReply.reply}
+                            </div>
                           ) : (
                             <Button variant="ghost" size="sm" onClick={() => setReplyFor(review)}>
                               <Reply className="h-4 w-4" />
@@ -126,7 +147,12 @@ export function ReviewsPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -146,7 +172,10 @@ export function ReviewsPage() {
               <p className="mt-1 text-muted-foreground">{replyFor.review}</p>
               <div className="mt-1 flex items-center gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3 w-3 ${i < replyFor.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
+                  <Star
+                    key={i}
+                    className={`h-3 w-3 ${i < replyFor.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`}
+                  />
                 ))}
               </div>
             </div>
@@ -155,8 +184,20 @@ export function ReviewsPage() {
               <Textarea value={replyText} onChange={(e) => setReplyText(e.target.value)} rows={4} />
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => { setReplyFor(null); setReplyText(''); }}>Cancel</Button>
-              <Button onClick={() => replyMutation.mutate({ reviewId: replyFor._id, reply: replyText })} disabled={!replyText || replyMutation.isPending} loading={replyMutation.isPending}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReplyFor(null);
+                  setReplyText('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => replyMutation.mutate({ reviewId: replyFor._id, reply: replyText })}
+                disabled={!replyText || replyMutation.isPending}
+                loading={replyMutation.isPending}
+              >
                 Send Reply
               </Button>
             </div>

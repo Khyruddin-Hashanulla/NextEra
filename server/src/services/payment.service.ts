@@ -8,6 +8,8 @@ import { PlatformWallet } from '../models/platformWallet.model';
 import { Payout } from '../models/payout.model';
 import { Subscription } from '../models/subscription.model';
 import { SubscriptionEnrollment } from '../models/subscriptionEnrollment.model';
+import { InstructorSubscription } from '../models/instructorSubscription.model';
+import { InstructorSubscriptionPlan } from '../models/instructorSubscriptionPlan.model';
 import { Coupon } from '../models/coupon.model';
 import { Refund } from '../models/refund.model';
 import { WebhookEvent } from '../models/webhookEvent.model';
@@ -20,11 +22,14 @@ import { ROLES } from '../constants/roles';
 import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { platformSettingsService } from './platformSettings.service';
+import { entitlementService } from './entitlement.service';
 import { affiliateService } from './affiliate.service';
+import { isFeatureEnabled } from './featureToggle.service';
 import { cacheManager } from '../cache/cacheManager';
 
 const RAZORPAY_KEY_ID = env.razorpayKeyId;
 const RAZORPAY_KEY_SECRET = env.razorpayKeySecret;
+const RAZORPAY_PAYOUT_ACCOUNT_NUMBER = env.razorpayPayoutAccountNumber;
 
 export class PaymentService {
   // ─── Cache Invalidation ─────────────────────────────────────
@@ -36,7 +41,9 @@ export class PaymentService {
       cacheManager.invalidateCourseCache(),
       cacheManager.invalidateStudentCourseList(),
       (async () => {
-        const courses = await Course.find({ _id: { $in: courseIds } }).select('instructor').lean();
+        const courses = await Course.find({ _id: { $in: courseIds } })
+          .select('instructor')
+          .lean();
         const instructorIds = new Set(courses.map((c) => c.instructor.toString()));
         for (const instructorId of instructorIds) {
           await cacheManager.invalidateInstructorCache(instructorId);
@@ -51,6 +58,32 @@ export class PaymentService {
     }
     const Razorpay = (await import('razorpay')).default;
     return new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET });
+  }
+
+  // Razorpay rejects orders whose `receipt` exceeds 40 characters, so receipts
+  // are built from short id suffixes. Gateway failures are mapped to a
+  // standardized ApiError (with only safe gateway fields logged) instead of
+  // surfacing as an opaque 500.
+  private async createRazorpayOrder(options: { amount: number; currency: string; receipt: string }) {
+    const razorpay = await this.getRazorpay();
+    try {
+      return await razorpay.orders.create(options);
+    } catch (rzErr: any) {
+      const rzDetails = rzErr?.error || rzErr?.response?.data || {};
+      logger.error('Razorpay order creation failed', {
+        amount: options.amount,
+        receipt: options.receipt,
+        statusCode: rzErr?.statusCode || rzErr?.status,
+        razorpayCode: rzDetails.code,
+        razorpayDescription: rzDetails.description,
+        razorpayStep: rzDetails.step,
+        razorpayReason: rzDetails.reason,
+        message: rzErr?.message || String(rzErr),
+      });
+      throw ApiError.internal(
+        `Payment gateway error: ${rzDetails.description || rzErr?.message || 'Order creation failed'}`
+      );
+    }
   }
 
   // ─── Platform Wallet (Singleton) ──────────────────────────
@@ -91,9 +124,8 @@ export class PaymentService {
     }
     if (amount < coupon.minAmount) throw ApiError.badRequest('Minimum amount not met for coupon');
 
-    const discountAmount = coupon.discountType === 'percentage'
-      ? Math.round((amount * coupon.discountValue) / 100)
-      : coupon.discountValue;
+    const discountAmount =
+      coupon.discountType === 'percentage' ? Math.round((amount * coupon.discountValue) / 100) : coupon.discountValue;
     const finalAmount = Math.max(0, amount - discountAmount);
 
     return { coupon, discountAmount, finalAmount };
@@ -123,6 +155,8 @@ export class PaymentService {
     );
 
     if (payment.commissionSplits.length > 0) {
+      const autoApprove = await isFeatureEnabled('instructor_payouts_auto_approve');
+      const initialStatus = autoApprove ? 'approved' : 'pending';
       const payoutDocs: any[] = [];
       for (const split of payment.commissionSplits) {
         if (split.instructorShare > 0) {
@@ -133,7 +167,7 @@ export class PaymentService {
             totalAmount: split.baseAmount,
             sourcePayment: payment._id,
             sourceType: payment.type,
-            status: 'pending',
+            status: initialStatus,
             scheduledDate: new Date(),
           });
         }
@@ -161,20 +195,41 @@ export class PaymentService {
       razorpayPaymentId,
     };
     if (razorpaySignature !== undefined) update.razorpaySignature = razorpaySignature;
-    return Payment.findOneAndUpdate(
-      { _id: paymentId, status: 'pending' },
-      { $set: update },
-      { new: true, session }
-    );
+    return Payment.findOneAndUpdate({ _id: paymentId, status: 'pending' }, { $set: update }, { new: true, session });
+  }
+
+  // Reuse an existing pending order for the same purchase intent instead of
+  // creating a duplicate Razorpay order + payment on double-click/retry. A
+  // single duplicate order could otherwise be paid twice and credit the wallet
+  // twice. Stale pendings (beyond the gateway order validity window) are marked
+  // failed so a fresh order can be created.
+  private async reuseOrExpirePendingPayment(
+    filter: Record<string, any>,
+    _requestAmount: number
+  ): Promise<{ orderId: string; amount: number; currency: string; key: string; paymentId: string } | null> {
+    const pending = await Payment.findOne({ ...filter, status: 'pending' });
+    if (!pending) return null;
+    const staleMs = 24 * 60 * 60 * 1000;
+    if (Date.now() - new Date(pending.createdAt).getTime() > staleMs) {
+      await Payment.findByIdAndUpdate(pending._id, {
+        $set: { status: 'failed', pendingReason: 'Order expired before payment was completed' },
+      });
+      return null;
+    }
+    return {
+      orderId: pending.razorpayOrderId,
+      amount: pending.amount * 100,
+      currency: pending.currency || 'INR',
+      key: RAZORPAY_KEY_ID,
+      paymentId: String(pending._id),
+    };
   }
 
   private async createPaymentSideEffects(payment: any, session: mongoose.ClientSession) {
     if (payment.type === 'course' && payment.course) {
-      const existingEnrollment = await Enrollment.findOne(
-        { user: payment.user, course: payment.course },
-        null,
-        { session }
-      );
+      const existingEnrollment = await Enrollment.findOne({ user: payment.user, course: payment.course }, null, {
+        session,
+      });
       if (!existingEnrollment) {
         await Enrollment.create([{ user: payment.user, course: payment.course }], { session });
         await Course.findByIdAndUpdate(payment.course, { $inc: { totalEnrollments: 1 } }, { session });
@@ -183,11 +238,9 @@ export class PaymentService {
       const bundle = await Bundle.findById(payment.bundle).session(session);
       if (bundle) {
         const allCourseIds = bundle.courses;
-        const existingEnrollments = await Enrollment.find(
-          { user: payment.user, course: { $in: allCourseIds } },
-          null,
-          { session }
-        );
+        const existingEnrollments = await Enrollment.find({ user: payment.user, course: { $in: allCourseIds } }, null, {
+          session,
+        });
         const existingCourseIdSet = new Set(existingEnrollments.map((e) => e.course.toString()));
         const newCourseIds = allCourseIds.filter(
           (cid: mongoose.Types.ObjectId) => !existingCourseIdSet.has(cid.toString())
@@ -199,11 +252,7 @@ export class PaymentService {
             { session, ordered: true }
           );
           await Bundle.findByIdAndUpdate(payment.bundle, { $inc: { totalEnrollments: 1 } }, { session });
-          await Course.updateMany(
-            { _id: { $in: newCourseIds } },
-            { $inc: { totalEnrollments: 1 } },
-            { session }
-          );
+          await Course.updateMany({ _id: { $in: newCourseIds } }, { $inc: { totalEnrollments: 1 } }, { session });
         }
       }
     } else if (payment.type === 'subscription' && payment.subscription) {
@@ -219,24 +268,71 @@ export class PaymentService {
           const endDate = new Date();
           endDate.setDate(endDate.getDate() + plan.durationDays);
           const [subEnrollment] = await SubscriptionEnrollment.create(
-            [{
-              user: payment.user,
-              subscription: payment.subscription,
-              razorpayOrderId: payment.razorpayOrderId,
-              razorpayPaymentId: payment.razorpayPaymentId,
-              startDate,
-              endDate,
-              status: 'active',
-            }],
+            [
+              {
+                user: payment.user,
+                subscription: payment.subscription,
+                razorpayOrderId: payment.razorpayOrderId,
+                razorpayPaymentId: payment.razorpayPaymentId,
+                startDate,
+                endDate,
+                status: 'active',
+              },
+            ],
             { session }
           );
           payment.subscriptionEnrollment = subEnrollment._id;
           await payment.save({ session });
-          await Subscription.findByIdAndUpdate(
-            payment.subscription,
-            { $inc: { totalSubscribers: 1 } },
+          await Subscription.findByIdAndUpdate(payment.subscription, { $inc: { totalSubscribers: 1 } }, { session });
+        }
+      }
+    } else if (payment.type === 'instructor_subscription' && payment.instructorSubscription) {
+      // Activate the instructor plan from a captured payment so a user is never
+      // "paid but not activated" when the client-side verify never returns.
+      const existingSub = await InstructorSubscription.findOne(
+        { instructor: payment.user, status: { $in: ['ACTIVE', 'active'] } },
+        null,
+        { session }
+      );
+      if (existingSub) return;
+      const plan = await InstructorSubscriptionPlan.findById(payment.instructorSubscription).session(session);
+      if (plan) {
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + (plan.durationDays || 365));
+        try {
+          await InstructorSubscription.create(
+            [
+              {
+                instructor: payment.user,
+                plan: plan._id,
+                payment: payment._id,
+                planSnapshot: {
+                  code: plan.code || undefined,
+                  name: plan.name,
+                  type: plan.type,
+                  price: plan.price ?? 0,
+                  durationDays: plan.durationDays || 365,
+                },
+                priceSnapshot: { amount: plan.price ?? 0, currency: 'INR', durationDays: plan.durationDays || 365 },
+                paymentReference: payment.razorpayOrderId,
+                razorpaySubscriptionId: payment.razorpayOrderId,
+                razorpayPaymentId: payment.razorpayPaymentId || '',
+                startDate,
+                endDate,
+                status: 'ACTIVE',
+              },
+            ],
             { session }
           );
+          await InstructorSubscriptionPlan.findByIdAndUpdate(
+            plan._id,
+            { $inc: { totalSubscribers: 1 } },
+            { session }
+          ).catch(() => undefined);
+        } catch (createError: any) {
+          // Concurrent verify/webhook already activated this instructor.
+          if (createError?.code !== 11000) throw createError;
         }
       }
     }
@@ -254,6 +350,8 @@ export class PaymentService {
 
     const existing = await Enrollment.findOne({ user: userId, course: courseId });
     if (existing) throw ApiError.conflict('Already enrolled in this course');
+
+    await entitlementService.requireStudentCapacity(course.instructor.toString(), userId);
 
     let amount = course.price;
     let discountAmount = 0;
@@ -276,40 +374,49 @@ export class PaymentService {
       return result;
     }
 
-    const commissionPercent = await platformSettingsService.getCommissionPercentage();
-    const commission = this.calculateCommission(amount, commissionPercent);
     const instructorId = course.instructor.toString();
+    const { commissionPercent: resolvedCommissionPercent } =
+      await entitlementService.getInstructorCommission(instructorId);
+    const commissionPercent = resolvedCommissionPercent;
+    const commission = this.calculateCommission(amount, commissionPercent);
 
-    const razorpay = await this.getRazorpay();
-    const options = {
+    const reused = await this.reuseOrExpirePendingPayment({ user: userId, type: 'course', course: courseId }, amount);
+    if (reused) return reused;
+
+    const order = await this.createRazorpayOrder({
       amount: amount * 100,
       currency: 'INR',
-      receipt: `receipt_course_${courseId}_${userId}_${Date.now()}`,
-    };
-
-    const order = await razorpay.orders.create(options);
+      receipt: `rc_${courseId.slice(-8)}_${userId.slice(-8)}_${Date.now().toString(36)}`,
+    });
 
     return withTransaction(async (session) => {
-      const [payment] = await Payment.create([{
-        user: userId,
-        type: 'course',
-        course: courseId,
-        razorpayOrderId: order.id,
-        amount,
-        coupon: coupon?._id,
-        discountAmount,
-        status: 'pending',
-        commissionPercent: commission.commissionPercent,
-        commissionSplits: [{
-          instructor: instructorId,
-          baseAmount: amount,
-          commissionPercent: commission.commissionPercent,
-          commissionAmount: commission.commissionAmount,
-          instructorShare: commission.instructorShare,
-        }],
-        totalCommissionAmount: commission.commissionAmount,
-        totalInstructorShare: commission.instructorShare,
-      }], { session });
+      const [payment] = await Payment.create(
+        [
+          {
+            user: userId,
+            type: 'course',
+            course: courseId,
+            razorpayOrderId: order.id,
+            amount,
+            coupon: coupon?._id,
+            discountAmount,
+            status: 'pending',
+            commissionPercent: commission.commissionPercent,
+            commissionSplits: [
+              {
+                instructor: instructorId,
+                baseAmount: amount,
+                commissionPercent: commission.commissionPercent,
+                commissionAmount: commission.commissionAmount,
+                instructorShare: commission.instructorShare,
+              },
+            ],
+            totalCommissionAmount: commission.commissionAmount,
+            totalInstructorShare: commission.instructorShare,
+          },
+        ],
+        { session }
+      );
 
       if (coupon) {
         await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } }, { session });
@@ -325,7 +432,12 @@ export class PaymentService {
     });
   }
 
-  async verifyCoursePayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
+  async verifyCoursePayment(
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string
+  ) {
     const expectedSignature = crypto
       .createHmac('sha256', RAZORPAY_KEY_SECRET)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
@@ -335,30 +447,26 @@ export class PaymentService {
       throw ApiError.badRequest('Invalid payment signature');
     }
 
-    const payment = await Payment.findOne({ razorpayOrderId });
+    const payment = await Payment.findOne({ razorpayOrderId, user: userId });
     if (!payment) throw ApiError.notFound('Payment not found');
     if (payment.type !== 'course') throw ApiError.badRequest('Not a course payment');
 
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
+    // Runs through withTransaction so it degrades gracefully (no transaction)
+    // on standalone MongoDB while keeping full atomicity on replica sets.
+    let newlyClaimed: any = null;
+    const result = await withTransaction(async (session) => {
       const claimed = await this.claimPayment(payment._id.toString(), razorpayPaymentId, razorpaySignature, session);
-      if (!claimed) {
-        await session.abortTransaction();
-        return { success: true, paymentId: payment._id };
-      }
+      if (!claimed) return { success: true, paymentId: payment._id };
+      newlyClaimed = claimed;
       await this.createPaymentSideEffects(claimed, session);
       await this.creditWallet(claimed._id.toString(), session);
-      await session.commitTransaction();
-      const courseIds = claimed.course ? [claimed.course.toString()] : [];
-      await this.invalidateAfterPurchase(claimed.user.toString(), courseIds);
       return { success: true, paymentId: claimed._id };
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
+    });
+    if (newlyClaimed) {
+      const courseIds = newlyClaimed.course ? [newlyClaimed.course.toString()] : [];
+      await this.invalidateAfterPurchase(newlyClaimed.user.toString(), courseIds);
     }
+    return result;
   }
 
   // ─── Bundle Purchase ────────────────────────────────────
@@ -371,6 +479,13 @@ export class PaymentService {
     const existingEnrollments = await Enrollment.find({ user: userId, course: { $in: courseIds } });
     if (existingEnrollments.length > 0) {
       throw ApiError.conflict('You are already enrolled in one or more courses in this bundle');
+    }
+
+    const bundleInstructors = [
+      ...new Set((bundle.courses as any[]).map((c: any) => c.instructor?.toString()).filter(Boolean)),
+    ];
+    for (const instructorId of bundleInstructors) {
+      await entitlementService.requireStudentCapacity(instructorId, userId);
     }
 
     let amount = bundle.discountedPrice > 0 ? bundle.discountedPrice : bundle.price;
@@ -410,7 +525,10 @@ export class PaymentService {
       for (const course of courses) {
         const ratio = originalTotal > 0 ? course.price / originalTotal : 1 / courses.length;
         const courseAmount = Math.round(totalBundleAmount * ratio);
-        const commission = this.calculateCommission(courseAmount, commissionPercent);
+        const { commissionPercent: instructorCommissionPercent } = await entitlementService.getInstructorCommission(
+          course.instructor.toString()
+        );
+        const commission = this.calculateCommission(courseAmount, instructorCommissionPercent);
         commissionSplits.push({
           instructor: course.instructor,
           baseAmount: courseAmount,
@@ -423,30 +541,38 @@ export class PaymentService {
       }
     }
 
-    const razorpay = await this.getRazorpay();
-    const options = {
+    const reused = await this.reuseOrExpirePendingPayment(
+      { user: userId, type: 'bundle', bundle: bundleId },
+      totalBundleAmount
+    );
+    if (reused) return reused;
+
+    const order = await this.createRazorpayOrder({
       amount: totalBundleAmount * 100,
       currency: 'INR',
-      receipt: `receipt_bundle_${bundleId}_${userId}_${Date.now()}`,
-    };
-
-    const order = await razorpay.orders.create(options);
+      receipt: `rb_${bundleId.slice(-8)}_${userId.slice(-8)}_${Date.now().toString(36)}`,
+    });
 
     return withTransaction(async (session) => {
-      const [payment] = await Payment.create([{
-        user: userId,
-        type: 'bundle',
-        bundle: bundleId,
-        razorpayOrderId: order.id,
-        amount: totalBundleAmount,
-        coupon: coupon?._id,
-        discountAmount,
-        status: 'pending',
-        commissionPercent,
-        commissionSplits,
-        totalCommissionAmount,
-        totalInstructorShare,
-      }], { session });
+      const [payment] = await Payment.create(
+        [
+          {
+            user: userId,
+            type: 'bundle',
+            bundle: bundleId,
+            razorpayOrderId: order.id,
+            amount: totalBundleAmount,
+            coupon: coupon?._id,
+            discountAmount,
+            status: 'pending',
+            commissionPercent,
+            commissionSplits,
+            totalCommissionAmount,
+            totalInstructorShare,
+          },
+        ],
+        { session }
+      );
 
       if (coupon) {
         await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } }, { session });
@@ -462,7 +588,12 @@ export class PaymentService {
     });
   }
 
-  async verifyBundlePayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
+  async verifyBundlePayment(
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string
+  ) {
     const expectedSignature = crypto
       .createHmac('sha256', RAZORPAY_KEY_SECRET)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
@@ -472,34 +603,28 @@ export class PaymentService {
       throw ApiError.badRequest('Invalid payment signature');
     }
 
-    const payment = await Payment.findOne({ razorpayOrderId });
+    const payment = await Payment.findOne({ razorpayOrderId, user: userId });
     if (!payment) throw ApiError.notFound('Payment not found');
     if (payment.type !== 'bundle') throw ApiError.badRequest('Not a bundle payment');
 
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
+    let newlyClaimed: any = null;
+    const result = await withTransaction(async (session) => {
       const claimed = await this.claimPayment(payment._id.toString(), razorpayPaymentId, razorpaySignature, session);
-      if (!claimed) {
-        await session.abortTransaction();
-        return { success: true, paymentId: payment._id };
-      }
+      if (!claimed) return { success: true, paymentId: payment._id };
+      newlyClaimed = claimed;
       await this.createPaymentSideEffects(claimed, session);
       await this.creditWallet(claimed._id.toString(), session);
-      await session.commitTransaction();
+      return { success: true, paymentId: claimed._id };
+    });
+    if (newlyClaimed) {
       let courseIds: string[] = [];
-      if (claimed.bundle) {
-        const bundle = await Bundle.findById(claimed.bundle).select('courses').lean();
+      if (newlyClaimed.bundle) {
+        const bundle = await Bundle.findById(newlyClaimed.bundle).select('courses').lean();
         courseIds = (bundle?.courses ?? []).map((c) => c.toString());
       }
-      await this.invalidateAfterPurchase(claimed.user.toString(), courseIds);
-      return { success: true, paymentId: claimed._id };
-    } catch (error) {
-      await session.abortTransaction();
-      throw error;
-    } finally {
-      session.endSession();
+      await this.invalidateAfterPurchase(newlyClaimed.user.toString(), courseIds);
     }
+    return result;
   }
 
   // ─── Subscription Purchase ──────────────────────────────
@@ -530,14 +655,19 @@ export class PaymentService {
         const startDate = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + plan.durationDays);
-        const [subEnrollment] = await SubscriptionEnrollment.create([{
-          user: userId,
-          subscription: subscriptionId,
-          razorpayOrderId: `free_${Date.now()}`,
-          startDate,
-          endDate,
-          status: 'active',
-        }], { session });
+        const [subEnrollment] = await SubscriptionEnrollment.create(
+          [
+            {
+              user: userId,
+              subscription: subscriptionId,
+              razorpayOrderId: `free_${Date.now()}`,
+              startDate,
+              endDate,
+              status: 'active',
+            },
+          ],
+          { session }
+        );
         await Subscription.findByIdAndUpdate(subscriptionId, { $inc: { totalSubscribers: 1 } }, { session });
         return { free: true, subscriptionEnrollment: subEnrollment };
       });
@@ -548,30 +678,38 @@ export class PaymentService {
     const commissionPercent = await platformSettingsService.getCommissionPercentage();
     const commission = this.calculateCommission(amount, commissionPercent);
 
-    const razorpay = await this.getRazorpay();
-    const options = {
+    const reused = await this.reuseOrExpirePendingPayment(
+      { user: userId, type: 'subscription', subscription: subscriptionId },
+      amount
+    );
+    if (reused) return reused;
+
+    const order = await this.createRazorpayOrder({
       amount: amount * 100,
       currency: 'INR',
-      receipt: `receipt_sub_${subscriptionId}_${userId}_${Date.now()}`,
-    };
-
-    const order = await razorpay.orders.create(options);
+      receipt: `rs_${subscriptionId.slice(-8)}_${userId.slice(-8)}_${Date.now().toString(36)}`,
+    });
 
     return withTransaction(async (session) => {
-      const [payment] = await Payment.create([{
-        user: userId,
-        type: 'subscription',
-        subscription: subscriptionId,
-        razorpayOrderId: order.id,
-        amount,
-        coupon: coupon?._id,
-        discountAmount,
-        status: 'pending',
-        commissionPercent: commission.commissionPercent,
-        commissionSplits: [],
-        totalCommissionAmount: commission.commissionAmount,
-        totalInstructorShare: 0,
-      }], { session });
+      const [payment] = await Payment.create(
+        [
+          {
+            user: userId,
+            type: 'subscription',
+            subscription: subscriptionId,
+            razorpayOrderId: order.id,
+            amount,
+            coupon: coupon?._id,
+            discountAmount,
+            status: 'pending',
+            commissionPercent: commission.commissionPercent,
+            commissionSplits: [],
+            totalCommissionAmount: commission.commissionAmount,
+            totalInstructorShare: 0,
+          },
+        ],
+        { session }
+      );
 
       if (coupon) {
         await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } }, { session });
@@ -587,7 +725,118 @@ export class PaymentService {
     });
   }
 
-  async verifySubscriptionPayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
+  async verifySubscriptionPayment(
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string
+  ) {
+    const expectedSignature = crypto
+      .createHmac('sha256', RAZORPAY_KEY_SECRET)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest('hex');
+
+    if (expectedSignature !== razorpaySignature) {
+      throw ApiError.badRequest('Invalid payment signature');
+    }
+
+    const payment = await Payment.findOne({ razorpayOrderId, user: userId });
+    if (!payment) throw ApiError.notFound('Payment not found');
+    if (payment.type !== 'subscription') throw ApiError.badRequest('Not a subscription payment');
+
+    let newlyClaimed: any = null;
+    const result = await withTransaction(async (session) => {
+      const claimed = await this.claimPayment(payment._id.toString(), razorpayPaymentId, razorpaySignature, session);
+      if (!claimed) return { success: true, paymentId: payment._id };
+      newlyClaimed = claimed;
+      await this.createPaymentSideEffects(claimed, session);
+      await this.creditWallet(claimed._id.toString(), session);
+      return { success: true, paymentId: claimed._id, subscriptionEnrollment: claimed.subscriptionEnrollment };
+    });
+    if (newlyClaimed) {
+      await this.invalidateAfterPurchase(newlyClaimed.user.toString(), []);
+    }
+    return result;
+  }
+
+  // ─── Instructor Plan Purchase ─────────────────────────────
+  async initiateInstructorSubscriptionPayment(
+    instructorId: string,
+    planId: string
+  ): Promise<{
+    orderId: string;
+    amount: number;
+    currency: string;
+    key: string;
+    paymentId: string;
+  }> {
+    const plan = await InstructorSubscriptionPlan.findById(planId);
+    if (!plan) throw ApiError.notFound('Instructor plan not found', 'PLAN_NOT_FOUND');
+    if (plan.status !== 'active') throw ApiError.badRequest('This plan is not active', 'PLAN_INACTIVE');
+    if (plan.type === 'free') throw ApiError.badRequest('Free plans do not require a payment');
+
+    const amount = (plan.discountPrice && plan.discountPrice > 0 ? plan.discountPrice : plan.price) || 0;
+    if (amount <= 0) throw ApiError.badRequest('Plan price must be greater than zero');
+
+    const razorpay = await this.getRazorpay();
+    const options = {
+      amount: amount * 100,
+      currency: 'INR',
+      receipt: `isub_${planId.slice(-8)}_${instructorId.slice(-8)}_${Date.now().toString(36)}`,
+    };
+
+    let order: any;
+    try {
+      order = await razorpay.orders.create(options);
+    } catch (rzErr: any) {
+      const rzDetails = rzErr?.error || rzErr?.response?.data || {};
+      logger.error('Razorpay order creation failed', {
+        planId,
+        instructorId,
+        amount,
+        statusCode: rzErr?.statusCode || rzErr?.status,
+        razorpayCode: rzDetails.code,
+        razorpayDescription: rzDetails.description,
+        razorpayStep: rzDetails.step,
+        razorpayReason: rzDetails.reason,
+        message: rzErr?.message || String(rzErr),
+      });
+      throw ApiError.internal(
+        `Payment gateway error: ${rzDetails.description || rzErr?.message || 'Order creation failed'}`
+      );
+    }
+
+    const [payment] = await Payment.create([
+      {
+        user: instructorId,
+        type: 'instructor_subscription',
+        instructorSubscription: plan._id,
+        razorpayOrderId: order.id,
+        amount,
+        status: 'pending',
+        commissionPercent: 0,
+        commissionSplits: [],
+        totalCommissionAmount: 0,
+        totalInstructorShare: 0,
+      },
+    ]);
+
+    return {
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      key: RAZORPAY_KEY_ID,
+      paymentId: payment._id.toString(),
+    };
+  }
+
+  async verifyInstructorSubscriptionPayment(
+    instructorId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string,
+    planId?: string
+  ) {
     const expectedSignature = crypto
       .createHmac('sha256', RAZORPAY_KEY_SECRET)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
@@ -598,28 +847,118 @@ export class PaymentService {
     }
 
     const payment = await Payment.findOne({ razorpayOrderId });
-    if (!payment) throw ApiError.notFound('Payment not found');
-    if (payment.type !== 'subscription') throw ApiError.badRequest('Not a subscription payment');
+    if (!payment) throw ApiError.notFound('Payment not found', 'PLAN_NOT_FOUND');
+    if (payment.type !== 'instructor_subscription') throw ApiError.badRequest('Not an instructor plan payment');
+    if (payment.user.toString() !== instructorId)
+      throw ApiError.forbidden('Payment does not belong to this instructor');
+    if (planId && payment.instructorSubscription?.toString() !== planId.toString()) {
+      throw ApiError.badRequest('Payment is for a different plan');
+    }
 
-    const session = await mongoose.startSession();
-    try {
-      session.startTransaction();
+    // Marker thrown inside withTransaction to force an abort when a concurrent
+    // verify/webhook won the single-ACTIVE race; caught below and surfaced as a
+    // success so the client verifies cleanly after an already-activated plan.
+    class LostActivationRaceError extends Error {}
+
+    let activated = false;
+    const result = await withTransaction(async (session) => {
       const claimed = await this.claimPayment(payment._id.toString(), razorpayPaymentId, razorpaySignature, session);
-      if (!claimed) {
-        await session.abortTransaction();
+      if (claimed) {
+        await this.creditWallet(claimed._id.toString(), session);
+      }
+
+      const existingSub = await InstructorSubscription.findOne(
+        { instructor: instructorId, status: { $in: ['ACTIVE', 'active'] } },
+        null,
+        { session }
+      );
+
+      // Resolve the target plan early for both the idempotency and upgrade checks.
+      const plan = planId
+        ? await InstructorSubscriptionPlan.findById(planId).session(session)
+        : await InstructorSubscriptionPlan.findById(payment.instructorSubscription).session(session);
+      if (!plan) throw ApiError.notFound('Instructor plan not found', 'PLAN_NOT_FOUND');
+
+      // Idempotent: if already subscribed to this exact plan, return success.
+      if (existingSub && String(existingSub.plan) === String(plan._id)) {
         return { success: true, paymentId: payment._id };
       }
-      await this.createPaymentSideEffects(claimed, session);
-      await this.creditWallet(claimed._id.toString(), session);
-      await session.commitTransaction();
-      await this.invalidateAfterPurchase(claimed.user.toString(), []);
-      return { success: true, paymentId: claimed._id, subscriptionEnrollment: claimed.subscriptionEnrollment };
-    } catch (error) {
-      await session.abortTransaction();
+
+      // Upgrade: cancel old subscription before activating the new one.
+      if (existingSub) {
+        existingSub.status = 'CANCELLED';
+        existingSub.cancelledAt = new Date();
+        existingSub.cancellationReason = 'Upgraded to new plan';
+        await existingSub.save({ session });
+        if (existingSub.plan) {
+          await InstructorSubscriptionPlan.findByIdAndUpdate(
+            existingSub.plan,
+            { $inc: { totalSubscribers: -1 } },
+            { session }
+          ).catch(() => undefined);
+        }
+      }
+
+      const startDate = new Date();
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + (plan.durationDays || 365));
+
+      try {
+        await InstructorSubscription.create(
+          [
+            {
+              instructor: instructorId,
+              plan: plan._id,
+              payment: payment._id,
+              planSnapshot: {
+                code: plan.code || undefined,
+                name: plan.name,
+                type: plan.type,
+                price: plan.price ?? 0,
+                durationDays: plan.durationDays || 365,
+              },
+              priceSnapshot: { amount: plan.price ?? 0, currency: 'INR', durationDays: plan.durationDays || 365 },
+              paymentReference: payment.razorpayOrderId,
+              razorpaySubscriptionId: payment.razorpayOrderId,
+              razorpayPaymentId,
+              startDate,
+              endDate,
+              status: 'ACTIVE',
+            },
+          ],
+          { session }
+        );
+        await InstructorSubscriptionPlan.findByIdAndUpdate(
+          plan._id,
+          { $inc: { totalSubscribers: 1 } },
+          { session }
+        ).catch(() => undefined);
+      } catch (createError: any) {
+        if (createError?.code === 11000) {
+          // Lost the single-ACTIVE race to a concurrent verify/webhook; that
+          // request already activated the subscription. Roll back this request's
+          // claim/credit and surface a success to the client.
+          throw new LostActivationRaceError();
+        }
+        throw createError;
+      }
+
+      activated = true;
+      return { success: true, paymentId: payment._id };
+    }).catch((error: any) => {
+      if (error instanceof LostActivationRaceError) {
+        logger.info('Instructor subscription activation lost activation race', {
+          paymentId: payment._id,
+          instructorId,
+        });
+        return { success: true, paymentId: payment._id };
+      }
       throw error;
-    } finally {
-      session.endSession();
+    });
+    if (activated) {
+      await this.invalidateAfterPurchase(instructorId, []);
     }
+    return result;
   }
 
   // ─── Notification Helper ─────────────────────────────────
@@ -635,11 +974,8 @@ export class PaymentService {
   }
 
   // ─── Razorpay Webhook Handler (Fully Idempotent) ────────
-  async handleWebhook(event: string, payload: any, signature: string) {
-    const expectedSignature = crypto
-      .createHmac('sha256', RAZORPAY_KEY_SECRET)
-      .update(JSON.stringify(payload))
-      .digest('hex');
+  async handleWebhook(event: string, payload: any, signature: string, rawBody: string) {
+    const expectedSignature = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET).update(rawBody).digest('hex');
 
     if (expectedSignature !== signature) {
       logger.warn('Webhook rejected: invalid signature', { event });
@@ -650,7 +986,7 @@ export class PaymentService {
     const entity = payload.payload?.payment?.entity || payload.payload?.order?.entity || {};
     const rzpPaymentId = entity.id || '';
     const orderId = entity.order_id || '';
-    const payloadHash = crypto.createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+    const payloadHash = crypto.createHash('sha256').update(rawBody).digest('hex');
 
     if (!eventId) {
       logger.warn('Webhook received without event_id', { event });
@@ -662,7 +998,10 @@ export class PaymentService {
     const recordEvent = async (session: mongoose.ClientSession, status: string = 'processed') => {
       const existing = await WebhookEvent.findOne({ eventId }).session(session);
       if (existing) return false;
-      await WebhookEvent.create([{ eventId, eventType: event, paymentId: rzpPaymentId, orderId, payloadHash, status: status as any }], { session });
+      await WebhookEvent.create(
+        [{ eventId, eventType: event, paymentId: rzpPaymentId, orderId, payloadHash, status: status as any }],
+        { session }
+      );
       return true;
     };
 
@@ -671,71 +1010,65 @@ export class PaymentService {
         logger.warn('Webhook missing order_id for payment.captured', { eventId });
         return { received: true };
       }
-      const session = await mongoose.startSession();
+      let processedPaymentId: string | null = null;
       try {
-        session.startTransaction();
-        if (!(await recordEvent(session))) {
-          await session.abortTransaction();
-          logger.info('Duplicate payment.captured webhook', { eventId });
-          return { received: true, duplicate: true };
+        const result = await withTransaction(async (session) => {
+          if (!(await recordEvent(session))) {
+            logger.info('Duplicate payment.captured webhook', { eventId });
+            return { received: true, duplicate: true };
+          }
+          const payment = await Payment.findOne({ razorpayOrderId: orderId }).session(session);
+          if (!payment) {
+            logger.warn('payment.captured: payment not found', { orderId, eventId });
+            return { received: true };
+          }
+          const claimed = await this.claimPayment(payment._id.toString(), rzpPaymentId, undefined, session);
+          if (!claimed) {
+            logger.info('payment.captured: payment already claimed', { orderId, eventId });
+            return { received: true };
+          }
+          claimed.paymentCapturedAt = new Date();
+          await claimed.save({ session });
+          await this.createPaymentSideEffects(claimed, session);
+          await this.creditWallet(claimed._id.toString(), session);
+          processedPaymentId = claimed._id.toString();
+          return { received: true, processed: true };
+        });
+        if (processedPaymentId) {
+          logger.info('Payment processed via payment.captured', { orderId, paymentId: processedPaymentId, eventId });
         }
-        const payment = await Payment.findOne({ razorpayOrderId: orderId }).session(session);
-        if (!payment) {
-          logger.warn('payment.captured: payment not found', { orderId, eventId });
-          await session.abortTransaction();
-          return { received: true };
-        }
-        const claimed = await this.claimPayment(payment._id.toString(), rzpPaymentId, undefined, session);
-        if (!claimed) {
-          logger.info('payment.captured: payment already claimed', { orderId, eventId });
-          await session.commitTransaction();
-          return { received: true };
-        }
-        claimed.paymentCapturedAt = new Date();
-        await claimed.save({ session });
-        await this.createPaymentSideEffects(claimed, session);
-        await this.creditWallet(claimed._id.toString(), session);
-        await session.commitTransaction();
-        logger.info('Payment processed via payment.captured', { orderId, paymentId: claimed._id, eventId });
-        return { received: true, processed: true };
+        return result;
       } catch (error: any) {
-        await session.abortTransaction();
         if (error?.code === 11000) {
           logger.info('Duplicate payment.captured (concurrent)', { eventId });
           return { received: true, duplicate: true };
         }
         logger.error('payment.captured failed', { eventId, error: error.message });
         throw error;
-      } finally {
-        session.endSession();
       }
     }
 
     if (event === 'payment.authorized') {
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-        if (!(await recordEvent(session))) {
-          await session.abortTransaction();
-          return { received: true, duplicate: true };
-        }
-        if (orderId) {
-          await Payment.findOneAndUpdate(
-            { razorpayOrderId: orderId },
-            { $set: { status: 'pending', pendingReason: 'Payment authorized by gateway' } },
-            { session }
-          );
-        }
-        await session.commitTransaction();
+        const result = await withTransaction(async (session) => {
+          if (!(await recordEvent(session))) {
+            return { received: true, duplicate: true };
+          }
+          if (orderId) {
+            await Payment.findOneAndUpdate(
+              { razorpayOrderId: orderId },
+              { $set: { status: 'pending', pendingReason: 'Payment authorized by gateway' } },
+              { session }
+            );
+          }
+          return { received: true, processed: true };
+        });
         logger.info('payment.authorized processed', { orderId, eventId });
-        return { received: true, processed: true };
+        return result;
       } catch (error: any) {
-        await session.abortTransaction();
         if (error?.code === 11000) return { received: true, duplicate: true };
         logger.error('payment.authorized failed', { eventId, error: error.message });
         throw error;
-      } finally {
-        session.endSession();
       }
     }
 
@@ -744,58 +1077,58 @@ export class PaymentService {
         logger.warn('payment.pending: missing order_id', { eventId });
         return { received: true };
       }
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-        if (!(await recordEvent(session, 'pending'))) {
-          await session.abortTransaction();
-          return { received: true, duplicate: true };
-        }
-        const payment = await Payment.findOne({ razorpayOrderId: orderId }).session(session);
-        if (!payment) {
-          logger.warn('payment.pending: payment not found', { orderId, eventId });
-          await session.abortTransaction();
-          return { received: true };
-        }
-        const pendingReason = entity.status_reason || entity.description || 'Payment is pending processing';
-        const update: Record<string, any> = { status: 'pending', pendingReason };
-        await Payment.findByIdAndUpdate(payment._id, { $set: update }, { session });
+        const result = await withTransaction(async (session) => {
+          if (!(await recordEvent(session, 'pending'))) {
+            return { received: true, duplicate: true };
+          }
+          const payment = await Payment.findOne({ razorpayOrderId: orderId }).session(session);
+          if (!payment) {
+            logger.warn('payment.pending: payment not found', { orderId, eventId });
+            return { received: true };
+          }
+          const pendingReason = entity.status_reason || entity.description || 'Payment is pending processing';
+          const update: Record<string, any> = { status: 'pending', pendingReason };
+          await Payment.findByIdAndUpdate(payment._id, { $set: update }, { session });
 
-        const user = await User.findById(payment.user).select('email name').session(session).lean();
+          const _user = await User.findById(payment.user).select('email name').session(session).lean();
 
-        await this.sendPaymentNotification(
-          [payment.user.toString()],
-          'Payment Pending',
-          'Your payment is currently pending. We will update you automatically once it is confirmed.',
-          'payment'
-        );
+          await this.sendPaymentNotification(
+            [payment.user.toString()],
+            'Payment Pending',
+            'Your payment is currently pending. We will update you automatically once it is confirmed.',
+            'payment'
+          );
 
-        const adminUsers = await User.find({ role: ROLES.ADMIN }).select('_id').session(session).lean();
-        await this.sendPaymentNotification(
-          adminUsers.map((a: any) => a._id.toString()),
-          'Payment Pending - Action Required',
-          `Payment of ₹${(payment.amount / 100).toFixed(2)} for order ${orderId} is pending. Reason: ${pendingReason}`,
-          'payment'
-        );
+          const adminUsers = await User.find({ role: ROLES.ADMIN }).select('_id').session(session).lean();
+          await this.sendPaymentNotification(
+            adminUsers.map((a: any) => a._id.toString()),
+            'Payment Pending - Action Required',
+            `Payment of ₹${payment.amount.toFixed(2)} for order ${orderId} is pending. Reason: ${pendingReason}`,
+            'payment'
+          );
 
-        await AuditLog.create([{
-          user: payment.user,
-          action: 'payment_pending',
-          resource: 'Payment',
-          resourceId: payment._id.toString(),
-          details: { orderId, pendingReason, eventId },
-        }], { session });
+          await AuditLog.create(
+            [
+              {
+                user: payment.user,
+                action: 'payment_pending',
+                resource: 'Payment',
+                resourceId: payment._id.toString(),
+                details: { orderId, pendingReason, eventId },
+              },
+            ],
+            { session }
+          );
 
-        await session.commitTransaction();
-        logger.info('payment.pending processed', { orderId, paymentId: payment._id, eventId, pendingReason });
-        return { received: true, processed: true };
+          return { received: true, processed: true };
+        });
+        logger.info('payment.pending processed', { orderId, eventId });
+        return result;
       } catch (error: any) {
-        await session.abortTransaction();
         if (error?.code === 11000) return { received: true, duplicate: true };
         logger.error('payment.pending failed', { eventId, error: error.message });
         throw error;
-      } finally {
-        session.endSession();
       }
     }
 
@@ -804,156 +1137,153 @@ export class PaymentService {
         logger.warn('payment.failed: missing order_id and payment_id', { eventId });
         return { received: true };
       }
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-        if (!(await recordEvent(session, 'failed'))) {
-          await session.abortTransaction();
-          return { received: true, duplicate: true };
-        }
-        const query = orderId ? { razorpayOrderId: orderId } : { razorpayPaymentId: rzpPaymentId };
-        const payment = await Payment.findOne(query).session(session);
-        if (!payment) {
-          logger.warn('payment.failed: payment not found', { orderId, rzpPaymentId, eventId });
-          await session.abortTransaction();
-          return { received: true };
-        }
-        const acqData = entity.acquirer_data || {};
-        const cardData = entity.card || {};
-        const failureDetails: Record<string, any> = {
-          failureCode: entity.failure_code || entity.error_code || '',
-          failureReason: entity.failure_reason || entity.error_reason || '',
-          failureDescription: entity.error_description || entity.failure_description || '',
-          paymentMethod: entity.method || '',
-          bank: entity.bank || '',
-          wallet: entity.wallet || '',
-          upiProvider: entity.vpa || acqData.vpa || '',
-          cardLast4: cardData.last4 || '',
-          cardNetwork: cardData.network || '',
-          cardIssuer: cardData.issuer || '',
-          failedAt: new Date(),
-        };
-        await Payment.findByIdAndUpdate(payment._id, {
-          $set: {
-            status: 'failed',
-            razorpayPaymentId: rzpPaymentId || payment.razorpayPaymentId,
-            failureDetails,
-          },
-        }, { session });
-
-        const student = await User.findById(payment.user).select('name email').session(session).lean();
-        await this.sendPaymentNotification(
-          [payment.user.toString()],
-          'Payment Failed',
-          'Your payment could not be completed. Please retry or use another payment method.',
-          'payment',
-          '/student/payments'
-        );
-
-        if (payment.type === 'course' && payment.course) {
-          const course = await Course.findById(payment.course).populate('instructor', '_id name').session(session).lean();
-          if (course && (course.instructor as any)?._id) {
-            await this.sendPaymentNotification(
-              [(course.instructor as any)._id.toString()],
-              'Payment Failed - Course Purchase',
-              `Payment failed for course "${course.title}" by student ${(student as any)?.name || 'Unknown'}.`,
-              'payment'
-            );
+        const result = await withTransaction(async (session) => {
+          if (!(await recordEvent(session, 'failed'))) {
+            return { received: true, duplicate: true };
           }
-        } else if (payment.type === 'bundle' && payment.bundle) {
-          const bundle = await Bundle.findById(payment.bundle).session(session).lean();
-          if (bundle) {
-            const courses = await Course.find({ _id: { $in: bundle.courses as any } })
-              .populate('instructor', '_id name').session(session).lean();
-            const instructorIds = new Set(courses.map((c: any) => c.instructor?._id?.toString()).filter(Boolean));
-            await this.sendPaymentNotification(
-              [...instructorIds],
-              'Payment Failed - Bundle Purchase',
-              `Payment failed for bundle "${bundle.title}" by student ${(student as any)?.name || 'Unknown'}.`,
-              'payment'
-            );
+          const query = orderId ? { razorpayOrderId: orderId } : { razorpayPaymentId: rzpPaymentId };
+          const payment = await Payment.findOne(query).session(session);
+          if (!payment) {
+            logger.warn('payment.failed: payment not found', { orderId, rzpPaymentId, eventId });
+            return { received: true };
           }
-        }
+          const acqData = entity.acquirer_data || {};
+          const cardData = entity.card || {};
+          const failureDetails: Record<string, any> = {
+            failureCode: entity.failure_code || entity.error_code || '',
+            failureReason: entity.failure_reason || entity.error_reason || '',
+            failureDescription: entity.error_description || entity.failure_description || '',
+            paymentMethod: entity.method || '',
+            bank: entity.bank || '',
+            wallet: entity.wallet || '',
+            upiProvider: entity.vpa || acqData.vpa || '',
+            cardLast4: cardData.last4 || '',
+            cardNetwork: cardData.network || '',
+            cardIssuer: cardData.issuer || '',
+            failedAt: new Date(),
+          };
+          await Payment.findByIdAndUpdate(
+            payment._id,
+            {
+              $set: {
+                status: 'failed',
+                razorpayPaymentId: rzpPaymentId || payment.razorpayPaymentId,
+                failureDetails,
+              },
+            },
+            { session }
+          );
 
-        const adminUsers = await User.find({ role: ROLES.ADMIN }).select('_id').session(session).lean();
-        await this.sendPaymentNotification(
-          adminUsers.map((a: any) => a._id.toString()),
-          'Payment Failed - Alert',
-          `A payment of ₹${(payment.amount / 100).toFixed(2)} has failed. Order: ${orderId}. Reason: ${failureDetails.failureReason || 'Unknown'}`,
-          'payment'
-        );
+          const student = await User.findById(payment.user).select('name email').session(session).lean();
+          await this.sendPaymentNotification(
+            [payment.user.toString()],
+            'Payment Failed',
+            'Your payment could not be completed. Please retry or use another payment method.',
+            'payment',
+            '/student/payments'
+          );
 
-        await AuditLog.create([{
-          user: payment.user,
-          action: 'payment_failed',
-          resource: 'Payment',
-          resourceId: payment._id.toString(),
-          details: { orderId, eventId, failureDetails },
-        }], { session });
+          if (payment.type === 'course' && payment.course) {
+            const course = await Course.findById(payment.course)
+              .populate('instructor', '_id name')
+              .session(session)
+              .lean();
+            if (course && (course.instructor as any)?._id) {
+              await this.sendPaymentNotification(
+                [(course.instructor as any)._id.toString()],
+                'Payment Failed - Course Purchase',
+                `Payment failed for course "${course.title}" by student ${(student as any)?.name || 'Unknown'}.`,
+                'payment'
+              );
+            }
+          } else if (payment.type === 'bundle' && payment.bundle) {
+            const bundle = await Bundle.findById(payment.bundle).session(session).lean();
+            if (bundle) {
+              const courses = await Course.find({ _id: { $in: bundle.courses as any } })
+                .populate('instructor', '_id name')
+                .session(session)
+                .lean();
+              const instructorIds = new Set(courses.map((c: any) => c.instructor?._id?.toString()).filter(Boolean));
+              await this.sendPaymentNotification(
+                [...instructorIds],
+                'Payment Failed - Bundle Purchase',
+                `Payment failed for bundle "${bundle.title}" by student ${(student as any)?.name || 'Unknown'}.`,
+                'payment'
+              );
+            }
+          }
 
-        await session.commitTransaction();
-        logger.info('payment.failed processed', {
-          orderId, paymentId: payment._id, eventId,
-          failureCode: failureDetails.failureCode,
-          failureReason: failureDetails.failureReason,
+          const adminUsers = await User.find({ role: ROLES.ADMIN }).select('_id').session(session).lean();
+          await this.sendPaymentNotification(
+            adminUsers.map((a: any) => a._id.toString()),
+            'Payment Failed - Alert',
+            `A payment of ₹${payment.amount.toFixed(2)} has failed. Order: ${orderId}. Reason: ${failureDetails.failureReason || 'Unknown'}`,
+            'payment'
+          );
+
+          await AuditLog.create(
+            [
+              {
+                user: payment.user,
+                action: 'payment_failed',
+                resource: 'Payment',
+                resourceId: payment._id.toString(),
+                details: { orderId, eventId, failureDetails },
+              },
+            ],
+            { session }
+          );
+
+          return { received: true, processed: true };
         });
-        return { received: true, processed: true };
+        logger.info('payment.failed processed', { orderId, eventId });
+        return result;
       } catch (error: any) {
-        await session.abortTransaction();
         if (error?.code === 11000) return { received: true, duplicate: true };
         logger.error('payment.failed failed', { eventId, error: error.message });
         throw error;
-      } finally {
-        session.endSession();
       }
     }
 
     if (event === 'order.paid' || event === 'subscription.charged') {
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-        if (!(await recordEvent(session))) {
-          await session.abortTransaction();
-          return { received: true, duplicate: true };
-        }
-        await session.commitTransaction();
+        const result = await withTransaction(async (session) => {
+          if (!(await recordEvent(session))) {
+            return { received: true, duplicate: true };
+          }
+          return { received: true };
+        });
         logger.info('Non-critical webhook recorded', { eventId, event });
-        return { received: true };
+        return result;
       } catch (error: any) {
-        await session.abortTransaction();
         if (error?.code === 11000) return { received: true, duplicate: true };
         logger.error('Webhook recording failed', { eventId, event, error: error.message });
         throw error;
-      } finally {
-        session.endSession();
       }
     }
 
     if (event === 'payment.refunded') {
-      const session = await mongoose.startSession();
       try {
-        session.startTransaction();
-        if (!(await recordEvent(session))) {
-          await session.abortTransaction();
-          return { received: true, duplicate: true };
-        }
-        if (orderId) {
-          await Payment.findOneAndUpdate(
-            { razorpayOrderId: orderId, status: 'success' },
-            { $set: { status: 'refunded' } },
-            { session }
-          );
-        }
-        await session.commitTransaction();
+        const result = await withTransaction(async (session) => {
+          if (!(await recordEvent(session))) {
+            return { received: true, duplicate: true };
+          }
+          if (orderId) {
+            await Payment.findOneAndUpdate(
+              { razorpayOrderId: orderId, status: 'success' },
+              { $set: { status: 'refunded' } },
+              { session }
+            );
+          }
+          return { received: true, processed: true };
+        });
         logger.info('Refund webhook processed', { orderId, eventId });
-        return { received: true, processed: true };
+        return result;
       } catch (error: any) {
-        await session.abortTransaction();
         if (error?.code === 11000) return { received: true, duplicate: true };
         logger.error('Refund webhook failed', { eventId, error: error.message });
         throw error;
-      } finally {
-        session.endSession();
       }
     }
 
@@ -967,14 +1297,11 @@ export class PaymentService {
     if (!payment) throw ApiError.notFound('Payment not found');
     if (payment.status !== 'failed') throw ApiError.badRequest('Only failed payments can be retried');
 
-    const razorpay = await this.getRazorpay();
-
-    const options = {
+    const newOrder = await this.createRazorpayOrder({
       amount: payment.amount * 100,
       currency: payment.currency || 'INR',
-      receipt: `retry_${payment._id}_${Date.now()}`,
-    };
-    const newOrder = await razorpay.orders.create(options);
+      receipt: `rty_${String(payment._id).slice(-8)}_${Date.now().toString(36)}`,
+    });
 
     payment.razorpayOrderId = newOrder.id;
     payment.status = 'pending';
@@ -1010,14 +1337,17 @@ export class PaymentService {
           $group: {
             _id: null,
             totalPaid: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, '$amount', 0] } },
-            totalPending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, '$amount', 0] } },
+            totalPending: {
+              $sum: { $cond: [{ $in: ['$status', ['pending', 'approved', 'processing']] }, '$amount', 0] },
+            },
+            totalApproved: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, '$amount', 0] } },
             totalOverall: { $sum: '$amount' },
           },
         },
       ]),
     ]);
 
-    const summary = totals[0] || { totalPaid: 0, totalPending: 0, totalOverall: 0 };
+    const summary = totals[0] || { totalPaid: 0, totalPending: 0, totalApproved: 0, totalOverall: 0 };
 
     return {
       payouts,
@@ -1043,12 +1373,13 @@ export class PaymentService {
         .lean(),
       Payout.countDocuments(filter),
       Payout.aggregate([
-        { $match: status ? { status } as any : {} },
+        { $match: status ? ({ status } as any) : {} },
         {
           $group: {
             _id: null,
             totalPaid: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, '$amount', 0] } },
             totalPending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, '$amount', 0] } },
+            totalApproved: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, '$amount', 0] } },
             totalProcessing: { $sum: { $cond: [{ $eq: ['$status', 'processing'] }, '$amount', 0] } },
             totalFailed: { $sum: { $cond: [{ $eq: ['$status', 'failed'] }, '$amount', 0] } },
             count: { $sum: 1 },
@@ -1057,35 +1388,65 @@ export class PaymentService {
       ]),
     ]);
 
-    const summary = totals[0] || { totalPaid: 0, totalPending: 0, totalProcessing: 0, totalFailed: 0, count: 0 };
+    const summary = totals[0] || {
+      totalPaid: 0,
+      totalPending: 0,
+      totalApproved: 0,
+      totalProcessing: 0,
+      totalFailed: 0,
+      count: 0,
+    };
 
     return { payouts, summary, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
+  async approvePayout(payoutId: string, _adminId: string) {
+    const payout = await Payout.findById(payoutId);
+    if (!payout) throw ApiError.notFound('Payout not found');
+    if (payout.status !== 'pending') throw ApiError.badRequest('Only pending payouts can be approved');
+    payout.status = 'approved';
+    await payout.save();
+    return payout;
+  }
+
   async processPayout(payoutId: string) {
+    if (!(await isFeatureEnabled('instructor_payouts'))) {
+      throw ApiError.badRequest('Instructor payouts are currently disabled', 'PAYOUTS_DISABLED');
+    }
     const payout = await Payout.findById(payoutId).populate('instructor');
     if (!payout) throw ApiError.notFound('Payout not found');
-    if (payout.status !== 'pending') throw ApiError.badRequest('Payout is not in pending status');
+    if (payout.status !== 'approved') throw ApiError.badRequest('Payout is not approved for processing');
 
     payout.status = 'processing';
     await payout.save();
 
     try {
       const instructor = payout.instructor as any;
+      // Prefer new structured path (instructorProfile.bankDetails), then legacy
+      // flat fields directly on User (bankAccountNumber/ifscCode), then defaults.
+      const bankDetails = instructor?.instructorProfile?.bankDetails || {};
+      const accountHolderName = bankDetails.accountHolderName || instructor?.name || '';
+      // Legacy fields were stored directly on User (bankAccountNumber/ifscCode);
+      // support them for backward compatibility with existing data and tests.
+      const accountNumber = bankDetails.accountNumber || instructor?.bankAccountNumber || '00000000000';
+      const ifsc = bankDetails.ifscCode || instructor?.ifscCode || 'SBIN0000000';
+
       const razorpay = await this.getRazorpay();
 
       const rzpPayout = await razorpay.payouts.create({
-        account_number: RAZORPAY_KEY_ID,
+        // Account number of the Razorpay payout account that holds the platform's
+        // payout balance. Falls back to the key id so sandbox setups still work.
+        account_number: RAZORPAY_PAYOUT_ACCOUNT_NUMBER || RAZORPAY_KEY_ID,
         fund_account: {
           account_type: 'bank_account',
           bank_account: {
-            name: instructor.name,
-            account_number: instructor.bankAccountNumber || '00000000000',
-            ifsc: instructor.ifscCode || 'SBIN0000000',
+            name: accountHolderName,
+            account_number: accountNumber,
+            ifsc,
           },
           contact: {
-            name: instructor.name,
-            email: instructor.email,
+            name: accountHolderName,
+            email: instructor?.email,
           },
         },
         amount: payout.amount * 100,
@@ -1141,10 +1502,23 @@ export class PaymentService {
   }
 
   async processAllPendingPayouts() {
-    const pendingPayouts = await Payout.find({ status: 'pending' });
+    if (!(await isFeatureEnabled('instructor_payouts'))) {
+      return { success: 0, failed: 0, errors: ['instructor_payouts feature is disabled'] as string[], skipped: true };
+    }
+
+    // Recover payouts stuck in 'processing' (e.g. process crash after marking
+    // processing but before the gateway call completed) by reverting them to
+    // 'approved' so the next run can attempt them again.
+    const staleThreshold = new Date(Date.now() - 30 * 60 * 1000);
+    await Payout.updateMany(
+      { status: 'processing', updatedAt: { $lt: staleThreshold } },
+      { $set: { status: 'approved' }, $unset: { notes: '' } }
+    );
+
+    const approvedPayouts = await Payout.find({ status: 'approved' });
     const results = { success: 0, failed: 0, errors: [] as string[] };
 
-    for (const payout of pendingPayouts) {
+    for (const payout of approvedPayouts) {
       try {
         await this.processPayout(payout._id.toString());
         results.success++;
@@ -1189,7 +1563,7 @@ export class PaymentService {
       Payment.countDocuments({ status: 'success' }),
     ]);
 
-    return { payments, total, page, limit, totalPages: Math.ceil(total / limit) };
+    return { transactions: payments, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 
   // ─── Refund Processing (Synchronous, Razorpay-first, Transactional) ─
@@ -1201,9 +1575,12 @@ export class PaymentService {
     adminId: string,
     adminNote?: string
   ) {
-    const payment = await Payment.findById(paymentId).populate('course', 'title instructor').populate('bundle', 'title courses');
+    const payment = await Payment.findById(paymentId)
+      .populate('course', 'title instructor')
+      .populate('bundle', 'title courses');
     if (!payment) throw ApiError.notFound('Payment not found');
-    if (payment.status !== 'success' && payment.status !== 'refunded') throw ApiError.badRequest('Only successful payments can be refunded');
+    if (payment.status !== 'success' && payment.status !== 'refunded')
+      throw ApiError.badRequest('Only successful payments can be refunded');
     if ((payment.status as string) === 'refunded') throw ApiError.badRequest('Payment has already been refunded');
     if (!payment.razorpayPaymentId) throw ApiError.badRequest('Payment has no Razorpay payment ID');
 
@@ -1211,21 +1588,34 @@ export class PaymentService {
       throw ApiError.badRequest(`Refund amount must be between 1 and ${payment.amount}`);
     }
 
-    const existingRefund = await Refund.findOne({ payment: paymentId, status: { $in: ['pending', 'approved', 'processed'] } });
+    const existingRefund = await Refund.findOne({
+      payment: paymentId,
+      status: { $in: ['pending', 'approved', 'processed'] },
+    });
     if (existingRefund) throw ApiError.badRequest('A refund is already being processed for this payment');
 
-    const refundDoc = await Refund.create({
-      payment: paymentId,
-      user: payment.user,
-      course: payment.course?._id,
-      bundle: payment.bundle?._id,
-      amount: refundAmount,
-      reason,
-      refundType,
-      status: 'pending',
-      processedBy: adminId,
-      adminNote,
-    });
+    let refundDoc;
+    try {
+      refundDoc = await Refund.create({
+        payment: paymentId,
+        user: payment.user,
+        course: payment.course?._id,
+        bundle: payment.bundle?._id,
+        amount: refundAmount,
+        reason,
+        refundType,
+        status: 'pending',
+        processedBy: adminId,
+        adminNote,
+      });
+    } catch (error: any) {
+      // Unique partial index (payment + active status) guards against concurrent
+      // duplicate refunds; the pre-check above is the primary defence.
+      if (error?.code === 11000) {
+        throw ApiError.badRequest('A refund is already being processed for this payment');
+      }
+      throw error;
+    }
 
     let razorpayResponse: any;
     try {
@@ -1246,23 +1636,29 @@ export class PaymentService {
     const isFullRefund = refundType === 'full' || refundAmount >= payment.amount;
 
     await withTransaction(async (session) => {
-      await Refund.findByIdAndUpdate(refundDoc._id, {
-        status: 'processed',
-        processedAt: new Date(),
-        razorpayRefundId: razorpayResponse.id,
-        razorpayRefundStatus: razorpayResponse.status,
-        razorpayRefundSpeed: razorpayResponse.speed || razorpayResponse.speed_processed,
-        gatewayResponse: {
-          id: razorpayResponse.id,
-          status: razorpayResponse.status,
-          amount: razorpayResponse.amount,
-          speed: razorpayResponse.speed_processed || razorpayResponse.speed,
-          created_at: razorpayResponse.created_at,
+      await Refund.findByIdAndUpdate(
+        refundDoc._id,
+        {
+          status: 'processed',
+          processedAt: new Date(),
+          razorpayRefundId: razorpayResponse.id,
+          razorpayRefundStatus: razorpayResponse.status,
+          razorpayRefundSpeed: razorpayResponse.speed || razorpayResponse.speed_processed,
+          gatewayResponse: {
+            id: razorpayResponse.id,
+            status: razorpayResponse.status,
+            amount: razorpayResponse.amount,
+            speed: razorpayResponse.speed_processed || razorpayResponse.speed,
+            created_at: razorpayResponse.created_at,
+          },
         },
-      }, { session });
+        { session }
+      );
 
       const paymentUpdate: Record<string, any> = { refundedAt: new Date() };
       if (isFullRefund) paymentUpdate.status = 'refunded';
+      // Clear walletCredited so rollback doesn't happen again (idempotency)
+      if (payment.walletCredited) paymentUpdate.walletCredited = false;
       await Payment.findByIdAndUpdate(paymentId, { $set: paymentUpdate }, { session });
 
       if (payment.course) {
@@ -1273,11 +1669,7 @@ export class PaymentService {
         const courseIds = bundleDoc.courses || [];
         await Enrollment.deleteMany({ user: payment.user, course: { $in: courseIds } }, { session });
         await Bundle.findByIdAndUpdate(bundleDoc._id, { $inc: { totalEnrollments: -1 } }, { session });
-        await Course.updateMany(
-          { _id: { $in: courseIds } },
-          { $inc: { totalEnrollments: -1 } },
-          { session }
-        );
+        await Course.updateMany({ _id: { $in: courseIds } }, { $inc: { totalEnrollments: -1 } }, { session });
       } else if (payment.subscription) {
         await SubscriptionEnrollment.deleteOne({ user: payment.user, subscription: payment.subscription }, { session });
         await Subscription.findByIdAndUpdate(payment.subscription, { $inc: { totalSubscribers: -1 } }, { session });
@@ -1291,24 +1683,32 @@ export class PaymentService {
           const commissionReversal = Math.round((payment.totalCommissionAmount || 0) * commissionRatio);
           const instructorReversal = Math.round((payment.totalInstructorShare || 0) * commissionRatio);
 
-          await PlatformWallet.findByIdAndUpdate(wallet._id, {
-            $inc: {
-              currentBalance: -reversalAmount,
-              totalRevenue: -reversalAmount,
-              totalCommissionCollected: -commissionReversal,
+          await PlatformWallet.findByIdAndUpdate(
+            wallet._id,
+            {
+              $inc: {
+                currentBalance: -reversalAmount,
+                totalRevenue: -reversalAmount,
+                totalCommissionCollected: -commissionReversal,
+              },
+              $set: { lastUpdated: new Date() },
             },
-            $set: { lastUpdated: new Date() },
-          }, { session });
+            { session }
+          );
 
           if (instructorReversal > 0) {
             await Payout.updateMany(
-              { sourcePayment: paymentId, status: 'pending' },
+              { sourcePayment: paymentId, status: { $in: ['pending', 'approved'] } },
               { status: 'cancelled' },
               { session }
             );
-            await PlatformWallet.findByIdAndUpdate(wallet._id, {
-              $inc: { pendingPayouts: -instructorReversal },
-            }, { session });
+            await PlatformWallet.findByIdAndUpdate(
+              wallet._id,
+              {
+                $inc: { pendingPayouts: -instructorReversal },
+              },
+              { session }
+            );
           }
         }
       }
@@ -1334,9 +1734,9 @@ export class PaymentService {
           );
         }
       } else if (payment.bundle) {
-        const instructorIds = [...new Set(
-          (payment.commissionSplits || []).map((s: any) => s.instructor?.toString()).filter(Boolean)
-        )] as string[];
+        const instructorIds = [
+          ...new Set((payment.commissionSplits || []).map((s: any) => s.instructor?.toString()).filter(Boolean)),
+        ] as string[];
         if (instructorIds.length > 0) {
           await this.sendPaymentNotification(
             instructorIds,
@@ -1358,21 +1758,26 @@ export class PaymentService {
         );
       }
 
-      await AuditLog.create([{
-        user: adminId as any,
-        action: 'refund_processed',
-        resource: 'Payment',
-        resourceId: paymentId,
-        details: {
-          refundId: refundDoc._id,
-          refundAmount,
-          refundType,
-          reason,
-          paymentAmount: payment.amount,
-          razorpayRefundId: razorpayResponse.id,
-          isFullRefund,
-        },
-      }], { session });
+      await AuditLog.create(
+        [
+          {
+            user: adminId as any,
+            action: 'refund_processed',
+            resource: 'Payment',
+            resourceId: paymentId,
+            details: {
+              refundId: refundDoc._id,
+              refundAmount,
+              refundType,
+              reason,
+              paymentAmount: payment.amount,
+              razorpayRefundId: razorpayResponse.id,
+              isFullRefund,
+            },
+          },
+        ],
+        { session }
+      );
     });
 
     logger.info('Refund processed successfully', {

@@ -61,7 +61,15 @@ function courseData() {
             isFree: false,
             order: 1,
             duration: 0,
-            videoSource: { source: 'youtube', videoId: 'dQw4w9WgXcQ', url: '', thumbnailUrl: '', playbackRate: 1, provider: '', qualities: [] },
+            videoSource: {
+              source: 'youtube',
+              videoId: 'dQw4w9WgXcQ',
+              url: '',
+              thumbnailUrl: '',
+              playbackRate: 1,
+              provider: '',
+              qualities: [],
+            },
             videoUrl: { url: '', publicId: '' },
           },
         ],
@@ -104,7 +112,9 @@ describe('CoursePlayerPage', () => {
 
     const iframe = document.querySelector('iframe');
     expect(iframe).not.toBeNull();
-    expect(iframe!.getAttribute('src')).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1');
+    expect(iframe!.getAttribute('src')).toBe(
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1'
+    );
     expect(iframe!.getAttribute('allowFullScreen')).not.toBeNull();
     expect(iframe!.getAttribute('allow')).toContain('autoplay');
   });
@@ -118,12 +128,22 @@ describe('CoursePlayerPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /YouTube Lecture/i }));
 
     const iframe = document.querySelector('iframe');
-    expect(iframe!.getAttribute('src')).toBe('https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1');
+    expect(iframe!.getAttribute('src')).toBe(
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1'
+    );
   });
 
   it('renders a native video element for direct videoUrl lectures', () => {
     const data = courseData();
-    data.curriculum[0].lectures[0].videoSource = { source: 'direct', videoId: 'v1', url: 'https://cdn.example.com/video.mp4', thumbnailUrl: '', playbackRate: 1, provider: '', qualities: [] };
+    data.curriculum[0].lectures[0].videoSource = {
+      source: 'direct',
+      videoId: 'v1',
+      url: 'https://cdn.example.com/video.mp4',
+      thumbnailUrl: '',
+      playbackRate: 1,
+      provider: '',
+      qualities: [],
+    };
     data.curriculum[0].lectures[0].videoUrl = { url: 'https://cdn.example.com/video.mp4', publicId: 'v1' };
     useQueryMock.mockReturnValue({ data, isLoading: false, error: null });
 
@@ -187,7 +207,12 @@ describe('CoursePlayerPage', () => {
           shuffleOptions: false,
           scoringPolicy: 'best',
           questions: [
-            { question: 'What does JSX stand for?', options: ['JavaScript XML', 'Java Syntax'], marks: 1, type: 'single' },
+            {
+              question: 'What does JSX stand for?',
+              options: ['JavaScript XML', 'Java Syntax'],
+              marks: 1,
+              type: 'single',
+            },
             { question: 'True or false: Hooks are functions.', options: ['True', 'False'], marks: 1, type: 'boolean' },
           ],
         },

@@ -67,7 +67,7 @@ export class CacheService {
 
   // ─── Serialization ────────────────────────────────────────────
   private serialize(value: unknown, options: CacheSetOptions): string {
-    let json = JSON.stringify(value);
+    const json = JSON.stringify(value);
     const shouldCompress =
       (options.compress === undefined ? env.redisCompressionEnabled : options.compress) &&
       json.length >= env.redisCompressionThresholdBytes;
@@ -151,9 +151,7 @@ export class CacheService {
   }
 
   private globToRegExp(pattern: string): RegExp {
-    const escaped = pattern
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&')
-      .replace(/\*/g, '.*');
+    const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
     return new RegExp(`^${escaped}$`);
   }
 

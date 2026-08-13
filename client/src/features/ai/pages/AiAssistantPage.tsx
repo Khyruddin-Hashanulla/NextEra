@@ -15,7 +15,11 @@ interface ChatMessage {
 export function AiAssistantPage() {
   const { addToast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'assistant', content: 'Hi! I\'m your AI learning assistant. Ask me anything about your courses, concepts, or get help with coding problems.' },
+    {
+      role: 'assistant',
+      content:
+        "Hi! I'm your AI learning assistant. Ask me anything about your courses, concepts, or get help with coding problems.",
+    },
   ]);
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -32,7 +36,10 @@ export function AiAssistantPage() {
     },
     onError: () => {
       addToast({ title: 'Failed to get response', variant: 'error' });
-      setMessages((prev) => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' },
+      ]);
     },
   });
 
@@ -69,9 +76,7 @@ export function AiAssistantPage() {
               )}
               <div
                 className={`rounded-lg px-4 py-2 max-w-[80%] text-sm ${
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                  msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
                 }`}
               >
                 {msg.content}
@@ -97,7 +102,10 @@ export function AiAssistantPage() {
         </CardContent>
         <div className="p-4 border-t">
           <form
-            onSubmit={(e) => { e.preventDefault(); handleSend(); }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
             className="flex gap-2"
           >
             <Input

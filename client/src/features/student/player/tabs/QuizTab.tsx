@@ -38,7 +38,9 @@ function parseQuizQuestions(lecture: PlayerLecture): QuizQuestion[] {
           marks: q.marks,
         }));
       }
-    } catch {}
+    } catch {
+      // invalid stored JSON — return empty questions
+    }
   }
   return [];
 }
@@ -113,7 +115,9 @@ export function QuizTab({ courseId, lectureId, lecture }: QuizTabProps) {
     <Card>
       <CardContent className="space-y-4 pt-4">
         {lastAttempt && (
-          <div className={`rounded-lg p-3 text-sm ${lastAttempt.passed ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          <div
+            className={`rounded-lg p-3 text-sm ${lastAttempt.passed ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}
+          >
             Last attempt: {lastAttempt.score}/{lastAttempt.totalQuestions} ({lastAttempt.passed ? 'Passed' : 'Failed'})
           </div>
         )}
@@ -121,7 +125,11 @@ export function QuizTab({ courseId, lectureId, lecture }: QuizTabProps) {
           <div key={idx} className="space-y-2">
             <p className="text-sm font-medium">
               {idx + 1}. {q.question}
-              {q.marks ? <span className="ml-2 text-xs text-muted-foreground">({q.marks} mark{q.marks !== 1 ? 's' : ''})</span> : null}
+              {q.marks ? (
+                <span className="ml-2 text-xs text-muted-foreground">
+                  ({q.marks} mark{q.marks !== 1 ? 's' : ''})
+                </span>
+              ) : null}
             </p>
             {q.type === 'fill_blank' ? (
               <Input
@@ -132,7 +140,10 @@ export function QuizTab({ courseId, lectureId, lecture }: QuizTabProps) {
             ) : (
               <div className="space-y-1">
                 {(q.options || []).map((opt) => (
-                  <label key={opt} className="flex items-center gap-2 rounded border p-2 text-sm cursor-pointer hover:bg-muted">
+                  <label
+                    key={opt}
+                    className="flex items-center gap-2 rounded border p-2 text-sm cursor-pointer hover:bg-muted"
+                  >
                     <input
                       type="radio"
                       name={`q-${idx}`}
@@ -147,7 +158,10 @@ export function QuizTab({ courseId, lectureId, lecture }: QuizTabProps) {
             )}
           </div>
         ))}
-        <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || answeredCount < questions.length}>
+        <Button
+          onClick={() => submitMutation.mutate()}
+          disabled={submitMutation.isPending || answeredCount < questions.length}
+        >
           {submitMutation.isPending ? 'Submitting...' : 'Submit Quiz'}
         </Button>
       </CardContent>

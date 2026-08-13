@@ -270,28 +270,40 @@ describe('validateCloudinaryResponse', () => {
 
   it('rejects non-HTTPS URL', () => {
     const result = {
-      secure_url: 'http://res.cloudinary.com/image.jpg',
+      secure_url: 'http://res.cloudinary.com/dp0o3faxz/image.jpg',
       public_id: 'abc',
     };
     expect(() => validateCloudinaryResponse(result)).toThrow('non-HTTPS');
   });
 
   it('rejects response without public_id', () => {
-    expect(() => validateCloudinaryResponse({ secure_url: 'https://res.cloudinary.com/image.jpg' })).toThrow('public ID');
+    expect(() => validateCloudinaryResponse({ secure_url: 'https://res.cloudinary.com/dp0o3faxz/image.jpg' })).toThrow(
+      'public ID'
+    );
   });
 
   it('rejects executable response format', () => {
     const result = {
-      secure_url: 'https://res.cloudinary.com/file.exe',
+      secure_url: 'https://res.cloudinary.com/dp0o3faxz/file.exe',
       public_id: 'abc',
       format: 'exe',
     };
     expect(() => validateCloudinaryResponse(result)).toThrow('suspicious');
   });
 
+  it('rejects URL from wrong cloud account', () => {
+    const result = {
+      secure_url: 'https://res.cloudinary.com/wrongcloud/image/upload/v1/test.jpg',
+      public_id: 'nextera/test123',
+      resource_type: 'image',
+      format: 'jpg',
+    };
+    expect(() => validateCloudinaryResponse(result)).toThrow('does not match expected account');
+  });
+
   it('accepts valid cloudinary response', () => {
     const result = {
-      secure_url: 'https://res.cloudinary.com/nextera/image/upload/v1/test.jpg',
+      secure_url: 'https://res.cloudinary.com/dp0o3faxz/image/upload/v1/test.jpg',
       public_id: 'nextera/test123',
       resource_type: 'image',
       format: 'jpg',
@@ -372,7 +384,7 @@ describe('policy consistency', () => {
   });
 
   it('each policy has non-empty allowed types', () => {
-    for (const [key, policy] of Object.entries(UPLOAD_POLICIES)) {
+    for (const [_key, policy] of Object.entries(UPLOAD_POLICIES)) {
       expect(policy.allowedMimeTypes.length).toBeGreaterThan(0);
       expect(policy.allowedExtensions.length).toBeGreaterThan(0);
       expect(policy.maxSize).toBeGreaterThan(0);

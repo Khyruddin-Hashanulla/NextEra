@@ -3,15 +3,17 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QUERY_KEYS } from '@/lib/constants';
 
-const { addToast, getMe, updateProfile, uploadAvatar, changePassword, setQueryData, invalidateQueries } = vi.hoisted(() => ({
-  addToast: vi.fn(),
-  getMe: vi.fn(),
-  updateProfile: vi.fn(),
-  uploadAvatar: vi.fn(),
-  changePassword: vi.fn(),
-  setQueryData: vi.fn(),
-  invalidateQueries: vi.fn(),
-}));
+const { addToast, getMe, updateProfile, uploadAvatar, changePassword, setQueryData, invalidateQueries } = vi.hoisted(
+  () => ({
+    addToast: vi.fn(),
+    getMe: vi.fn(),
+    updateProfile: vi.fn(),
+    uploadAvatar: vi.fn(),
+    changePassword: vi.fn(),
+    setQueryData: vi.fn(),
+    invalidateQueries: vi.fn(),
+  })
+);
 
 vi.mock('@tanstack/react-query', () => ({
   useQuery: vi.fn(),
@@ -37,7 +39,6 @@ vi.mock('framer-motion', () => ({
 }));
 
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { userApi } from '@/api/endpoints/user';
 import { EditProfilePage } from './EditProfilePage';
 
 const useQueryMock = useQuery as unknown as ReturnType<typeof vi.fn>;
@@ -82,7 +83,7 @@ beforeEach(() => {
 
   updateProfile.mockResolvedValue({ data: { data: makeUser() } });
 
-  useQueryMock.mockImplementation(({ queryKey, queryFn }: any) => ({
+  useQueryMock.mockImplementation(({ _queryKey, _queryFn }: any) => ({
     data: null,
     isLoading: false,
   }));

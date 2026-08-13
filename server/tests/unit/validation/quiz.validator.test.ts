@@ -64,9 +64,13 @@ describe('quiz.validator', () => {
 
   it('validates analytics query with coercion', () => {
     expect(quizAnalyticsQuerySchema.parse({ query: {} }).query).toMatchObject({ page: 1, limit: 20 });
-    expect(quizAnalyticsQuerySchema.parse({ query: { page: 'bad', limit: 'x' } }).query).toMatchObject({ page: 1, limit: 20 });
+    expect(quizAnalyticsQuerySchema.parse({ query: { page: 'bad', limit: 'x' } }).query).toMatchObject({
+      page: 1,
+      limit: 20,
+    });
     expect(
-      quizAnalyticsQuerySchema.parse({ query: { lectureId: 'l', courseId: 'c', search: 's', sort: 'score-desc' } }).query.sort,
+      quizAnalyticsQuerySchema.parse({ query: { lectureId: 'l', courseId: 'c', search: 's', sort: 'score-desc' } })
+        .query.sort
     ).toBe('score-desc');
   });
 
@@ -78,7 +82,8 @@ describe('quiz.validator', () => {
   it('validates attempt query', () => {
     expect(quizAttemptQuerySchema.parse({ query: {} }).query).toMatchObject({ page: 1, limit: 20 });
     expect(
-      quizAttemptQuerySchema.parse({ query: { status: 'graded', attemptNumber: '2', search: 's', sort: 'score-asc' } }).query.attemptNumber,
+      quizAttemptQuerySchema.parse({ query: { status: 'graded', attemptNumber: '2', search: 's', sort: 'score-asc' } })
+        .query.attemptNumber
     ).toBe(2);
     expect(() => quizAttemptQuerySchema.parse({ query: { status: 'bogus' } })).toThrow();
   });

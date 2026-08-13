@@ -35,6 +35,9 @@ export function createUploadMiddleware(category: FileCategory) {
     limits: {
       fileSize: policy.maxSize,
       files: 1,
+      parts: 2,
+      fields: 5,
+      fieldSize: 10 * 1024,
     },
     fileFilter: createFileFilter(policy),
   });
@@ -47,6 +50,9 @@ export function createMultiUploadMiddleware(category: FileCategory, maxFiles = 5
     limits: {
       fileSize: policy.maxSize,
       files: maxFiles,
+      parts: maxFiles + 5,
+      fields: 5,
+      fieldSize: 10 * 1024,
     },
     fileFilter: createFileFilter(policy),
   });
@@ -76,7 +82,9 @@ export function createFieldUploadMiddleware(
     }
 
     if (!validateExtension(file.originalname, policy)) {
-      callback(new Error(`Invalid file extension for ${file.fieldname}. Allowed: ${policy.allowedExtensions.join(', ')}`));
+      callback(
+        new Error(`Invalid file extension for ${file.fieldname}. Allowed: ${policy.allowedExtensions.join(', ')}`)
+      );
       return;
     }
 
@@ -109,7 +117,7 @@ export function handleMulterError(error: any): string {
       case 'LIMIT_UNEXPECTED_FILE':
         return `Unexpected file field: ${error.field}`;
       case 'LIMIT_PART_COUNT':
-        return 'Too many parts';
+        return 'Too many parts in the request';
       case 'LIMIT_FIELD_KEY':
         return 'Field name too long';
       case 'LIMIT_FIELD_VALUE':

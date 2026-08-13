@@ -84,10 +84,7 @@ export const manualGradeAttempt = asyncHandler(async (req: Request, res: Respons
 
 export const publishGrade = asyncHandler(async (req: Request, res: Response) => {
   const { attemptId } = req.params;
-  const result = await quizService.publishAttempt(
-    attemptId,
-    new mongoose.Types.ObjectId(req.currentUser!.userId),
-  );
+  const result = await quizService.publishAttempt(attemptId, new mongoose.Types.ObjectId(req.currentUser!.userId));
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Grade published', result));
 });
 

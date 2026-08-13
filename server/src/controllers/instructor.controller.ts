@@ -6,7 +6,6 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { ApiError } from '../utils/ApiError';
 import { HTTP_STATUS } from '../constants/httpStatus';
-import { quizService } from '../services/quiz.service';
 import { FileCategory } from '../config/upload';
 import { sanitizeRequestBody } from '../utils/sanitize';
 
@@ -141,6 +140,27 @@ export const createAnnouncement = asyncHandler(async (req: Request, res: Respons
 export const deleteAnnouncement = asyncHandler(async (req: Request, res: Response) => {
   await instructorService.deleteAnnouncement(req.params.id);
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Announcement deleted', null));
+});
+
+// ─── Notifications (instructor inbox) ──────────────────────────
+export const listNotifications = asyncHandler(async (req: Request, res: Response) => {
+  const { page, limit } = req.query as any;
+  const data = await instructorService.listNotifications(
+    req.currentUser!.userId,
+    Number(page) || 1,
+    Number(limit) || 20
+  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Notifications fetched', data));
+});
+
+export const markNotificationRead = asyncHandler(async (req: Request, res: Response) => {
+  const data = await instructorService.markNotificationRead(req.params.id, req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Notification marked as read', data));
+});
+
+export const markAllNotificationsRead = asyncHandler(async (req: Request, res: Response) => {
+  const data = await instructorService.markAllNotificationsRead(req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('All notifications marked as read', data));
 });
 
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {

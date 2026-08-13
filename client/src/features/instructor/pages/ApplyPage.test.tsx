@@ -20,9 +20,7 @@ vi.mock('@/providers/AuthProvider', () => ({
 
 vi.mock('framer-motion', () => ({
   motion: {
-    div: ({ children, initial: _i, animate: _a, transition: _t, ...props }: any) => (
-      <div {...props}>{children}</div>
-    ),
+    div: ({ children, initial: _i, animate: _a, transition: _t, ...props }: any) => <div {...props}>{children}</div>,
   },
   useReducedMotion: () => false,
 }));

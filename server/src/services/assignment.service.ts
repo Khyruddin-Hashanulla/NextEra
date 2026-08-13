@@ -2,14 +2,12 @@ import mongoose from 'mongoose';
 import { AssignmentSubmission } from '../models/assignmentSubmission.model';
 import { Lecture } from '../models/lecture.model';
 import { Course } from '../models/course.model';
-import { Enrollment } from '../models/enrollment.model';
 import { User } from '../models/user.model';
 import { Notification } from '../models/notification.model';
 import { ApiError } from '../utils/ApiError';
 import { escapeRegex } from '../utils/escapeRegex';
 import {
   AssignmentStatus,
-  GRADEABLE_STATUSES,
   computePercentage,
   computePassFail,
   computeLetterGrade,
@@ -55,6 +53,8 @@ export class AssignmentService {
     instructorId: string,
     { page = 1, limit = 10, search, status }: { page?: number; limit?: number; search?: string; status?: string }
   ) {
+    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit), 10) || 10));
     const courseIds = await this.getInstructorCourseIds(instructorId);
     const matchQuery: any = { course: { $in: courseIds }, type: 'assignment' };
 
@@ -66,7 +66,7 @@ export class AssignmentService {
       matchQuery._id = { $in: matchingLectures.map((l) => l._id) };
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (pageNum - 1) * limitNum;
     const [lectureResult] = await Lecture.aggregate([
       { $match: matchQuery },
       {
@@ -74,7 +74,7 @@ export class AssignmentService {
           items: [
             { $sort: { createdAt: -1 } },
             { $skip: skip },
-            { $limit: limit },
+            { $limit: limitNum },
             { $lookup: { from: 'courses', localField: 'course', foreignField: '_id', as: 'course' } },
             {
               $addFields: {
@@ -82,11 +82,7 @@ export class AssignmentService {
                   $let: {
                     vars: { c: { $arrayElemAt: ['$course', 0] } },
                     in: {
-                      $cond: [
-                        { $eq: ['$$c', null] },
-                        null,
-                        { _id: '$$c._id', title: '$$c.title' },
-                      ],
+                      $cond: [{ $eq: ['$$c', null] }, null, { _id: '$$c._id', title: '$$c.title' }],
                     },
                   },
                 },
@@ -124,7 +120,7 @@ export class AssignmentService {
 
     return {
       assignments: items,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
     };
   }
 
@@ -170,7 +166,9 @@ export class AssignmentService {
 
   async getLectureSubmissions(instructorId: string, lectureId: string, query: ListQuery): Promise<any> {
     const lecture = await this.verifyInstructorOwnsLecture(instructorId, lectureId);
-    const { page, limit, status, search, sort } = query;
+    const { page = 1, limit = 10, status, search, sort } = query;
+    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit), 10) || 10));
 
     const matchQuery: any = { lecture: lectureId };
     if (status) matchQuery.status = status;
@@ -178,10 +176,7 @@ export class AssignmentService {
     if (search) {
       const escaped = escapeRegex(search);
       const users = await User.find({
-        $or: [
-          { name: { $regex: escaped, $options: 'i' } },
-          { email: { $regex: escaped, $options: 'i' } },
-        ],
+        $or: [{ name: { $regex: escaped, $options: 'i' } }, { email: { $regex: escaped, $options: 'i' } }],
       })
         .select('_id')
         .lean();
@@ -194,13 +189,13 @@ export class AssignmentService {
     else if (sort === 'grade') sortQuery = { grade: 1 };
     else if (sort === '-grade') sortQuery = { grade: -1 };
 
-    const skip = (page - 1) * limit;
+    const skip = (pageNum - 1) * limitNum;
     const [submissions, total] = await Promise.all([
       AssignmentSubmission.find(matchQuery)
         .populate('user', 'name email avatar')
         .sort(sortQuery)
         .skip(skip)
-        .limit(limit)
+        .limit(limitNum)
         .lean(),
       AssignmentSubmission.countDocuments(matchQuery),
     ]);
@@ -217,7 +212,7 @@ export class AssignmentService {
         assignment: lecture.assignment,
       },
       submissions: sanitized,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
     };
   }
 
@@ -383,7 +378,9 @@ export class AssignmentService {
   // ─── Admin ────────────────────────────────────────────────────
 
   async listAllSubmissions(query: ListQuery & { courseId?: string }): Promise<any> {
-    const { page, limit, status, search, sort, courseId } = query;
+    const { page = 1, limit = 10, status, search, sort, courseId } = query;
+    const pageNum = Math.max(1, parseInt(String(page), 10) || 1);
+    const limitNum = Math.max(1, Math.min(100, parseInt(String(limit), 10) || 10));
 
     const matchQuery: any = {};
     if (status) matchQuery.status = status;
@@ -392,10 +389,7 @@ export class AssignmentService {
     if (search) {
       const escaped = escapeRegex(search);
       const users = await User.find({
-        $or: [
-          { name: { $regex: escaped, $options: 'i' } },
-          { email: { $regex: escaped, $options: 'i' } },
-        ],
+        $or: [{ name: { $regex: escaped, $options: 'i' } }, { email: { $regex: escaped, $options: 'i' } }],
       })
         .select('_id')
         .lean();
@@ -408,7 +402,7 @@ export class AssignmentService {
     else if (sort === 'grade') sortQuery = { grade: 1 };
     else if (sort === '-grade') sortQuery = { grade: -1 };
 
-    const skip = (page - 1) * limit;
+    const skip = (pageNum - 1) * limitNum;
     const [submissions, total] = await Promise.all([
       AssignmentSubmission.find(matchQuery)
         .populate('user', 'name email')
@@ -416,7 +410,7 @@ export class AssignmentService {
         .populate('lecture', 'title')
         .sort(sortQuery)
         .skip(skip)
-        .limit(limit)
+        .limit(limitNum)
         .lean(),
       AssignmentSubmission.countDocuments(matchQuery),
     ]);
@@ -428,7 +422,7 @@ export class AssignmentService {
 
     return {
       submissions: sanitized,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      pagination: { page: pageNum, limit: limitNum, total, pages: Math.ceil(total / limitNum) },
     };
   }
 
@@ -458,8 +452,6 @@ export class AssignmentService {
     const passingMarks = lecture?.assignment?.passingMarks;
     const passFail = computePassFail(payload.grade, passingMarks, maxMarks);
     const letterGrade = payload.letterGrade || computeLetterGrade(percentage);
-
-    const wasPreviouslyGraded = submission.status === 'graded';
 
     submission.grade = payload.grade;
     submission.maxMarks = maxMarks;
@@ -508,10 +500,7 @@ export class AssignmentService {
     if (query.courseId) matchQuery.course = query.courseId;
 
     const [statusCounts, averageGrade, total] = await Promise.all([
-      AssignmentSubmission.aggregate([
-        { $match: matchQuery },
-        { $group: { _id: '$status', count: { $sum: 1 } } },
-      ]),
+      AssignmentSubmission.aggregate([{ $match: matchQuery }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
       AssignmentSubmission.aggregate([
         { $match: { ...matchQuery, status: 'graded', grade: { $exists: true } } },
         {
@@ -545,9 +534,10 @@ export class AssignmentService {
         averagePercentage: Math.round(stats.avgPercentage * 100) / 100,
         passCount: stats.passCount,
         failCount: stats.failCount,
-        passRate: stats.passCount + stats.failCount > 0
-          ? Math.round((stats.passCount / (stats.passCount + stats.failCount)) * 10000) / 100
-          : 0,
+        passRate:
+          stats.passCount + stats.failCount > 0
+            ? Math.round((stats.passCount / (stats.passCount + stats.failCount)) * 10000) / 100
+            : 0,
       },
     };
   }
@@ -593,9 +583,7 @@ export class AssignmentService {
   // ─── Helpers ──────────────────────────────────────────────────
 
   private async getInstructorCourseIds(instructorId: string): Promise<mongoose.Types.ObjectId[]> {
-    const courses = await Course.find({ instructor: instructorId })
-      .select('_id')
-      .lean();
+    const courses = await Course.find({ instructor: instructorId }).select('_id').lean();
     return courses.map((c) => c._id);
   }
 

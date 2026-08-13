@@ -21,8 +21,19 @@ export function LearningStats({ stats, isLoading }: LearningStatsProps) {
   const statItems: StatItem[] = [
     { icon: Users, label: 'Students learning', value: stats.students, accent: 'bg-primary/10 text-primary' },
     { icon: BookOpen, label: 'Courses published', value: stats.courses, accent: 'bg-sky-500/10 text-sky-500' },
-    { icon: GraduationCap, label: 'Expert instructors', value: stats.instructors, accent: 'bg-amber-500/10 text-amber-500' },
-    { icon: Star, label: 'Average course rating', value: stats.averageRating, suffix: '/5', accent: 'bg-violet-500/10 text-violet-500' },
+    {
+      icon: GraduationCap,
+      label: 'Expert instructors',
+      value: stats.instructors,
+      accent: 'bg-amber-500/10 text-amber-500',
+    },
+    {
+      icon: Star,
+      label: 'Average course rating',
+      value: stats.averageRating,
+      suffix: '/5',
+      accent: 'bg-violet-500/10 text-violet-500',
+    },
   ];
 
   return (

@@ -4,7 +4,15 @@ import { hasFeature } from '@/lib/subscription';
 import UpgradePrompt from './UpgradePrompt';
 
 interface FeatureGateProps {
-  feature: 'unlimitedCourses' | 'advancedAnalytics' | 'coupons' | 'liveClasses' | 'featuredInstructor' | 'prioritySupport' | 'unlimitedStorage' | 'premiumMarketing';
+  feature:
+    | 'unlimitedCourses'
+    | 'advancedAnalytics'
+    | 'coupons'
+    | 'liveClasses'
+    | 'featuredInstructor'
+    | 'prioritySupport'
+    | 'unlimitedStorage'
+    | 'premiumMarketing';
   children: ReactNode;
   fallback?: ReactNode;
   showUpgradePrompt?: boolean;

@@ -78,10 +78,22 @@ export function SettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-72" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
         <div className="max-w-3xl space-y-6">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}><CardHeader><Skeleton className="h-6 w-32" /></CardHeader><CardContent className="space-y-4">{[...Array(3)].map((_, j) => <Skeleton key={j} className="h-10 w-full" />)}</CardContent></Card>
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-6 w-32" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...Array(3)].map((_, j) => (
+                  <Skeleton key={j} className="h-10 w-full" />
+                ))}
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -110,16 +122,28 @@ export function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Platform Email</Label>
-                <Input type="email" value={form.platformEmail} onChange={(e) => setForm({ ...form, platformEmail: e.target.value })} />
+                <Input
+                  type="email"
+                  value={form.platformEmail}
+                  onChange={(e) => setForm({ ...form, platformEmail: e.target.value })}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Meta Description</Label>
-              <Input value={form.metaDescription} onChange={(e) => setForm({ ...form, metaDescription: e.target.value })} />
+              <Input
+                value={form.metaDescription}
+                onChange={(e) => setForm({ ...form, metaDescription: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label>Currency</Label>
-              <Input value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} maxLength={3} className="w-20 uppercase" />
+              <Input
+                value={form.currency}
+                onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                maxLength={3}
+                className="w-20 uppercase"
+              />
             </div>
           </CardContent>
         </Card>
@@ -133,16 +157,29 @@ export function SettingsPage() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="cursor-pointer">Allow User Registration</Label>
-              <input type="checkbox" checked={form.allowRegistration} onChange={(e) => setForm({ ...form, allowRegistration: e.target.checked })} className="h-5 w-5 rounded border-gray-300" />
+              <input
+                type="checkbox"
+                checked={form.allowRegistration}
+                onChange={(e) => setForm({ ...form, allowRegistration: e.target.checked })}
+                className="h-5 w-5 rounded border-gray-300"
+              />
             </div>
             <div className="flex items-center justify-between">
               <Label className="cursor-pointer">Maintenance Mode</Label>
-              <input type="checkbox" checked={form.maintenanceMode} onChange={(e) => setForm({ ...form, maintenanceMode: e.target.checked })} className="h-5 w-5 rounded border-gray-300" />
+              <input
+                type="checkbox"
+                checked={form.maintenanceMode}
+                onChange={(e) => setForm({ ...form, maintenanceMode: e.target.checked })}
+                className="h-5 w-5 rounded border-gray-300"
+              />
             </div>
             <div className="space-y-2">
               <Label>Default User Role</Label>
-              <select value={form.defaultUserRole} onChange={(e) => setForm({ ...form, defaultUserRole: e.target.value as any })}
-                className="flex h-10 w-full max-w-xs rounded-lg border border-input bg-background px-3 text-sm">
+              <select
+                value={form.defaultUserRole}
+                onChange={(e) => setForm({ ...form, defaultUserRole: e.target.value as any })}
+                className="flex h-10 w-full max-w-xs rounded-lg border border-input bg-background px-3 text-sm"
+              >
                 <option value="student">Student</option>
                 <option value="instructor">Instructor</option>
               </select>
@@ -160,43 +197,65 @@ export function SettingsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Commission (%)</Label>
-                <Input type="number" min={0} max={100} value={form.commissionPercentage}
-                  onChange={(e) => setForm({ ...form, commissionPercentage: Number(e.target.value) })} />
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={form.commissionPercentage}
+                  onChange={(e) => setForm({ ...form, commissionPercentage: Number(e.target.value) })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>GST (%)</Label>
-                <Input type="number" min={0} max={100} value={form.gstPercentage}
-                  onChange={(e) => setForm({ ...form, gstPercentage: Number(e.target.value) })} />
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={form.gstPercentage}
+                  onChange={(e) => setForm({ ...form, gstPercentage: Number(e.target.value) })}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Minimum Payout Amount</Label>
-                <Input type="number" min={0} value={form.minimumPayoutAmount}
-                  onChange={(e) => setForm({ ...form, minimumPayoutAmount: Number(e.target.value) })} />
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.minimumPayoutAmount}
+                  onChange={(e) => setForm({ ...form, minimumPayoutAmount: Number(e.target.value) })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Refund Window (days)</Label>
-                <Input type="number" min={0} value={form.refundWindowDays}
-                  onChange={(e) => setForm({ ...form, refundWindowDays: Number(e.target.value) })} />
+                <Input
+                  type="number"
+                  min={0}
+                  value={form.refundWindowDays}
+                  onChange={(e) => setForm({ ...form, refundWindowDays: Number(e.target.value) })}
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Support Email</Label>
-                <Input type="email" value={form.supportEmail}
-                  onChange={(e) => setForm({ ...form, supportEmail: e.target.value })} />
+                <Input
+                  type="email"
+                  value={form.supportEmail}
+                  onChange={(e) => setForm({ ...form, supportEmail: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Timezone</Label>
-                <Input value={form.timezone}
-                  onChange={(e) => setForm({ ...form, timezone: e.target.value })} />
+                <Input value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })} />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Default Instructor Plan</Label>
-              <Input value={form.defaultInstructorPlan}
-                onChange={(e) => setForm({ ...form, defaultInstructorPlan: e.target.value })} />
+              <Input
+                value={form.defaultInstructorPlan}
+                onChange={(e) => setForm({ ...form, defaultInstructorPlan: e.target.value })}
+              />
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={resetDefaults}>
@@ -216,7 +275,13 @@ export function SettingsPage() {
             {(['youtube', 'twitter', 'linkedin', 'instagram'] as const).map((platform) => (
               <div key={platform} className="space-y-2">
                 <Label className="capitalize">{platform}</Label>
-                <Input value={form.socialLinks[platform]} onChange={(e) => setForm({ ...form, socialLinks: { ...form.socialLinks, [platform]: e.target.value } })} placeholder={`https://${platform}.com/...`} />
+                <Input
+                  value={form.socialLinks[platform]}
+                  onChange={(e) =>
+                    setForm({ ...form, socialLinks: { ...form.socialLinks, [platform]: e.target.value } })
+                  }
+                  placeholder={`https://${platform}.com/...`}
+                />
               </div>
             ))}
           </CardContent>

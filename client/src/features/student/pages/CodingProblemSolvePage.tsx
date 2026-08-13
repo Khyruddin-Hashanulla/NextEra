@@ -38,13 +38,13 @@ export function CodingProblemSolvePage() {
 
   const { data: problemData, isLoading } = useQuery({
     queryKey: ['coding-problem', slug],
-    queryFn: () => codingApi.getProblemBySlug(slug!).then(r => r.data.data),
+    queryFn: () => codingApi.getProblemBySlug(slug!).then((r) => r.data.data),
     enabled: !!slug,
   });
 
   const { data: submissionsData } = useQuery({
     queryKey: ['coding-submissions', problemData?._id],
-    queryFn: () => codingApi.getUserSubmissions(problemData!._id, { limit: 5 }).then(r => r.data),
+    queryFn: () => codingApi.getUserSubmissions(problemData!._id, { limit: 5 }).then((r) => r.data),
     enabled: !!problemData?._id,
   });
 
@@ -73,12 +73,16 @@ export function CodingProblemSolvePage() {
     return (
       <div className="text-center py-12 text-muted-foreground">
         Problem not found
-        <div className="mt-2"><Button variant="link" onClick={() => navigate('/coding/problems')}>Back to problems</Button></div>
+        <div className="mt-2">
+          <Button variant="link" onClick={() => navigate('/coding/problems')}>
+            Back to problems
+          </Button>
+        </div>
       </div>
     );
   }
 
-  const sampleCases = problemData.testCases?.filter(tc => tc.isSample) || [];
+  const sampleCases = problemData.testCases?.filter((tc) => tc.isSample) || [];
   const previousSubmissions = submissionsData?.submissions || [];
 
   return (
@@ -97,7 +101,10 @@ export function CodingProblemSolvePage() {
                 <div>
                   <CardTitle className="text-lg">{problemData.title}</CardTitle>
                   <div className="flex items-center gap-2 mt-1">
-                    <Badge variant="outline" className={`text-xs ${difficultyColors[problemData.difficulty as Difficulty] || ''}`}>
+                    <Badge
+                      variant="outline"
+                      className={`text-xs ${difficultyColors[problemData.difficulty as Difficulty] || ''}`}
+                    >
                       {problemData.difficulty}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
@@ -118,7 +125,9 @@ export function CodingProblemSolvePage() {
                 <TabsContent value="description" className="space-y-4 mt-4">
                   <div className="prose prose-sm max-w-none">
                     {problemData.description.split('\n').map((line: string, i: number) => (
-                      <p key={i} className="text-sm text-muted-foreground">{line}</p>
+                      <p key={i} className="text-sm text-muted-foreground">
+                        {line}
+                      </p>
                     ))}
                   </div>
 
@@ -131,7 +140,9 @@ export function CodingProblemSolvePage() {
                   {problemData.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {problemData.tags.map((tag: string) => (
-                        <span key={tag} className="text-xs bg-muted px-2 py-0.5 rounded">{tag}</span>
+                        <span key={tag} className="text-xs bg-muted px-2 py-0.5 rounded">
+                          {tag}
+                        </span>
                       ))}
                     </div>
                   )}
@@ -141,8 +152,14 @@ export function CodingProblemSolvePage() {
                       <h4 className="text-sm font-medium">Sample Test Cases</h4>
                       {sampleCases.map((tc: any, i: number) => (
                         <div key={i} className="rounded border bg-muted/50 p-3 text-sm">
-                          <div><span className="text-muted-foreground">Input:</span> <code className="text-xs bg-background px-1 rounded">{tc.input}</code></div>
-                          <div><span className="text-muted-foreground">Output:</span> <code className="text-xs bg-background px-1 rounded">{tc.expectedOutput}</code></div>
+                          <div>
+                            <span className="text-muted-foreground">Input:</span>{' '}
+                            <code className="text-xs bg-background px-1 rounded">{tc.input}</code>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Output:</span>{' '}
+                            <code className="text-xs bg-background px-1 rounded">{tc.expectedOutput}</code>
+                          </div>
                           {tc.explanation && <div className="text-xs text-muted-foreground mt-1">{tc.explanation}</div>}
                         </div>
                       ))}
@@ -181,17 +198,30 @@ export function CodingProblemSolvePage() {
                       </div>
                       <div className="space-y-2">
                         {lastSubmission.testResults?.map((tr: TestResult, i: number) => (
-                          <div key={i} className={`rounded border p-3 text-sm ${tr.passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                          <div
+                            key={i}
+                            className={`rounded border p-3 text-sm ${tr.passed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}
+                          >
                             <div className="flex items-center gap-2">
-                              {tr.passed ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-red-500" />}
+                              {tr.passed ? (
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                              ) : (
+                                <XCircle className="h-4 w-4 text-red-500" />
+                              )}
                               <span className="font-medium">Test {i + 1}</span>
                               {tr.runtime && <span className="text-xs text-muted-foreground">~{tr.runtime}ms</span>}
                             </div>
                             {!tr.passed && tr.input && (
                               <div className="mt-1 text-xs">
-                                <div>Input: <code className="bg-background px-1 rounded">{tr.input}</code></div>
-                                <div>Expected: <code className="bg-background px-1 rounded">{tr.expectedOutput}</code></div>
-                                <div>Got: <code className="bg-background px-1 rounded">{tr.actualOutput}</code></div>
+                                <div>
+                                  Input: <code className="bg-background px-1 rounded">{tr.input}</code>
+                                </div>
+                                <div>
+                                  Expected: <code className="bg-background px-1 rounded">{tr.expectedOutput}</code>
+                                </div>
+                                <div>
+                                  Got: <code className="bg-background px-1 rounded">{tr.actualOutput}</code>
+                                </div>
                               </div>
                             )}
                             {tr.error && <p className="text-xs text-red-600 mt-1">{tr.error}</p>}
@@ -218,8 +248,18 @@ export function CodingProblemSolvePage() {
           />
 
           <div className="flex gap-2">
-            <Button onClick={() => submitMutation.mutate()} disabled={submitMutation.isPending || !code.trim()} className="flex-1">
-              {submitMutation.isPending ? <><Loader2 className="h-4 w-4 animate-spin" /> Running...</> : 'Submit'}
+            <Button
+              onClick={() => submitMutation.mutate()}
+              disabled={submitMutation.isPending || !code.trim()}
+              className="flex-1"
+            >
+              {submitMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Running...
+                </>
+              ) : (
+                'Submit'
+              )}
             </Button>
           </div>
         </div>

@@ -18,7 +18,7 @@ router.post(
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
   validate(generateDescriptionSchema),
-  aiController.generateDescription,
+  aiController.generateDescription
 );
 
 router.post(
@@ -26,7 +26,7 @@ router.post(
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
   validate(generateQuizSchema),
-  aiController.generateQuiz,
+  aiController.generateQuiz
 );
 
 router.post(
@@ -34,14 +34,9 @@ router.post(
   authenticate,
   authorize(ROLES.INSTRUCTOR, ROLES.ADMIN),
   validate(generateAssignmentSchema),
-  aiController.generateAssignment,
+  aiController.generateAssignment
 );
 
-router.post(
-  '/chat',
-  authenticate,
-  validate(chatSchema),
-  aiController.chat,
-);
+router.post('/chat', authenticate, validate(chatSchema), aiController.chat);
 
 export default router;

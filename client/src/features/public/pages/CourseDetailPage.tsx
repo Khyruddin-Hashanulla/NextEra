@@ -1,9 +1,8 @@
 import { useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { studentApi } from '@/api/endpoints/student';
-import { CourseCard } from '@/components/course/CourseCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -12,71 +11,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
-import { Star, Users, Clock, BookOpen, CheckCircle2, Share2, Heart, Bookmark, AlertCircle, PlayCircle, ArrowRight, Award, Lock } from 'lucide-react';
+import { Star, Users, Clock, BookOpen, CheckCircle2, Share2, PlayCircle, Award, Lock } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { ResourceNotFound } from '@/components/common/ResourceNotFound';
 import { formatCurrency, formatDate, formatNumber, getInitials } from '@/lib/utils';
 import { categorizeError } from '@/lib/error-utils';
-import { cn } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/providers/AuthProvider';
 import { useToast } from '@/providers/ToastProvider';
 import { CourseShowcase } from '../components/CourseShowcase';
+import { WishlistButton } from '@/components/course/WishlistButton';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { courseSchema, breadcrumbListSchema } from '@/lib/schema';
 import { getCoursePricing } from '@/lib/coursePricing';
+import { openRazorpayCheckout } from '@/lib/razorpay';
+import { formatLectureDuration } from '@/features/student/player/format';
 import { PreviewVideoModal } from '../components/PreviewVideoModal';
 import { resolveThumbnailUrl } from '@/lib/video';
-
-interface CourseDetail {
-  course: {
-    _id: string;
-    title: string;
-    slug: string;
-    description: string;
-    shortDescription: string;
-    thumbnail: { url: string; publicId: string };
-    introVideo: { url: string; videoId: string; posterUrl: string; source: string };
-    welcomeMessage: string;
-    congratulationMessage: string;
-    pricing: { originalPrice: number; discountPercent: number; hasDiscount: boolean; gstPercent: number; gstInclusive: boolean };
-    price: number;
-    category: { _id: string; name: string } | string;
-    instructor: { _id: string; name: string; email: string; avatar?: { url: string }; bio?: string } | null;
-    level: 'beginner' | 'intermediate' | 'advanced' | 'all';
-    language: string;
-    prerequisites: string;
-    benefits: string;
-    requirements: string[];
-    tags: string[];
-    whatYouWillLearn: string[];
-    visibility: 'public' | 'private';
-    courseType: 'paid' | 'free' | 'draft' | 'private';
-    status: 'draft' | 'review' | 'published' | 'archived';
-    isApproved: boolean;
-    featured: boolean;
-    badge: string;
-    totalDuration: number;
-    totalLectures: number;
-    totalSections: number;
-    totalResources: number;
-    averageRating: number;
-    totalReviews: number;
-    totalEnrollments: number;
-    certificateSettings: { enabled: boolean; template: string; issueAutomatically: boolean };
-    meta: { seoTitle: string; seoDescription: string; seoKeywords: string[] };
-    lastActivity: string;
-    createdAt: string;
-    updatedAt: string;
-  };
-  curriculum: any[];
-  isEnrolled: boolean;
-  enrollment: any;
-}
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -87,7 +42,7 @@ export function CourseDetailPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['course-detail', id, user?._id],
-    queryFn: ({ signal }) => studentApi.getCourseDetail(id!, signal).then(r => r.data.data),
+    queryFn: ({ signal }) => studentApi.getCourseDetail(id!, signal).then((r) => r.data.data),
     enabled: !!id,
     retry: 1,
   });
@@ -95,9 +50,8 @@ export function CourseDetailPage() {
   const course = data?.course;
   const curriculum = data?.curriculum || [];
   const isEnrolled = data?.isEnrolled || false;
-  const enrollment = data?.enrollment;
 
-  const { isFree, price, originalPrice, hasDiscount } = getCoursePricing(course);
+  const { price, originalPrice, hasDiscount } = getCoursePricing(course);
 
   const [previewLecture, setPreviewLecture] = useState<any>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -127,9 +81,43 @@ export function CourseDetailPage() {
         navigate(ROUTES.STUDENT_COURSE_PLAYER(course._id), { replace: true });
         return;
       }
-      await studentApi.initiatePayment(course._id);
+      const res: any = await studentApi.initiatePayment(course._id);
+      const data = res?.data?.data || {};
+      if (data.free) {
+        await queryClient.invalidateQueries({ queryKey: ['course-detail', id] });
+        addToast({ title: 'Enrolled successfully', variant: 'success' });
+        navigate(ROUTES.STUDENT_COURSE_PLAYER(course._id), { replace: true });
+        return;
+      }
+      const opened = await openRazorpayCheckout({
+        key: data.key,
+        amount: data.amount,
+        currency: data.currency,
+        orderId: data.orderId,
+        description: `Course: ${course.title}`,
+        onSuccess: async (response: any) => {
+          try {
+            await studentApi.verifyPayment({
+              razorpayOrderId: response.razorpay_order_id,
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpaySignature: response.razorpay_signature,
+            });
+            addToast({ title: 'Payment successful! You are now enrolled', variant: 'success' });
+            await queryClient.invalidateQueries({ queryKey: ['course-detail', id] });
+            navigate(ROUTES.STUDENT_COURSE_PLAYER(course._id), { replace: true });
+          } catch {
+            addToast({ title: 'Payment verification failed', variant: 'error' });
+          }
+        },
+        onDismiss: () => {
+          enrollInFlight.current = false;
+          setIsEnrolling(false);
+        },
+      });
+      if (!opened) {
+        addToast({ title: 'Failed to load payment gateway', variant: 'error' });
+      }
       await queryClient.invalidateQueries({ queryKey: ['course-detail', id] });
-      addToast({ title: 'Redirecting to payment...', variant: 'info' });
     } catch (e: any) {
       const message = e?.response?.data?.message || 'Failed to enroll in this course';
       addToast({ title: message, variant: 'error' });
@@ -147,7 +135,9 @@ export function CourseDetailPage() {
           <div className="h-8 w-3/4 bg-muted rounded" />
           <div className="h-4 w-1/2 bg-muted rounded" />
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="h-12 bg-muted rounded" /><div className="h-12 bg-muted rounded" /><div className="h-12 bg-muted rounded" />
+            <div className="h-12 bg-muted rounded" />
+            <div className="h-12 bg-muted rounded" />
+            <div className="h-12 bg-muted rounded" />
           </div>
           <div className="h-64 bg-muted rounded" />
         </div>
@@ -197,38 +187,36 @@ export function CourseDetailPage() {
         type="article"
         author={course?.instructor?.name}
       />
-      <StructuredData schemas={[
-        courseSchema({
-          title: course.title,
-          description: course.shortDescription || course.description,
-          slug: course.slug,
-          thumbnail: course.thumbnail,
-          instructor: course.instructor ?? undefined,
-          category: course.category,
-          level: course.level,
-          price: course.price,
-          averageRating: course.averageRating,
-          totalReviews: course.totalReviews,
-          language: course.language,
-          whatYouWillLearn: course.whatYouWillLearn,
-          prerequisites: course.prerequisites,
-          updatedAt: course.updatedAt,
-        }),
-        breadcrumbListSchema([
-          { name: 'Home', path: '/' },
-          { name: 'Courses', path: '/courses' },
-          { name: course.title, path: `/courses/${id}` },
-        ]),
-      ]} />
+      <StructuredData
+        schemas={[
+          courseSchema({
+            title: course.title,
+            description: course.shortDescription || course.description,
+            slug: course.slug,
+            thumbnail: course.thumbnail,
+            instructor: course.instructor ?? undefined,
+            category: course.category,
+            level: course.level,
+            price: course.price,
+            averageRating: course.averageRating,
+            totalReviews: course.totalReviews,
+            language: course.language,
+            whatYouWillLearn: course.whatYouWillLearn,
+            prerequisites: course.prerequisites,
+            updatedAt: course.updatedAt,
+          }),
+          breadcrumbListSchema([
+            { name: 'Home', path: '/' },
+            { name: 'Courses', path: '/courses' },
+            { name: course.title, path: `/courses/${id}` },
+          ]),
+        ]}
+      />
       {/* Hero Section */}
       <Section size="sm" className="relative overflow-hidden">
         <Container>
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative"
-            >
+            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative">
               <div className="aspect-video rounded-2xl overflow-hidden bg-muted relative">
                 {(course.thumbnail?.url || course.introVideo?.source === 'youtube') && (
                   <OptimizedImage
@@ -240,7 +228,10 @@ export function CourseDetailPage() {
                     fetchPriority="high"
                     fallbackSrc={
                       course.introVideo?.source === 'youtube'
-                        ? resolveThumbnailUrl(course.thumbnail?.url, course.introVideo).replace('maxresdefault', 'hqdefault')
+                        ? resolveThumbnailUrl(course.thumbnail?.url, course.introVideo).replace(
+                            'maxresdefault',
+                            'hqdefault'
+                          )
                         : undefined
                     }
                   />
@@ -268,7 +259,9 @@ export function CourseDetailPage() {
                   </button>
                 )}
                 {course.featured && (
-                  <Badge className="absolute top-4 left-4" variant="secondary">Featured</Badge>
+                  <Badge className="absolute top-4 left-4" variant="secondary">
+                    Featured
+                  </Badge>
                 )}
                 <Badge className="absolute top-4 right-4 capitalize" variant="outline">
                   {course.level}
@@ -284,10 +277,14 @@ export function CourseDetailPage() {
             >
               <div className="flex flex-wrap gap-2">
                 {course.category?.name && (
-                  <Badge variant="outline">{typeof course.category === 'object' ? course.category.name : course.category}</Badge>
+                  <Badge variant="outline">
+                    {typeof course.category === 'object' ? course.category.name : course.category}
+                  </Badge>
                 )}
                 {course.tags?.slice(0, 3).map((tag: string) => (
-                  <Badge key={tag} variant="secondary" className="text-xs">#{tag}</Badge>
+                  <Badge key={tag} variant="secondary" className="text-xs">
+                    #{tag}
+                  </Badge>
                 ))}
                 {course.badge && <Badge variant="default">{course.badge}</Badge>}
               </div>
@@ -329,9 +326,7 @@ export function CourseDetailPage() {
                   {hasDiscount && (
                     <span className="text-muted-foreground line-through">{formatCurrency(originalPrice)}</span>
                   )}
-                  {hasDiscount && (
-                    <Badge variant="secondary">Save {course.pricing.discountPercent}%</Badge>
-                  )}
+                  {hasDiscount && <Badge variant="secondary">Save {course.pricing.discountPercent}%</Badge>}
                 </div>
 
                 <div className="flex flex-wrap gap-3 w-full sm:w-auto">
@@ -359,6 +354,8 @@ export function CourseDetailPage() {
                     <Share2 className="h-4 w-4" />
                     Share
                   </Button>
+
+                  <WishlistButton courseId={course._id} variant="button" />
                 </div>
               </div>
 
@@ -392,7 +389,9 @@ export function CourseDetailPage() {
           <Tabs defaultValue="overview" className="w-full">
             <TabsList className="grid w-full grid-cols-3 md:grid-cols-4">
               <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="curriculum">Curriculum ({totalSections} sections, {totalLectures} lectures)</TabsTrigger>
+              <TabsTrigger value="curriculum">
+                Curriculum ({totalSections} sections, {totalLectures} lectures)
+              </TabsTrigger>
               <TabsTrigger value="instructor">Instructor</TabsTrigger>
               <TabsTrigger value="reviews">Reviews ({course.totalReviews})</TabsTrigger>
             </TabsList>
@@ -434,7 +433,9 @@ export function CourseDetailPage() {
 
                   <div>
                     <h3 className="text-heading-md font-semibold mb-4">Course Benefits</h3>
-                    <p className="text-body text-muted-foreground">{course.benefits || 'Gain practical skills and industry-recognized certification.'}</p>
+                    <p className="text-body text-muted-foreground">
+                      {course.benefits || 'Gain practical skills and industry-recognized certification.'}
+                    </p>
                   </div>
 
                   {course.prerequisites && (
@@ -518,13 +519,17 @@ export function CourseDetailPage() {
                   <Card className="bg-muted/50">
                     <CardContent className="pt-6">
                       <Button asChild className="w-full" size="lg" variant="default">
-                        <Link to="#" onClick={(e) => { e.preventDefault(); handleEnroll(); }}>
+                        <Link
+                          to="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            handleEnroll();
+                          }}
+                        >
                           {isEnrolled ? 'Continue Learning' : price === 0 ? 'Enroll for Free' : 'Enroll Now'}
                         </Link>
                       </Button>
-                      <p className="text-center text-sm text-muted-foreground mt-3">
-                        30-day money-back guarantee
-                      </p>
+                      <p className="text-center text-sm text-muted-foreground mt-3">30-day money-back guarantee</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -575,13 +580,17 @@ export function CourseDetailPage() {
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium truncate">{lecture.title}</p>
                                   <p className="text-sm text-muted-foreground">
-                                    {lecture.type} · {lecture.duration}min
+                                    {lecture.type}
+                                    {formatLectureDuration(lecture.duration) &&
+                                      ` · ${formatLectureDuration(lecture.duration)}`}
                                   </p>
                                 </div>
                                 {isEnrolled ? (
                                   <PlayCircle className="h-4 w-4 text-success" />
                                 ) : lecture.isFree ? (
-                                  <Badge variant="secondary" className="text-xs">Free Preview</Badge>
+                                  <Badge variant="secondary" className="text-xs">
+                                    Free Preview
+                                  </Badge>
                                 ) : (
                                   <Lock className="h-4 w-4 text-muted-foreground" />
                                 )}
@@ -603,11 +612,15 @@ export function CourseDetailPage() {
                     <div className="flex items-start gap-6">
                       <Avatar className="h-24 w-24">
                         <AvatarImage src={course.instructor.avatar?.url} alt={course.instructor.name || ''} />
-                        <AvatarFallback className="text-3xl font-bold">{getInitials(course.instructor.name)}</AvatarFallback>
+                        <AvatarFallback className="text-3xl font-bold">
+                          {getInitials(course.instructor.name)}
+                        </AvatarFallback>
                       </Avatar>
                       <div>
                         <h3 className="text-heading-lg font-semibold">{course.instructor.name}</h3>
-                        <p className="text-muted-foreground mt-1">{course.instructor.bio || 'Experienced instructor passionate about teaching.'}</p>
+                        <p className="text-muted-foreground mt-1">
+                          {course.instructor.bio || 'Experienced instructor passionate about teaching.'}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -616,9 +629,7 @@ export function CourseDetailPage() {
                     <Card>
                       <CardContent className="pt-6">
                         <Button asChild variant="outline" className="w-full">
-                          <Link to={`/instructors/${course.instructor._id}`}>
-                            View Instructor Profile
-                          </Link>
+                          <Link to={`/instructors/${course.instructor._id}`}>View Instructor Profile</Link>
                         </Button>
                       </CardContent>
                     </Card>
@@ -650,12 +661,7 @@ export function CourseDetailPage() {
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-heading-lg font-semibold">You May Also Like</h2>
           </div>
-          <CourseShowcase 
-            courses={[]} 
-            title="" 
-            limit={4}
-            className="hidden"
-          />
+          <CourseShowcase courses={[]} title="" limit={4} className="hidden" />
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

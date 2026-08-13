@@ -1,4 +1,5 @@
-const YOUTUBE_ID_RE = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|attribution_link\?a=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+const YOUTUBE_ID_RE =
+  /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|attribution_link\?a=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 const VIMEO_ID_RE = /(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/;
 
 export interface VideoEmbedConfig {

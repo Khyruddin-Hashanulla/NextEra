@@ -41,7 +41,7 @@ export function Navbar() {
       { label: 'Blog', path: ROUTES.BLOG },
       { label: 'About', path: ROUTES.ABOUT },
       { label: 'Contact', path: ROUTES.CONTACT },
-      { label: 'FAQ', path: ROUTES.FAQ },
+      { label: 'FAQ', path: ROUTES.FAQ }
     );
     return links;
   }, [isAuthenticated, user?.role]);
@@ -73,7 +73,9 @@ export function Navbar() {
     } else {
       document.body.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, [mobileMenuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -109,7 +111,10 @@ export function Navbar() {
             </span>
           </Link>
 
-          <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-0.5 rounded-full border border-border bg-muted/40 p-1">
+          <nav
+            aria-label="Main navigation"
+            className="hidden lg:flex items-center gap-0.5 rounded-full border border-border bg-muted/40 p-1"
+          >
             <div className="relative" ref={exploreRef}>
               <button
                 onClick={() => setExploreOpen(!exploreOpen)}
@@ -174,7 +179,10 @@ export function Navbar() {
                     className="w-48 lg:w-64 h-9 rounded-full border-border bg-muted text-sm pl-9 pr-4"
                     autoFocus
                   />
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
                 </form>
               ) : (
                 <button
@@ -185,7 +193,9 @@ export function Navbar() {
                 >
                   <Search className="h-4 w-4" aria-hidden="true" />
                   <span className="hidden lg:inline">Search</span>
-                  <span className="hidden xl:inline text-xs text-muted-foreground/40 border border-border rounded px-1.5 py-0.5">Ctrl+K</span>
+                  <span className="hidden xl:inline text-xs text-muted-foreground/40 border border-border rounded px-1.5 py-0.5">
+                    Ctrl+K
+                  </span>
                 </button>
               )}
             </div>
@@ -227,7 +237,11 @@ export function Navbar() {
               aria-controls={mobileMenuId}
               aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}
+              {mobileMenuOpen ? (
+                <X className="h-5 w-5" aria-hidden="true" />
+              ) : (
+                <Menu className="h-5 w-5" aria-hidden="true" />
+              )}
             </button>
           </div>
         </div>
@@ -242,8 +256,18 @@ export function Navbar() {
           aria-label="Navigation menu"
         >
           <div className="px-4 py-3">
-            <form onSubmit={(e) => { handleSearch(e); setMobileMenuOpen(false); }} className="relative mb-3" role="search">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+            <form
+              onSubmit={(e) => {
+                handleSearch(e);
+                setMobileMenuOpen(false);
+              }}
+              className="relative mb-3"
+              role="search"
+            >
+              <Search
+                className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+                aria-hidden="true"
+              />
               <Input
                 type="text"
                 placeholder="Search courses..."
@@ -268,7 +292,11 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link to="/instructors" onClick={() => setMobileMenuOpen(false)} className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl">
+              <Link
+                to="/instructors"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-3 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent rounded-xl"
+              >
                 Instructors
               </Link>
             </nav>
@@ -297,17 +325,34 @@ export function Navbar() {
                 >
                   <ThemeIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
-                <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-destructive rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" aria-label="Sign out">
+                <button
+                  onClick={handleLogout}
+                  className="p-2 text-muted-foreground hover:text-destructive rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label="Sign out"
+                >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
             </div>
           ) : (
             <div className="border-t border-border px-4 py-3 flex flex-col gap-2">
-              <Button variant="ghost" onClick={() => { navigate(ROUTES.LOGIN); setMobileMenuOpen(false); }} className="w-full justify-center rounded-full text-sm">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  navigate(ROUTES.LOGIN);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full justify-center rounded-full text-sm"
+              >
                 Sign In
               </Button>
-              <Button onClick={() => { navigate(ROUTES.REGISTER); setMobileMenuOpen(false); }} className="w-full justify-center rounded-full text-sm">
+              <Button
+                onClick={() => {
+                  navigate(ROUTES.REGISTER);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full justify-center rounded-full text-sm"
+              >
                 Create Free Account
               </Button>
             </div>

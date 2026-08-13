@@ -14,8 +14,7 @@ const itemVariants = {
 };
 
 export const InstructorStats = memo(function InstructorStats({ instructor }: InstructorStatsProps) {
-  const satisfaction =
-    instructor.averageRating > 0 ? Math.round((instructor.averageRating / 5) * 100) : 0;
+  const satisfaction = instructor.averageRating > 0 ? Math.round((instructor.averageRating / 5) * 100) : 0;
 
   const stats = [
     {

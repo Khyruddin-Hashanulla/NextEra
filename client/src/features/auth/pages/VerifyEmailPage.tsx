@@ -6,7 +6,11 @@ import { SEO } from '@/components/seo/SEO';
 export function VerifyEmailPage() {
   return (
     <PageTransition>
-      <SEO title="Verify Email" description="Verify your email address to activate your NextEra account." robots="noindex,nofollow" />
+      <SEO
+        title="Verify Email"
+        description="Verify your email address to activate your NextEra account."
+        robots="noindex,nofollow"
+      />
       <AuthLayout>
         <VerifyEmailForm />
       </AuthLayout>

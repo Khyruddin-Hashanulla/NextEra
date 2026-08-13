@@ -277,11 +277,15 @@ describe('SubscriptionPermissionService — require* methods', () => {
     });
 
     it('throws for starter plan', async () => {
-      await expect(service.requirePaidCoursePermission('instr1', QUOTA_FIXTURES.starter())).rejects.toThrow('Upgrade to Pro');
+      await expect(service.requirePaidCoursePermission('instr1', QUOTA_FIXTURES.starter())).rejects.toThrow(
+        'Upgrade to Pro'
+      );
     });
 
     it('throws for expired pro plan', async () => {
-      await expect(service.requirePaidCoursePermission('instr1', QUOTA_FIXTURES.pro({ status: 'expired' }))).rejects.toThrow('Upgrade to Pro');
+      await expect(
+        service.requirePaidCoursePermission('instr1', QUOTA_FIXTURES.pro({ status: 'expired' }))
+      ).rejects.toThrow('Upgrade to Pro');
     });
   });
 
@@ -321,7 +325,9 @@ describe('SubscriptionPermissionService — require* methods', () => {
     });
 
     it('throws for starter', async () => {
-      await expect(service.requireLiveClassPermission('instr1', QUOTA_FIXTURES.starter())).rejects.toThrow('Live classes');
+      await expect(service.requireLiveClassPermission('instr1', QUOTA_FIXTURES.starter())).rejects.toThrow(
+        'Live classes'
+      );
     });
   });
 
@@ -341,7 +347,9 @@ describe('SubscriptionPermissionService — require* methods', () => {
     });
 
     it('throws for starter', async () => {
-      await expect(service.requireAdvancedAnalyticsPermission('instr1', QUOTA_FIXTURES.starter())).rejects.toThrow('analytics');
+      await expect(service.requireAdvancedAnalyticsPermission('instr1', QUOTA_FIXTURES.starter())).rejects.toThrow(
+        'analytics'
+      );
     });
   });
 

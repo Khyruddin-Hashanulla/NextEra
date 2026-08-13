@@ -58,7 +58,7 @@ describe('withTransaction', () => {
     await expect(
       withTransaction(async () => {
         throw boom;
-      }),
+      })
     ).rejects.toThrow('boom');
 
     expect(session.abortTransaction).toHaveBeenCalledOnce();
@@ -83,7 +83,7 @@ describe('withTransaction', () => {
     await expect(
       withTransaction(async () => {
         throw new Error('work failed');
-      }),
+      })
     ).rejects.toThrow('work failed');
     expect(session.endSession).toHaveBeenCalledOnce();
   });
@@ -155,7 +155,7 @@ describe('withTransaction on a server without transaction support', () => {
     await expect(
       withTransaction(async () => {
         throw new Error('boom');
-      }),
+      })
     ).rejects.toThrow('boom');
 
     expect(session.abortTransaction).not.toHaveBeenCalled();

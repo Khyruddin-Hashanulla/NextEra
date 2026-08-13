@@ -13,7 +13,10 @@ export interface CertificatePayload {
 
 export function generateCertificateSignature(data: CertificatePayload): string {
   const payload = `${data.certificateId}|${data.userId}|${data.courseId}|${data.issuedAt}|v${data.version}`;
-  return crypto.createHmac('sha256', env.certificateSecret || 'cert-default-secret').update(payload).digest('hex');
+  return crypto
+    .createHmac('sha256', env.certificateSecret || 'cert-default-secret')
+    .update(payload)
+    .digest('hex');
 }
 
 export function verifyCertificateSignature(data: CertificatePayload, signature: string): boolean {

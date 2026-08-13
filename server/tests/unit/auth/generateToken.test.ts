@@ -58,11 +58,7 @@ describe('verifyAccessToken', () => {
   });
 
   it('throws for an expired token', () => {
-    const expired = jwt.sign(
-      { userId: 'x', role: 'student', email: 'x' },
-      env.jwtAccessSecret,
-      { expiresIn: '-10s' },
-    );
+    const expired = jwt.sign({ userId: 'x', role: 'student', email: 'x' }, env.jwtAccessSecret, { expiresIn: '-10s' });
     expect(() => verifyAccessToken(expired)).toThrow();
   });
 

@@ -28,10 +28,7 @@ export function verifyZoomWebhookSignature(options: ZoomWebhookVerificationOptio
   const deltaSeconds = Math.abs(now - ts * 1000);
   if (delta > windowMs && deltaSeconds > windowMs) return false;
 
-  const expected = crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.${rawBody}`)
-    .digest('base64');
+  const expected = crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('base64');
 
   const expectedBuffer = Buffer.from(expected);
   const receivedBuffer = Buffer.from(signature);

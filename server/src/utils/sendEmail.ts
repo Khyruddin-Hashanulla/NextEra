@@ -32,13 +32,13 @@ export const sendEmail = async (options: EmailOptions): Promise<void> => {
     logger.info(
       `[Email] Accepted to=${options.to} subject="${options.subject}" ` +
         `accepted=${JSON.stringify(info.accepted)} rejected=${JSON.stringify(info.rejected)} ` +
-        `response="${info.response}" messageId=${info.messageId}`,
+        `response="${info.response}" messageId=${info.messageId}`
     );
   } catch (error) {
     logger.error(
       `[Email] Failed to=${options.to} subject="${options.subject}" ` +
         `code=${(error as any)?.code} command=${(error as any)?.command} ` +
-        `response=${JSON.stringify((error as any)?.response)} message=${(error as any)?.message}`,
+        `response=${JSON.stringify((error as any)?.response)} message=${(error as any)?.message}`
     );
     throw error;
   }
@@ -149,11 +149,13 @@ export const sendInstructorDecisionEmail = async (options: {
       <h2 style="color: #f97316;">NextEra LMS - Instructor Application</h2>
       <p>Hi ${options.name},</p>
       <p>${heading}</p>
-      ${isApproved
-        ? `<p>You can now create and publish courses, manage your curriculum, and track your earnings from your instructor dashboard.</p>`
-        : `<p>Unfortunately, your application was not approved at this time.</p>
+      ${
+        isApproved
+          ? `<p>You can now create and publish courses, manage your curriculum, and track your earnings from your instructor dashboard.</p>`
+          : `<p>Unfortunately, your application was not approved at this time.</p>
            ${options.reason ? `<p style="background: #fef2f2; padding: 12px; border-radius: 8px; color: #b91c1c;">Reason: ${options.reason}</p>` : ''}
-           <p>You are welcome to review the requirements and reapply.</p>`}
+           <p>You are welcome to review the requirements and reapply.</p>`
+      }
       <div style="text-align: center; margin: 30px 0;">
         <a href="${isApproved ? dashboardUrl : applyUrl}"
            style="background: ${isApproved ? '#f97316' : '#6b7280'}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-size: 16px; display: inline-block;">

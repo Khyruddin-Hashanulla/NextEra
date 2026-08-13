@@ -10,10 +10,7 @@ export interface SafeRegexOptions {
   caseInsensitive?: boolean;
 }
 
-export function validateSearchInput(
-  input: unknown,
-  options?: SafeRegexOptions
-): string {
+export function validateSearchInput(input: unknown, options?: SafeRegexOptions): string {
   const maxLength = options?.maxLength ?? MAX_SEARCH_LENGTH;
 
   if (typeof input !== 'string') {

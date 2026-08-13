@@ -7,6 +7,7 @@ export interface FileUploadResult {
   url: string;
   publicId: string;
   name?: string;
+  duration?: number;
 }
 
 interface FileUploaderProps {
@@ -30,7 +31,17 @@ function formatSize(bytes: number): string {
   return `${value} ${sizes[i]}`;
 }
 
-export function FileUploader({ accept, maxSize, label, hint, value, onChange, upload, disabled, compact }: FileUploaderProps) {
+export function FileUploader({
+  accept,
+  maxSize,
+  label,
+  hint,
+  value,
+  onChange,
+  upload,
+  disabled,
+  compact,
+}: FileUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +105,9 @@ export function FileUploader({ accept, maxSize, label, hint, value, onChange, up
           <FileIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{value.name || 'Uploaded file'}</p>
-            <a href={value.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">View file</a>
+            <a href={value.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+              View file
+            </a>
           </div>
         </div>
         {!disabled && (
@@ -111,11 +124,16 @@ export function FileUploader({ accept, maxSize, label, hint, value, onChange, up
       <div
         role="button"
         tabIndex={0}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={() => !isUploading && inputRef.current?.click()}
-        onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !isUploading) inputRef.current?.click(); }}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !isUploading) inputRef.current?.click();
+        }}
         className={`
           relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors
           ${dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
@@ -128,7 +146,10 @@ export function FileUploader({ accept, maxSize, label, hint, value, onChange, up
           type="file"
           accept={accept}
           disabled={disabled || isUploading}
-          onChange={(e) => { handleFile(e.target.files?.[0] || null); if (e.target) e.target.value = ''; }}
+          onChange={(e) => {
+            handleFile(e.target.files?.[0] || null);
+            if (e.target) e.target.value = '';
+          }}
           className="hidden"
         />
         {isUploading ? (
@@ -153,7 +174,9 @@ export function FileUploader({ accept, maxSize, label, hint, value, onChange, up
             <p className="text-sm font-medium">{label}</p>
             <p className="mt-1 text-xs text-muted-foreground">Drag & drop or click to browse</p>
             {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-            <p className="text-xs text-muted-foreground">Accepted: {accept} (max {formatSize(maxSize)})</p>
+            <p className="text-xs text-muted-foreground">
+              Accepted: {accept} (max {formatSize(maxSize)})
+            </p>
           </>
         )}
       </div>

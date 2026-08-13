@@ -103,7 +103,7 @@ describe('authenticate middleware', () => {
   });
 
   it('does not check token version when absent on the token', async () => {
-    const { tokenVersion, ...noVersion } = decoded;
+    const { tokenVersion: _tokenVersion, ...noVersion } = decoded;
     vi.mocked(verifyAccessToken).mockReturnValue(noVersion);
     vi.mocked(UserModel.findById as never).mockResolvedValue(userDoc);
     vi.mocked(RevokedToken.findOne as never).mockResolvedValue(null);
@@ -115,7 +115,7 @@ describe('authenticate middleware', () => {
   });
 
   it('skips the revocation check when the token has no jti', async () => {
-    const { jti, ...noJti } = decoded;
+    const { jti: _jti, ...noJti } = decoded;
     vi.mocked(verifyAccessToken).mockReturnValue(noJti);
     vi.mocked(UserModel.findById as never).mockResolvedValue(userDoc);
     vi.mocked(RevokedToken.findOne as never).mockResolvedValue(null);

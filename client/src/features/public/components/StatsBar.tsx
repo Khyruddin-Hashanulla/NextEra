@@ -48,7 +48,8 @@ export function StatsBar({ stats, className, columns = 4 }: StatsBarProps) {
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 + index * 0.1 }}
           >
-            {formatNumber(stat.value)}{stat.suffix || ''}
+            {formatNumber(stat.value)}
+            {stat.suffix || ''}
           </motion.p>
           <p className="text-sm mt-1">{stat.label}</p>
         </motion.div>

@@ -15,12 +15,7 @@ export function LoadingSpinner({ size = 'md', className, label = 'Loading' }: Lo
 
   return (
     <div className={cn('flex items-center justify-center', className)} role="status" aria-live="polite">
-      <div
-        className={cn(
-          'animate-spin rounded-full border-primary border-t-transparent',
-          sizeClasses[size]
-        )}
-      />
+      <div className={cn('animate-spin rounded-full border-primary border-t-transparent', sizeClasses[size])} />
       <span className="sr-only">{label}</span>
     </div>
   );

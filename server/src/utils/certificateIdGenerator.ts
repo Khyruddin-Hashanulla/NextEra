@@ -46,7 +46,7 @@ export async function generateCertificateId(categoryName: string): Promise<strin
   const counter = await CertificateCounter.findByIdAndUpdate(
     `cert_${year}_${category}`,
     { $inc: { seq: 1 } },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
   );
 
   const seq = String(counter.seq).padStart(6, '0');

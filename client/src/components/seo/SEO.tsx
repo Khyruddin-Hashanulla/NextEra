@@ -27,15 +27,9 @@ export function SEO({
   author,
 }: SEOProps) {
   const pageTitle = formatPageTitle(title);
-  const pageUrl = url
-    ? (url.startsWith('http') ? url : buildCanonical(url))
-    : buildCanonical(canonical || '/');
-  const pageCanonical = canonical
-    ? (canonical.startsWith('http') ? canonical : buildCanonical(canonical))
-    : pageUrl;
-  const pageImage = image.startsWith('http')
-    ? image
-    : `${SEO_DEFAULTS.SITE_URL.replace(/\/+$/, '')}${image}`;
+  const pageUrl = url ? (url.startsWith('http') ? url : buildCanonical(url)) : buildCanonical(canonical || '/');
+  const pageCanonical = canonical ? (canonical.startsWith('http') ? canonical : buildCanonical(canonical)) : pageUrl;
+  const pageImage = image.startsWith('http') ? image : `${SEO_DEFAULTS.SITE_URL.replace(/\/+$/, '')}${image}`;
 
   return (
     <Helmet>

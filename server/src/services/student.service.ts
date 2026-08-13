@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { User } from '../models/user.model';
 import { ROLES } from '../constants/roles';
@@ -17,78 +16,76 @@ import { Review } from '../models/review.model';
 import { QuizAttempt } from '../models/quizAttempt.model';
 import { AssignmentSubmission } from '../models/assignmentSubmission.model';
 import { Certificate } from '../models/certificate.model';
-import { Coupon } from '../models/coupon.model';
 import { Notification } from '../models/notification.model';
+import { Announcement } from '../models/announcement.model';
 import { Wishlist } from '../models/wishlist.model';
 import { ApiError } from '../utils/ApiError';
 import { sanitizePlainText } from '../utils/sanitize';
 import { escapeRegex } from '../utils/escapeRegex';
-import { env } from '../config/env';
-import { generateCertificateSignature, generateQrCodePngBuffer, getQrCodeImageUrl, verifyCertificateSignature, getVerificationUrl } from '../utils/certificate';
+import {
+  generateCertificateSignature,
+  generateQrCodePngBuffer,
+  getQrCodeImageUrl,
+  verifyCertificateSignature,
+  getVerificationUrl,
+} from '../utils/certificate';
 import { generateCertificateId } from '../utils/certificateIdGenerator';
 import { generateCertificatePdf, getCertificateUrl } from '../utils/pdfGenerator';
-import { logger } from '../utils/logger';
 import { withTransaction } from '../utils/transaction';
 import { paymentService } from './payment.service';
+import { entitlementService } from './entitlement.service';
 import { cacheService } from '../cache/cache.service';
 import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
 import { cacheManager } from '../cache/cacheManager';
 
-const RAZORPAY_KEY_ID = env.razorpayKeyId;
-const RAZORPAY_KEY_SECRET = env.razorpayKeySecret;
-
 export class StudentService {
   // ─── Dashboard ───────────────────────────────────────────────
   async getDashboard(userId: string) {
-    return cacheService.remember(
-      cacheKeys.studentDashboard(userId),
-      { ttl: CACHE_TTL.STUDENT_DASHBOARD },
-      async () => {
-        const [enrollmentResult, certificates] = await Promise.all([
-          Enrollment.aggregate([
-            { $match: { user: new mongoose.Types.ObjectId(userId) } },
-            { $sort: { enrolledAt: -1 } },
-            {
-              $lookup: { from: 'courses', localField: 'course', foreignField: '_id', as: 'course' },
-            },
-            {
-              $addFields: {
-                course: {
-                  $let: {
-                    vars: { c: { $arrayElemAt: ['$course', 0] } },
-                    in: {
-                      $cond: [
-                        { $eq: ['$$c', null] },
-                        null,
-                        {
-                          _id: '$$c._id',
-                          title: '$$c.title',
-                          thumbnail: '$$c.thumbnail',
-                          price: '$$c.price',
-                          level: '$$c.level',
-                          totalLectures: '$$c.totalLectures',
-                          totalDuration: '$$c.totalDuration',
-                        },
-                      ],
-                    },
+    return cacheService.remember(cacheKeys.studentDashboard(userId), { ttl: CACHE_TTL.STUDENT_DASHBOARD }, async () => {
+      const [enrollmentResult, certificates] = await Promise.all([
+        Enrollment.aggregate([
+          { $match: { user: new mongoose.Types.ObjectId(userId) } },
+          { $sort: { enrolledAt: -1 } },
+          {
+            $lookup: { from: 'courses', localField: 'course', foreignField: '_id', as: 'course' },
+          },
+          {
+            $addFields: {
+              course: {
+                $let: {
+                  vars: { c: { $arrayElemAt: ['$course', 0] } },
+                  in: {
+                    $cond: [
+                      { $eq: ['$$c', null] },
+                      null,
+                      {
+                        _id: '$$c._id',
+                        title: '$$c.title',
+                        thumbnail: '$$c.thumbnail',
+                        price: '$$c.price',
+                        level: '$$c.level',
+                        totalLectures: '$$c.totalLectures',
+                        totalDuration: '$$c.totalDuration',
+                      },
+                    ],
                   },
                 },
               },
             },
-          ]),
-          Certificate.countDocuments({ user: userId }),
-        ]);
+          },
+        ]),
+        Certificate.countDocuments({ user: userId }),
+      ]);
 
-        const enrollments = enrollmentResult ?? [];
-        const totalCourses = enrollments.length;
-        const completedCourses = enrollments.filter((e) => e.isCompleted).length;
-        const inProgress = enrollments.filter((e) => !e.isCompleted && e.completionPercentage > 0).length;
+      const enrollments = enrollmentResult ?? [];
+      const totalCourses = enrollments.length;
+      const completedCourses = enrollments.filter((e) => e.isCompleted).length;
+      const inProgress = enrollments.filter((e) => !e.isCompleted && e.completionPercentage > 0).length;
 
-        const recentCourses = enrollments.slice(0, 5);
+      const recentCourses = enrollments.slice(0, 5);
 
-        return { totalCourses, completedCourses, inProgress, certificates, recentCourses, enrollments };
-      }
-    );
+      return { totalCourses, completedCourses, inProgress, certificates, recentCourses, enrollments };
+    });
   }
 
   // ─── Course Catalog ──────────────────────────────────────────
@@ -287,7 +284,9 @@ export class StudentService {
 
     const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
     const sectionIds = sections.map((s) => s._id);
-    const lectures = await Lecture.find({ section: { $in: sectionIds } }).sort({ order: 1 }).lean();
+    const lectures = await Lecture.find({ section: { $in: sectionIds } })
+      .sort({ order: 1 })
+      .lean();
 
     let enrollment = null;
     let isEnrolled = false;
@@ -339,7 +338,7 @@ export class StudentService {
       const { quiz, ...rest } = lecture;
       if (quiz?.questions) {
         quiz.questions = quiz.questions.map((q: any) => {
-          const { correctAnswer, ...safeQuestion } = q;
+          const { correctAnswer: _correctAnswer, ...safeQuestion } = q;
           return safeQuestion;
         });
       }
@@ -371,6 +370,8 @@ export class StudentService {
     if (existing) {
       return { free: true, alreadyEnrolled: true, enrollment: existing };
     }
+
+    await entitlementService.requireStudentCapacity(course.instructor.toString(), userId);
 
     try {
       const result = await withTransaction(async (session) => {
@@ -445,7 +446,12 @@ export class StudentService {
     return paymentService.initiateBundlePayment(userId, bundleId, couponCode);
   }
 
-  async verifyBundlePayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
+  async verifyBundlePayment(
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string
+  ) {
     return paymentService.verifyBundlePayment(userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
   }
 
@@ -467,12 +473,22 @@ export class StudentService {
     return paymentService.initiateSubscriptionPayment(userId, subscriptionId, couponCode);
   }
 
-  async verifySubscriptionPayment(userId: string, razorpayOrderId: string, razorpayPaymentId: string, razorpaySignature: string) {
+  async verifySubscriptionPayment(
+    userId: string,
+    razorpayOrderId: string,
+    razorpayPaymentId: string,
+    razorpaySignature: string
+  ) {
     return paymentService.verifySubscriptionPayment(userId, razorpayOrderId, razorpayPaymentId, razorpaySignature);
   }
 
   // ─── Progress Tracking ───────────────────────────────────────
-  async updateProgress(userId: string, courseId: string, lectureId: string, data: { position?: number; completed?: boolean; duration?: number }) {
+  async updateProgress(
+    userId: string,
+    courseId: string,
+    lectureId: string,
+    data: { position?: number; completed?: boolean; duration?: number }
+  ) {
     const enrollment = await Enrollment.findOne({ user: userId, course: courseId });
     if (!enrollment) throw ApiError.notFound('Not enrolled in this course');
 
@@ -501,9 +517,8 @@ export class StudentService {
     if (data.position !== undefined) enrollment.lastWatchedTimestamp = data.position;
 
     const totalLectures = await Lecture.countDocuments({ course: courseId });
-    enrollment.completionPercentage = totalLectures > 0
-      ? Math.round((enrollment.completedLectures.length / totalLectures) * 100)
-      : 0;
+    enrollment.completionPercentage =
+      totalLectures > 0 ? Math.round((enrollment.completedLectures.length / totalLectures) * 100) : 0;
 
     if (enrollment.completionPercentage >= 100) {
       enrollment.isCompleted = true;
@@ -547,10 +562,7 @@ export class StudentService {
     const filter: any = { user: userId };
     if (courseId) filter.course = courseId;
     if (lectureId) filter.lecture = lectureId;
-    const notes = await Note.find(filter)
-      .populate('lecture', 'title')
-      .sort({ createdAt: -1 })
-      .lean();
+    const notes = await Note.find(filter).populate('lecture', 'title').sort({ createdAt: -1 }).lean();
     return notes;
   }
 
@@ -588,11 +600,12 @@ export class StudentService {
   }
 
   // ─── Discussion ──────────────────────────────────────────────
-  async createDiscussion(userId: string, data: { courseId: string; lectureId?: string; title: string; content: string }) {
+  async createDiscussion(
+    userId: string,
+    data: { courseId: string; lectureId?: string; title: string; content: string }
+  ) {
     const discussion = await Discussion.create({ user: userId, ...data });
-    const populated = await Discussion.findById(discussion._id)
-      .populate('user', 'name avatar')
-      .lean();
+    const populated = await Discussion.findById(discussion._id).populate('user', 'name avatar').lean();
     return populated;
   }
 
@@ -642,11 +655,7 @@ export class StudentService {
 
   async updateReview(reviewId: string, rating: number, review?: string) {
     return withTransaction(async (session) => {
-      const updated = await Review.findByIdAndUpdate(
-        reviewId,
-        { $set: { rating, review } },
-        { new: true, session }
-      );
+      const updated = await Review.findByIdAndUpdate(reviewId, { $set: { rating, review } }, { new: true, session });
       if (!updated) throw ApiError.notFound('Review not found');
       await this.updateCourseRatings(updated.course.toString(), session);
       return updated;
@@ -673,15 +682,24 @@ export class StudentService {
       { $group: { _id: null, averageRating: { $avg: '$rating' }, totalReviews: { $sum: 1 } } },
     ]).session(session || null);
     if (stats.length > 0) {
-      await Course.findByIdAndUpdate(courseId, {
-        averageRating: Math.round(stats[0].averageRating * 10) / 10,
-        totalReviews: stats[0].totalReviews,
-      }, { session });
+      await Course.findByIdAndUpdate(
+        courseId,
+        {
+          averageRating: Math.round(stats[0].averageRating * 10) / 10,
+          totalReviews: stats[0].totalReviews,
+        },
+        { session }
+      );
     }
   }
 
   // ─── Quiz ────────────────────────────────────────────────────
-  async submitQuiz(userId: string, courseId: string, lectureId: string, answers: { question: string; selectedAnswer: string }[]) {
+  async submitQuiz(
+    userId: string,
+    courseId: string,
+    lectureId: string,
+    answers: { question: string; selectedAnswer: string }[]
+  ) {
     const lecture = await Lecture.findById(lectureId);
     if (!lecture || lecture.type !== 'assignment' || !lecture.assignment) {
       throw ApiError.badRequest('This lecture does not contain a quiz');
@@ -719,14 +737,18 @@ export class StudentService {
   }
 
   async getQuizAttempts(userId: string, lectureId: string) {
-    const attempts = await QuizAttempt.find({ user: userId, lecture: lectureId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const attempts = await QuizAttempt.find({ user: userId, lecture: lectureId }).sort({ createdAt: -1 }).lean();
     return attempts;
   }
 
   // ─── Assignment ──────────────────────────────────────────────
-  async submitAssignment(userId: string, courseId: string, lectureId: string, content?: string, files?: { url: string; publicId: string; name: string }[]) {
+  async submitAssignment(
+    userId: string,
+    courseId: string,
+    lectureId: string,
+    content?: string,
+    files?: { url: string; publicId: string; name: string }[]
+  ) {
     const user = await User.findById(userId).lean();
     if (!user || !user.isActive) throw ApiError.forbidden('Account is blocked');
 
@@ -826,9 +848,7 @@ export class StudentService {
   }
 
   async getAssignmentsOverview(userId: string, page = 1, limit = 20, courseId?: string, status?: string) {
-    const enrolledCourses = await Enrollment.find({ user: userId })
-      .select('course')
-      .lean();
+    const enrolledCourses = await Enrollment.find({ user: userId }).select('course').lean();
     const enrolledCourseIds = enrolledCourses.map((e) => e.course);
 
     const lectureMatch: any = { type: 'assignment' };
@@ -906,9 +926,7 @@ export class StudentService {
   }
 
   async getAssignmentDetail(userId: string, lectureId: string) {
-    const lecture = await Lecture.findById(lectureId)
-      .populate('course', 'title thumbnail instructor')
-      .lean();
+    const lecture = await Lecture.findById(lectureId).populate('course', 'title thumbnail instructor').lean();
 
     if (!lecture || lecture.type !== 'assignment') {
       throw ApiError.notFound('Assignment not found');
@@ -962,10 +980,7 @@ export class StudentService {
     if (existingCert) return existingCert;
 
     const user = await User.findById(userId).lean();
-    const course = await Course.findById(courseId)
-      .populate('instructor', 'name')
-      .populate('category', 'name')
-      .lean();
+    const course = await Course.findById(courseId).populate('instructor', 'name').populate('category', 'name').lean();
     if (!user || !course) throw ApiError.notFound('User or Course not found');
     if (!course.isApproved) throw ApiError.badRequest('Course is not approved');
     if (course.status !== 'published') throw ApiError.badRequest('Course is not published');
@@ -989,9 +1004,7 @@ export class StudentService {
         .select('percentage passed')
         .lean();
       if (!best || Number(best.percentage) < minScore) {
-        throw ApiError.badRequest(
-          `A minimum quiz score of ${minScore}% is required to earn this certificate`
-        );
+        throw ApiError.badRequest(`A minimum quiz score of ${minScore}% is required to earn this certificate`);
       }
     }
 
@@ -1016,7 +1029,7 @@ export class StudentService {
     const courseLevel = course.level || '';
     const courseDuration = course.totalDuration || 0;
 
-    const pdfPath = await generateCertificatePdf({
+    await generateCertificatePdf({
       studentName: user.name,
       courseTitle: course.title,
       instructorName,
@@ -1035,32 +1048,35 @@ export class StudentService {
 
     try {
       return await withTransaction(async (session) => {
-        const [certificate] = await Certificate.create([{
-          user: userId,
-          course: courseId,
-          enrollment: enrollment._id,
-          certificateId,
-          verificationUrl,
-          qrCodeUrl: qrCodeImageUrl,
-          certificateUrl,
-          pdfUrl,
-          digitalSignature,
-          status: 'active',
-          version: 1,
-          metadata: {
-            categoryName,
-            courseDuration,
-            courseLevel,
-            instructorName,
-          },
-          issuedAt,
-        }], { session });
+        const [certificate] = await Certificate.create(
+          [
+            {
+              user: userId,
+              course: courseId,
+              enrollment: enrollment._id,
+              certificateId,
+              verificationUrl,
+              qrCodeUrl: qrCodeImageUrl,
+              certificateUrl,
+              pdfUrl,
+              digitalSignature,
+              status: 'active',
+              version: 1,
+              metadata: {
+                categoryName,
+                courseDuration,
+                courseLevel,
+                instructorName,
+              },
+              issuedAt,
+            },
+          ],
+          { session }
+        );
 
         await Enrollment.findByIdAndUpdate(enrollment._id, { certificateUrl: pdfUrl }, { session });
 
-        const populated = await Certificate.findById(certificate._id)
-          .populate('course', 'title')
-          .lean();
+        const populated = await Certificate.findById(certificate._id).populate('course', 'title').lean();
 
         return populated;
       });
@@ -1102,7 +1118,7 @@ export class StudentService {
         issuedAt: cert.issuedAt.toISOString(),
         version: cert.version || 1,
       },
-      cert.digitalSignature,
+      cert.digitalSignature
     );
 
     const isRevoked = cert.status === 'revoked';
@@ -1127,7 +1143,10 @@ export class StudentService {
     return { buffer, filename: `certificate-${certificateId}-qr.png` };
   }
 
-  async downloadCertificate(userId: string, certificateId: string): Promise<{ filePath: string; filename: string; contentType: string }> {
+  async downloadCertificate(
+    userId: string,
+    certificateId: string
+  ): Promise<{ filePath: string; filename: string; contentType: string }> {
     const cert = await Certificate.findOne({ certificateId }).lean();
     if (!cert) throw ApiError.notFound('Certificate not found');
     if (cert.user.toString() !== userId) throw ApiError.forbidden('Not your certificate');
@@ -1145,7 +1164,7 @@ export class StudentService {
 
     const verificationUrl = cert.verificationUrl || getVerificationUrl(cert.certificateId);
     const qrCodeData = await generateQrCodePngBuffer(verificationUrl);
-    const instructorName = (cert.metadata?.instructorName) || (course as any)?.instructor?.name || 'Instructor';
+    const instructorName = cert.metadata?.instructorName || (course as any)?.instructor?.name || 'Instructor';
 
     const pdfPath = await generateCertificatePdf({
       studentName: user?.name || 'Student',
@@ -1181,21 +1200,17 @@ export class StudentService {
   }
 
   async listWishlist(userId: string) {
-    return cacheService.remember(
-      cacheKeys.wishlist(userId),
-      { ttl: CACHE_TTL.WISHLIST },
-      async () => {
-        const items = await Wishlist.find({ user: userId })
-          .populate({
-            path: 'course',
-            select: 'title thumbnail price level instructor totalDuration averageRating totalReviews',
-            populate: { path: 'instructor', select: 'name avatar' },
-          })
-          .sort({ createdAt: -1 })
-          .lean();
-        return items;
-      }
-    );
+    return cacheService.remember(cacheKeys.wishlist(userId), { ttl: CACHE_TTL.WISHLIST }, async () => {
+      const items = await Wishlist.find({ user: userId })
+        .populate({
+          path: 'course',
+          select: 'title thumbnail price level instructor totalDuration averageRating totalReviews',
+          populate: { path: 'instructor', select: 'name avatar' },
+        })
+        .sort({ createdAt: -1 })
+        .lean();
+      return items;
+    });
   }
 
   // ─── Order History ────────────────────────────────────────────
@@ -1297,11 +1312,7 @@ export class StudentService {
   async listNotifications(userId: string, page = 1, limit = 20) {
     const skip = (page - 1) * limit;
     const [notifications, total, unreadCount] = await Promise.all([
-      Notification.find({ user: userId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      Notification.find({ user: userId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       Notification.countDocuments({ user: userId }),
       Notification.countDocuments({ user: userId, isRead: false }),
     ]);
@@ -1321,6 +1332,23 @@ export class StudentService {
   async markAllNotificationsRead(userId: string) {
     await Notification.updateMany({ user: userId, isRead: false }, { isRead: true });
     return { success: true };
+  }
+
+  // ─── Announcements ───────────────────────────────────────────
+  async listAnnouncements(userId: string, page = 1, limit = 20) {
+    const enrollments = await Enrollment.find({ user: userId }).select('course').lean();
+    const courseIds = enrollments.map((e) => e.course);
+    const skip = (page - 1) * limit;
+    const [announcements, total] = await Promise.all([
+      Announcement.find({ course: { $in: courseIds } })
+        .populate('course', 'title')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Announcement.countDocuments({ course: { $in: courseIds } }),
+    ]);
+    return { announcements, total, page, limit, totalPages: Math.ceil(total / limit) };
   }
 }
 

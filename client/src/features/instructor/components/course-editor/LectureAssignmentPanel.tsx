@@ -37,7 +37,9 @@ export function LectureAssignmentPanel({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="assignment-question" className="text-sm font-medium">Question / Instructions *</label>
+        <label htmlFor="assignment-question" className="text-sm font-medium">
+          Question / Instructions *
+        </label>
         <Textarea
           id="assignment-question"
           value={assignment.question || ''}
@@ -48,7 +50,9 @@ export function LectureAssignmentPanel({
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="assignment-details" className="text-sm font-medium">Additional Details</label>
+        <label htmlFor="assignment-details" className="text-sm font-medium">
+          Additional Details
+        </label>
         <Textarea
           id="assignment-details"
           value={assignment.instructions || ''}
@@ -60,7 +64,9 @@ export function LectureAssignmentPanel({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="assignment-due" className="text-sm font-medium">Deadline</label>
+          <label htmlFor="assignment-due" className="text-sm font-medium">
+            Deadline
+          </label>
           <Input
             id="assignment-due"
             type="date"
@@ -70,7 +76,9 @@ export function LectureAssignmentPanel({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <label htmlFor="assignment-total" className="text-sm font-medium">Total Marks</label>
+            <label htmlFor="assignment-total" className="text-sm font-medium">
+              Total Marks
+            </label>
             <Input
               id="assignment-total"
               type="number"
@@ -80,7 +88,9 @@ export function LectureAssignmentPanel({
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="assignment-passing" className="text-sm font-medium">Passing Marks</label>
+            <label htmlFor="assignment-passing" className="text-sm font-medium">
+              Passing Marks
+            </label>
             <Input
               id="assignment-passing"
               type="number"
@@ -95,12 +105,17 @@ export function LectureAssignmentPanel({
       <div className="rounded-lg border p-3 space-y-3">
         <label className="flex items-center justify-between gap-2 text-sm font-medium">
           Allow late submissions
-          <Switch checked={assignment.allowLateSubmission ?? false} onCheckedChange={(v) => set({ allowLateSubmission: v })} />
+          <Switch
+            checked={assignment.allowLateSubmission ?? false}
+            onCheckedChange={(v) => set({ allowLateSubmission: v })}
+          />
         </label>
         {assignment.allowLateSubmission && (
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="late-days" className="text-sm font-medium">Late window (days)</label>
+              <label htmlFor="late-days" className="text-sm font-medium">
+                Late window (days)
+              </label>
               <Input
                 id="late-days"
                 type="number"
@@ -110,7 +125,9 @@ export function LectureAssignmentPanel({
               />
             </div>
             <div className="space-y-2">
-              <label htmlFor="penalty" className="text-sm font-medium">Penalty %</label>
+              <label htmlFor="penalty" className="text-sm font-medium">
+                Penalty %
+              </label>
               <Input
                 id="penalty"
                 type="number"
@@ -134,7 +151,10 @@ export function LectureAssignmentPanel({
           value={null}
           onChange={(r) => {
             if (r) {
-              onAttachmentsChange([...(attachments || []), { url: r.url, publicId: r.publicId, name: r.name || 'Attachment', type: 'file', size: 0 }]);
+              onAttachmentsChange([
+                ...(attachments || []),
+                { url: r.url, publicId: r.publicId, name: r.name || 'Attachment', type: 'file', size: 0 },
+              ]);
             }
           }}
           upload={uploadApi.document}
@@ -145,7 +165,9 @@ export function LectureAssignmentPanel({
               <div key={i} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{a.name}</p>
-                  <a href={a.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">View file</a>
+                  <a href={a.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
+                    View file
+                  </a>
                 </div>
                 <button
                   type="button"

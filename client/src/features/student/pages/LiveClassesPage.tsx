@@ -6,10 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/providers/ToastProvider';
 import { CardGridSkeleton } from '@/components/skeletons/ListSkeleton';
-import {
-  Calendar, Clock, Video, ExternalLink, User, Play, Monitor,
-  ChevronLeft, ChevronRight,
-} from 'lucide-react';
+import { Calendar, Clock, Video, ExternalLink, User, Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
   scheduled: 'bg-blue-100 text-blue-700',
@@ -52,8 +49,26 @@ export function LiveClassesPage() {
       </div>
 
       <div className="flex gap-2">
-        <Button variant={filter === 'upcoming' ? 'default' : 'outline'} size="sm" onClick={() => { setFilter('upcoming'); setPage(1); }}>Upcoming</Button>
-        <Button variant={filter === 'past' ? 'default' : 'outline'} size="sm" onClick={() => { setFilter('past'); setPage(1); }}>Past</Button>
+        <Button
+          variant={filter === 'upcoming' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setFilter('upcoming');
+            setPage(1);
+          }}
+        >
+          Upcoming
+        </Button>
+        <Button
+          variant={filter === 'past' ? 'default' : 'outline'}
+          size="sm"
+          onClick={() => {
+            setFilter('past');
+            setPage(1);
+          }}
+        >
+          Past
+        </Button>
       </div>
 
       {isLoading ? (
@@ -78,7 +93,9 @@ export function LiveClassesPage() {
                       <CardTitle className="text-base">{item.title}</CardTitle>
                       <p className="text-xs text-muted-foreground mt-1">{item.course?.title}</p>
                     </div>
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[item.status] || ''}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[item.status] || ''}`}
+                    >
                       {isLive && <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />}
                       {item.status}
                     </span>
@@ -88,7 +105,12 @@ export function LiveClassesPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Calendar className="h-4 w-4" />
-                      {startDate.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                      {startDate.toLocaleDateString(undefined, {
+                        weekday: 'long',
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </div>
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <Clock className="h-4 w-4" />
@@ -109,11 +131,23 @@ export function LiveClassesPage() {
                   <div className="mt-4 flex gap-2">
                     {(isLive || isUpcoming) && (
                       <Button size="sm" onClick={() => joinMutation.mutate(item._id)} disabled={joinMutation.isPending}>
-                        {isLive ? <><Monitor className="mr-1 h-4 w-4" />Join Now</> : <><ExternalLink className="mr-1 h-4 w-4" />Join</>}
+                        {isLive ? (
+                          <>
+                            <Monitor className="mr-1 h-4 w-4" />
+                            Join Now
+                          </>
+                        ) : (
+                          <>
+                            <ExternalLink className="mr-1 h-4 w-4" />
+                            Join
+                          </>
+                        )}
                       </Button>
                     )}
                     {item.zoomMeetingId && (
-                      <Badge variant="outline" className="text-xs">ID: {item.zoomMeetingId}</Badge>
+                      <Badge variant="outline" className="text-xs">
+                        ID: {item.zoomMeetingId}
+                      </Badge>
                     )}
                   </div>
                 </CardContent>
@@ -125,12 +159,19 @@ export function LiveClassesPage() {
 
       {pagination && pagination.pages > 1 && (
         <div className="flex items-center justify-between pt-4">
-          <p className="text-sm text-muted-foreground">Page {pagination.page} of {pagination.pages}</p>
+          <p className="text-sm text-muted-foreground">
+            Page {pagination.page} of {pagination.pages}
+          </p>
           <div className="flex gap-2">
             <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <Button size="sm" variant="outline" disabled={page >= pagination.pages} onClick={() => setPage((p) => p + 1)}>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={page >= pagination.pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>

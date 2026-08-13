@@ -24,7 +24,7 @@ export interface RenderWithProvidersResult extends RenderResult {
 
 export function renderWithProviders(
   ui: ReactElement,
-  options: RenderWithProvidersOptions = {},
+  options: RenderWithProvidersOptions = {}
 ): RenderWithProvidersResult {
   const { user = null, route = '/', initialEntries, mockAuth } = options;
   const queryClient = options.queryClient ?? createTestQueryClient();

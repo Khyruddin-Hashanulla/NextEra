@@ -25,7 +25,12 @@ export function BlogPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [form, setForm] = useState<{ title: string; content: string; excerpt: string; status: 'draft' | 'published' }>({ title: '', content: '', excerpt: '', status: 'draft' });
+  const [form, setForm] = useState<{ title: string; content: string; excerpt: string; status: 'draft' | 'published' }>({
+    title: '',
+    content: '',
+    excerpt: '',
+    status: 'draft',
+  });
   const queryClient = useQueryClient();
   const { addToast } = useToast();
 
@@ -91,7 +96,12 @@ export function BlogPage() {
           <h1 className="text-2xl font-bold tracking-tight">Blog Management</h1>
           <p className="mt-1 text-muted-foreground">Manage blog posts</p>
         </div>
-        <Button onClick={() => { resetForm(); setShowForm(true); }}>
+        <Button
+          onClick={() => {
+            resetForm();
+            setShowForm(true);
+          }}
+        >
           <Plus className="mr-1.5 h-4 w-4" /> New Post
         </Button>
       </motion.div>
@@ -121,9 +131,15 @@ export function BlogPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Title</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Author</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Created</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Author
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Status
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Created
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -133,13 +149,19 @@ export function BlogPage() {
                         <td className="px-4 py-3 font-medium">{blog.title}</td>
                         <td className="px-4 py-3 text-muted-foreground">{blog.author?.name || 'N/A'}</td>
                         <td className="px-4 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                            blog.status === 'published'
-                              ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                          }`}>{blog.status}</span>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                              blog.status === 'published'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                            }`}
+                          >
+                            {blog.status}
+                          </span>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(blog.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(blog.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
                             <Button variant="ghost" size="sm" onClick={() => openEdit(blog)}>
@@ -164,7 +186,12 @@ export function BlogPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -180,33 +207,56 @@ export function BlogPage() {
           <div className="w-full max-w-2xl rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">{editingId ? 'Edit Post' : 'New Post'}</h2>
-              <Button variant="ghost" size="sm" onClick={resetForm}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={resetForm}>
+                Close
+              </Button>
             </div>
             <div className="max-h-[60vh] space-y-4 overflow-y-auto pr-2">
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Post title" />
+                <Input
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  placeholder="Post title"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Excerpt</Label>
-                <Input value={form.excerpt} onChange={(e) => setForm({ ...form, excerpt: e.target.value })} placeholder="Brief excerpt" />
+                <Input
+                  value={form.excerpt}
+                  onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                  placeholder="Brief excerpt"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Content</Label>
-                <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} placeholder="Write your content..." rows={10} />
+                <Textarea
+                  value={form.content}
+                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  placeholder="Write your content..."
+                  rows={10}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value as 'draft' | 'published' })}
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <select
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value as 'draft' | 'published' })}
+                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                >
                   <option value="draft">Draft</option>
                   <option value="published">Published</option>
                 </select>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button onClick={handleSubmit} disabled={!form.title || !form.content || createMutation.isPending || updateMutation.isPending}>
+              <Button variant="outline" onClick={resetForm}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!form.title || !form.content || createMutation.isPending || updateMutation.isPending}
+              >
                 {editingId ? 'Update' : 'Publish'}
               </Button>
             </div>
@@ -220,8 +270,16 @@ export function BlogPage() {
             <h2 className="text-lg font-semibold">Delete Post</h2>
             <p className="mt-2 text-sm text-muted-foreground">Are you sure? This action cannot be undone.</p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteId)} loading={deleteMutation.isPending}>Delete</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteMutation.mutate(deleteId)}
+                loading={deleteMutation.isPending}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>

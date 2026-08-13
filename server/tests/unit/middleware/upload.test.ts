@@ -45,7 +45,6 @@ vi.mock('multer', () => ({
   default: hoisted.multerFn,
 }));
 
-
 function file(mimetype: string, originalname: string, fieldname = 'file'): any {
   return { mimetype, originalname, fieldname, buffer: Buffer.from('x') };
 }
@@ -160,7 +159,7 @@ describe('upload middleware', () => {
     expect(handleMulterError(new hoisted.MockMulterError('LIMIT_FILE_SIZE'))).toBe('File is too large');
     expect(handleMulterError(new hoisted.MockMulterError('LIMIT_FILE_COUNT'))).toBe('Too many files');
     expect(handleMulterError(new hoisted.MockMulterError('LIMIT_UNEXPECTED_FILE', 'x'))).toBe(
-      'Unexpected file field: x',
+      'Unexpected file field: x'
     );
     expect(handleMulterError(new hoisted.MockMulterError('LIMIT_PART_COUNT'))).toBe('Too many parts');
     expect(handleMulterError(new hoisted.MockMulterError('LIMIT_FIELD_KEY'))).toBe('Field name too long');

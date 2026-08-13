@@ -33,7 +33,4 @@ const featuredPromotionSchema = new Schema<IFeaturedPromotion>(
 
 featuredPromotionSchema.index({ status: 1, position: 1 });
 
-export const FeaturedPromotion = mongoose.model<IFeaturedPromotion>(
-  'FeaturedPromotion',
-  featuredPromotionSchema
-);
+export const FeaturedPromotion = mongoose.model<IFeaturedPromotion>('FeaturedPromotion', featuredPromotionSchema);

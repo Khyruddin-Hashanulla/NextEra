@@ -7,9 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
-import {
-  BookOpen, PlayCircle, Award, History, Sparkles, GraduationCap, Compass,
-} from 'lucide-react';
+import { BookOpen, PlayCircle, Award, History, Sparkles, GraduationCap, Compass } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -66,7 +64,9 @@ export function MyCoursesPage() {
           <Skeleton className="h-5 w-80" />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-9 w-28 rounded-full" />)}
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-28 rounded-full" />
+          ))}
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -114,7 +114,11 @@ export function MyCoursesPage() {
       </motion.div>
 
       <motion.div variants={cardItem} className="flex flex-wrap items-center gap-3">
-        <div className="flex items-start gap-1 rounded-xl border border-border bg-muted p-1" role="tablist" aria-label="Filter courses">
+        <div
+          className="flex items-start gap-1 rounded-xl border border-border bg-muted p-1"
+          role="tablist"
+          aria-label="Filter courses"
+        >
           {tabs.map((tab) => {
             const count = tabCount(tab.key);
             const Icon = tab.icon;
@@ -128,9 +132,7 @@ export function MyCoursesPage() {
                 onClick={() => setFilter(tab.key)}
                 className={cn(
                   'inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-sm font-medium transition-all',
-                  active
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground',
+                  active ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 )}
               >
                 <Icon className={cn('h-4 w-4', active ? 'text-primary' : 'text-muted-foreground')} />
@@ -139,7 +141,7 @@ export function MyCoursesPage() {
                   <span
                     className={cn(
                       'rounded-full px-1.5 py-0.5 text-[11px] font-semibold',
-                      active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                      active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
                     )}
                   >
                     {count}
@@ -156,7 +158,11 @@ export function MyCoursesPage() {
           <EmptyState
             icon={<BookOpen className="h-8 w-8" />}
             title={filter === 'completed' ? 'No completed courses yet' : 'No courses in progress'}
-            description={filter === 'all' ? 'You are not enrolled in any courses yet — start your journey.' : 'Keep going — finish a course to see it here.'}
+            description={
+              filter === 'all'
+                ? 'You are not enrolled in any courses yet — start your journey.'
+                : 'Keep going — finish a course to see it here.'
+            }
             action={filter === 'all' ? { label: 'Browse Courses', href: '/courses' } : undefined}
           />
         </motion.div>
@@ -189,13 +195,17 @@ export function MyCoursesPage() {
                       'absolute right-3 top-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold shadow-sm backdrop-blur',
                       enrollment.isCompleted
                         ? 'bg-emerald-500 text-white'
-                        : 'bg-white/20 text-white ring-1 ring-white/30',
+                        : 'bg-white/20 text-white ring-1 ring-white/30'
                     )}
                   >
                     {enrollment.isCompleted ? (
-                      <><Award className="h-3 w-3" /> Completed</>
+                      <>
+                        <Award className="h-3 w-3" /> Completed
+                      </>
                     ) : (
-                      <><PlayCircle className="h-3 w-3" /> In Progress</>
+                      <>
+                        <PlayCircle className="h-3 w-3" /> In Progress
+                      </>
                     )}
                   </span>
 
@@ -228,9 +238,7 @@ export function MyCoursesPage() {
                       {enrollment.course?.title || 'Untitled Course'}
                     </Link>
                     {enrollment.course?.instructor?.name && (
-                      <p className="text-xs text-muted-foreground">
-                        by {enrollment.course.instructor.name}
-                      </p>
+                      <p className="text-xs text-muted-foreground">by {enrollment.course.instructor.name}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
                       Enrolled {new Date(enrollment.enrolledAt).toLocaleDateString()}
@@ -241,9 +249,13 @@ export function MyCoursesPage() {
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                         {enrollment.isCompleted ? (
-                          <><Sparkles className="h-3 w-3 text-emerald-500" /> Completed</>
+                          <>
+                            <Sparkles className="h-3 w-3 text-emerald-500" /> Completed
+                          </>
                         ) : (
-                          <><GraduationCap className="h-3 w-3" /> Progress</>
+                          <>
+                            <GraduationCap className="h-3 w-3" /> Progress
+                          </>
                         )}
                       </span>
                       <span className="text-xs font-semibold tabular-nums">
@@ -254,7 +266,7 @@ export function MyCoursesPage() {
                       <div
                         className={cn(
                           'h-full rounded-full transition-all duration-500',
-                          enrollment.isCompleted ? 'bg-emerald-500' : 'bg-primary',
+                          enrollment.isCompleted ? 'bg-emerald-500' : 'bg-primary'
                         )}
                         style={{ width: `${enrollment.completionPercentage || 0}%` }}
                       />
@@ -276,10 +288,7 @@ export function MyCoursesPage() {
                   )}
 
                   <div className="flex gap-2 pt-1">
-                    <Link
-                      to={`/student/courses/${enrollment.course?._id}/learn`}
-                      className="min-w-0 flex-1"
-                    >
+                    <Link to={`/student/courses/${enrollment.course?._id}/learn`} className="min-w-0 flex-1">
                       <Button size="sm" fullWidth>
                         <PlayCircle className="mr-1.5 h-4 w-4" />
                         {enrollment.isCompleted ? 'Review' : 'Continue'}

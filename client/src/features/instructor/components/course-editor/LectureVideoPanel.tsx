@@ -2,11 +2,7 @@ import { Input } from '@/components/ui/input';
 import { FileUploader } from './FileUploader';
 import { uploadApi } from '@/api/endpoints/upload';
 import { VideoSource } from '@/types/instructor';
-import {
-  extractYouTubeId,
-  buildYouTubeThumbnailUrl,
-  youtubeThumbnailFallback,
-} from '@/lib/video';
+import { extractYouTubeId, buildYouTubeThumbnailUrl, youtubeThumbnailFallback } from '@/lib/video';
 
 const VIDEO_SOURCES = [
   { value: 'none', label: 'No Video' },
@@ -17,10 +13,29 @@ const VIDEO_SOURCES = [
   { value: 'direct', label: 'Direct Upload' },
 ];
 
-export function LectureVideoPanel({ videoSource, onChange }: { videoSource: VideoSource; onChange: (v: VideoSource) => void }) {
+export function LectureVideoPanel({
+  videoSource,
+  duration,
+  onChange,
+  onDurationChange,
+}: {
+  videoSource: VideoSource;
+  duration?: number;
+  onChange: (v: VideoSource) => void;
+  onDurationChange?: (duration: number) => void;
+}) {
   const set = (patch: Partial<VideoSource>) => onChange({ ...videoSource, ...patch });
 
   const isYouTube = videoSource?.source === 'youtube';
+  const isDirect = videoSource?.source === 'direct';
+
+  const formatAutoDuration = (seconds?: number): string => {
+    if (!seconds || seconds <= 0) return '';
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return minutes > 0 ? `${minutes}m ${secs}s` : `${secs}s`;
+  };
+  const autoDurationLabel = formatAutoDuration(duration);
 
   const handleYouTubeLink = (raw: string) => {
     const id = extractYouTubeId(raw);
@@ -41,19 +56,29 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="video-source" className="text-sm font-medium">Source</label>
+          <label htmlFor="video-source" className="text-sm font-medium">
+            Source
+          </label>
           <select
             id="video-source"
             value={videoSource?.source || 'none'}
-            onChange={(e) => set({ source: e.target.value as VideoSource['source'], url: '', videoId: '', thumbnailUrl: '' })}
+            onChange={(e) =>
+              set({ source: e.target.value as VideoSource['source'], url: '', videoId: '', thumbnailUrl: '' })
+            }
             className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
           >
-            {VIDEO_SOURCES.map((vs) => <option key={vs.value} value={vs.value}>{vs.label}</option>)}
+            {VIDEO_SOURCES.map((vs) => (
+              <option key={vs.value} value={vs.value}>
+                {vs.label}
+              </option>
+            ))}
           </select>
         </div>
         {isYouTube && (
           <div className="space-y-2">
-            <label htmlFor="video-url" className="text-sm font-medium">YouTube Link</label>
+            <label htmlFor="video-url" className="text-sm font-medium">
+              YouTube Link
+            </label>
             <Input
               id="video-id"
               value={videoSource?.videoId || ''}
@@ -62,16 +87,18 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
             />
             <p className="text-xs text-muted-foreground">
               {videoSource?.videoId
-                ? (extractYouTubeId(videoSource.videoId)
-                    ? `Video ID: ${extractYouTubeId(videoSource.videoId)}`
-                    : 'Waiting for a valid YouTube link or video ID…')
+                ? extractYouTubeId(videoSource.videoId)
+                  ? `Video ID: ${extractYouTubeId(videoSource.videoId)}`
+                  : 'Waiting for a valid YouTube link or video ID…'
                 : 'Paste a link above — the video ID and thumbnail are created automatically.'}
             </p>
           </div>
         )}
         {videoSource?.source === 'vimeo' && (
           <div className="space-y-2">
-            <label htmlFor="video-id" className="text-sm font-medium">Video ID</label>
+            <label htmlFor="video-id" className="text-sm font-medium">
+              Video ID
+            </label>
             <Input
               id="video-id"
               value={videoSource?.videoId || ''}
@@ -82,7 +109,9 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
         )}
         {(videoSource?.source === 'direct' || videoSource?.source === 'bunny') && (
           <div className="space-y-2">
-            <label htmlFor="video-url" className="text-sm font-medium">Video URL</label>
+            <label htmlFor="video-url" className="text-sm font-medium">
+              Video URL
+            </label>
             <Input
               id="video-url"
               value={videoSource?.url || ''}
@@ -93,12 +122,10 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
         )}
         {videoSource?.source === 's3' && (
           <div className="space-y-2">
-            <label htmlFor="s3-key" className="text-sm font-medium">S3 Object Key</label>
-            <Input
-              id="s3-key"
-              value={videoSource?.videoId || ''}
-              onChange={(e) => set({ videoId: e.target.value })}
-            />
+            <label htmlFor="s3-key" className="text-sm font-medium">
+              S3 Object Key
+            </label>
+            <Input id="s3-key" value={videoSource?.videoId || ''} onChange={(e) => set({ videoId: e.target.value })} />
           </div>
         )}
       </div>
@@ -130,16 +157,39 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
           maxSize={200 * 1024 * 1024}
           label="Upload video file"
           hint="MP4, WebM, MOV or MKV up to 200MB"
-          value={videoSource?.url ? { url: videoSource.url, publicId: videoSource.videoId, name: videoSource.videoId || 'Uploaded video' } : null}
-          onChange={(r) => r ? set({ source: 'direct', url: r.url, videoId: r.publicId }) : set({ url: '', videoId: '' })}
+          value={
+            videoSource?.url
+              ? { url: videoSource.url, publicId: videoSource.videoId, name: videoSource.videoId || 'Uploaded video' }
+              : null
+          }
+          onChange={(r) => {
+            if (r) {
+              set({ source: 'direct', url: r.url, videoId: r.publicId });
+              if (typeof r.duration === 'number' && Number.isFinite(r.duration) && r.duration >= 0) {
+                onDurationChange?.(Math.round(r.duration));
+              }
+            } else {
+              set({ url: '', videoId: '' });
+              onDurationChange?.(0);
+            }
+          }}
           upload={uploadApi.video}
         />
+        {isDirect && (
+          <p className="text-xs text-muted-foreground">
+            {autoDurationLabel
+              ? `Duration: ${autoDurationLabel} (auto-detected)`
+              : 'Duration is detected automatically from the uploaded video after saving.'}
+          </p>
+        )}
       </div>
 
       {videoSource?.source !== 'none' && !isYouTube && (
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <label htmlFor="thumbnail-url" className="text-sm font-medium">Thumbnail URL</label>
+            <label htmlFor="thumbnail-url" className="text-sm font-medium">
+              Thumbnail URL
+            </label>
             <Input
               id="thumbnail-url"
               value={videoSource?.thumbnailUrl || ''}
@@ -148,7 +198,9 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="playback-rate" className="text-sm font-medium">Playback Rate</label>
+            <label htmlFor="playback-rate" className="text-sm font-medium">
+              Playback Rate
+            </label>
             <Input
               id="playback-rate"
               type="number"
@@ -164,7 +216,9 @@ export function LectureVideoPanel({ videoSource, onChange }: { videoSource: Vide
         <div className="grid gap-4 sm:grid-cols-2">
           <div />
           <div className="space-y-2">
-            <label htmlFor="playback-rate" className="text-sm font-medium">Playback Rate</label>
+            <label htmlFor="playback-rate" className="text-sm font-medium">
+              Playback Rate
+            </label>
             <Input
               id="playback-rate"
               type="number"

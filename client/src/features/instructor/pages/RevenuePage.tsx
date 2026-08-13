@@ -2,9 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { instructorApi } from '@/api/endpoints/instructor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/common/ErrorState';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
-import { DollarSign, TrendingUp, ShoppingCart, ArrowRight } from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
+import { DollarSign, TrendingUp, ShoppingCart } from 'lucide-react';
 
 const container = {
   hidden: { opacity: 0 },
@@ -16,13 +17,30 @@ const item = {
 };
 
 const statCards = [
-  { key: 'total', label: 'Total Revenue', icon: DollarSign, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400', prefix: '₹' },
-  { key: 'monthly', label: 'Monthly Revenue', icon: TrendingUp, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400', prefix: '₹' },
-  { key: 'sales', label: 'Total Sales', icon: ShoppingCart, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400', prefix: '' },
+  {
+    key: 'total',
+    label: 'Total Revenue',
+    icon: DollarSign,
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+    currency: true,
+  },
+  {
+    key: 'monthly',
+    label: 'Monthly Revenue',
+    icon: TrendingUp,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+    currency: true,
+  },
+  {
+    key: 'sales',
+    label: 'Total Sales',
+    icon: ShoppingCart,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+  },
 ];
 
 export function RevenuePage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['instructor', 'revenue'],
     queryFn: ({ signal }) => instructorApi.getRevenue(undefined, undefined, signal).then((r) => r.data.data),
   });
@@ -30,13 +48,31 @@ export function RevenuePage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Unable to load revenue"
+        message="We couldn't fetch your revenue. Please try again."
+        onRetry={refetch}
+        showHomeLink={false}
+      />
     );
   }
 
@@ -53,8 +89,8 @@ export function RevenuePage() {
       <motion.div variants={item} className="grid gap-4 sm:grid-cols-3">
         {statCards.map((stat) => {
           let value: string | number = 0;
-          if (stat.key === 'total') value = data?.total || 0;
-          else if (stat.key === 'monthly') value = monthlyRevenue;
+          if (stat.key === 'total') value = formatCurrency(data?.total ?? 0);
+          else if (stat.key === 'monthly') value = formatCurrency(monthlyRevenue);
           else if (stat.key === 'sales') value = totalSales;
           return (
             <Card key={stat.key} className="transition-shadow hover:shadow-md">
@@ -64,9 +100,7 @@ export function RevenuePage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-2xl font-bold tracking-tight">
-                    {stat.prefix}{(value as number).toLocaleString()}
-                  </p>
+                  <p className="text-2xl font-bold tracking-tight">{value}</p>
                 </div>
               </CardContent>
             </Card>
@@ -85,9 +119,15 @@ export function RevenuePage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Course</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Enrollments</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Amount</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Course
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Enrollments
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Amount
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -95,7 +135,7 @@ export function RevenuePage() {
                       <tr key={course._id} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3 font-medium">{course.courseTitle}</td>
                         <td className="px-4 py-3">{course.enrollments}</td>
-                        <td className="px-4 py-3">₹{course.amount.toLocaleString()}</td>
+                        <td className="px-4 py-3">{formatCurrency(course.amount ?? 0)}</td>
                       </tr>
                     ))}
                   </tbody>

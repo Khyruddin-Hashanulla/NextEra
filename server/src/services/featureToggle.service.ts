@@ -5,11 +5,7 @@ let cachedToggles: Record<string, boolean> | null = null;
 
 export const initializeDefaultFeatures = async () => {
   for (const feature of DEFAULT_FEATURES) {
-    await FeatureToggle.updateOne(
-      { key: feature.key },
-      { $setOnInsert: feature },
-      { upsert: true },
-    );
+    await FeatureToggle.updateOne({ key: feature.key }, { $setOnInsert: feature }, { upsert: true });
   }
 };
 
@@ -19,11 +15,7 @@ export const getAllFeatures = async () => {
 };
 
 export const updateFeature = async (key: string, enabled: boolean, userId: string) => {
-  const feature = await FeatureToggle.findOneAndUpdate(
-    { key },
-    { enabled, updatedBy: userId },
-    { new: true },
-  );
+  const feature = await FeatureToggle.findOneAndUpdate({ key }, { enabled, updatedBy: userId }, { new: true });
   if (!feature) throw ApiError.notFound(`Feature '${key}' not found`);
   cachedToggles = null;
   return feature;

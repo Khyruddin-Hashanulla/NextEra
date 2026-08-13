@@ -15,7 +15,7 @@ describe('Tooltip', () => {
           </TooltipTrigger>
           <TooltipContent>Useful tip</TooltipContent>
         </Tooltip>
-      </TooltipProvider>,
+      </TooltipProvider>
     );
     expect(screen.queryByText('Useful tip')).not.toBeInTheDocument();
   });
@@ -29,7 +29,7 @@ describe('Tooltip', () => {
           </TooltipTrigger>
           <TooltipContent>Useful tip</TooltipContent>
         </Tooltip>
-      </TooltipProvider>,
+      </TooltipProvider>
     );
     await user.tab();
     expect(await screen.findByText('Useful tip')).toBeInTheDocument();
@@ -45,7 +45,7 @@ describe('Tooltip', () => {
           <TooltipContent>Useful tip</TooltipContent>
         </Tooltip>
         <button>Other</button>
-      </TooltipProvider>,
+      </TooltipProvider>
     );
     await user.tab();
     await screen.findByText('Useful tip');
@@ -62,7 +62,7 @@ describe('Tooltip', () => {
           </TooltipTrigger>
           <TooltipContent>Hover tip</TooltipContent>
         </Tooltip>
-      </TooltipProvider>,
+      </TooltipProvider>
     );
     await user.hover(screen.getByRole('button', { name: 'Hover me' }));
     expect(await screen.findByText('Hover tip')).toBeInTheDocument();
@@ -77,7 +77,7 @@ describe('Tooltip', () => {
           </TooltipTrigger>
           <TooltipContent className="custom-tooltip">Styled tip</TooltipContent>
         </Tooltip>
-      </TooltipProvider>,
+      </TooltipProvider>
     );
     await user.hover(screen.getByRole('button', { name: 'Hover me' }));
     const tip = await screen.findByText('Styled tip');

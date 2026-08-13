@@ -4,20 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { SubscriptionsSkeleton } from '@/components/skeletons/CertificateSkeleton';
-import { Loader2, Check, Crown, Clock, CalendarDays } from 'lucide-react';
+import { Loader2, Check, Crown, CalendarDays } from 'lucide-react';
 import { useToast } from '@/providers/ToastProvider';
+import { formatCurrency } from '@/lib/utils';
 import { useState } from 'react';
-
-function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if ((window as any).Razorpay) return resolve(true);
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
+import { loadRazorpayScript } from '@/lib/razorpay';
 
 export function SubscriptionsPage() {
   const { addToast } = useToast();
@@ -102,7 +93,9 @@ export function SubscriptionsPage() {
             <div>
               <p className="font-medium">You have an active {mySub.subscription?.name} subscription</p>
               <p className="text-sm text-muted-foreground">
-                {daysLeft > 0 ? `${daysLeft} days remaining (ends ${new Date(mySub.endDate).toLocaleDateString()})` : 'Expires today'}
+                {daysLeft > 0
+                  ? `${daysLeft} days remaining (ends ${new Date(mySub.endDate).toLocaleDateString()})`
+                  : 'Expires today'}
               </p>
             </div>
           </CardContent>
@@ -116,7 +109,10 @@ export function SubscriptionsPage() {
           const isCurrentPlan = isSubscribed && mySub.subscription?._id === plan._id;
 
           return (
-            <Card key={plan._id} className={`flex flex-col ${isCurrentPlan ? 'border-primary ring-1 ring-primary' : ''}`}>
+            <Card
+              key={plan._id}
+              className={`flex flex-col ${isCurrentPlan ? 'border-primary ring-1 ring-primary' : ''}`}
+            >
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl">{plan.name}</CardTitle>
@@ -128,11 +124,11 @@ export function SubscriptionsPage() {
                 <div>
                   {originalPrice ? (
                     <div className="flex items-baseline gap-2">
-                      <span className="text-3xl font-bold">${displayPrice}</span>
-                      <span className="text-muted-foreground line-through">${originalPrice}</span>
+                      <span className="text-3xl font-bold">{formatCurrency(displayPrice)}</span>
+                      <span className="text-muted-foreground line-through">{formatCurrency(originalPrice)}</span>
                     </div>
                   ) : (
-                    <span className="text-3xl font-bold">${displayPrice}</span>
+                    <span className="text-3xl font-bold">{formatCurrency(displayPrice)}</span>
                   )}
                   <p className="text-sm text-muted-foreground">per {plan.durationDays} days</p>
                 </div>
@@ -152,9 +148,13 @@ export function SubscriptionsPage() {
               </CardContent>
               <CardFooter>
                 {isCurrentPlan ? (
-                  <Button className="w-full" disabled>Current Plan</Button>
+                  <Button className="w-full" disabled>
+                    Current Plan
+                  </Button>
                 ) : isSubscribed ? (
-                  <Button className="w-full" variant="outline" disabled>Already Subscribed</Button>
+                  <Button className="w-full" variant="outline" disabled>
+                    Already Subscribed
+                  </Button>
                 ) : (
                   <Button
                     className="w-full"
@@ -162,7 +162,9 @@ export function SubscriptionsPage() {
                     disabled={loadingPlanId === plan._id}
                   >
                     {loadingPlanId === plan._id ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> Processing...</>
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" /> Processing...
+                      </>
                     ) : plan.price === 0 ? (
                       'Get Started Free'
                     ) : (

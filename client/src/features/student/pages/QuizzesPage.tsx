@@ -8,10 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ErrorState } from '@/components/common/ErrorState';
 import { EmptyState } from '@/components/common/EmptyState';
@@ -41,7 +46,7 @@ export function QuizzesPage() {
 
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
   const [isViewResultOpen, setIsViewResultOpen] = useState(false);
-  const [isStartQuizOpen, setIsStartQuizOpen] = useState(false);
+  const [_isStartQuizOpen, setIsStartQuizOpen] = useState(false);
   const [selectedLectureId, setSelectedLectureId] = useState<string>('');
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
 
@@ -49,14 +54,22 @@ export function QuizzesPage() {
     mutationFn: (data: { courseId: string; lectureId: string }) =>
       quizApi.startQuizEnhanced(data).then((r: any) => r.data),
     onSuccess: () => {
-      addToast({ title: 'Quiz started', description: 'You can now begin answering quiz questions', variant: 'success' });
+      addToast({
+        title: 'Quiz started',
+        description: 'You can now begin answering quiz questions',
+        variant: 'success',
+      });
       refetch();
       setIsStartQuizOpen(false);
     },
     onError: (error: any) => {
       const category = categorizeError(error);
       if (category === 'forbidden') {
-        addToast({ title: 'Access denied', description: 'You do not have permission to start this quiz', variant: 'error' });
+        addToast({
+          title: 'Access denied',
+          description: 'You do not have permission to start this quiz',
+          variant: 'error',
+        });
       } else if (category === 'not-found') {
         addToast({ title: 'Quiz not found', description: 'The requested quiz does not exist', variant: 'error' });
       } else {
@@ -66,24 +79,22 @@ export function QuizzesPage() {
   });
 
   const viewResultMutation = useMutation({
-    mutationFn: (attemptId: string) =>
-      quizApi.getAttemptResult(attemptId).then((r: any) => r.data),
+    mutationFn: (attemptId: string) => quizApi.getAttemptResult(attemptId).then((r: any) => r.data),
     onSuccess: (data) => {
       setSelectedAttemptId(data.attemptId);
       setIsViewResultOpen(true);
     },
-    onError: (error: any) => {
+    onError: (_error: any) => {
       addToast({ title: 'Error', description: 'Failed to load attempt result', variant: 'error' });
     },
   });
 
   const downloadResultMutation = useMutation({
-    mutationFn: (attemptId: string) =>
-      quizApi.downloadResult(attemptId).then((r: any) => r.data),
-    onSuccess: (data) => {
+    mutationFn: (attemptId: string) => quizApi.downloadResult(attemptId).then((r: any) => r.data),
+    onSuccess: (_data) => {
       addToast({ title: 'Success', description: 'Result downloaded successfully', variant: 'success' });
     },
-    onError: (error: any) => {
+    onError: (_error: any) => {
       addToast({ title: 'Error', description: 'Failed to download result', variant: 'error' });
     },
   });
@@ -103,13 +114,7 @@ export function QuizzesPage() {
         />
       );
     }
-    return (
-      <ErrorState
-        title="Unable to load quiz data"
-        message="Please try again later."
-        onRetry={() => refetch()}
-      />
-    );
+    return <ErrorState title="Unable to load quiz data" message="Please try again later." onRetry={() => refetch()} />;
   }
 
   const quizzes = data?.quizzes || [];
@@ -123,11 +128,19 @@ export function QuizzesPage() {
 
   const getGradeColor = (grade: string) => {
     switch (grade) {
-      case 'A+': case 'A': return 'bg-green-100 text-green-800';
-      case 'B+': case 'B': return 'bg-blue-100 text-blue-800';
-      case 'C+': case 'C': return 'bg-yellow-100 text-yellow-800';
-      case 'D': return 'bg-orange-100 text-orange-800';
-      default: return 'bg-red-100 text-red-800';
+      case 'A+':
+      case 'A':
+        return 'bg-green-100 text-green-800';
+      case 'B+':
+      case 'B':
+        return 'bg-blue-100 text-blue-800';
+      case 'C+':
+      case 'C':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'D':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-red-100 text-red-800';
     }
   };
 
@@ -215,7 +228,9 @@ export function QuizzesPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Score</p>
-                        <p className="text-sm font-semibold">{attempt.score}/{attempt.totalMarks}</p>
+                        <p className="text-sm font-semibold">
+                          {attempt.score}/{attempt.totalMarks}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Percentage</p>
@@ -223,7 +238,9 @@ export function QuizzesPage() {
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Correct/Total</p>
-                        <p className="text-sm font-semibold">{attempt.correctAnswers}/{attempt.totalQuestions}</p>
+                        <p className="text-sm font-semibold">
+                          {attempt.correctAnswers}/{attempt.totalQuestions}
+                        </p>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Time Taken</p>
@@ -235,7 +252,10 @@ export function QuizzesPage() {
 
                     <div className="flex gap-2 flex-wrap">
                       {attempt.status === 'published' && (
-                        <Dialog open={isViewResultOpen && selectedAttemptId === attempt._id} onOpenChange={setIsViewResultOpen}>
+                        <Dialog
+                          open={isViewResultOpen && selectedAttemptId === attempt._id}
+                          onOpenChange={setIsViewResultOpen}
+                        >
                           <DialogTrigger asChild>
                             <Button
                               variant="outline"
@@ -278,7 +298,10 @@ export function QuizzesPage() {
                                         <div className="flex-1">
                                           <p className="font-medium text-sm mb-1">{detail.question}</p>
                                           <div className="flex items-center gap-2 mb-2">
-                                            <Badge variant={detail.isCorrect ? 'default' : 'secondary'} className="text-xs">
+                                            <Badge
+                                              variant={detail.isCorrect ? 'default' : 'secondary'}
+                                              className="text-xs"
+                                            >
                                               {detail.isCorrect ? 'Correct' : 'Incorrect'}
                                             </Badge>
                                             <Badge variant="outline" className="text-xs">
@@ -324,14 +347,27 @@ export function QuizzesPage() {
                     {stats.scoreHistory && stats.scoreHistory.length > 0 ? (
                       <div className="space-y-3">
                         {stats.scoreHistory.map((attempt: any) => (
-                          <div key={attempt.attemptNumber} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div
+                            key={attempt.attemptNumber}
+                            className="flex items-center justify-between p-3 border rounded-lg"
+                          >
                             <div>
                               <p className="font-medium">Attempt #{attempt.attemptNumber}</p>
                               <p className="text-sm text-muted-foreground">
                                 {new Date(attempt.completedAt).toLocaleDateString()} • {attempt.percentage}% score
                               </p>
                             </div>
-                            <Badge className={getGradeColor('')}>{attempt.percentage >= 90 ? 'A+' : attempt.percentage >= 80 ? 'A' : attempt.percentage >= 70 ? 'B+' : attempt.percentage >= 60 ? 'B' : 'F'}</Badge>
+                            <Badge className={getGradeColor('')}>
+                              {attempt.percentage >= 90
+                                ? 'A+'
+                                : attempt.percentage >= 80
+                                  ? 'A'
+                                  : attempt.percentage >= 70
+                                    ? 'B+'
+                                    : attempt.percentage >= 60
+                                      ? 'B'
+                                      : 'F'}
+                            </Badge>
                           </div>
                         ))}
                       </div>

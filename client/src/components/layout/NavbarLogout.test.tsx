@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Navbar } from '@/components/layout/Navbar';
 import { renderWithProviders } from '@/test/render/renderWithProviders';
@@ -27,9 +27,7 @@ describe('Navbar logout state', () => {
 
     renderWithProviders(<Navbar />, { queryClient });
 
-    expect(
-      screen.getByRole('button', { name: 'Account menu for Student User' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Account menu for Student User' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Sign In' })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Account menu for Student User' }));
@@ -39,9 +37,7 @@ describe('Navbar logout state', () => {
       expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Create Free Account' })).toBeInTheDocument();
     });
-    expect(
-      screen.queryByRole('button', { name: 'Account menu for Student User' }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Account menu for Student User' })).not.toBeInTheDocument();
     expect(localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN)).toBeNull();
     expect(queryClient.getQueryData(QUERY_KEYS.auth.user)).toBeUndefined();
   });

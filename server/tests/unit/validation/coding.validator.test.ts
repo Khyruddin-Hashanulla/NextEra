@@ -31,7 +31,9 @@ describe('coding.validator', () => {
     const parsed = createCodingProblemSchema.parse(valid);
     expect(parsed.body.difficulty).toBe('easy');
     expect(parsed.body.isPublished).toBe(true);
-    expect(() => createCodingProblemSchema.parse({ body: { title: '', description: '', difficulty: 'easy', testCases: [] } })).toThrow();
+    expect(() =>
+      createCodingProblemSchema.parse({ body: { title: '', description: '', difficulty: 'easy', testCases: [] } })
+    ).toThrow();
   });
 
   it('applies coding problem defaults', () => {
@@ -49,14 +51,16 @@ describe('coding.validator', () => {
 
   it('validates coding problem updates', () => {
     expect(updateCodingProblemSchema.parse({ body: { title: 'New', difficulty: 'medium' } }).body.difficulty).toBe(
-      'medium',
+      'medium'
     );
     expect(() => updateCodingProblemSchema.parse({ body: { memoryLimit: 4 } })).toThrow();
   });
 
   it('validates code submission', () => {
     expect(submitCodeSchema.parse({ body: { code: 'print(1)', language: 'python' } }).body.isPractice).toBe(true);
-    expect(submitCodeSchema.parse({ body: { code: 'print(1)', language: 'python', isPractice: false } }).body.isPractice).toBe(false);
+    expect(
+      submitCodeSchema.parse({ body: { code: 'print(1)', language: 'python', isPractice: false } }).body.isPractice
+    ).toBe(false);
     expect(() => submitCodeSchema.parse({ body: { code: '', language: 'cobol' } })).toThrow();
   });
 
@@ -67,7 +71,18 @@ describe('coding.validator', () => {
       sort: 'newest',
     });
     expect(
-      listCodingProblemsQuerySchema.parse({ query: { difficulty: 'hard', tag: 't', category: 'c', course: 'co', page: '2', limit: '5', search: 's', sort: 'submissions' } }).query,
+      listCodingProblemsQuerySchema.parse({
+        query: {
+          difficulty: 'hard',
+          tag: 't',
+          category: 'c',
+          course: 'co',
+          page: '2',
+          limit: '5',
+          search: 's',
+          sort: 'submissions',
+        },
+      }).query
     ).toMatchObject({ page: '2', limit: '5', sort: 'submissions' });
     expect(() => listCodingProblemsQuerySchema.parse({ query: { sort: 'bogus' } })).toThrow();
   });

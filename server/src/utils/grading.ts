@@ -41,11 +41,7 @@ export function computePercentage(grade: number, maxMarks: number): number {
   return Math.round((grade / maxMarks) * 10000) / 100;
 }
 
-export function computePassFail(
-  grade: number,
-  passingMarks: number | undefined,
-  maxMarks: number
-): 'pass' | 'fail' {
+export function computePassFail(grade: number, passingMarks: number | undefined, maxMarks: number): 'pass' | 'fail' {
   if (passingMarks === undefined || passingMarks <= 0) {
     const threshold = maxMarks * 0.6;
     return grade >= threshold ? 'pass' : 'fail';

@@ -59,11 +59,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setModeState((prev) => (prev === 'light' ? 'dark' : prev === 'dark' ? 'system' : 'light'));
   }, []);
 
-  return (
-    <ThemeContext.Provider value={{ mode, theme, setMode, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  return <ThemeContext.Provider value={{ mode, theme, setMode, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {

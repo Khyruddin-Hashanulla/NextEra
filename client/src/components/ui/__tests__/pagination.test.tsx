@@ -4,9 +4,7 @@ import { Pagination } from '@/components/ui/pagination';
 
 describe('Pagination', () => {
   it('returns null when there is a single page', () => {
-    const { container } = render(
-      <Pagination currentPage={1} totalPages={1} onPageChange={vi.fn()} />,
-    );
+    const { container } = render(<Pagination currentPage={1} totalPages={1} onPageChange={vi.fn()} />);
     expect(container.innerHTML).toBe('');
   });
 
@@ -47,9 +45,7 @@ describe('Pagination', () => {
   });
 
   it('hides page numbers when disabled', () => {
-    render(
-      <Pagination currentPage={2} totalPages={4} onPageChange={vi.fn()} showPageNumbers={false} />,
-    );
+    render(<Pagination currentPage={2} totalPages={4} onPageChange={vi.fn()} showPageNumbers={false} />);
     expect(screen.queryByRole('button', { name: /Page \d/ })).not.toBeInTheDocument();
   });
 });

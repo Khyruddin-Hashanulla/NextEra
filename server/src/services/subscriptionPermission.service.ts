@@ -1,5 +1,7 @@
 import { RevenueService, revenueService } from './revenue.service';
 import { Course } from '../models/course.model';
+import { IPlanEntitlements } from '../models/instructorSubscriptionPlan.model';
+import { deriveLegacyFeaturesFromEntitlements } from './entitlement.service';
 import { ApiError } from '../utils/ApiError';
 
 export interface InstructorPlanInfo {
@@ -16,6 +18,8 @@ export interface InstructorPlanInfo {
     unlimitedStorage: boolean;
     premiumMarketing: boolean;
   };
+  /** Structured source of truth, when the plan defines one. Preferred for gates. */
+  entitlements?: IPlanEntitlements;
   planName?: string;
   endDate?: Date | null;
 }
@@ -39,10 +43,22 @@ export class SubscriptionPermissionService {
   async getInstructorPlanInfo(instructorId: string): Promise<InstructorPlanInfo> {
     const subscription = await this.revenueService.getInstructorSubscription(instructorId);
     const plan = subscription?.plan;
-    const features = plan?.features || DEFAULT_STARTER_FEATURES;
+    // Structured entitlements are the source of truth; when present, derive the
+    // legacy flat features so both permission stacks always agree (including for
+    // plans edited through the entitlements editor).
+    const entitlements = plan?.entitlements;
+    const features = entitlements
+      ? deriveLegacyFeaturesFromEntitlements(entitlements)
+      : plan?.features || DEFAULT_STARTER_FEATURES;
+
+    // The subscription model uses uppercase status (ACTIVE/EXPIRED/...); legacy
+    // consumers compare lowercase values. Normalize on the read path.
+    const rawStatus = String(subscription?.status || 'none').toLowerCase();
+    const status: InstructorPlanInfo['status'] =
+      rawStatus === 'active' || rawStatus === 'expired' || rawStatus === 'cancelled' ? rawStatus : 'none';
 
     return {
-      status: subscription?.status || 'none',
+      status,
       features: {
         freeCoursesLimit: features.freeCoursesLimit ?? DEFAULT_STARTER_FEATURES.freeCoursesLimit,
         unlimitedCourses: features.unlimitedCourses ?? DEFAULT_STARTER_FEATURES.unlimitedCourses,
@@ -55,6 +71,7 @@ export class SubscriptionPermissionService {
         unlimitedStorage: features.unlimitedStorage ?? DEFAULT_STARTER_FEATURES.unlimitedStorage,
         premiumMarketing: features.premiumMarketing ?? DEFAULT_STARTER_FEATURES.premiumMarketing,
       },
+      entitlements,
       planName: plan?.name,
       endDate: subscription?.endDate,
     };
@@ -66,10 +83,31 @@ export class SubscriptionPermissionService {
 
   canCreatePaidCourse(info: InstructorPlanInfo): boolean {
     if (!this.isActive(info)) return false;
+    if (info.entitlements)
+      return info.entitlements.courses.canCreatePaid || info.entitlements.courses.unlimitedCreationMode;
     return info.features.unlimitedCourses;
   }
 
-  async canPublishCourse(instructorId: string, info: InstructorPlanInfo): Promise<{ allowed: boolean; reason?: string }> {
+  async canPublishCourse(
+    instructorId: string,
+    info: InstructorPlanInfo
+  ): Promise<{ allowed: boolean; reason?: string }> {
+    if (info.entitlements) {
+      const c = info.entitlements.courses;
+      if (c.unlimitedCreationMode) return { allowed: true };
+      const publishedCount = await Course.countDocuments({
+        instructor: instructorId,
+        status: 'published',
+      });
+      const limit = c.maxPublishedCourses || c.maxCreationCount;
+      if (publishedCount >= limit) {
+        return {
+          allowed: false,
+          reason: `You have reached the limit of ${limit} published courses. Upgrade to publish more.`,
+        };
+      }
+      return { allowed: true };
+    }
     if (info.features.unlimitedCourses) {
       return { allowed: true };
     }
@@ -88,11 +126,13 @@ export class SubscriptionPermissionService {
 
   canCreateBundle(info: InstructorPlanInfo): boolean {
     if (!this.isActive(info)) return false;
+    if (info.entitlements) return info.entitlements.marketing.bundles;
     return info.features.unlimitedCourses;
   }
 
   canCreateSubscriptionProduct(info: InstructorPlanInfo): boolean {
     if (!this.isActive(info)) return false;
+    if (info.entitlements) return info.entitlements.marketing.instructorSubscriptions;
     return info.features.unlimitedCourses;
   }
 
@@ -122,54 +162,59 @@ export class SubscriptionPermissionService {
   }
 
   getRemainingPublishedCourseSlots(info: InstructorPlanInfo, publishedCount: number): number {
+    const c = info.entitlements?.courses;
+    if (c) {
+      if (c.unlimitedCreationMode) return Infinity;
+      return Math.max(0, (c.maxPublishedCourses || c.maxCreationCount) - publishedCount);
+    }
     if (info.features.unlimitedCourses) return Infinity;
     return Math.max(0, info.features.freeCoursesLimit - publishedCount);
   }
 
   async requireAdvancedAnalyticsPermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     if (!this.canAccessAdvancedAnalytics(planInfo)) {
       throw ApiError.forbidden('Advanced analytics are available on Pro and Premium plans.');
     }
   }
 
   async requirePaidCoursePermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     if (!this.canCreatePaidCourse(planInfo)) {
       throw ApiError.forbidden('Upgrade to Pro to create paid courses.');
     }
   }
 
   async requireCouponPermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     if (!this.canUseCoupons(planInfo)) {
       throw ApiError.forbidden('Coupons are available on the Pro plan. Upgrade to create coupons.');
     }
   }
 
   async requireLiveClassPermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     if (!this.canScheduleLiveClass(planInfo)) {
       throw ApiError.forbidden('Live classes require a Pro subscription. Upgrade to schedule live classes.');
     }
   }
 
   async requireBundlePermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     if (!this.canCreateBundle(planInfo)) {
       throw ApiError.forbidden('Bundles are available on the Pro plan. Upgrade to create bundles.');
     }
   }
 
   async requireSubscriptionProductPermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     if (!this.canCreateSubscriptionProduct(planInfo)) {
       throw ApiError.forbidden('Subscription products are available on the Pro plan.');
     }
   }
 
   async requirePublishPermission(instructorId: string, info?: InstructorPlanInfo): Promise<void> {
-    const planInfo = info || await this.getInstructorPlanInfo(instructorId);
+    const planInfo = info || (await this.getInstructorPlanInfo(instructorId));
     const { allowed, reason } = await this.canPublishCourse(instructorId, planInfo);
     if (!allowed) {
       throw ApiError.forbidden(reason || 'You have reached the maximum number of published courses.');

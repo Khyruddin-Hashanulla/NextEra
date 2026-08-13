@@ -16,9 +16,7 @@ describe('createCourseSchema', () => {
   });
 
   it('rejects a title shorter than 5 characters', () => {
-    expect(() => createCourseSchema.parse({ title: 'Node' })).toThrow(
-      /Title must be at least 5 characters/,
-    );
+    expect(() => createCourseSchema.parse({ title: 'Node' })).toThrow(/Title must be at least 5 characters/);
   });
 
   it('rejects a negative price', () => {
@@ -45,12 +43,8 @@ describe('createCourseSchema', () => {
   });
 
   it('rejects discount percent outside 0-100', () => {
-    expect(() =>
-      createCourseSchema.parse({ title: 'Valid Title', pricing: { discountPercent: 101 } }),
-    ).toThrow();
-    expect(() =>
-      createCourseSchema.parse({ title: 'Valid Title', pricing: { discountPercent: -1 } }),
-    ).toThrow();
+    expect(() => createCourseSchema.parse({ title: 'Valid Title', pricing: { discountPercent: 101 } })).toThrow();
+    expect(() => createCourseSchema.parse({ title: 'Valid Title', pricing: { discountPercent: -1 } })).toThrow();
   });
 
   it('rejects quiz scores outside 0-100', () => {
@@ -58,7 +52,7 @@ describe('createCourseSchema', () => {
       createCourseSchema.parse({
         title: 'Valid Title',
         certificateSettings: { minimumQuizScore: 101 },
-      }),
+      })
     ).toThrow();
   });
 });
@@ -84,9 +78,7 @@ describe('createSectionSchema', () => {
   });
 
   it('rejects a one-character title', () => {
-    expect(() => createSectionSchema.parse({ title: 'A' })).toThrow(
-      /Section title must be at least 2 characters/,
-    );
+    expect(() => createSectionSchema.parse({ title: 'A' })).toThrow(/Section title must be at least 2 characters/);
   });
 });
 
@@ -117,7 +109,7 @@ describe('createLectureSchema', () => {
         title: 'Lecture 1',
         type: 'video',
         attachments: [{ url: 'x', publicId: 'y', name: 'n', type: 't', size: 201 * 1024 * 1024 }],
-      }),
+      })
     ).toThrow();
   });
 
@@ -131,9 +123,7 @@ describe('createLectureSchema', () => {
   });
 
   it('rejects negative quiz time limits', () => {
-    expect(() =>
-      createLectureSchema.parse({ title: 'Lecture 1', type: 'quiz', quiz: { timeLimit: -1 } }),
-    ).toThrow();
+    expect(() => createLectureSchema.parse({ title: 'Lecture 1', type: 'quiz', quiz: { timeLimit: -1 } })).toThrow();
   });
 
   it('accepts quiz questions with full scoring fields', () => {
@@ -198,7 +188,7 @@ describe('createLectureSchema', () => {
         quiz: {
           questions: [{ question: 'Q', type: 'single', options: ['Only one'], correctAnswer: 'Only one' }],
         },
-      }),
+      })
     ).toThrow(/At least 2 options required/);
   });
 
@@ -210,7 +200,7 @@ describe('createLectureSchema', () => {
         quiz: {
           questions: [{ question: 'Q', type: 'single', options: ['A', 'B'] }],
         },
-      }),
+      })
     ).toThrow(/Correct answer is required/);
   });
 });
@@ -261,7 +251,7 @@ describe('createLectureSchema – attachments, resources and links', () => {
         type: 'article',
         articleContent: '<p>hi</p>',
         links: [{ label: 'Broken', url: '' }],
-      }),
+      })
     ).toThrow();
   });
 
@@ -289,12 +279,8 @@ describe('createLectureSchema – attachments, resources and links', () => {
 
 describe('reorderSectionsSchema / reorderLecturesSchema', () => {
   it('accepts valid reorder payloads', () => {
-    expect(
-      reorderSectionsSchema.parse({ sectionOrder: [{ sectionId: 'a', order: 0 }] }).sectionOrder,
-    ).toHaveLength(1);
-    expect(
-      reorderLecturesSchema.parse({ lectureOrder: [{ lectureId: 'b', order: 2 }] }).lectureOrder,
-    ).toHaveLength(1);
+    expect(reorderSectionsSchema.parse({ sectionOrder: [{ sectionId: 'a', order: 0 }] }).sectionOrder).toHaveLength(1);
+    expect(reorderLecturesSchema.parse({ lectureOrder: [{ lectureId: 'b', order: 2 }] }).lectureOrder).toHaveLength(1);
   });
 
   it('rejects more than 100 section entries', () => {
@@ -304,5 +290,29 @@ describe('reorderSectionsSchema / reorderLecturesSchema', () => {
 
   it('rejects negative order values', () => {
     expect(() => reorderSectionsSchema.parse({ sectionOrder: [{ sectionId: 'a', order: -1 }] })).toThrow();
+  });
+
+  it('rejects an empty reorder list', () => {
+    expect(() => reorderSectionsSchema.parse({ sectionOrder: [] })).toThrow(/cannot be empty/);
+    expect(() => reorderLecturesSchema.parse({ lectureOrder: [] })).toThrow(/cannot be empty/);
+  });
+
+  it('rejects duplicate ids in a reorder list', () => {
+    expect(() =>
+      reorderSectionsSchema.parse({
+        sectionOrder: [
+          { sectionId: 'a', order: 0 },
+          { sectionId: 'a', order: 1 },
+        ],
+      })
+    ).toThrow(/duplicate sections/);
+    expect(() =>
+      reorderLecturesSchema.parse({
+        lectureOrder: [
+          { lectureId: 'b', order: 0 },
+          { lectureId: 'b', order: 1 },
+        ],
+      })
+    ).toThrow(/duplicate lectures/);
   });
 });

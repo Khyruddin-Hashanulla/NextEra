@@ -1,4 +1,3 @@
-import mongoose from 'mongoose';
 import { audit, auditMiddleware, previousDataLoader, AuditOptions } from '../../../src/middlewares/audit.middleware';
 import { auditService } from '../../../src/services/audit.service';
 import { mockRequest, mockResponse, mockNext } from '../../helpers/requestHelpers';
@@ -76,7 +75,7 @@ describe('audit middleware', () => {
         userAgent: 'test-agent',
         requestId: 'req-1',
         route: '/courses',
-      }),
+      })
     );
   });
 
@@ -95,7 +94,7 @@ describe('audit middleware', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     expect(auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ statusCode: 404, success: false, errorMessage: 'Course not found' }),
+      expect.objectContaining({ statusCode: 404, success: false, errorMessage: 'Course not found' })
     );
   });
 
@@ -114,7 +113,7 @@ describe('audit middleware', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     expect(auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ success: false, errorMessage: 'Unknown error' }),
+      expect.objectContaining({ success: false, errorMessage: 'Unknown error' })
     );
   });
 
@@ -153,7 +152,7 @@ describe('audit middleware', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     expect(auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ previousData: { title: 'Old' }, newData: { title: 'New' } }),
+      expect.objectContaining({ previousData: { title: 'Old' }, newData: { title: 'New' } })
     );
   });
 
@@ -171,9 +170,7 @@ describe('audit middleware', () => {
     res.json({ success: true, data: { data: { title: 'React' } } });
     await new Promise((r) => setTimeout(r, 0));
 
-    expect(auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ newData: { title: 'React' } }),
-    );
+    expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({ newData: { title: 'React' } }));
   });
 
   it('falls back to baseUrl when the route has no path', async () => {
@@ -190,9 +187,7 @@ describe('audit middleware', () => {
     res.json({ ok: true });
     await new Promise((r) => setTimeout(r, 0));
 
-    expect(auditService.log).toHaveBeenCalledWith(
-      expect.objectContaining({ route: '/api' }),
-    );
+    expect(auditService.log).toHaveBeenCalledWith(expect.objectContaining({ route: '/api' }));
   });
 
   it('supports function-based action, resourceId and resourceName', async () => {
@@ -220,7 +215,7 @@ describe('audit middleware', () => {
         action: 'update_2',
         resourceId: 'course_c1',
         resourceName: 'My Course',
-      }),
+      })
     );
   });
 

@@ -3,9 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '@/api/endpoints/admin';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DataTable } from '@/features/admin/components/DataTable';
 import type { Column } from '@/features/admin/components/DataTable';
 import { useToast } from '@/providers/ToastProvider';
@@ -49,12 +47,16 @@ export function RecordingManagementPage() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['admin', 'recordings', page, search, status],
-    queryFn: ({ signal }) => adminApi.listRecordings({
-      page,
-      limit: 20,
-      search: search || undefined,
-      status: status || undefined,
-    }, signal),
+    queryFn: ({ signal }) =>
+      adminApi.listRecordings(
+        {
+          page,
+          limit: 20,
+          search: search || undefined,
+          status: status || undefined,
+        },
+        signal
+      ),
   });
 
   const deleteMutation = useMutation({
@@ -97,7 +99,9 @@ export function RecordingManagementPage() {
     {
       header: 'Date',
       accessor: (r) => (
-        <span className="text-sm text-muted-foreground whitespace-nowrap">{new Date(r.createdAt).toLocaleDateString()}</span>
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
+          {new Date(r.createdAt).toLocaleDateString()}
+        </span>
       ),
     },
     {
@@ -106,7 +110,9 @@ export function RecordingManagementPage() {
         <div className="flex justify-end gap-1">
           {r.url && (
             <Button variant="ghost" size="sm" asChild title="Open recording">
-              <a href={r.url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
+              <a href={r.url} target="_blank" rel="noreferrer">
+                <ExternalLink className="h-4 w-4" />
+              </a>
             </Button>
           )}
           <Button
@@ -138,12 +144,23 @@ export function RecordingManagementPage() {
           <Input
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { setSearch(searchInput.trim()); setPage(1); } }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                setSearch(searchInput.trim());
+                setPage(1);
+              }
+            }}
             placeholder="Search title, topic, meeting ID..."
             className="pl-9"
           />
         </div>
-        <Select value={status} onValueChange={(v) => { setStatus(v === 'all' ? '' : v); setPage(1); }}>
+        <Select
+          value={status}
+          onValueChange={(v) => {
+            setStatus(v === 'all' ? '' : v);
+            setPage(1);
+          }}
+        >
           <SelectTrigger className="w-44">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>

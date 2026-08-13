@@ -42,7 +42,10 @@ export function CourseCurriculum({
           aria-valuemax={100}
           aria-valuenow={completionPercent}
         >
-          <div className="h-full rounded-full bg-primary transition-all duration-500 ease-out" style={{ width: `${completionPercent}%` }} />
+          <div
+            className="h-full rounded-full bg-primary transition-all duration-500 ease-out"
+            style={{ width: `${completionPercent}%` }}
+          />
         </div>
       </div>
 

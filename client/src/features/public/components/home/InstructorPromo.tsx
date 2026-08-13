@@ -64,8 +64,8 @@ export function InstructorPromo() {
                 transition={{ delay: 0.2 }}
                 className="mt-4 max-w-xl text-base leading-relaxed text-primary-foreground/85 sm:text-lg"
               >
-                Turn your skills into a thriving teaching business. Create a course once and earn
-                revenue from every student who enrolls.
+                Turn your skills into a thriving teaching business. Create a course once and earn revenue from every
+                student who enrolls.
               </motion.p>
 
               <motion.ul
@@ -104,9 +104,21 @@ export function InstructorPromo() {
 
             <div className="grid gap-4">
               {[
-                { icon: Wallet, title: 'Earn on every sale', text: 'Get paid for each enrollment, minus a small platform share.' },
-                { icon: Globe, title: 'Reach a global audience', text: 'Students from 120+ countries can discover your course.' },
-                { icon: Video, title: 'Easy course creation', text: 'Structured tools to plan, record, and publish in days.' },
+                {
+                  icon: Wallet,
+                  title: 'Earn on every sale',
+                  text: 'Get paid for each enrollment, minus a small platform share.',
+                },
+                {
+                  icon: Globe,
+                  title: 'Reach a global audience',
+                  text: 'Students from 120+ countries can discover your course.',
+                },
+                {
+                  icon: Video,
+                  title: 'Easy course creation',
+                  text: 'Structured tools to plan, record, and publish in days.',
+                },
               ].map((item, index) => (
                 <motion.div
                   key={item.title}

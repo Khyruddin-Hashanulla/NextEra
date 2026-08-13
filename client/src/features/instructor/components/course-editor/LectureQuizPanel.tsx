@@ -11,25 +11,59 @@ export function LectureQuizPanel({ quiz, onChange }: { quiz: LectureQuiz; onChan
       <h3 className="text-sm font-semibold">Quiz Settings</h3>
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="space-y-2">
-          <label htmlFor="quiz-time" className="text-sm font-medium">Time Limit (min)</label>
-          <Input id="quiz-time" type="number" value={quiz?.timeLimit || 0} onChange={(e) => set({ timeLimit: Number(e.target.value) })} />
+          <label htmlFor="quiz-time" className="text-sm font-medium">
+            Time Limit (min)
+          </label>
+          <Input
+            id="quiz-time"
+            type="number"
+            value={quiz?.timeLimit || 0}
+            onChange={(e) => set({ timeLimit: Number(e.target.value) })}
+          />
         </div>
         <div className="space-y-2">
-          <label htmlFor="quiz-passing" className="text-sm font-medium">Passing Score %</label>
-          <Input id="quiz-passing" type="number" value={quiz?.passingScore || 60} onChange={(e) => set({ passingScore: Number(e.target.value) })} min={0} max={100} />
+          <label htmlFor="quiz-passing" className="text-sm font-medium">
+            Passing Score %
+          </label>
+          <Input
+            id="quiz-passing"
+            type="number"
+            value={quiz?.passingScore || 60}
+            onChange={(e) => set({ passingScore: Number(e.target.value) })}
+            min={0}
+            max={100}
+          />
         </div>
         <div className="space-y-2">
-          <label htmlFor="quiz-attempts" className="text-sm font-medium">Max Attempts</label>
-          <Input id="quiz-attempts" type="number" value={quiz?.maxAttempts || 3} onChange={(e) => set({ maxAttempts: Number(e.target.value) })} min={1} />
+          <label htmlFor="quiz-attempts" className="text-sm font-medium">
+            Max Attempts
+          </label>
+          <Input
+            id="quiz-attempts"
+            type="number"
+            value={quiz?.maxAttempts || 3}
+            onChange={(e) => set({ maxAttempts: Number(e.target.value) })}
+            min={1}
+          />
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <label htmlFor="quiz-cooldown" className="text-sm font-medium">Attempt Cooldown (min)</label>
-          <Input id="quiz-cooldown" type="number" value={quiz?.attemptCooldownMinutes || 0} onChange={(e) => set({ attemptCooldownMinutes: Number(e.target.value) })} min={0} />
+          <label htmlFor="quiz-cooldown" className="text-sm font-medium">
+            Attempt Cooldown (min)
+          </label>
+          <Input
+            id="quiz-cooldown"
+            type="number"
+            value={quiz?.attemptCooldownMinutes || 0}
+            onChange={(e) => set({ attemptCooldownMinutes: Number(e.target.value) })}
+            min={0}
+          />
         </div>
         <div className="space-y-2">
-          <label htmlFor="quiz-policy" className="text-sm font-medium">Scoring Policy</label>
+          <label htmlFor="quiz-policy" className="text-sm font-medium">
+            Scoring Policy
+          </label>
           <select
             id="quiz-policy"
             value={quiz?.scoringPolicy || 'best'}
@@ -72,10 +106,7 @@ export function LectureQuizPanel({ quiz, onChange }: { quiz: LectureQuiz; onChan
 
       <div className="border-t pt-4">
         <h4 className="mb-3 text-sm font-semibold">Questions</h4>
-        <QuizQuestionBuilder
-          questions={quiz?.questions || []}
-          onChange={(questions) => set({ questions })}
-        />
+        <QuizQuestionBuilder questions={quiz?.questions || []} onChange={(questions) => set({ questions })} />
       </div>
     </div>
   );

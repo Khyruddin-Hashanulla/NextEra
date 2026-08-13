@@ -7,7 +7,7 @@ export interface IPayout extends Document {
   totalAmount: number;
   sourcePayment: mongoose.Types.ObjectId;
   sourceType: 'course' | 'bundle' | 'subscription';
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'approved' | 'processing' | 'completed' | 'failed' | 'cancelled';
   razorpayPayoutId?: string;
   utr?: string;
   scheduledDate: Date;
@@ -31,7 +31,7 @@ const payoutSchema = new Schema<IPayout>(
     },
     status: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'failed'],
+      enum: ['pending', 'approved', 'processing', 'completed', 'failed', 'cancelled'],
       default: 'pending',
     },
     razorpayPayoutId: { type: String, maxlength: 200 },
@@ -45,5 +45,7 @@ const payoutSchema = new Schema<IPayout>(
 
 payoutSchema.index({ instructor: 1, status: 1 });
 payoutSchema.index({ scheduledDate: 1 });
+payoutSchema.index({ status: 1, createdAt: -1 });
+payoutSchema.index({ status: 1 });
 
 export const Payout = mongoose.model<IPayout>('Payout', payoutSchema);

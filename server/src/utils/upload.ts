@@ -1,7 +1,14 @@
 import path from 'path';
 import crypto from 'crypto';
-import { FileCategory, UPLOAD_POLICIES, UploadPolicy, EXECUTABLE_EXTENSIONS, DANGEROUS_PATTERNS } from '../config/upload';
+import {
+  FileCategory,
+  UPLOAD_POLICIES,
+  UploadPolicy,
+  EXECUTABLE_EXTENSIONS,
+  DANGEROUS_PATTERNS,
+} from '../config/upload';
 import { ApiError } from './ApiError';
+import { env } from '../config/env';
 
 export interface ValidationResult {
   valid: boolean;
@@ -27,12 +34,9 @@ function matchesDangerousPattern(filename: string): boolean {
   return DANGEROUS_PATTERNS.some((pattern) => pattern.test(filename));
 }
 
-function isValidObjectId(str: string): boolean {
-  return /^[a-fA-F0-9]{24}$/.test(str);
-}
-
 export function sanitizeFilename(filename: string): string {
   let safe = filename
+    // eslint-disable-next-line no-control-regex
     .replace(/[\x00-\x1f\x7f]/g, '')
     .replace(/\.\.\//g, '')
     .replace(/\.\.\\/g, '')
@@ -50,7 +54,8 @@ export function sanitizeFilename(filename: string): string {
 export function generateSafeFilename(originalname: string): string {
   const ext = getExtension(originalname);
   const randomId = crypto.randomBytes(8).toString('hex');
-  const base = path.basename(originalname, ext)
+  const base = path
+    .basename(originalname, ext)
     .replace(/[^a-zA-Z0-9_-]/g, '_')
     .slice(0, 50);
   return `${base}_${randomId}${ext}`;
@@ -104,7 +109,13 @@ export function validateFilename(filename: string): ValidationResult {
   return { valid: true, sanitizedFilename: sanitized };
 }
 
-export function validateCloudinaryResponse(result: any): { url: string; publicId: string } {
+export interface CloudinaryFileResult {
+  url: string;
+  publicId: string;
+  duration?: number;
+}
+
+export function validateCloudinaryResponse(result: any): CloudinaryFileResult {
   if (!result) {
     throw ApiError.internal('Cloudinary returned empty response');
   }
@@ -116,6 +127,10 @@ export function validateCloudinaryResponse(result: any): { url: string; publicId
 
   if (!secureUrl.startsWith('https://')) {
     throw ApiError.internal('Cloudinary returned non-HTTPS URL');
+  }
+
+  if (env.cloudinaryCloudName && !secureUrl.includes(`/${env.cloudinaryCloudName}/`)) {
+    throw ApiError.internal('Cloudinary URL does not match expected account');
   }
 
   const publicId = result.public_id;
@@ -133,13 +148,15 @@ export function validateCloudinaryResponse(result: any): { url: string; publicId
     throw ApiError.internal('Cloudinary returned suspicious file format');
   }
 
-  return { url: secureUrl, publicId };
+  const duration =
+    typeof result.duration === 'number' && Number.isFinite(result.duration) && result.duration >= 0
+      ? Math.round(result.duration)
+      : undefined;
+
+  return duration !== undefined ? { url: secureUrl, publicId, duration } : { url: secureUrl, publicId };
 }
 
-export function validateUploadedFile(
-  file: Express.Multer.File | undefined,
-  policy: UploadPolicy,
-): void {
+export function validateUploadedFile(file: Express.Multer.File | undefined, policy: UploadPolicy): void {
   if (!file) {
     throw ApiError.badRequest('No file provided');
   }

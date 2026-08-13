@@ -7,10 +7,24 @@ import { Enrollment } from '../models/enrollment.model';
 import { Payment } from '../models/payment.model';
 
 jest.mock('../models/user.model', () => ({
-  User: { aggregate: jest.fn(), find: jest.fn(), countDocuments: jest.fn(), findById: jest.fn(), findByIdAndUpdate: jest.fn(), findByIdAndDelete: jest.fn() },
+  User: {
+    aggregate: jest.fn(),
+    find: jest.fn(),
+    countDocuments: jest.fn(),
+    findById: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+  },
 }));
 jest.mock('../models/course.model', () => ({
-  Course: { aggregate: jest.fn(), countDocuments: jest.fn(), find: jest.fn(), findById: jest.fn(), findByIdAndUpdate: jest.fn(), findByIdAndDelete: jest.fn() },
+  Course: {
+    aggregate: jest.fn(),
+    countDocuments: jest.fn(),
+    find: jest.fn(),
+    findById: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+  },
 }));
 jest.mock('../models/enrollment.model', () => ({
   Enrollment: { countDocuments: jest.fn(), aggregate: jest.fn() },
@@ -145,7 +159,10 @@ describe('AdminService.listStudents', () => {
     const id1 = new mongoose.Types.ObjectId();
     const id2 = new mongoose.Types.ObjectId();
     (User.find as jest.Mock).mockReturnValue(
-      chainable([{ _id: id1, name: 'S1' }, { _id: id2, name: 'S2' }])
+      chainable([
+        { _id: id1, name: 'S1' },
+        { _id: id2, name: 'S2' },
+      ])
     );
     (User.countDocuments as jest.Mock).mockResolvedValue(2);
     mockedEnrollmentAggregate.mockResolvedValue([{ _id: id1, count: 3 }]);

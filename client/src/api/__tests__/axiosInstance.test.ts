@@ -1,8 +1,8 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { server } from '@/test/mocks/server';
 import axiosInstance, { fetchCsrfToken, getCsrfToken } from '@/api/axiosInstance';
-import { TOKEN_KEYS, API_BASE_URL } from '@/lib/constants';
+import { TOKEN_KEYS } from '@/lib/constants';
 
 const realLocation = window.location;
 
@@ -48,7 +48,7 @@ function setupProtectedEndpoint(failuresBeforeSuccess: number) {
       }
       return HttpResponse.json({ data: { ok: true } });
     }),
-    http.post('/api/v1/auth/refresh', () => HttpResponse.json(authPayload())),
+    http.post('/api/v1/auth/refresh', () => HttpResponse.json(authPayload()))
   );
   return () => attempts;
 }
@@ -65,7 +65,7 @@ describe('axiosInstance request interceptor', () => {
       http.get('/api/v1/echo', ({ request }) => {
         (request.headers.get('authorization') ?? '').startsWith('Bearer');
         return HttpResponse.json({ data: { auth: request.headers.get('authorization'), seen } });
-      }),
+      })
     );
     const { data } = await axiosInstance.get('/echo');
     expect(data.data.auth).toBe('Bearer my-token');
@@ -74,8 +74,8 @@ describe('axiosInstance request interceptor', () => {
   it('skips the Authorization header without a token', async () => {
     server.use(
       http.get('/api/v1/echo2', ({ request }) =>
-        HttpResponse.json({ data: { auth: request.headers.get('authorization') } }),
-      ),
+        HttpResponse.json({ data: { auth: request.headers.get('authorization') } })
+      )
     );
     const { data } = await axiosInstance.get('/echo2');
     expect(data.data.auth).toBeNull();
@@ -85,8 +85,8 @@ describe('axiosInstance request interceptor', () => {
     localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, 'my-token');
     server.use(
       http.post('/api/v1/csrf-echo', ({ request }) =>
-        HttpResponse.json({ data: { csrf: request.headers.get('x-csrf-token') } }),
-      ),
+        HttpResponse.json({ data: { csrf: request.headers.get('x-csrf-token') } })
+      )
     );
     await fetchCsrfToken();
     const { data } = await axiosInstance.post('/csrf-echo', {});
@@ -96,9 +96,7 @@ describe('axiosInstance request interceptor', () => {
 
 describe('axiosInstance response interceptor', () => {
   it('returns the response on success', async () => {
-    server.use(
-      http.get('/api/v1/plain', () => HttpResponse.json({ data: { ok: true } })),
-    );
+    server.use(http.get('/api/v1/plain', () => HttpResponse.json({ data: { ok: true } })));
     const { data } = await axiosInstance.get('/plain');
     expect(data.data.ok).toBe(true);
   });
@@ -134,13 +132,10 @@ describe('axiosInstance response interceptor', () => {
       http.post('/api/v1/auth/refresh', () => {
         refreshCalls += 1;
         return HttpResponse.json(authPayload());
-      }),
+      })
     );
 
-    const [a, b] = await Promise.all([
-      axiosInstance.get('/protected-a'),
-      axiosInstance.get('/protected-b'),
-    ]);
+    const [a, b] = await Promise.all([axiosInstance.get('/protected-a'), axiosInstance.get('/protected-b')]);
     expect(a.data.data.ok).toBe('/api/v1/protected-a');
     expect(b.data.data.ok).toBe('/api/v1/protected-b');
     expect(refreshCalls).toBe(1);
@@ -152,12 +147,8 @@ describe('axiosInstance response interceptor', () => {
     stubLocation();
 
     server.use(
-      http.get('/api/v1/protected-c', () =>
-        HttpResponse.json({ message: 'Unauthorized' }, { status: 401 }),
-      ),
-      http.post('/api/v1/auth/refresh', () =>
-        HttpResponse.json({ message: 'Invalid refresh token' }, { status: 401 }),
-      ),
+      http.get('/api/v1/protected-c', () => HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })),
+      http.post('/api/v1/auth/refresh', () => HttpResponse.json({ message: 'Invalid refresh token' }, { status: 401 }))
     );
 
     await expect(axiosInstance.get('/protected-c')).rejects.toThrow();
@@ -170,11 +161,7 @@ describe('axiosInstance response interceptor', () => {
     localStorage.setItem(TOKEN_KEYS.ACCESS_TOKEN, 'expired');
     stubLocation();
 
-    server.use(
-      http.get('/api/v1/protected-d', () =>
-        HttpResponse.json({ message: 'Unauthorized' }, { status: 401 }),
-      ),
-    );
+    server.use(http.get('/api/v1/protected-d', () => HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })));
 
     await expect(axiosInstance.get('/protected-d')).rejects.toThrow();
     expect(window.location.href).toBe('/auth/login');
@@ -194,21 +181,13 @@ describe('axiosInstance response interceptor', () => {
 
 describe('fetchCsrfToken', () => {
   it('stores the token from the server', async () => {
-    server.use(
-      http.get('/api/v1/csrf-token', () =>
-        HttpResponse.json({ data: { csrfToken: 'server-token' } }),
-      ),
-    );
+    server.use(http.get('/api/v1/csrf-token', () => HttpResponse.json({ data: { csrfToken: 'server-token' } })));
     await fetchCsrfToken();
     expect(getCsrfToken()).toBe('server-token');
   });
 
   it('clears the token when the request fails', async () => {
-    server.use(
-      http.get('/api/v1/csrf-token', () =>
-        HttpResponse.json({ message: 'boom' }, { status: 500 }),
-      ),
-    );
+    server.use(http.get('/api/v1/csrf-token', () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
     await fetchCsrfToken();
     expect(getCsrfToken()).toBeNull();
   });
@@ -226,9 +205,7 @@ describe('axiosInstance csrf recovery', () => {
         }
         return HttpResponse.json({ data: { ok: true, csrf: request.headers.get('x-csrf-token') } });
       }),
-      http.get('/api/v1/csrf-token', () =>
-        HttpResponse.json({ data: { csrfToken: 'rotated-token' } }),
-      ),
+      http.get('/api/v1/csrf-token', () => HttpResponse.json({ data: { csrfToken: 'rotated-token' } }))
     );
 
     const { data } = await axiosInstance.post('/csrf-check', {});
@@ -246,9 +223,7 @@ describe('axiosInstance csrf recovery', () => {
     server.use(
       http.get('/api/v1/q-a', () => HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })),
       http.get('/api/v1/q-b', () => HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })),
-      http.post('/api/v1/auth/refresh', () =>
-        HttpResponse.json({ message: 'Bad refresh' }, { status: 401 }),
-      ),
+      http.post('/api/v1/auth/refresh', () => HttpResponse.json({ message: 'Bad refresh' }, { status: 401 }))
     );
 
     const a = axiosInstance.get('/q-a');

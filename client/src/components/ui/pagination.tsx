@@ -20,8 +20,6 @@ export function Pagination({
   showPageNumbers = true,
   siblingCount = 1,
 }: PaginationProps) {
-  if (totalPages <= 1) return null;
-
   const pages = React.useMemo(() => {
     const pages: (number | 'ellipsis')[] = [];
     const startPage = Math.max(2, currentPage - siblingCount);
@@ -41,6 +39,8 @@ export function Pagination({
 
     return pages;
   }, [currentPage, totalPages, siblingCount]);
+
+  if (totalPages <= 1) return null;
 
   return (
     <nav className={cn('flex items-center gap-1', className)} aria-label="Pagination">

@@ -4,6 +4,7 @@ import { Enrollment } from '../models/enrollment.model';
 import { Payment } from '../models/payment.model';
 import { User } from '../models/user.model';
 import { Announcement } from '../models/announcement.model';
+import { Notification } from '../models/notification.model';
 import { Review } from '../models/review.model';
 import { Certificate } from '../models/certificate.model';
 import { Coupon } from '../models/coupon.model';
@@ -11,9 +12,16 @@ import { ApiError } from '../utils/ApiError';
 import { ROLES } from '../constants/roles';
 import { escapeRegex } from '../utils/escapeRegex';
 import { generateCertificateId } from '../utils/certificateIdGenerator';
-import { generateCertificateSignature, generateQrCodePngBuffer, getQrCodeImageUrl, getVerificationUrl } from '../utils/certificate';
+import {
+  generateCertificateSignature,
+  generateQrCodePngBuffer,
+  getQrCodeImageUrl,
+  getVerificationUrl,
+} from '../utils/certificate';
 import { generateCertificatePdf, getCertificateUrl } from '../utils/pdfGenerator';
+import { sendEmail } from '../utils/sendEmail';
 import { subscriptionPermissionService } from './subscriptionPermission.service';
+import { entitlementService } from './entitlement.service';
 import { Types } from 'mongoose';
 import { cacheService } from '../cache/cache.service';
 import { cacheKeys, CACHE_TTL } from '../cache/cacheKeys';
@@ -113,10 +121,8 @@ export class InstructorService {
   }
 
   async getDashboard(userId: string): Promise<InstructorDashboardData> {
-    return cacheService.remember(
-      cacheKeys.instructorDashboard(userId),
-      { ttl: CACHE_TTL.INSTRUCTOR_DASHBOARD },
-      () => this.buildDashboard(userId)
+    return cacheService.remember(cacheKeys.instructorDashboard(userId), { ttl: CACHE_TTL.INSTRUCTOR_DASHBOARD }, () =>
+      this.buildDashboard(userId)
     );
   }
 
@@ -152,8 +158,10 @@ export class InstructorService {
         { $group: { _id: null, total: { $sum: 1 }, students: { $addToSet: '$user' } } },
       ]),
       Payment.aggregate<RevenueStatsResult>([
-        { $match: { status: 'success', course: { $in: courseIds } } },
-        { $group: { _id: null, total: { $sum: '$amount' } } },
+        { $match: { status: 'success', 'commissionSplits.instructor': instructorId as any } },
+        { $unwind: '$commissionSplits' },
+        { $match: { 'commissionSplits.instructor': instructorId as any } },
+        { $group: { _id: null, total: { $sum: '$commissionSplits.instructorShare' } } },
       ]),
     ]);
 
@@ -174,9 +182,8 @@ export class InstructorService {
       { ttl: CACHE_TTL.INSTRUCTOR_REVENUE },
       async () => {
         const courses = await Course.find({ instructor: instructorId }).select('_id title').lean();
-        const courseIds = courses.map((c: any) => c._id);
 
-        const match: any = { status: 'success', course: { $in: courseIds } };
+        const match: any = { status: 'success', 'commissionSplits.instructor': instructorId };
         if (startDate || endDate) {
           match.createdAt = {};
           if (startDate) match.createdAt.$gte = new Date(startDate);
@@ -188,10 +195,12 @@ export class InstructorService {
             $facet: {
               daily: [
                 { $match: match },
+                { $unwind: '$commissionSplits' },
+                { $match: { 'commissionSplits.instructor': instructorId } },
                 {
                   $group: {
                     _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-                    amount: { $sum: '$amount' },
+                    amount: { $sum: '$commissionSplits.instructorShare' },
                     count: { $sum: 1 },
                   },
                 },
@@ -199,7 +208,9 @@ export class InstructorService {
               ],
               perCourse: [
                 { $match: match },
-                { $group: { _id: '$course', amount: { $sum: '$amount' }, count: { $sum: 1 } } },
+                { $unwind: '$commissionSplits' },
+                { $match: { 'commissionSplits.instructor': instructorId } },
+                { $group: { _id: '$course', amount: { $sum: '$commissionSplits.instructorShare' }, count: { $sum: 1 } } },
               ],
             },
           },
@@ -210,7 +221,12 @@ export class InstructorService {
 
         const courseRevenue = perCourse.map((p: any) => {
           const course = courses.find((c: any) => c._id.toString() === p._id.toString());
-          return { courseTitle: course?.title || 'Unknown', amount: p.amount, enrollments: p.count };
+          return {
+            _id: course?._id,
+            courseTitle: course?.title || 'Unknown',
+            amount: p.amount,
+            enrollments: p.count,
+          };
         });
 
         const total = revenue.reduce((sum: number, r: any) => sum + r.amount, 0);
@@ -227,11 +243,12 @@ export class InstructorService {
         await subscriptionPermissionService.requireAdvancedAnalyticsPermission(instructorId);
         const courseIds = (await Course.find({ instructor: instructorId }).select('_id').lean()).map((c: any) => c._id);
 
-        const [enrollmentResult, revenueTrend, topCourses] = await Promise.all([
+        const [enrollmentResult, revenueTrend, topCourses, courseRevenue, ratingResult] = await Promise.all([
           Enrollment.aggregate([
             { $match: { course: { $in: courseIds } } },
             {
               $facet: {
+                stats: [{ $group: { _id: null, total: { $sum: 1 }, students: { $addToSet: '$user' } } }],
                 enrollmentTrend: [
                   {
                     $group: {
@@ -254,11 +271,13 @@ export class InstructorService {
             },
           ]),
           Payment.aggregate([
-            { $match: { status: 'success', course: { $in: courseIds } } },
+            { $match: { status: 'success', 'commissionSplits.instructor': instructorId as any } },
+            { $unwind: '$commissionSplits' },
+            { $match: { 'commissionSplits.instructor': instructorId as any } },
             {
               $group: {
                 _id: { $dateToString: { format: '%Y-%m', date: '$createdAt' } },
-                amount: { $sum: '$amount' },
+                amount: { $sum: '$commissionSplits.instructorShare' },
                 count: { $sum: 1 },
               },
             },
@@ -269,7 +288,26 @@ export class InstructorService {
             .limit(10)
             .select('title totalEnrollments averageRating price totalRevenue')
             .lean(),
+          Payment.aggregate([
+            { $match: { status: 'success', 'commissionSplits.instructor': instructorId as any } },
+            { $unwind: '$commissionSplits' },
+            { $match: { 'commissionSplits.instructor': instructorId as any } },
+            {
+              $group: {
+                _id: '$course',
+                revenue: { $sum: '$commissionSplits.instructorShare' },
+                enrollments: { $sum: 1 },
+              },
+            },
+          ]),
+          Review.aggregate([
+            { $match: { course: { $in: courseIds } } },
+            { $group: { _id: null, averageRating: { $avg: '$rating' } } },
+          ]),
         ]);
+
+        const enrollmentStats = enrollmentResult[0]?.stats?.[0];
+        const totalRevenue = revenueTrend.reduce((sum: number, r: any) => sum + r.amount, 0);
 
         const enrollmentTrend = enrollmentResult[0]?.enrollmentTrend ?? [];
         const studentGrowth = enrollmentResult[0]?.studentGrowth ?? [];
@@ -282,12 +320,28 @@ export class InstructorService {
 
         const totalViews = topCourses.reduce((sum: number, c: any) => sum + (c.totalEnrollments || 0), 0);
 
+        const revenueByCourse = new Map((courseRevenue ?? []).map((r: any) => [r._id?.toString(), r]));
+        const topPerformingCourses = (topCourses ?? [])
+          .map((c: any) => ({
+            _id: c._id,
+            title: c.title,
+            enrollments: revenueByCourse.get(c._id.toString())?.enrollments || c.totalEnrollments || 0,
+            revenue: revenueByCourse.get(c._id.toString())?.revenue || 0,
+          }))
+          .sort((a: any, b: any) => (b.revenue || 0) - (a.revenue || 0))
+          .slice(0, 10);
+
         return {
           totalViews,
+          totalStudents: enrollmentStats?.students?.length ?? 0,
+          totalEnrollments: enrollmentStats?.total ?? 0,
+          totalRevenue,
+          averageRating: Math.round((ratingResult?.[0]?.averageRating ?? 0) * 10) / 10,
+          totalCourses: courseIds.length,
           enrollmentTrend,
           revenueTrend,
           studentGrowth: growth,
-          topPerformingCourses: topCourses,
+          topPerformingCourses,
         };
       }
     );
@@ -302,7 +356,10 @@ export class InstructorService {
     const match: any = { course: { $in: courseIds } };
     if (search) {
       const users = await User.find({
-        $or: [{ name: { $regex: escapeRegex(search), $options: 'i' } }, { email: { $regex: escapeRegex(search), $options: 'i' } }],
+        $or: [
+          { name: { $regex: escapeRegex(search), $options: 'i' } },
+          { email: { $regex: escapeRegex(search), $options: 'i' } },
+        ],
       })
         .select('_id')
         .lean();
@@ -322,6 +379,7 @@ export class InstructorService {
     ]);
 
     const students = enrollments.map((e: any) => ({
+      _id: e._id,
       user: e.user,
       course: e.course,
       enrolledAt: e.enrolledAt,
@@ -362,6 +420,15 @@ export class InstructorService {
     }
   ) {
     await subscriptionPermissionService.requireCouponPermission(instructorId);
+    if (data.isActive !== false) {
+      const { used, limit } = await entitlementService.getActiveCouponCount(instructorId);
+      if (limit > 0 && used >= limit) {
+        throw ApiError.forbidden(
+          `You have reached the maximum of ${limit} active coupons on your plan. Deactivate an existing coupon or upgrade your instructor plan.`,
+          'COUPON_LIMIT_REACHED'
+        );
+      }
+    }
     return Coupon.create({ ...data, createdBy: instructorId });
   }
 
@@ -452,13 +519,92 @@ export class InstructorService {
   ) {
     const course = await Course.findOne({ _id: data.course, instructor: instructorId });
     if (!course) throw ApiError.notFound('Course not found or not owned by you');
-    return Announcement.create({ ...data, instructor: instructorId });
+
+    const announcement = await Announcement.create({ ...data, instructor: instructorId });
+
+    const enrolledUsers = await Enrollment.find({
+      course: course._id,
+      user: { $ne: instructorId },
+    }).select('user').lean();
+    const recipients = enrolledUsers.map((e) => e.user);
+
+    if (recipients.length > 0) {
+      await Notification.insertMany(
+        recipients.map((userId) => ({
+          user: userId,
+          course: course._id,
+          announcement: announcement._id,
+          title: data.title,
+          message: data.message,
+          type: 'course',
+          link: '/student/announcements',
+        }))
+      );
+    }
+
+    if (data.sendEmail && recipients.length > 0) {
+      this.sendAnnouncementEmails(recipients, course, data).catch(() => {});
+    }
+
+    return announcement;
+  }
+
+  private async sendAnnouncementEmails(
+    recipientIds: Types.ObjectId[],
+    course: { _id: Types.ObjectId; title: string },
+    data: { title: string; message: string }
+  ): Promise<void> {
+    const users = await User.find({ _id: { $in: recipientIds }, isActive: true })
+      .select('name email')
+      .lean();
+    if (users.length === 0) return;
+
+    const subject = `${data.title} - ${course.title}`;
+    const text = [data.title, '', data.message, '', `Course: ${course.title}`, 'View on NextEra LMS'].join('\n');
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #f97316;">${data.title}</h2>
+        <p>${data.message}</p>
+        <hr style="border: 1px solid #e5e7eb; margin: 20px 0;" />
+        <p style="color: #6b7280; font-size: 12px;">Course: ${course.title}</p>
+      </div>
+    `;
+
+    await Promise.allSettled(users.map((u) => sendEmail({ to: u.email, subject, text, html })));
   }
 
   async deleteAnnouncement(announcementId: string) {
     const announcement = await Announcement.findByIdAndDelete(announcementId);
     if (!announcement) throw ApiError.notFound('Announcement not found');
+    await Notification.deleteMany({ announcement: announcement._id });
     return { deleted: true };
+  }
+
+  // ─── Notifications (instructor inbox) ────────────────────────
+  async listNotifications(userId: string, page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [notifications, total, unreadCount] = await Promise.all([
+      Notification.find({ user: userId }).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+      Notification.countDocuments({ user: userId }),
+      Notification.countDocuments({ user: userId, isRead: false }),
+    ]);
+    return { notifications, total, unreadCount, page, limit, totalPages: Math.ceil(total / limit) };
+  }
+
+  async markNotificationRead(notificationId: string, userId: string) {
+    if (!Types.ObjectId.isValid(notificationId)) throw ApiError.badRequest('Invalid notification id');
+    const notification = await Notification.findOneAndUpdate(
+      { _id: notificationId, user: userId },
+      { isRead: true },
+      { new: true }
+    );
+    if (!notification) throw ApiError.notFound('Notification not found');
+    return notification;
+  }
+
+  async markAllNotificationsRead(userId: string) {
+    await Notification.updateMany({ user: userId, isRead: false }, { isRead: true });
+    return { success: true };
   }
 
   async getProfile(userId: string) {
@@ -511,17 +657,23 @@ export class InstructorService {
   async uploadAvatar(userId: string, file: Express.Multer.File): Promise<{ url: string; publicId: string }> {
     const { uploadService } = await import('../services/upload.service');
     const result = await uploadService.uploadImage(file);
-    
+
     // Persist the avatar URL to the user document
-    await User.findByIdAndUpdate(userId, { 
-      $set: { avatar: { url: result.url, publicId: result.publicId } } 
-    }, { new: true });
-    
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: { avatar: { url: result.url, publicId: result.publicId } },
+      },
+      { new: true }
+    );
+
     return result;
   }
 
   async getSubscriptionStatus(userId: string) {
-    const user = await User.findById(userId).select('instructorProfile.subscriptionStatus instructorProfile.subscriptionExpiry').lean();
+    const user = await User.findById(userId)
+      .select('instructorProfile.subscriptionStatus instructorProfile.subscriptionExpiry')
+      .lean();
     if (!user) throw ApiError.notFound('User not found');
     return {
       subscriptionStatus: user.instructorProfile?.subscriptionStatus || 'none',
@@ -550,14 +702,19 @@ export class InstructorService {
     };
   }
 
-  async issueCertificate(
-    instructorId: string,
-    data: { userId: string; courseId: string; enrollmentId: string }
-  ) {
+  async issueCertificate(instructorId: string, data: { userId: string; courseId: string; enrollmentId: string }) {
     const course = await Course.findOne({ _id: data.courseId, instructor: instructorId })
       .populate('category', 'name')
       .lean();
     if (!course) throw ApiError.notFound('Course not found or not owned by you');
+
+    const view = await entitlementService.getEntitlementView(instructorId);
+    if (!view.entitlements.certificates.enabled) {
+      throw ApiError.forbidden(
+        'Certificates are available on Growth and higher plans. Upgrade your instructor plan to issue certificates.',
+        'CERTIFICATE_NOT_ALLOWED'
+      );
+    }
 
     const enrollment = await Enrollment.findOne({ _id: data.enrollmentId, user: data.userId, course: data.courseId });
     if (!enrollment) throw ApiError.notFound('Enrollment not found');
@@ -591,7 +748,7 @@ export class InstructorService {
     const qrCodeImageUrl = getQrCodeImageUrl(certificateId);
     const qrCodeData = await generateQrCodePngBuffer(verificationUrl);
 
-    const pdfPath = await generateCertificatePdf({
+    await generateCertificatePdf({
       studentName: user.name,
       courseTitle: course.title,
       instructorName,

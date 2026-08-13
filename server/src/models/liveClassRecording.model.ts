@@ -13,10 +13,7 @@ export type RecordingStatus = (typeof RECORDING_STATUS)[keyof typeof RECORDING_S
 // 'available' is kept as a legacy status for records created before the
 // recording-status model was introduced. Completed recordings queries should
 // use COMPLETED_RECORDING_STATUSES so legacy records remain visible.
-export const COMPLETED_RECORDING_STATUSES: readonly string[] = [
-  RECORDING_STATUS.COMPLETED,
-  'available',
-];
+export const COMPLETED_RECORDING_STATUSES: readonly string[] = [RECORDING_STATUS.COMPLETED, 'available'];
 
 const RECORDING_STATUS_VALUES: readonly string[] = [
   RECORDING_STATUS.PENDING,
@@ -87,7 +84,4 @@ liveClassRecordingSchema.index({ course: 1, status: 1 });
 liveClassRecordingSchema.index({ instructor: 1, createdAt: -1 });
 liveClassRecordingSchema.index({ zoomRecordingId: 1 });
 
-export const LiveClassRecording = mongoose.model<ILiveClassRecording>(
-  'LiveClassRecording',
-  liveClassRecordingSchema
-);
+export const LiveClassRecording = mongoose.model<ILiveClassRecording>('LiveClassRecording', liveClassRecordingSchema);

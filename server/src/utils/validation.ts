@@ -68,14 +68,11 @@ export const NESTING_LIMITS = {
 
 import { z } from 'zod';
 
-export const stringField = (maxSize: number, minSize = 1) =>
-  z.string().min(minSize).max(maxSize).trim();
+export const stringField = (maxSize: number, minSize = 1) => z.string().min(minSize).max(maxSize).trim();
 
-export const optionalStringField = (maxSize: number) =>
-  z.string().max(maxSize).trim().optional();
+export const optionalStringField = (maxSize: number) => z.string().max(maxSize).trim().optional();
 
-export const limitedArray = <T extends z.ZodTypeAny>(schema: T, maxItems: number) =>
-  z.array(schema).max(maxItems);
+export const limitedArray = <T extends z.ZodTypeAny>(schema: T, maxItems: number) => z.array(schema).max(maxItems);
 
 export const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1).catch(1),

@@ -39,9 +39,6 @@ function setCsrfHeader(config: InternalAxiosRequestConfig, token: string | null)
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
   withCredentials: true,
   validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
 });
@@ -57,11 +54,7 @@ axiosInstance.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    if (
-      config.method &&
-      !SAFE_METHODS.includes(config.method.toUpperCase()) &&
-      config.headers
-    ) {
+    if (config.method && !SAFE_METHODS.includes(config.method.toUpperCase()) && config.headers) {
       if (!csrfToken) {
         await fetchCsrfToken();
       }

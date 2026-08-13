@@ -40,7 +40,9 @@ export class CascadeDeleteService {
   async deleteCourse(courseId: string, session: mongoose.ClientSession): Promise<void> {
     const [lectures, codingProblems] = await Promise.all([
       Lecture.find({ course: courseId })
-        .select('_id videoUrl.publicId resources.publicId attachments.publicId sourceCode.publicId practiceFiles.publicId')
+        .select(
+          '_id videoUrl.publicId resources.publicId attachments.publicId sourceCode.publicId practiceFiles.publicId'
+        )
         .lean(),
       CodingProblem.find({ course: courseId }).select('_id').lean(),
     ]);
@@ -80,7 +82,9 @@ export class CascadeDeleteService {
 
   async deleteSection(sectionId: string, courseId: string, session: mongoose.ClientSession): Promise<void> {
     const lectures = await Lecture.find({ section: sectionId })
-      .select('_id videoUrl.publicId resources.publicId attachments.publicId sourceCode.publicId practiceFiles.publicId')
+      .select(
+        '_id videoUrl.publicId resources.publicId attachments.publicId sourceCode.publicId practiceFiles.publicId'
+      )
       .lean();
 
     const lectureIds = lectures.map((l) => l._id);
@@ -126,42 +130,57 @@ export class CascadeDeleteService {
 
     const anonymizedEmail = `deleted_${userId.toString().slice(-8)}@deleted.localhost`;
 
-    await User.findByIdAndUpdate(userId, {
-      $set: {
-        name: 'Deleted User',
-        email: anonymizedEmail,
-        phone: '',
-        address: '',
-        bio: '',
-        avatar: { url: '', publicId: '' },
-        socialLinks: { youtube: '', twitter: '', linkedin: '', github: '', portfolio: '', website: '' },
-        googleId: undefined,
-        isActive: false,
-        isDeleted: true,
-        deletedAt: new Date(),
-        deletedBy: deletedBy as any,
-        failedLoginAttempts: 0,
-        accountLockedUntil: undefined,
-        lockLevel: 0,
-        lastFailedLogin: undefined,
-        lastFailedLoginIp: '',
-        resetPasswordToken: undefined,
-        resetPasswordExpire: undefined,
-        instructorProfile: {
-          qualification: '', experience: '', expertise: [],
-          resume: { url: '', publicId: '' },
-          identityProof: { url: '', publicId: '' },
-          demoVideo: { url: '', publicId: '' },
-          taxDetails: { pan: '', gst: '' },
-          bankDetails: {
-            accountHolderName: '', accountNumber: '', ifscCode: '', bankName: '', branch: '', upiId: '',
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          name: 'Deleted User',
+          email: anonymizedEmail,
+          phone: '',
+          address: '',
+          bio: '',
+          avatar: { url: '', publicId: '' },
+          socialLinks: { youtube: '', twitter: '', linkedin: '', github: '', portfolio: '', website: '' },
+          googleId: undefined,
+          isActive: false,
+          isDeleted: true,
+          deletedAt: new Date(),
+          deletedBy: deletedBy as any,
+          failedLoginAttempts: 0,
+          accountLockedUntil: undefined,
+          lockLevel: 0,
+          lastFailedLogin: undefined,
+          lastFailedLoginIp: '',
+          resetPasswordToken: undefined,
+          resetPasswordExpire: undefined,
+          instructorProfile: {
+            qualification: '',
+            experience: '',
+            expertise: [],
+            resume: { url: '', publicId: '' },
+            identityProof: { url: '', publicId: '' },
+            demoVideo: { url: '', publicId: '' },
+            taxDetails: { pan: '', gst: '' },
+            bankDetails: {
+              accountHolderName: '',
+              accountNumber: '',
+              ifscCode: '',
+              bankName: '',
+              branch: '',
+              upiId: '',
+            },
+            teachingCategories: [],
+            completedCourses: 0,
+            totalStudents: 0,
+            totalEarnings: 0,
+            rating: 0,
+            subscriptionStatus: 'none',
+            subscriptionExpiry: undefined,
           },
-          teachingCategories: [],
-          completedCourses: 0, totalStudents: 0, totalEarnings: 0, rating: 0,
-          subscriptionStatus: 'none', subscriptionExpiry: undefined,
         },
       },
-    }, { session });
+      { session }
+    );
 
     const userObjectId = user._id as mongoose.Types.ObjectId;
 
@@ -187,11 +206,7 @@ export class CascadeDeleteService {
         ? CodingSubmission.deleteMany({ problem: { $in: userCodingProblemIds } }, { session })
         : Promise.resolve(),
       Review.updateMany({ user: userObjectId }, { $set: { user: userObjectId } }, { session }),
-      Discussion.updateMany(
-        { user: userObjectId },
-        { $set: { user: userObjectId } },
-        { session }
-      ),
+      Discussion.updateMany({ user: userObjectId }, { $set: { user: userObjectId } }, { session }),
       Discussion.updateMany(
         { 'replies.user': userObjectId },
         { $set: { 'replies.$[].user': userObjectId } },
@@ -224,7 +239,11 @@ export class CascadeDeleteService {
       Payout.updateMany({ instructor: userObjectId }, { $set: { instructor: userObjectId } }, { session }),
       Refund.updateMany({ user: userObjectId }, { $set: { user: userObjectId } }, { session }),
       Refund.updateMany({ processedBy: userObjectId }, { $set: { processedBy: null } }, { session }),
-      InstructorSubscription.updateMany({ instructor: userObjectId }, { $set: { instructor: userObjectId } }, { session }),
+      InstructorSubscription.updateMany(
+        { instructor: userObjectId },
+        { $set: { instructor: userObjectId } },
+        { session }
+      ),
     ]);
 
     const courses = await Course.find({ instructor: userObjectId }).select('_id').lean();

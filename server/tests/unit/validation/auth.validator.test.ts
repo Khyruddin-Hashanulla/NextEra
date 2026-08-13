@@ -22,27 +22,27 @@ describe('registerSchema', () => {
   });
 
   it('does not accept emails with surrounding whitespace', () => {
-    expect(() =>
-      registerSchema.parse({ name: 'Jane', email: '  a@b.com  ', password: 'StrongPass1' }),
-    ).toThrow(/Invalid email address/);
+    expect(() => registerSchema.parse({ name: 'Jane', email: '  a@b.com  ', password: 'StrongPass1' })).toThrow(
+      /Invalid email address/
+    );
   });
 
   it('rejects names shorter than 2 characters', () => {
-    expect(() =>
-      registerSchema.parse({ name: 'A', email: 'a@b.com', password: 'StrongPass1' }),
-    ).toThrow(/at least 2 characters/);
+    expect(() => registerSchema.parse({ name: 'A', email: 'a@b.com', password: 'StrongPass1' })).toThrow(
+      /at least 2 characters/
+    );
   });
 
   it('rejects an invalid email', () => {
-    expect(() =>
-      registerSchema.parse({ name: 'Jane', email: 'not-an-email', password: 'StrongPass1' }),
-    ).toThrow(/Invalid email address/);
+    expect(() => registerSchema.parse({ name: 'Jane', email: 'not-an-email', password: 'StrongPass1' })).toThrow(
+      /Invalid email address/
+    );
   });
 
   it('rejects passwords shorter than 8 characters', () => {
-    expect(() =>
-      registerSchema.parse({ name: 'Jane', email: 'a@b.com', password: 'Short1' }),
-    ).toThrow(/at least 8 characters/);
+    expect(() => registerSchema.parse({ name: 'Jane', email: 'a@b.com', password: 'Short1' })).toThrow(
+      /at least 8 characters/
+    );
   });
 
   it.each([
@@ -50,9 +50,7 @@ describe('registerSchema', () => {
     ['lowercase', 'UPPERCASE1', /lowercase letter/],
     ['number', 'NoNumbersHere', /number/],
   ] as const)('rejects passwords missing %s', (_label, password, pattern) => {
-    expect(() =>
-      registerSchema.parse({ name: 'Jane', email: 'a@b.com', password }),
-    ).toThrow(pattern);
+    expect(() => registerSchema.parse({ name: 'Jane', email: 'a@b.com', password })).toThrow(pattern);
   });
 });
 
@@ -63,9 +61,7 @@ describe('loginSchema', () => {
   });
 
   it('rejects a missing password', () => {
-    expect(() => loginSchema.parse({ email: 'a@b.com', password: '' })).toThrow(
-      /Password is required/,
-    );
+    expect(() => loginSchema.parse({ email: 'a@b.com', password: '' })).toThrow(/Password is required/);
   });
 });
 
@@ -86,12 +82,8 @@ describe('verifyEmailSchema', () => {
   });
 
   it('rejects otps that are not exactly 6 characters', () => {
-    expect(() => verifyEmailSchema.parse({ email: 'a@b.com', otp: '12345' })).toThrow(
-      /OTP must be 6 digits/,
-    );
-    expect(() => verifyEmailSchema.parse({ email: 'a@b.com', otp: '1234567' })).toThrow(
-      /OTP must be 6 digits/,
-    );
+    expect(() => verifyEmailSchema.parse({ email: 'a@b.com', otp: '12345' })).toThrow(/OTP must be 6 digits/);
+    expect(() => verifyEmailSchema.parse({ email: 'a@b.com', otp: '1234567' })).toThrow(/OTP must be 6 digits/);
   });
 });
 
@@ -103,9 +95,7 @@ describe('resetPasswordSchema', () => {
   });
 
   it('rejects a missing token', () => {
-    expect(() => resetPasswordSchema.parse({ token: '', password: 'StrongPass1' })).toThrow(
-      /Reset token is required/,
-    );
+    expect(() => resetPasswordSchema.parse({ token: '', password: 'StrongPass1' })).toThrow(/Reset token is required/);
   });
 
   it('enforces password complexity', () => {
@@ -115,15 +105,11 @@ describe('resetPasswordSchema', () => {
 
 describe('googleAuthSchema / refreshTokenSchema', () => {
   it('requires a non-empty credential', () => {
-    expect(() => googleAuthSchema.parse({ credential: '' })).toThrow(
-      /Google credential is required/,
-    );
+    expect(() => googleAuthSchema.parse({ credential: '' })).toThrow(/Google credential is required/);
     expect(googleAuthSchema.parse({ credential: 'abc' }).credential).toBe('abc');
   });
 
   it('requires a non-empty refresh token', () => {
-    expect(() => refreshTokenSchema.parse({ refreshToken: '' })).toThrow(
-      /Refresh token is required/,
-    );
+    expect(() => refreshTokenSchema.parse({ refreshToken: '' })).toThrow(/Refresh token is required/);
   });
 });

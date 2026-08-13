@@ -1,23 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import mongoose from 'mongoose';
 import { ApiError } from '../utils/ApiError';
-import { ROLES } from '../constants/roles';
 import { Course } from '../models/course.model';
 import { Section } from '../models/section.model';
 import { Lecture } from '../models/lecture.model';
-import { Note } from '../models/note.model';
-import { Enrollment } from '../models/enrollment.model';
-import { Certificate } from '../models/certificate.model';
-import { AssignmentSubmission } from '../models/assignmentSubmission.model';
-import { Coupon } from '../models/coupon.model';
-import { Announcement } from '../models/announcement.model';
-import { Review } from '../models/review.model';
-import { QuizAttempt } from '../models/quizAttempt.model';
-import { LiveClass } from '../models/liveClass.model';
-import { CodingSubmission } from '../models/codingSubmission.model';
-import { Notification } from '../models/notification.model';
-import { AuditLog } from '../models/auditLog.model';
-import { auditDenied, getUserId, getIp, getUserAgent, isAdmin } from '../services/dataScoping.service';
+import { auditDenied, getUserId, isAdmin } from '../services/dataScoping.service';
 
 // Re-export the factory-based middleware from the new dataScoping module
 export {
@@ -54,7 +41,7 @@ async function verifyField<T>(
   field: keyof T & string,
   expectedId: string,
   resourceName: string,
-  req: Request,
+  req: Request
 ): Promise<void> {
   if (!isValidId(resourceId)) {
     await auditDenied(req, resourceName, resourceId, `Invalid ${resourceName} ID`);

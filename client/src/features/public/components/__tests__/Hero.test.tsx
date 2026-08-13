@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { Routes, Route } from 'react-router-dom';
 import { Hero } from '@/features/public/components/Hero';
 import { renderWithProviders } from '@/test/render/renderWithProviders';
@@ -25,10 +25,8 @@ function renderHero(user?: User) {
     </Routes>,
     {
       route: '/',
-      mockAuth: user
-        ? createAuthValue({ user, isAuthenticated: true })
-        : createAuthValue(),
-    },
+      mockAuth: user ? createAuthValue({ user, isAuthenticated: true }) : createAuthValue(),
+    }
   );
 }
 

@@ -84,4 +84,19 @@ describe('AssignmentService.getInstructorAssignments', () => {
     expect(result.pagination.total).toBe(0);
     expect(mockedSubmissionAggregate).not.toHaveBeenCalled();
   });
+
+  it('coerces string page/limit query params into numeric $skip/$limit stages', async () => {
+    const courseId = new mongoose.Types.ObjectId();
+    mockedCourseFind.mockReturnValue(chainable([{ _id: courseId }]));
+    mockedLectureAggregate.mockResolvedValue([{ items: [], total: [{ count: 0 }] }]);
+
+    await service.getInstructorAssignments(INSTRUCTOR_ID, { page: '2', limit: '5' } as any);
+
+    const pipeline = mockedLectureAggregate.mock.calls[0][0];
+    const items = pipeline[1].$facet.items;
+    const skipStage = items.find((s: any) => typeof s.$skip !== 'undefined');
+    const limitStage = items.find((s: any) => typeof s.$limit !== 'undefined');
+    expect(skipStage.$skip).toBe(5);
+    expect(limitStage.$limit).toBe(5);
+  });
 });

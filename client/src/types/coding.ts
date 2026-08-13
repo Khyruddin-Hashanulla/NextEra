@@ -1,5 +1,13 @@
 export type Difficulty = 'easy' | 'medium' | 'hard';
-export type SubmissionStatus = 'pending' | 'running' | 'accepted' | 'wrong_answer' | 'time_limit_exceeded' | 'memory_limit_exceeded' | 'runtime_error' | 'compilation_error';
+export type SubmissionStatus =
+  | 'pending'
+  | 'running'
+  | 'accepted'
+  | 'wrong_answer'
+  | 'time_limit_exceeded'
+  | 'memory_limit_exceeded'
+  | 'runtime_error'
+  | 'compilation_error';
 export type ProgrammingLanguage = 'javascript' | 'python' | 'java' | 'cpp' | 'typescript' | 'go' | 'rust';
 
 export interface TestCase {

@@ -29,7 +29,7 @@ describe('Sheet', () => {
             <button>Save</button>
           </SheetFooter>
         </SheetContent>
-      </Sheet>,
+      </Sheet>
     );
     expect(screen.getByRole('button', { name: 'Open sheet' })).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('Sheet', () => {
             <SheetDescription>Navigation menu</SheetDescription>
           </SheetHeader>
         </SheetContent>
-      </Sheet>,
+      </Sheet>
     );
     await user.click(screen.getByRole('button', { name: 'Open sheet' }));
     const dialog = await screen.findByRole('dialog');
@@ -64,7 +64,7 @@ describe('Sheet', () => {
         <SheetContent>
           <SheetTitle>Menu</SheetTitle>
         </SheetContent>
-      </Sheet>,
+      </Sheet>
     );
     await screen.findByRole('dialog');
     await user.click(screen.getByRole('button', { name: 'Close' }));
@@ -77,7 +77,7 @@ describe('Sheet', () => {
         <SheetContent className="custom-sheet-side">
           <SheetTitle>Menu</SheetTitle>
         </SheetContent>
-      </Sheet>,
+      </Sheet>
     );
     const content = await screen.findByRole('dialog');
     expect(content.className).toContain('custom-sheet-side');
@@ -90,7 +90,7 @@ describe('Sheet', () => {
         <SheetContent>
           <SheetTitle>Menu</SheetTitle>
         </SheetContent>
-      </Sheet>,
+      </Sheet>
     );
     await user.keyboard('{Escape}');
     expect(onOpenChange).toHaveBeenCalledWith(false);

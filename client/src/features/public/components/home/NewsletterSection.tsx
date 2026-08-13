@@ -28,8 +28,8 @@ export function NewsletterSection() {
                 Get learning tips in your inbox
               </h2>
               <p className="mt-3 max-w-lg text-muted-foreground">
-                Join thousands of students receiving hand-picked resources, career advice, and
-                exclusive course discounts every week. Free, forever.
+                Join thousands of students receiving hand-picked resources, career advice, and exclusive course
+                discounts every week. Free, forever.
               </p>
             </div>
 

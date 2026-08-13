@@ -26,6 +26,7 @@ const envSchema = z.object({
   CLOUDINARY_API_SECRET: z.string().default(''),
 
   RAZORPAY_KEY_ID: z.string().default(''),
+  RAZORPAY_PAYOUT_ACCOUNT_NUMBER: z.string().default(''),
   RAZORPAY_KEY_SECRET: z.string().default(''),
 
   SMTP_HOST: z.string().default('smtp.gmail.com'),
@@ -113,6 +114,7 @@ export const env = {
 
   razorpayKeyId: raw.RAZORPAY_KEY_ID,
   razorpayKeySecret: raw.RAZORPAY_KEY_SECRET,
+  razorpayPayoutAccountNumber: raw.RAZORPAY_PAYOUT_ACCOUNT_NUMBER,
 
   smtpHost: raw.SMTP_HOST,
   smtpPort: raw.SMTP_PORT,

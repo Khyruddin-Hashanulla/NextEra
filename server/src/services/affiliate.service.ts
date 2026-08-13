@@ -27,16 +27,19 @@ export class AffiliateService {
     return created.toObject();
   }
 
-  async updateSettings(data: Partial<{
-    enabled: boolean;
-    commissionType: 'percentage' | 'fixed';
-    commissionValue: number;
-    eligibleProducts: ('course' | 'bundle' | 'subscription')[];
-    minimumPurchaseAmount: number;
-    referralCookieExpiryDays: number;
-    maxCommissionPerOrder: number;
-    autoApproveCommission: boolean;
-  }>, adminId: string) {
+  async updateSettings(
+    data: Partial<{
+      enabled: boolean;
+      commissionType: 'percentage' | 'fixed';
+      commissionValue: number;
+      eligibleProducts: ('course' | 'bundle' | 'subscription')[];
+      minimumPurchaseAmount: number;
+      referralCookieExpiryDays: number;
+      maxCommissionPerOrder: number;
+      autoApproveCommission: boolean;
+    }>,
+    adminId: string
+  ) {
     let settings = await AffiliateSetting.findOne();
     if (!settings) {
       settings = new AffiliateSetting();
@@ -77,18 +80,20 @@ export class AffiliateService {
   }
 
   async getAffiliateProfile(userId: string): Promise<any> {
-    const affiliate = await Affiliate.findOne({ user: userId })
-      .populate('user', 'name email avatar');
+    const affiliate = await Affiliate.findOne({ user: userId }).populate('user', 'name email avatar');
     if (!affiliate) {
       return this.getOrCreateAffiliate(userId);
     }
     return affiliate;
   }
 
-  async updateAffiliateProfile(userId: string, data: {
-    payoutMethod?: string;
-    payoutDetails?: Record<string, any>;
-  }) {
+  async updateAffiliateProfile(
+    userId: string,
+    data: {
+      payoutMethod?: string;
+      payoutDetails?: Record<string, any>;
+    }
+  ) {
     const affiliate = await Affiliate.findOne({ user: userId });
     if (!affiliate) throw ApiError.notFound('Affiliate profile not found. Generate a referral link first.');
 
@@ -212,29 +217,46 @@ export class AffiliateService {
 
     const status = settings.autoApproveCommission ? 'approved' : 'pending';
 
-    const tx = await ReferralTransaction.create([{
-      affiliate: affiliate._id,
-      referral: referral._id,
-      payment: payment._id,
-      type: 'commission',
-      amount: commission,
-      commissionRate,
-      originalAmount: payment.amount,
-      status,
-      description: `Commission from ${payment.type} purchase`,
-    }], { session: session || undefined });
+    const tx = await ReferralTransaction.create(
+      [
+        {
+          affiliate: affiliate._id,
+          referral: referral._id,
+          payment: payment._id,
+          type: 'commission',
+          amount: commission,
+          commissionRate,
+          originalAmount: payment.amount,
+          status,
+          description: `Commission from ${payment.type} purchase`,
+        },
+      ],
+      { session: session || undefined }
+    );
 
     await Promise.all([
-      Referral.findByIdAndUpdate(referral._id, { status: 'converted', convertedAt: new Date() }, { session: session || undefined }),
-      Affiliate.findByIdAndUpdate(affiliate._id, {
-        $inc: { totalEarnings: commission, totalConversions: 1 },
-      }, { session: session || undefined }),
-      Payment.findByIdAndUpdate(payment._id, {
-        $set: {
-          referredBy: referral.referrer,
-          affiliateCommission: commission,
+      Referral.findByIdAndUpdate(
+        referral._id,
+        { status: 'converted', convertedAt: new Date() },
+        { session: session || undefined }
+      ),
+      Affiliate.findByIdAndUpdate(
+        affiliate._id,
+        {
+          $inc: { totalEarnings: commission, totalConversions: 1 },
         },
-      }, { session: session || undefined }),
+        { session: session || undefined }
+      ),
+      Payment.findByIdAndUpdate(
+        payment._id,
+        {
+          $set: {
+            referredBy: referral.referrer,
+            affiliateCommission: commission,
+          },
+        },
+        { session: session || undefined }
+      ),
     ]);
 
     return tx[0];
@@ -250,25 +272,34 @@ export class AffiliateService {
 
     if (!commissionTx) return;
 
-    const reversal = await ReferralTransaction.create([{
-      affiliate: commissionTx.affiliate,
-      referral: commissionTx.referral,
-      payment: commissionTx.payment,
-      type: 'reversal',
-      amount: -commissionTx.amount,
-      commissionRate: commissionTx.commissionRate,
-      originalAmount: commissionTx.originalAmount,
-      status: 'approved',
-      description: `Reversal: ${commissionTx.description}`,
-      reversedTransaction: commissionTx._id,
-    }], { session: session || undefined });
+    const reversal = await ReferralTransaction.create(
+      [
+        {
+          affiliate: commissionTx.affiliate,
+          referral: commissionTx.referral,
+          payment: commissionTx.payment,
+          type: 'reversal',
+          amount: -commissionTx.amount,
+          commissionRate: commissionTx.commissionRate,
+          originalAmount: commissionTx.originalAmount,
+          status: 'approved',
+          description: `Reversal: ${commissionTx.description}`,
+          reversedTransaction: commissionTx._id,
+        },
+      ],
+      { session: session || undefined }
+    );
 
     commissionTx.status = 'reversed';
     await commissionTx.save({ session: session || undefined });
 
-    await Affiliate.findByIdAndUpdate(commissionTx.affiliate, {
-      $inc: { totalEarnings: -commissionTx.amount, totalConversions: -1 },
-    }, { session: session || undefined });
+    await Affiliate.findByIdAndUpdate(
+      commissionTx.affiliate,
+      {
+        $inc: { totalEarnings: -commissionTx.amount, totalConversions: -1 },
+      },
+      { session: session || undefined }
+    );
 
     return reversal[0];
   }
@@ -280,13 +311,7 @@ export class AffiliateService {
 
     const settings = await this.getSettings();
 
-    const [
-      clickResult,
-      referralResult,
-      transactionResult,
-      transactions,
-      recentClicks,
-    ] = await Promise.all([
+    const [clickResult, referralResult, transactionResult, transactions, recentClicks] = await Promise.all([
       ReferralClick.aggregate([
         { $match: { code: affiliate.code } },
         {
@@ -501,18 +526,23 @@ export class AffiliateService {
         await tx.save({ session });
       }
 
-      const payoutRecord = await ReferralTransaction.create([{
-        affiliate: affiliate._id,
-        referral: null,
-        payment: null,
-        type: 'payout',
-        amount: -totalPayoutAmount,
-        commissionRate: 0,
-        originalAmount: totalPayoutAmount,
-        status: 'approved',
-        description: 'Payout requested',
-        paidAt: new Date(),
-      }], { session });
+      const payoutRecord = await ReferralTransaction.create(
+        [
+          {
+            affiliate: affiliate._id,
+            referral: null,
+            payment: null,
+            type: 'payout',
+            amount: -totalPayoutAmount,
+            commissionRate: 0,
+            originalAmount: totalPayoutAmount,
+            status: 'approved',
+            description: 'Payout requested',
+            paidAt: new Date(),
+          },
+        ],
+        { session }
+      );
 
       return {
         payoutId: payoutRecord[0]._id,
@@ -531,11 +561,7 @@ export class AffiliateService {
     const skip = (page - 1) * limit;
     const filter = { affiliate: affiliate._id, type: 'payout' as const };
     const [payouts, total] = await Promise.all([
-      ReferralTransaction.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
+      ReferralTransaction.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
       ReferralTransaction.countDocuments(filter),
     ]);
 
@@ -547,8 +573,7 @@ export class AffiliateService {
 
   // ─── Public Referral Lookup ──────────────────────────────────
   async getReferralInfo(code: string) {
-    const affiliate = await Affiliate.findOne({ code: code.toUpperCase(), status: 'active' })
-      .populate('user', 'name');
+    const affiliate = await Affiliate.findOne({ code: code.toUpperCase(), status: 'active' }).populate('user', 'name');
     if (!affiliate) throw ApiError.notFound('Invalid referral code');
     return {
       valid: true,
@@ -566,13 +591,7 @@ export class AffiliateService {
       activeAffiliates,
       totalReferrals,
       convertedReferrals,
-      [
-        earningsStats,
-        topAffiliates,
-        monthlyTrend,
-        transactionSummary,
-        pendingPayouts,
-      ],
+      [earningsStats, topAffiliates, monthlyTrend, transactionSummary, pendingPayouts],
     ] = await Promise.all([
       Affiliate.countDocuments(),
       Affiliate.countDocuments({ status: 'active' }),
@@ -768,22 +787,25 @@ export class AffiliateService {
       .populate({ path: 'payment', select: 'amount type' })
       .lean();
 
-    const headers = 'Date,Affiliate,Affiliate Email,Code,Type,Amount,Commission Rate,Status,Payment Amount,Payment Type\n';
-    const rows = transactions.map((t: any) => {
-      const affUser = t.affiliate?.user || {};
-      return [
-        new Date(t.createdAt).toISOString().split('T')[0],
-        `"${affUser.name || 'Unknown'}"`,
-        affUser.email || '',
-        t.affiliate?.code || '',
-        t.type,
-        t.amount,
-        `${t.commissionRate}%`,
-        t.status,
-        t.payment?.amount || 0,
-        t.payment?.type || '',
-      ].join(',');
-    }).join('\n');
+    const headers =
+      'Date,Affiliate,Affiliate Email,Code,Type,Amount,Commission Rate,Status,Payment Amount,Payment Type\n';
+    const rows = transactions
+      .map((t: any) => {
+        const affUser = t.affiliate?.user || {};
+        return [
+          new Date(t.createdAt).toISOString().split('T')[0],
+          `"${affUser.name || 'Unknown'}"`,
+          affUser.email || '',
+          t.affiliate?.code || '',
+          t.type,
+          t.amount,
+          `${t.commissionRate}%`,
+          t.status,
+          t.payment?.amount || 0,
+          t.payment?.type || '',
+        ].join(',');
+      })
+      .join('\n');
 
     return headers + rows;
   }

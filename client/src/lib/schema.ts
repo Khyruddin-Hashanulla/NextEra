@@ -43,11 +43,7 @@ export function websiteSchema(): Record<string, unknown> {
   };
 }
 
-export function webPageSchema(params: {
-  name: string;
-  description?: string;
-  path: string;
-}): Record<string, unknown> {
+export function webPageSchema(params: { name: string; description?: string; path: string }): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebPage',
@@ -111,9 +107,7 @@ export function courseSchema(course: {
   }
 
   if (course.category) {
-    schema.courseCode = typeof course.category === 'object'
-      ? course.category.name
-      : course.category;
+    schema.courseCode = typeof course.category === 'object' ? course.category.name : course.category;
   }
 
   if (course.level) {

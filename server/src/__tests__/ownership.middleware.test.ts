@@ -72,70 +72,87 @@ const SIMPLE_MIDDLEWARES: [string, any, any, string, Record<string, string>?][] 
   ['Announcement', mw.verifyAnnouncementOwnership, mockModels.Announcement, 'instructor'],
   ['QuizAttempt', mw.verifyQuizAttemptOwnership, mockModels.QuizAttempt, 'user'],
   ['LiveClass', mw.verifyLiveClassOwnership, mockModels.LiveClass, 'instructor'],
-  ['CodingSubmission', mw.verifyCodingSubmissionOwnership, mockModels.CodingSubmission, 'user', { submissionId: '__ID__' }],
+  [
+    'CodingSubmission',
+    mw.verifyCodingSubmissionOwnership,
+    mockModels.CodingSubmission,
+    'user',
+    { submissionId: '__ID__' },
+  ],
   ['Notification', mw.verifyNotificationOwnership, mockModels.Notification, 'user'],
 ];
 
-describe.each(SIMPLE_MIDDLEWARES)('%s middleware', (name: string, middleware: any, model: any, ownerField: string, paramsOverride?: Record<string, string>) => {
-  function buildParams(id: string): Record<string, string> {
-    if (paramsOverride) {
-      const p: Record<string, string> = {};
-      for (const [k, v] of Object.entries(paramsOverride)) {
-        p[k] = v === '__ID__' ? id : v;
+describe.each(SIMPLE_MIDDLEWARES)(
+  '%s middleware',
+  (name: string, middleware: any, model: any, ownerField: string, paramsOverride?: Record<string, string>) => {
+    function buildParams(id: string): Record<string, string> {
+      if (paramsOverride) {
+        const p: Record<string, string> = {};
+        for (const [k, v] of Object.entries(paramsOverride)) {
+          p[k] = v === '__ID__' ? id : v;
+        }
+        return p;
       }
-      return p;
+      return { id };
     }
-    return { id };
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      mockModels.AuditLog.create.mockResolvedValue({});
+    });
+
+    it('passes when owner accesses their resource', async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      mockById(model, { _id: id, [ownerField]: OWNER });
+      const next = nextFn();
+      await middleware(req({ params: buildParams(id) }) as Request, res() as Response, next);
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('passes when admin accesses any resource', async () => {
+      const next = nextFn();
+      await middleware(
+        req({ currentUser: { userId: OTHER, role: ROLES.ADMIN, email: 'a@a.com' } }) as Request,
+        res() as Response,
+        next
+      );
+      expect(next).toHaveBeenCalledWith();
+    });
+
+    it('blocks with 403 when different user', async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      mockById(model, { _id: id, [ownerField]: OTHER });
+      const next = nextFn();
+      await middleware(req({ params: buildParams(id) }) as Request, res() as Response, next);
+      expect(next).toHaveBeenCalledWith(expect.any(ApiError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(403);
+    });
+
+    it('blocks with 404 when resource not found', async () => {
+      mockById(model, null);
+      const next = nextFn();
+      await middleware(
+        req({ params: buildParams(new mongoose.Types.ObjectId().toString()) }) as Request,
+        res() as Response,
+        next
+      );
+      expect(next).toHaveBeenCalledWith(expect.any(ApiError));
+      expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
+    });
+
+    it('audit-logs on denied access (403)', async () => {
+      const id = new mongoose.Types.ObjectId().toString();
+      mockById(model, { _id: id, [ownerField]: OTHER });
+      const next = nextFn();
+      await middleware(req({ params: buildParams(id) }) as Request, res() as Response, next);
+      expect(mockModels.AuditLog.create).toHaveBeenCalled();
+      const entry = mockModels.AuditLog.create.mock.calls[0][0];
+      expect(entry.adminId).toBe(OWNER);
+      expect(entry.action).toBe('access_denied');
+      expect(entry.metadata.role).toBe(ROLES.INSTRUCTOR);
+    });
   }
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    mockModels.AuditLog.create.mockResolvedValue({});
-  });
-
-  it('passes when owner accesses their resource', async () => {
-    const id = new mongoose.Types.ObjectId().toString();
-    mockById(model, { _id: id, [ownerField]: OWNER });
-    const next = nextFn();
-    await middleware(req({ params: buildParams(id) }) as Request, res() as Response, next);
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it('passes when admin accesses any resource', async () => {
-    const next = nextFn();
-    await middleware(req({ currentUser: { userId: OTHER, role: ROLES.ADMIN, email: 'a@a.com' } }) as Request, res() as Response, next);
-    expect(next).toHaveBeenCalledWith();
-  });
-
-  it('blocks with 403 when different user', async () => {
-    const id = new mongoose.Types.ObjectId().toString();
-    mockById(model, { _id: id, [ownerField]: OTHER });
-    const next = nextFn();
-    await middleware(req({ params: buildParams(id) }) as Request, res() as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(ApiError));
-    expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(403);
-  });
-
-  it('blocks with 404 when resource not found', async () => {
-    mockById(model, null);
-    const next = nextFn();
-    await middleware(req({ params: buildParams(new mongoose.Types.ObjectId().toString()) }) as Request, res() as Response, next);
-    expect(next).toHaveBeenCalledWith(expect.any(ApiError));
-    expect((next as jest.Mock).mock.calls[0][0].statusCode).toBe(404);
-  });
-
-  it('audit-logs on denied access (403)', async () => {
-    const id = new mongoose.Types.ObjectId().toString();
-    mockById(model, { _id: id, [ownerField]: OTHER });
-    const next = nextFn();
-    await middleware(req({ params: buildParams(id) }) as Request, res() as Response, next);
-    expect(mockModels.AuditLog.create).toHaveBeenCalled();
-    const entry = mockModels.AuditLog.create.mock.calls[0][0];
-    expect(entry.adminId).toBe(OWNER);
-    expect(entry.action).toBe('access_denied');
-    expect(entry.metadata.role).toBe(ROLES.INSTRUCTOR);
-  });
-});
+);
 
 // ─── Section (multi-step: section → course → instructor) ──────
 
@@ -160,7 +177,9 @@ describe('verifySectionOwnership', () => {
   it('blocks with 403 when section in different course', async () => {
     const courseId = new mongoose.Types.ObjectId().toString();
     const sectionId = new mongoose.Types.ObjectId().toString();
-    mockModels.Section.findById.mockImplementation(() => chainResult({ _id: sectionId, course: new mongoose.Types.ObjectId().toString() }));
+    mockModels.Section.findById.mockImplementation(() =>
+      chainResult({ _id: sectionId, course: new mongoose.Types.ObjectId().toString() })
+    );
     const next = nextFn();
     await mw.verifySectionOwnership(req({ params: { id: courseId, sectionId } }) as Request, res() as Response, next);
     expect(next).toHaveBeenCalledWith(expect.any(ApiError));
@@ -231,7 +250,13 @@ describe('createOwnerMiddleware', () => {
   it('supports query idSource and custom idField', async () => {
     const id = new mongoose.Types.ObjectId().toString();
     const fakeModel: any = { findById: jest.fn(() => chainResult({ _id: id, owner: OTHER })) };
-    const m = mw.createOwnerMiddleware({ model: fakeModel, ownerField: 'owner', resourceName: 'X', idSource: 'query', idField: 'rid' });
+    const m = mw.createOwnerMiddleware({
+      model: fakeModel,
+      ownerField: 'owner',
+      resourceName: 'X',
+      idSource: 'query',
+      idField: 'rid',
+    });
     const next = nextFn();
     await m(req({ query: { rid: id } }) as Request, res() as Response, next);
     expect(next).toHaveBeenCalledWith(expect.any(ApiError));
@@ -243,7 +268,15 @@ describe('createOwnerMiddleware', () => {
 
 describe('DataScopingService', () => {
   const service = new ds.DataScopingService();
-  const fakeModel: any = { findById: jest.fn(), findOne: jest.fn(), find: jest.fn(), findByIdAndUpdate: jest.fn(), findOneAndUpdate: jest.fn(), findByIdAndDelete: jest.fn(), findOneAndDelete: jest.fn() };
+  const fakeModel: any = {
+    findById: jest.fn(),
+    findOne: jest.fn(),
+    find: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    findOneAndUpdate: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+    findOneAndDelete: jest.fn(),
+  };
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -255,7 +288,12 @@ describe('DataScopingService', () => {
 
   it('scopedFindById uses unscoped findById for admin', async () => {
     fakeModel.findById.mockReturnValue({ lean: jest.fn().mockResolvedValue({}) });
-    await service.scopedFindById(fakeModel, 'abc', req({ currentUser: { userId: OTHER, role: ROLES.ADMIN } }) as Request, 'user');
+    await service.scopedFindById(
+      fakeModel,
+      'abc',
+      req({ currentUser: { userId: OTHER, role: ROLES.ADMIN } }) as Request,
+      'user'
+    );
     expect(fakeModel.findById).toHaveBeenCalledWith('abc');
   });
 
@@ -268,7 +306,11 @@ describe('DataScopingService', () => {
   it('scopedFindByIdAndUpdate scopes for non-admin', async () => {
     fakeModel.findOneAndUpdate.mockReturnValue({ lean: jest.fn().mockResolvedValue({}) });
     await service.scopedFindByIdAndUpdate(fakeModel, 'abc', { $set: { x: 1 } }, req() as Request, 'user');
-    expect(fakeModel.findOneAndUpdate).toHaveBeenCalledWith({ _id: 'abc', user: OWNER }, { $set: { x: 1 } }, { new: true });
+    expect(fakeModel.findOneAndUpdate).toHaveBeenCalledWith(
+      { _id: 'abc', user: OWNER },
+      { $set: { x: 1 } },
+      { new: true }
+    );
   });
 });
 

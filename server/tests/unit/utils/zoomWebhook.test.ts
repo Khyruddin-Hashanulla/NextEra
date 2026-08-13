@@ -1,16 +1,10 @@
 import crypto from 'crypto';
-import {
-  verifyZoomWebhookSignature,
-  ZOOM_WEBHOOK_REPLAY_WINDOW_MS,
-} from '../../../src/utils/zoomWebhook';
+import { verifyZoomWebhookSignature, ZOOM_WEBHOOK_REPLAY_WINDOW_MS } from '../../../src/utils/zoomWebhook';
 
 const SECRET = 'test-webhook-secret';
 
 function sign(rawBody: string, timestamp: string | number, secret = SECRET): string {
-  return crypto
-    .createHmac('sha256', secret)
-    .update(`${timestamp}.${rawBody}`)
-    .digest('base64');
+  return crypto.createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('base64');
 }
 
 describe('verifyZoomWebhookSignature', () => {
@@ -44,16 +38,12 @@ describe('verifyZoomWebhookSignature', () => {
     const stale = Date.now() - ZOOM_WEBHOOK_REPLAY_WINDOW_MS - 1000;
     const timestamp = String(stale);
     const signature = sign(rawBody, timestamp);
-    expect(
-      verifyZoomWebhookSignature({ secret: SECRET, signature, timestamp, rawBody, now: Date.now() }),
-    ).toBe(false);
+    expect(verifyZoomWebhookSignature({ secret: SECRET, signature, timestamp, rawBody, now: Date.now() })).toBe(false);
   });
 
   it('returns false when timestamp is not a number', () => {
     const signature = sign(rawBody, 'not-a-number');
-    expect(
-      verifyZoomWebhookSignature({ secret: SECRET, signature, timestamp: 'not-a-number', rawBody }),
-    ).toBe(false);
+    expect(verifyZoomWebhookSignature({ secret: SECRET, signature, timestamp: 'not-a-number', rawBody })).toBe(false);
   });
 
   it('returns false when secret is empty', () => {
@@ -64,7 +54,7 @@ describe('verifyZoomWebhookSignature', () => {
 
   it('returns false when signature or timestamp headers are missing', () => {
     expect(verifyZoomWebhookSignature({ secret: SECRET, signature: undefined, timestamp: undefined, rawBody })).toBe(
-      false,
+      false
     );
   });
 });

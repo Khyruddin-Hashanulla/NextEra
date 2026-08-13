@@ -2,8 +2,10 @@ import axiosInstance from '../axiosInstance';
 import type { BlogPost, BlogComment, BlogCategory } from '@/types/blog';
 
 export const blogApi = {
-  listPublished: (params?: { page?: number; limit?: number; category?: string; tag?: string; search?: string }, signal?: AbortSignal) =>
-    axiosInstance.get<{ blogs: BlogPost[]; pagination: any }>('/blogs', { params, signal }),
+  listPublished: (
+    params?: { page?: number; limit?: number; category?: string; tag?: string; search?: string },
+    signal?: AbortSignal
+  ) => axiosInstance.get<{ blogs: BlogPost[]; pagination: any }>('/blogs', { params, signal }),
 
   getFeatured: (limit?: number, signal?: AbortSignal) =>
     axiosInstance.get<{ blogs: BlogPost[] }>('/blogs/featured', { params: { limit }, signal }),
@@ -27,7 +29,9 @@ export const blogApi = {
     axiosInstance.delete(`/blogs/comments/${commentId}`, { signal }),
 
   toggleLike: (commentId: string, signal?: AbortSignal) =>
-    axiosInstance.post<{ liked: boolean; likeCount: number }>(`/blogs/comments/${commentId}/like`, undefined, { signal }),
+    axiosInstance.post<{ liked: boolean; likeCount: number }>(`/blogs/comments/${commentId}/like`, undefined, {
+      signal,
+    }),
 
   toggleBookmark: (blogId: string, signal?: AbortSignal) =>
     axiosInstance.post<{ bookmarked: boolean }>(`/blogs/${blogId}/bookmark`, undefined, { signal }),

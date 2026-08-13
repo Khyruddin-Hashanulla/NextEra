@@ -22,6 +22,7 @@ import { startScheduler } from './services/scheduler.service';
 import { doubleCsrfProtection } from './config/csrf';
 import csrfRoutes from './routes/csrf.routes';
 import zoomWebhookRoutes from './routes/zoomWebhook.routes';
+import razorpayWebhookRoutes from './routes/razorpayWebhook.routes';
 import routes from './routes/index';
 import { logger } from './utils/logger';
 import { ApiError } from './utils/ApiError';
@@ -89,6 +90,7 @@ export function createApp(): express.Application {
   app.use(cors(corsOptions));
   app.use(cookieParser());
   app.use('/api/v1', zoomWebhookRoutes);
+  app.use('/api/v1', razorpayWebhookRoutes);
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(mongoSanitize());

@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import { AssignmentService } from '../services/assignment.service';
-import { ApiError } from '../utils/ApiError';
 
 const mockSave = jest.fn();
 
@@ -53,10 +52,13 @@ function mockCourse(value: unknown) {
 
 const INSTRUCTOR_ID = '6a6c5515bf5829ee772c2ce7';
 const ADMIN_ID = '6a6c5515bf5829ee772c2ce8';
-const OWNING_COURSE = { instructor: INSTRUCTOR_ID };
 
 function mockOwnedCourse() {
-  const course = { _id: assignmentLecture.course, instructor: INSTRUCTOR_ID, toString: () => assignmentLecture.course.toString() };
+  const course = {
+    _id: assignmentLecture.course,
+    instructor: INSTRUCTOR_ID,
+    toString: () => assignmentLecture.course.toString(),
+  };
   return chainable(course);
 }
 
@@ -89,7 +91,6 @@ jest.mock('../models/notification.model', () => ({
 import { AssignmentSubmission } from '../models/assignmentSubmission.model';
 import { Lecture } from '../models/lecture.model';
 import { Course } from '../models/course.model';
-import { User } from '../models/user.model';
 import { Notification } from '../models/notification.model';
 
 const assignmentLecture = {
@@ -162,9 +163,7 @@ describe('AssignmentService.gradeSubmission', () => {
     });
 
     expect(submission.gradingHistory).toHaveLength(2);
-    expect(Notification.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Grade Updated' })
-    );
+    expect(Notification.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Grade Updated' }));
   });
 
   it('throws when grade exceeds max marks', async () => {
@@ -173,27 +172,29 @@ describe('AssignmentService.gradeSubmission', () => {
     (Lecture.findById as jest.Mock).mockReturnValue(mockLecture(assignmentLecture));
     (Course.findById as jest.Mock).mockReturnValue(mockOwnedCourse());
 
-    await expect(
-      service.gradeSubmission(INSTRUCTOR_ID, submission._id.toString(), { grade: 101 })
-    ).rejects.toThrow('exceed');
+    await expect(service.gradeSubmission(INSTRUCTOR_ID, submission._id.toString(), { grade: 101 })).rejects.toThrow(
+      'exceed'
+    );
   });
 
   it('throws not found when submission is missing', async () => {
     (AssignmentSubmission.findById as jest.Mock).mockResolvedValue(null);
-    await expect(
-      service.gradeSubmission(INSTRUCTOR_ID, 'missing-id', { grade: 10 })
-    ).rejects.toThrow('Submission not found');
+    await expect(service.gradeSubmission(INSTRUCTOR_ID, 'missing-id', { grade: 10 })).rejects.toThrow(
+      'Submission not found'
+    );
   });
 
   it('throws forbidden when instructor does not own the course', async () => {
     const submission = mockSubmission();
     (AssignmentSubmission.findById as jest.Mock).mockResolvedValue(submission);
     (Lecture.findById as jest.Mock).mockReturnValue(mockLecture(assignmentLecture));
-    (Course.findById as jest.Mock).mockReturnValue(mockCourse({ _id: assignmentLecture.course, instructor: 'other-instructor' }));
+    (Course.findById as jest.Mock).mockReturnValue(
+      mockCourse({ _id: assignmentLecture.course, instructor: 'other-instructor' })
+    );
 
-    await expect(
-      service.gradeSubmission(INSTRUCTOR_ID, submission._id.toString(), { grade: 10 })
-    ).rejects.toThrow('access');
+    await expect(service.gradeSubmission(INSTRUCTOR_ID, submission._id.toString(), { grade: 10 })).rejects.toThrow(
+      'access'
+    );
   });
 });
 
@@ -213,9 +214,7 @@ describe('AssignmentService.returnForResubmission', () => {
     expect(result.feedback).toBe('Please improve');
     expect(result.resubmissionDeadline).toEqual(new Date('2026-08-15'));
     expect(result.gradingHistory).toHaveLength(1);
-    expect(Notification.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Assignment Returned' })
-    );
+    expect(Notification.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Assignment Returned' }));
   });
 });
 
@@ -254,9 +253,7 @@ describe('AssignmentService.updateSubmissionStatus', () => {
     await service.updateSubmissionStatus(INSTRUCTOR_ID, submission._id.toString(), { status: 'rejected' });
 
     expect(submission.status).toBe('rejected');
-    expect(Notification.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Assignment Rejected' })
-    );
+    expect(Notification.create).toHaveBeenCalledWith(expect.objectContaining({ title: 'Assignment Rejected' }));
   });
 });
 
@@ -320,9 +317,9 @@ describe('AssignmentService.getLectureSubmissions', () => {
   it('throws for non-assignment lectures', async () => {
     (Lecture.findById as jest.Mock).mockReturnValue(mockLecture({ _id: new mongoose.Types.ObjectId(), type: 'video' }));
 
-    await expect(
-      service.getLectureSubmissions(INSTRUCTOR_ID, 'lecture-1', { page: 1, limit: 10 })
-    ).rejects.toThrow('not an assignment');
+    await expect(service.getLectureSubmissions(INSTRUCTOR_ID, 'lecture-1', { page: 1, limit: 10 })).rejects.toThrow(
+      'not an assignment'
+    );
   });
 });
 
@@ -330,9 +327,7 @@ describe('AssignmentService.getSubmissionAnalytics', () => {
   it('computes pass rate from graded submissions', async () => {
     (AssignmentSubmission.aggregate as jest.Mock)
       .mockResolvedValueOnce([{ _id: 'graded', count: 10 }])
-      .mockResolvedValueOnce([
-        { avgGrade: 72.5, avgPercentage: 72.5, passCount: 8, failCount: 2 },
-      ]);
+      .mockResolvedValueOnce([{ avgGrade: 72.5, avgPercentage: 72.5, passCount: 8, failCount: 2 }]);
     (AssignmentSubmission.countDocuments as jest.Mock).mockResolvedValue(10);
 
     const analytics = await service.getSubmissionAnalytics({});

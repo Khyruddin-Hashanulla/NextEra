@@ -1,10 +1,6 @@
 import request from 'supertest';
 import { createApp } from '../../app';
-import {
-  connectTestDb,
-  disconnectTestDb,
-  clearDb,
-} from '../../test/helpers/db.helper';
+import { connectTestDb, disconnectTestDb, clearDb } from '../../test/helpers/db.helper';
 import { TestRequest } from '../../test/helpers/request.helper';
 
 describe('App smoke test', () => {

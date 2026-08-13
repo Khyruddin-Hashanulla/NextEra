@@ -7,11 +7,7 @@ export class CategoryService {
 
   async initializeDefaultCategories() {
     for (const category of DEFAULT_CATEGORIES) {
-      await Category.updateOne(
-        { name: category.name },
-        { $setOnInsert: category },
-        { upsert: true }
-      );
+      await Category.updateOne({ name: category.name }, { $setOnInsert: category }, { upsert: true });
     }
   }
 }

@@ -52,9 +52,7 @@ export function ResetPasswordForm() {
           <AlertCircle className="h-7 w-7 text-destructive" />
         </div>
         <h1 className="text-xl font-bold tracking-tight">Invalid reset link</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          This password reset link is invalid or has expired.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">This password reset link is invalid or has expired.</p>
         <Link
           to={ROUTES.FORGOT_PASSWORD}
           className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary transition-colors hover:text-primary/80"
@@ -67,17 +65,10 @@ export function ResetPasswordForm() {
   }
 
   return (
-    <motion.div
-      variants={stagger}
-      initial="hidden"
-      animate="show"
-      className="space-y-6"
-    >
+    <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
       <motion.div variants={item} className="text-center">
         <h1 className="text-2xl font-bold tracking-tight">Reset your password</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Enter your new password below
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Enter your new password below</p>
       </motion.div>
 
       <motion.form variants={item} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -145,12 +136,7 @@ export function ResetPasswordForm() {
           )}
         </div>
 
-        <Button
-          type="submit"
-          fullWidth
-          size="lg"
-          loading={resetPasswordMutation.isPending}
-        >
+        <Button type="submit" fullWidth size="lg" loading={resetPasswordMutation.isPending}>
           Reset password
         </Button>
       </motion.form>

@@ -37,7 +37,7 @@ router.post(
     let payload: any;
     try {
       payload = JSON.parse(rawBody);
-    } catch (error) {
+    } catch (_error) {
       throw ApiError.badRequest('Invalid JSON body');
     }
 

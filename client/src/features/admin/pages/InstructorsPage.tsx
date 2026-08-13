@@ -28,7 +28,10 @@ export function InstructorsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-64" /><Skeleton className="h-4 w-80" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-80" />
+        </div>
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-16 w-full rounded-lg" />
@@ -65,7 +68,9 @@ export function InstructorsPage() {
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Name</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Email</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Applied</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Applied
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -74,7 +79,9 @@ export function InstructorsPage() {
                       <tr key={inst._id} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3 font-medium">{inst.name}</td>
                         <td className="px-4 py-3 text-muted-foreground">{inst.email}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(inst.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(inst.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3">
                           <Button size="sm" variant="outline" onClick={() => setSelectedId(inst._id)}>
                             <Eye className="mr-1.5 h-4 w-4" /> Review

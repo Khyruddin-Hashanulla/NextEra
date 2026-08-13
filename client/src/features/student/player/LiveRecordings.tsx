@@ -14,7 +14,8 @@ interface LiveRecordingsProps {
 export function LiveRecordings({ courseId }: LiveRecordingsProps) {
   const { data: recordingsData, isLoading } = useQuery({
     queryKey: ['student', 'course-recordings', courseId],
-    queryFn: ({ signal }) => liveClassApi.listStudentRecordings({ courseId, page: 1, limit: 20 }, signal).then((r) => r.data.data),
+    queryFn: ({ signal }) =>
+      liveClassApi.listStudentRecordings({ courseId, page: 1, limit: 20 }, signal).then((r) => r.data.data),
     enabled: !!courseId,
   });
 
@@ -53,7 +54,9 @@ export function LiveRecordings({ courseId }: LiveRecordingsProps) {
                 </div>
                 {rec.url && (
                   <a href={rec.url} target="_blank" rel="noreferrer" onClick={() => recordView(rec)}>
-                    <Button size="sm"><Play className="mr-1 h-3 w-3" /> Watch</Button>
+                    <Button size="sm">
+                      <Play className="mr-1 h-3 w-3" /> Watch
+                    </Button>
                   </a>
                 )}
               </CardContent>

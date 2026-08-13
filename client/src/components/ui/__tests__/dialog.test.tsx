@@ -33,7 +33,7 @@ function renderDialog(open?: boolean) {
           </DialogClose>
         </DialogFooter>
       </DialogContent>
-    </Dialog>,
+    </Dialog>
   );
   return { user, onOpenChange };
 }
@@ -97,7 +97,7 @@ describe('Dialog', () => {
         <DialogContent className="custom-content-class">
           <DialogTitle>Custom</DialogTitle>
         </DialogContent>
-      </Dialog>,
+      </Dialog>
     );
     const content = document.body.querySelector('.custom-content-class');
     expect(content).toBeInTheDocument();

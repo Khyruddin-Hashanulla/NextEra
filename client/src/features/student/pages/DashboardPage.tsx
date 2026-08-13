@@ -6,8 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  BookOpen, Award, TrendingUp, GraduationCap, Clock,
-  ArrowRight, PlayCircle, ChevronRight, BarChart3,
+  BookOpen,
+  Award,
+  TrendingUp,
+  GraduationCap,
+  Clock,
+  ArrowRight,
+  PlayCircle,
+  ChevronRight,
+  BarChart3,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
@@ -26,10 +33,30 @@ const item = {
 };
 
 const statCards = [
-  { key: 'totalCourses', label: 'Enrolled Courses', icon: BookOpen, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
-  { key: 'inProgress', label: 'In Progress', icon: TrendingUp, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400' },
-  { key: 'completedCourses', label: 'Completed', icon: GraduationCap, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' },
-  { key: 'certificates', label: 'Certificates', icon: Award, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400' },
+  {
+    key: 'totalCourses',
+    label: 'Enrolled Courses',
+    icon: BookOpen,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+  },
+  {
+    key: 'inProgress',
+    label: 'In Progress',
+    icon: TrendingUp,
+    color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+  },
+  {
+    key: 'completedCourses',
+    label: 'Completed',
+    icon: GraduationCap,
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+  },
+  {
+    key: 'certificates',
+    label: 'Certificates',
+    icon: Award,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+  },
 ];
 
 export function DashboardPage() {
@@ -49,12 +76,24 @@ export function DashboardPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          <Card><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
-          <Card><CardContent className="p-6"><Skeleton className="h-48 w-full" /></CardContent></Card>
+          <Card>
+            <CardContent className="p-6">
+              <Skeleton className="h-48 w-full" />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-6">
+              <Skeleton className="h-48 w-full" />
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -112,7 +151,11 @@ export function DashboardPage() {
                 {dashboard.recentCourses.slice(0, 3).map((enrollment: any) => (
                   <Link
                     key={enrollment._id}
-                    to={enrollment.isCompleted ? '/student/certificates' : `/student/courses/${enrollment.course?._id}/learn`}
+                    to={
+                      enrollment.isCompleted
+                        ? '/student/certificates'
+                        : `/student/courses/${enrollment.course?._id}/learn`
+                    }
                     className="group flex items-center gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">

@@ -1,5 +1,3 @@
-import { Types } from 'mongoose';
-
 export interface ILectureQuiz {
   timeLimit: number;
   passingScore: number;

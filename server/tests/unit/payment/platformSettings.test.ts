@@ -45,7 +45,9 @@ describe('PlatformSettingsService - persistence-backed getters', () => {
   });
 
   it('getPlatformSettings returns existing settings', async () => {
-    vi.mocked(PlatformSettings.findOne as never).mockReturnValue({ lean: vi.fn().mockResolvedValue({ commissionPercentage: 20 }) } as never);
+    vi.mocked(PlatformSettings.findOne as never).mockReturnValue({
+      lean: vi.fn().mockResolvedValue({ commissionPercentage: 20 }),
+    } as never);
     await expect(service.getPlatformSettings()).resolves.toEqual({ commissionPercentage: 20 });
     expect(PlatformSettings.create).not.toHaveBeenCalled();
   });

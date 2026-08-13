@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/providers/ToastProvider';
 import { motion } from 'framer-motion';
-import { Plus, Trash2, Send, Megaphone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Send, Megaphone, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 const container = {
   hidden: { opacity: 0 },
@@ -32,6 +33,11 @@ export function AnnouncementsPage() {
     queryFn: ({ signal }) => instructorApi.listAnnouncements({ page, limit: 10 }, signal).then((r) => r.data.data),
   });
 
+  const coursesQuery = useQuery({
+    queryKey: ['instructor', 'courses'],
+    queryFn: ({ signal }) => instructorApi.listMyCourses(undefined, signal).then((r) => r.data.data),
+  });
+
   const createMutation = useMutation({
     mutationFn: () => instructorApi.createAnnouncement(form),
     onSuccess: () => {
@@ -45,7 +51,10 @@ export function AnnouncementsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => instructorApi.deleteAnnouncement(id),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['instructor', 'announcements'] }); addToast({ title: 'Announcement deleted', variant: 'success' }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['instructor', 'announcements'] });
+      addToast({ title: 'Announcement deleted', variant: 'success' });
+    },
     onError: () => addToast({ title: 'Delete failed', variant: 'error' }),
   });
 
@@ -73,7 +82,9 @@ export function AnnouncementsPage() {
             <CardContent className="flex flex-col items-center py-12 text-center">
               <Megaphone className="mb-3 h-12 w-12 text-muted-foreground/40" />
               <p className="font-medium">No announcements yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Create your first announcement to reach your students</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create your first announcement to reach your students
+              </p>
               <Button variant="outline" size="sm" className="mt-4" onClick={() => setOpen(true)}>
                 <Plus className="mr-1.5 h-4 w-4" /> Create Announcement
               </Button>
@@ -89,8 +100,12 @@ export function AnnouncementsPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Title</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Course</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Message</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Course
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Message
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Date</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Email</th>
                       <th className="px-4 py-3" />
@@ -101,12 +116,18 @@ export function AnnouncementsPage() {
                       <tr key={announcement._id} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3 font-medium">{announcement.title}</td>
                         <td className="px-4 py-3">{announcement.course?.title || 'All Courses'}</td>
-                        <td className="max-w-[300px] truncate px-4 py-3 text-muted-foreground">{announcement.message}</td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(announcement.createdAt).toLocaleDateString()}</td>
+                        <td className="max-w-[300px] truncate px-4 py-3 text-muted-foreground">
+                          {announcement.message}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(announcement.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3">
-                          {announcement.sendEmail
-                            ? <span className="text-xs font-medium text-green-600">Yes</span>
-                            : <span className="text-xs text-muted-foreground">No</span>}
+                          {announcement.sendEmail ? (
+                            <span className="text-xs font-medium text-green-600">Yes</span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No</span>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <Button variant="ghost" size="sm" onClick={() => deleteMutation.mutate(announcement._id)}>
@@ -127,7 +148,12 @@ export function AnnouncementsPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -143,29 +169,64 @@ export function AnnouncementsPage() {
           <div className="w-full max-w-lg rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Create Announcement</h2>
-              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                Close
+              </Button>
             </div>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Course ID</Label>
-                <Input value={form.course} onChange={(e) => setForm({ ...form, course: e.target.value })} placeholder="Enter course ID" />
-              </div>
+            <div className="space-y-2">
+              <Label>Course</Label>
+              <Select value={form.course} onValueChange={(course) => setForm({ ...form, course })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {coursesQuery.isLoading ? (
+                    <div className="flex items-center justify-center gap-2 px-4 py-3 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading courses...
+                    </div>
+                  ) : (
+                    coursesQuery.data?.map((course: any) => (
+                      <SelectItem key={course._id} value={course._id}>
+                        {course.title}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
               <div className="space-y-2">
                 <Label>Title</Label>
                 <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Message</Label>
-                <Textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={4} />
+                <Textarea
+                  value={form.message}
+                  onChange={(e) => setForm({ ...form, message: e.target.value })}
+                  rows={4}
+                />
               </div>
               <div className="flex items-center gap-2">
-                <input type="checkbox" id="sendEmail" checked={form.sendEmail} onChange={(e) => setForm({ ...form, sendEmail: e.target.checked })} className="h-4 w-4 rounded border-gray-300" />
+                <input
+                  type="checkbox"
+                  id="sendEmail"
+                  checked={form.sendEmail}
+                  onChange={(e) => setForm({ ...form, sendEmail: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
                 <Label htmlFor="sendEmail">Send email notification</Label>
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={() => createMutation.mutate()} disabled={createMutation.isPending || !form.title || !form.message || !form.course} loading={createMutation.isPending}>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => createMutation.mutate()}
+                disabled={createMutation.isPending || !form.title || !form.message || !form.course}
+                loading={createMutation.isPending}
+              >
                 <Send className="mr-1.5 h-4 w-4" /> Send Announcement
               </Button>
             </div>

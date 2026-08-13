@@ -33,10 +33,6 @@ export function getCoursePricing(course?: CoursePricingInput | null): CoursePric
   const price = isFree ? 0 : course?.price || 0;
   const originalPrice = isFree ? 0 : course?.pricing?.originalPrice || 0;
   const discountPercent = isFree ? 0 : course?.pricing?.discountPercent || 0;
-  const hasDiscount =
-    !isFree &&
-    !!course?.pricing?.hasDiscount &&
-    discountPercent > 0 &&
-    originalPrice > price;
+  const hasDiscount = !isFree && !!course?.pricing?.hasDiscount && discountPercent > 0 && originalPrice > price;
   return { isFree, price, originalPrice, discountPercent, hasDiscount };
 }

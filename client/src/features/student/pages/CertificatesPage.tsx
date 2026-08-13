@@ -6,11 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useToast } from '@/providers/ToastProvider';
-import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CertificateDocument } from '@/features/certificates/components/CertificateDocument';
 import { CertificateQrCode } from '@/features/certificates/components/CertificateQrCode';
-import { Award, Download, ExternalLink, Shield, Loader2, Sparkles, BadgeCheck, Printer, Link2, Check } from 'lucide-react';
+import {
+  Award,
+  Download,
+  ExternalLink,
+  Shield,
+  Loader2,
+  Sparkles,
+  BadgeCheck,
+  Printer,
+  Link2,
+  Check,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/lib/constants';
 import { motion } from 'framer-motion';
@@ -130,13 +140,9 @@ export function CertificatesPage() {
         className="flex flex-col gap-2 rounded-2xl border border-border/60 bg-gradient-to-br from-purple-500/10 via-transparent to-transparent p-6 sm:flex-row sm:items-end sm:justify-between"
       >
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            Student Dashboard
-          </p>
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">Student Dashboard</p>
           <h1 className="mt-2 heading-lg">My Certificates</h1>
-          <p className="mt-1 text-muted-foreground">
-            Your achievements, verified and always accessible.
-          </p>
+          <p className="mt-1 text-muted-foreground">Your achievements, verified and always accessible.</p>
         </div>
         {certificates.length > 0 && (
           <div className="flex items-center gap-2 rounded-xl border border-border bg-background/60 px-4 py-3 backdrop-blur">
@@ -153,7 +159,10 @@ export function CertificatesPage() {
       </motion.div>
 
       {generatable.length > 0 && (
-        <motion.div variants={item} className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 overflow-hidden">
+        <motion.div
+          variants={item}
+          className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 overflow-hidden"
+        >
           <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-4">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/15">
@@ -265,16 +274,12 @@ export function CertificatesPage() {
                 <CardContent className="space-y-3 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="truncate font-mono text-xs text-muted-foreground">
-                        {cert.certificateId}
-                      </p>
+                      <p className="truncate font-mono text-xs text-muted-foreground">{cert.certificateId}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         Issued: {new Date(cert.issuedAt).toLocaleDateString()}
                       </p>
                       {cert.course?.instructor?.name && (
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          by {cert.course.instructor.name}
-                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">by {cert.course.instructor.name}</p>
                       )}
                     </div>
                     {cert.qrCodeUrl && (
@@ -308,7 +313,11 @@ export function CertificatesPage() {
                       onClick={() => handleCopyUrl(cert)}
                       aria-label="Copy verification link"
                     >
-                      {copied ? <Check className="h-4 w-4 text-green-600" /> : <Link2 className="h-4 w-4 text-primary" />}
+                      {copied ? (
+                        <Check className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <Link2 className="h-4 w-4 text-primary" />
+                      )}
                     </Button>
                     <Button size="sm" variant="ghost" asChild aria-label="Verify certificate">
                       <Link to={verifyUrl(cert)} target="_blank">
@@ -323,13 +332,16 @@ export function CertificatesPage() {
         </motion.div>
       )}
 
-      <Dialog open={!!preview} onOpenChange={(open) => { if (!open) setPreview(null); }}>
+      <Dialog
+        open={!!preview}
+        onOpenChange={(open) => {
+          if (!open) setPreview(null);
+        }}
+      >
         <DialogContent className="max-w-4xl sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>Certificate Preview</DialogTitle>
-            <DialogDescription>
-              {preview?.course?.title || 'Course completion certificate'}
-            </DialogDescription>
+            <DialogDescription>{preview?.course?.title || 'Course completion certificate'}</DialogDescription>
           </DialogHeader>
           {preview && (
             <div className="space-y-4">
@@ -347,7 +359,11 @@ export function CertificatesPage() {
                   onClick={() => handleCopyUrl(preview)}
                   disabled={preview.status === 'revoked'}
                 >
-                  {copied ? <Check className="mr-1.5 h-3.5 w-3.5 text-green-600" /> : <Link2 className="mr-1.5 h-3.5 w-3.5" />}
+                  {copied ? (
+                    <Check className="mr-1.5 h-3.5 w-3.5 text-green-600" />
+                  ) : (
+                    <Link2 className="mr-1.5 h-3.5 w-3.5" />
+                  )}
                   {copied ? 'Copied' : 'Copy Link'}
                 </Button>
                 <Button

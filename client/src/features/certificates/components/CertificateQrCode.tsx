@@ -46,7 +46,7 @@ export function CertificateQrCode({ certificateId, qrCodeUrl, className, alt }: 
         aria-label={`QR code unavailable for certificate ${certificateId}`}
         className={cn(
           'flex flex-col items-center justify-center gap-1 rounded bg-white text-muted-foreground',
-          className,
+          className
         )}
       >
         <QrCode className="h-5 w-5" />
@@ -58,10 +58,7 @@ export function CertificateQrCode({ certificateId, qrCodeUrl, className, alt }: 
   return (
     <div className={cn('relative overflow-hidden rounded bg-white', className)}>
       {!loaded && (
-        <div
-          className="absolute inset-0 flex animate-pulse items-center justify-center bg-muted/60"
-          aria-hidden="true"
-        >
+        <div className="absolute inset-0 flex animate-pulse items-center justify-center bg-muted/60" aria-hidden="true">
           <QrCode className="h-5 w-5 text-muted-foreground/50" />
         </div>
       )}

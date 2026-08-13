@@ -84,7 +84,11 @@ const quizAttemptDetailSchema = new Schema<IQuizAttemptDetail>(
   {
     questionId: { type: String, required: true },
     question: { type: String, required: true, maxlength: 2000 },
-    type: { type: String, enum: ['single', 'multiple', 'boolean', 'fill_blank', 'matching', 'coding', 'essay'], required: true },
+    type: {
+      type: String,
+      enum: ['single', 'multiple', 'boolean', 'fill_blank', 'matching', 'coding', 'essay'],
+      required: true,
+    },
     options: [{ type: String }],
     correctAnswer: { type: String, required: true, maxlength: 2000 },
     selectedAnswer: { type: String, required: true, maxlength: 2000 },
@@ -152,7 +156,11 @@ const quizAttemptSchema = new Schema<IQuizAttempt>(
     timeTaken: { type: Number, min: 0 },
     timeLimit: { type: Number, min: 0 },
     autoSubmitted: { type: Boolean, default: false },
-    evaluationStatus: { type: String, enum: ['in_progress', 'auto_graded', 'pending', 'graded', 'published'], default: 'in_progress' },
+    evaluationStatus: {
+      type: String,
+      enum: ['in_progress', 'auto_graded', 'pending', 'graded', 'published'],
+      default: 'in_progress',
+    },
     evaluationVersion: { type: Number, default: 1 },
     gradedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     gradedAt: { type: Date },

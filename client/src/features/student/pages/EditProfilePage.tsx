@@ -81,18 +81,21 @@ export function EditProfilePage() {
     return trimmed;
   }, []);
 
-  const initializeForm = useCallback((profileData: any) => {
-    if (!profileData) return;
-    setForm({
-      name: profileData.name || '',
-      bio: profileData.bio || '',
-      socialLinks: {
-        linkedin: toSafeSocialUrl(profileData.socialLinks?.linkedin),
-        github: toSafeSocialUrl(profileData.socialLinks?.github),
-        portfolio: toSafeSocialUrl(profileData.socialLinks?.portfolio),
-      },
-    });
-  }, [toSafeSocialUrl]);
+  const initializeForm = useCallback(
+    (profileData: any) => {
+      if (!profileData) return;
+      setForm({
+        name: profileData.name || '',
+        bio: profileData.bio || '',
+        socialLinks: {
+          linkedin: toSafeSocialUrl(profileData.socialLinks?.linkedin),
+          github: toSafeSocialUrl(profileData.socialLinks?.github),
+          portfolio: toSafeSocialUrl(profileData.socialLinks?.portfolio),
+        },
+      });
+    },
+    [toSafeSocialUrl]
+  );
 
   useEffect(() => {
     if (profile) {
@@ -147,7 +150,11 @@ export function EditProfilePage() {
     onError: (error) => {
       const err = error as UpdateError;
       const message = err?.response?.data?.message || err?.message;
-      addToast({ title: 'Update failed', description: message || 'Failed to save your profile. Please try again.', variant: 'error' });
+      addToast({
+        title: 'Update failed',
+        description: message || 'Failed to save your profile. Please try again.',
+        variant: 'error',
+      });
     },
   });
 
@@ -167,7 +174,11 @@ export function EditProfilePage() {
       }
       setAvatarPreview(null);
       setAvatarVersion(Date.now());
-      addToast({ title: 'Profile picture updated', description: 'Your avatar has been successfully updated.', variant: 'success' });
+      addToast({
+        title: 'Profile picture updated',
+        description: 'Your avatar has been successfully updated.',
+        variant: 'success',
+      });
     },
     onError: () => {
       if (avatarPreviewRef.current) {
@@ -175,7 +186,11 @@ export function EditProfilePage() {
         avatarPreviewRef.current = null;
       }
       setAvatarPreview(null);
-      addToast({ title: 'Upload failed', description: 'Failed to upload profile picture. Please try again.', variant: 'error' });
+      addToast({
+        title: 'Upload failed',
+        description: 'Failed to upload profile picture. Please try again.',
+        variant: 'error',
+      });
     },
   });
 
@@ -186,12 +201,20 @@ export function EditProfilePage() {
         newPassword: passwordForm.newPassword,
       }),
     onSuccess: () => {
-      addToast({ title: 'Password changed', description: 'Your password has been updated successfully.', variant: 'success' });
+      addToast({
+        title: 'Password changed',
+        description: 'Your password has been updated successfully.',
+        variant: 'success',
+      });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     },
     onError: (error) => {
       const err = error as AxiosError<{ message?: string }>;
-      addToast({ title: 'Password change failed', description: err?.response?.data?.message || 'Please try again.', variant: 'error' });
+      addToast({
+        title: 'Password change failed',
+        description: err?.response?.data?.message || 'Please try again.',
+        variant: 'error',
+      });
     },
   });
 
@@ -214,7 +237,11 @@ export function EditProfilePage() {
     if (!file) return;
 
     if (!AVATAR_ACCEPTED_TYPES.includes(file.type)) {
-      addToast({ title: 'Invalid file type', description: 'Please upload a JPG, PNG, or WebP image.', variant: 'error' });
+      addToast({
+        title: 'Invalid file type',
+        description: 'Please upload a JPG, PNG, or WebP image.',
+        variant: 'error',
+      });
       return;
     }
 
@@ -250,17 +277,25 @@ export function EditProfilePage() {
         canvas.height = height;
         ctx.drawImage(img, 0, 0, width, height);
 
-        canvas.toBlob((blob) => {
-          if (!blob) return;
-          const previewUrl = URL.createObjectURL(blob);
-          avatarPreviewRef.current = previewUrl;
-          setAvatarPreview(previewUrl);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return;
+            const previewUrl = URL.createObjectURL(blob);
+            avatarPreviewRef.current = previewUrl;
+            setAvatarPreview(previewUrl);
 
-          const formData = new FormData();
-          formData.append('avatar', blob, file.name);
-          addToast({ title: 'Uploading...', description: 'Your profile picture is being uploaded.', variant: 'info' });
-          avatarMutation.mutate(formData);
-        }, 'image/jpeg', 0.9);
+            const formData = new FormData();
+            formData.append('avatar', blob, file.name);
+            addToast({
+              title: 'Uploading...',
+              description: 'Your profile picture is being uploaded.',
+              variant: 'info',
+            });
+            avatarMutation.mutate(formData);
+          },
+          'image/jpeg',
+          0.9
+        );
       };
       img.src = event.target?.result as string;
     };
@@ -279,9 +314,13 @@ export function EditProfilePage() {
         <div className="grid gap-6 lg:grid-cols-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <Card key={i}>
-              <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
               <CardContent className="space-y-4">
-                {[...Array(2)].map((_, j) => <Skeleton key={j} className="h-10 w-full" />)}
+                {[...Array(2)].map((_, j) => (
+                  <Skeleton key={j} className="h-10 w-full" />
+                ))}
               </CardContent>
             </Card>
           ))}
@@ -309,16 +348,15 @@ export function EditProfilePage() {
               <div className="group relative shrink-0">
                 <div className="relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xl font-bold text-primary">
                   {avatarSrc ? (
-                    <img
-                      src={avatarSrc}
-                      alt="Profile"
-                      className="h-full w-full object-cover"
-                    />
+                    <img src={avatarSrc} alt="Profile" className="h-full w-full object-cover" />
                   ) : (
                     profile?.name?.[0]?.toUpperCase() || '?'
                   )}
                 </div>
-                <label className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100" title="Change profile photo">
+                <label
+                  className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-black/50 text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  title="Change profile photo"
+                >
                   <Camera className="h-5 w-5" />
                   <input
                     type="file"
@@ -345,10 +383,14 @@ export function EditProfilePage() {
                 </div>
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Click the camera icon to update your profile photo (JPG, PNG, or WebP · max 2MB).</p>
+            <p className="text-xs text-muted-foreground">
+              Click the camera icon to update your profile photo (JPG, PNG, or WebP · max 2MB).
+            </p>
 
             <div className="space-y-2 pt-2 border-t">
-              <label className="text-sm font-medium text-foreground"><User className="mr-1 inline h-3 w-3" /> Full Name</label>
+              <label className="text-sm font-medium text-foreground">
+                <User className="mr-1 inline h-3 w-3" /> Full Name
+              </label>
               <Input
                 value={form.name}
                 onChange={(e) => updateProfileField('name', e.target.value)}
@@ -416,9 +458,7 @@ export function EditProfilePage() {
                 autoComplete="off"
                 type="url"
               />
-              <p className="text-xs text-muted-foreground">
-                Showcase your projects, certificates, or work samples.
-              </p>
+              <p className="text-xs text-muted-foreground">Showcase your projects, certificates, or work samples.</p>
             </div>
           </CardContent>
         </Card>

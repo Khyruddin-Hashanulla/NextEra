@@ -3,7 +3,13 @@ import { Eye, PenLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RichTextEditor } from './RichTextEditor';
 
-export function LectureArticlePanel({ articleContent, onChange }: { articleContent: string; onChange: (html: string) => void }) {
+export function LectureArticlePanel({
+  articleContent,
+  onChange,
+}: {
+  articleContent: string;
+  onChange: (html: string) => void;
+}) {
   const [preview, setPreview] = useState(false);
 
   return (

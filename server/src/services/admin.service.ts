@@ -4,8 +4,6 @@ import { Course } from '../models/course.model';
 import { InstructorApplication } from '../models/instructorApplication.model';
 import { Enrollment } from '../models/enrollment.model';
 import { Payment } from '../models/payment.model';
-import { Payout } from '../models/payout.model';
-import { PlatformWallet } from '../models/platformWallet.model';
 import { Category } from '../models/category.model';
 import { Coupon } from '../models/coupon.model';
 import { courseService } from './course.service';
@@ -33,6 +31,8 @@ import { mergeInstructorApplicationIntoUser } from '../utils/applyInstructorAppl
 import { withTransaction } from '../utils/transaction';
 import { sendInstructorDecisionEmail } from '../utils/sendEmail';
 import { paymentService } from './payment.service';
+import { revenueService } from './revenue.service';
+import { auditService } from './audit.service';
 import { logger } from '../utils/logger';
 import { cascadeDeleteService } from './cascadeDelete.service';
 import { cacheService } from '../cache/cache.service';
@@ -41,58 +41,51 @@ import { cacheManager } from '../cache/cacheManager';
 
 export class AdminService {
   async getDashboardStats() {
-    return cacheService.remember(
-      cacheKeys.adminDashboard(),
-      { ttl: CACHE_TTL.ADMIN_DASHBOARD },
-      async () => {
-        const [userAgg, courseAgg, totalEnrollments, totalRevenue, recentUsers, recentPayments] = await Promise.all([
-          User.aggregate([
-            {
-              $facet: {
-                roles: [{ $group: { _id: '$role', count: { $sum: 1 } } }],
-                total: [{ $count: 'count' }],
-              },
+    return cacheService.remember(cacheKeys.adminDashboard(), { ttl: CACHE_TTL.ADMIN_DASHBOARD }, async () => {
+      const [userAgg, courseAgg, totalEnrollments, totalRevenue, recentUsers, recentPayments] = await Promise.all([
+        User.aggregate([
+          {
+            $facet: {
+              roles: [{ $group: { _id: '$role', count: { $sum: 1 } } }],
+              total: [{ $count: 'count' }],
             },
-          ]),
-          Course.aggregate([
-            {
-              $facet: {
-                byStatus: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
-                total: [{ $count: 'count' }],
-              },
+          },
+        ]),
+        Course.aggregate([
+          {
+            $facet: {
+              byStatus: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+              total: [{ $count: 'count' }],
             },
-          ]),
-          Enrollment.countDocuments(),
-          Payment.aggregate([
-            { $match: { status: 'success' } },
-            { $group: { _id: null, total: { $sum: '$amount' } } },
-          ]),
-          User.find().sort({ createdAt: -1 }).limit(5).select('name email avatar role createdAt').lean(),
-          Payment.find({ status: 'success' }).sort({ createdAt: -1 }).limit(5).populate('user', 'name email').lean(),
-        ]);
-
-        const roleCounts = new Map((userAgg[0]?.roles ?? []).map((r: any) => [r._id, r.count]));
-        const statusCounts = new Map((courseAgg[0]?.byStatus ?? []).map((s: any) => [s._id, s.count]));
-
-        return {
-          users: {
-            total: userAgg[0]?.total?.[0]?.count ?? 0,
-            students: roleCounts.get(ROLES.STUDENT) ?? 0,
-            instructors: roleCounts.get(ROLES.INSTRUCTOR) ?? 0,
-            admins: roleCounts.get(ROLES.ADMIN) ?? 0,
           },
-          courses: {
-            total: courseAgg[0]?.total?.[0]?.count ?? 0,
-            published: statusCounts.get('published') ?? 0,
-            pending: statusCounts.get('review') ?? 0,
-          },
-          enrollments: totalEnrollments,
-          revenue: totalRevenue[0]?.total || 0,
-          recentUsers,
-          recentPayments,
-        };
-      }
-    );
+        ]),
+        Enrollment.countDocuments(),
+        Payment.aggregate([{ $match: { status: 'success' } }, { $group: { _id: null, total: { $sum: '$amount' } } }]),
+        User.find().sort({ createdAt: -1 }).limit(5).select('name email avatar role createdAt').lean(),
+        Payment.find({ status: 'success' }).sort({ createdAt: -1 }).limit(5).populate('user', 'name email').lean(),
+      ]);
+
+      const roleCounts = new Map((userAgg[0]?.roles ?? []).map((r: any) => [r._id, r.count]));
+      const statusCounts = new Map((courseAgg[0]?.byStatus ?? []).map((s: any) => [s._id, s.count]));
+
+      return {
+        users: {
+          total: userAgg[0]?.total?.[0]?.count ?? 0,
+          students: roleCounts.get(ROLES.STUDENT) ?? 0,
+          instructors: roleCounts.get(ROLES.INSTRUCTOR) ?? 0,
+          admins: roleCounts.get(ROLES.ADMIN) ?? 0,
+        },
+        courses: {
+          total: courseAgg[0]?.total?.[0]?.count ?? 0,
+          published: statusCounts.get('published') ?? 0,
+          pending: statusCounts.get('review') ?? 0,
+        },
+        enrollments: totalEnrollments,
+        revenue: totalRevenue[0]?.total || 0,
+        recentUsers,
+        recentPayments,
+      };
+    });
   }
 
   async getRevenueAnalytics(startDate?: string, endDate?: string) {
@@ -120,65 +113,54 @@ export class AdminService {
   }
 
   async getUserAnalytics() {
-    return cacheService.remember(
-      cacheKeys.adminUserAnalytics(),
-      { ttl: CACHE_TTL.ADMIN_ANALYTICS },
-      async () => {
-        const [result] = await User.aggregate([
-          {
-            $facet: {
-              userGrowth: [
-                {
-                  $group: {
-                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-                    count: { $sum: 1 },
-                  },
+    return cacheService.remember(cacheKeys.adminUserAnalytics(), { ttl: CACHE_TTL.ADMIN_ANALYTICS }, async () => {
+      const [result] = await User.aggregate([
+        {
+          $facet: {
+            userGrowth: [
+              {
+                $group: {
+                  _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                  count: { $sum: 1 },
                 },
-                { $sort: { _id: 1 } },
-              ],
-              roleDistribution: [{ $group: { _id: '$role', count: { $sum: 1 } } }],
-            },
+              },
+              { $sort: { _id: 1 } },
+            ],
+            roleDistribution: [{ $group: { _id: '$role', count: { $sum: 1 } } }],
           },
-        ]);
+        },
+      ]);
 
-        return { userGrowth: result?.userGrowth ?? [], roleDistribution: result?.roleDistribution ?? [] };
-      }
-    );
+      return { userGrowth: result?.userGrowth ?? [], roleDistribution: result?.roleDistribution ?? [] };
+    });
   }
 
   async getCourseAnalytics() {
-    return cacheService.remember(
-      cacheKeys.adminCourseAnalytics(),
-      { ttl: CACHE_TTL.ADMIN_ANALYTICS },
-      async () => {
-        const courseStats = await Course.aggregate([
-          {
-            $group: {
-              _id: '$status',
-              count: { $sum: 1 },
-            },
+    return cacheService.remember(cacheKeys.adminCourseAnalytics(), { ttl: CACHE_TTL.ADMIN_ANALYTICS }, async () => {
+      const courseStats = await Course.aggregate([
+        {
+          $group: {
+            _id: '$status',
+            count: { $sum: 1 },
           },
-        ]);
+        },
+      ]);
 
-        const topCourses = await Course.find({ status: 'published' })
-          .sort({ totalEnrollments: -1 })
-          .limit(10)
-          .populate('instructor', 'name')
-          .lean();
+      const topCourses = await Course.find({ status: 'published' })
+        .sort({ totalEnrollments: -1 })
+        .limit(10)
+        .populate('instructor', 'name')
+        .lean();
 
-        return { courseStats, topCourses };
-      }
-    );
+      return { courseStats, topCourses };
+    });
   }
 
   async listUsers(page: number, limit: number, search?: string, role?: string) {
     const query: any = {};
     if (search) {
       const escaped = escapeRegex(search);
-      query.$or = [
-        { name: { $regex: escaped, $options: 'i' } },
-        { email: { $regex: escaped, $options: 'i' } },
-      ];
+      query.$or = [{ name: { $regex: escaped, $options: 'i' } }, { email: { $regex: escaped, $options: 'i' } }];
     }
     if (role) query.role = role;
 
@@ -286,6 +268,26 @@ export class AdminService {
     await user.save();
     await application.save();
 
+    // Every approved instructor starts with the default (Starter) entitlement.
+    const granted = await revenueService.grantDefaultFreePlan(application.user.toString());
+    const grantedSub = Array.isArray(granted) ? granted[0] : granted;
+    const admin = await User.findById(adminId).select('name email').lean();
+    await auditService.log({
+      adminId,
+      adminName: admin?.name || 'System',
+      adminEmail: admin?.email || 'system@nextera.lms',
+      action: 'INSTRUCTOR_PLAN_ASSIGNED',
+      resourceType: 'InstructorSubscription',
+      resourceId: grantedSub?._id?.toString(),
+      resourceName: grantedSub?.planSnapshot?.name || grantedSub?.plan?._id?.toString() || 'Starter',
+      newData: {
+        instructor: application.user.toString(),
+        planCode: grantedSub?.planSnapshot?.code,
+        status: grantedSub?.status,
+        endDate: grantedSub?.endDate,
+      },
+    });
+
     await cacheManager.invalidateAdminCache();
     await cacheManager.invalidateInstructorCache(application.user.toString());
     await this.notifyAndEmail(application, user, 'approved', adminNote);
@@ -352,7 +354,10 @@ export class AdminService {
   }
 
   async createCategory(data: { name: string; description?: string; icon?: string }) {
-    const slug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = data.name
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
     const category = await Category.create({ ...data, slug });
     await cacheManager.invalidateCourseCache();
     return category;
@@ -361,7 +366,10 @@ export class AdminService {
   async updateCategory(id: string, data: { name?: string; description?: string; icon?: string; isActive?: boolean }) {
     const update: any = { ...data };
     if (data.name) {
-      update.slug = data.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      update.slug = data.name
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
     }
     const category = await Category.findByIdAndUpdate(id, { $set: update }, { new: true }).lean();
     if (!category) throw ApiError.notFound('Category not found');
@@ -385,10 +393,18 @@ export class AdminService {
   }
 
   async createBlog(data: {
-    title: string; content: string; excerpt?: string; tags?: string[];
-    featuredImage?: { url: string; publicId: string }; status?: string; author: string;
+    title: string;
+    content: string;
+    excerpt?: string;
+    tags?: string[];
+    featuredImage?: { url: string; publicId: string };
+    status?: string;
+    author: string;
   }) {
-    const slug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    const slug = data.title
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
     const blogData: any = { ...data, slug };
     if (data.status === 'published') blogData.publishedAt = new Date();
     const blog = await Blog.create(blogData);
@@ -399,7 +415,10 @@ export class AdminService {
 
   async updateBlog(id: string, data: any) {
     if (data.title) {
-      data.slug = data.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+      data.slug = data.title
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '');
     }
     if (data.status === 'published' && !data.publishedAt) {
       data.publishedAt = new Date();
@@ -428,8 +447,13 @@ export class AdminService {
   }
 
   async createCoupon(data: {
-    code: string; discountType: 'percentage' | 'fixed'; discountValue: number;
-    minAmount?: number; maxUses?: number; expiresAt: string; createdBy: string;
+    code: string;
+    discountType: 'percentage' | 'fixed';
+    discountValue: number;
+    minAmount?: number;
+    maxUses?: number;
+    expiresAt: string;
+    createdBy: string;
   }) {
     const existing = await Coupon.findOne({ code: data.code.toUpperCase() });
     if (existing) throw ApiError.conflict('Coupon code already exists');
@@ -457,6 +481,8 @@ export class AdminService {
   }
 
   async createNotification(data: { user: string; title: string; message: string; type?: string; link?: string }) {
+    const userExists = await User.exists({ _id: data.user });
+    if (!userExists) throw ApiError.badRequest('User not found');
     return Notification.create(data);
   }
 
@@ -480,7 +506,7 @@ export class AdminService {
   async getSettings() {
     let settings = await PlatformSettings.findOne().lean();
     if (!settings) {
-      settings = await PlatformSettings.create({}) as any;
+      settings = (await PlatformSettings.create({})) as any;
     }
     return settings;
   }
@@ -513,7 +539,8 @@ export class AdminService {
     const [courses, total] = await Promise.all([
       Course.find(query)
         .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('instructor', 'name email avatar')
         .populate('category', 'name')
         .lean(),
@@ -579,8 +606,12 @@ export class AdminService {
   }
 
   async createSubscriptionPlan(data: {
-    name: string; price: number; discountedPrice?: number;
-    durationDays: number; features: string[]; level: 'basic' | 'standard' | 'premium';
+    name: string;
+    price: number;
+    discountedPrice?: number;
+    durationDays: number;
+    features: string[];
+    level: 'basic' | 'standard' | 'premium';
     status?: 'active' | 'inactive';
   }) {
     return Subscription.create(data);
@@ -607,7 +638,8 @@ export class AdminService {
     const [reviews, total] = await Promise.all([
       Review.find(query)
         .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('user', 'name email avatar')
         .populate('course', 'title')
         .lean(),
@@ -617,11 +649,7 @@ export class AdminService {
   }
 
   async moderateReview(reviewId: string, status: 'approved' | 'rejected', adminNote?: string) {
-    const review = await Review.findByIdAndUpdate(
-      reviewId,
-      { status, adminNote },
-      { new: true }
-    );
+    const review = await Review.findByIdAndUpdate(reviewId, { status, adminNote }, { new: true });
     if (!review) throw ApiError.notFound('Review not found');
     return review;
   }
@@ -632,8 +660,12 @@ export class AdminService {
   }
 
   async createBanner(data: {
-    title: string; subtitle?: string; image: { url: string; publicId: string };
-    link?: string; position: string; order?: number;
+    title: string;
+    subtitle?: string;
+    image: { url: string; publicId: string };
+    link?: string;
+    position: string;
+    order?: number;
   }) {
     return Banner.create(data);
   }
@@ -658,7 +690,8 @@ export class AdminService {
     const [refunds, total] = await Promise.all([
       Refund.find(query)
         .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('user', 'name email')
         .populate('payment')
         .populate('course', 'title')
@@ -675,7 +708,6 @@ export class AdminService {
     if (refund.status !== 'pending') throw ApiError.badRequest('Refund is not in pending status');
 
     const payment = refund.payment as any;
-    const isFullRefund = refund.refundType === 'full' || refund.amount >= payment.amount;
 
     return paymentService.processRefundPayment(
       payment._id.toString(),
@@ -707,7 +739,8 @@ export class AdminService {
     const [tickets, total] = await Promise.all([
       SupportTicket.find(query)
         .sort({ updatedAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('user', 'name email avatar')
         .populate('assignedTo', 'name email')
         .lean(),
@@ -727,11 +760,7 @@ export class AdminService {
   }
 
   async updateTicketStatus(ticketId: string, status: string) {
-    const ticket = await SupportTicket.findByIdAndUpdate(
-      ticketId,
-      { status },
-      { new: true }
-    );
+    const ticket = await SupportTicket.findByIdAndUpdate(ticketId, { status }, { new: true });
     if (!ticket) throw ApiError.notFound('Support ticket not found');
     return ticket;
   }
@@ -763,11 +792,10 @@ export class AdminService {
     if (search) {
       const escaped = escapeRegex(search);
       const users = await User.find({
-        $or: [
-          { name: { $regex: escaped, $options: 'i' } },
-          { email: { $regex: escaped, $options: 'i' } },
-        ],
-      }).select('_id').lean();
+        $or: [{ name: { $regex: escaped, $options: 'i' } }, { email: { $regex: escaped, $options: 'i' } }],
+      })
+        .select('_id')
+        .lean();
       query.user = { $in: users.map((u) => u._id) };
     }
     if (status && ['active', 'revoked'].includes(status)) {
@@ -778,7 +806,8 @@ export class AdminService {
     const [certificates, total] = await Promise.all([
       Certificate.find(query)
         .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('user', 'name email')
         .populate('course', 'title')
         .lean(),
@@ -836,14 +865,22 @@ export class AdminService {
   }
 
   async createEmailTemplate(data: {
-    name: string; slug: string; subject: string; body: string;
-    variables?: string[]; category?: string;
+    name: string;
+    slug: string;
+    subject: string;
+    body: string;
+    variables?: string[];
+    category?: string;
   }) {
     return EmailTemplate.create(data);
   }
 
   async updateEmailTemplate(id: string, data: any) {
-    const template = await EmailTemplate.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true }).lean();
+    const template = await EmailTemplate.findByIdAndUpdate(
+      id,
+      { $set: data },
+      { new: true, runValidators: true }
+    ).lean();
     if (!template) throw ApiError.notFound('Email template not found');
     return template;
   }
@@ -861,11 +898,7 @@ export class AdminService {
 
     const skip = (page - 1) * limit;
     const [logs, total] = await Promise.all([
-      AuditLog.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
-        .populate('user', 'name email')
-        .lean(),
+      AuditLog.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('user', 'name email').lean(),
       AuditLog.countDocuments(query),
     ]);
     return { logs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
@@ -879,11 +912,7 @@ export class AdminService {
 
     const skip = (page - 1) * limit;
     const [logs, total] = await Promise.all([
-      SecurityLog.find(query)
-        .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
-        .populate('user', 'name email')
-        .lean(),
+      SecurityLog.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).populate('user', 'name email').lean(),
       SecurityLog.countDocuments(query),
     ]);
     return { logs, pagination: { page, limit, total, pages: Math.ceil(total / limit) } };
@@ -918,8 +947,12 @@ export class AdminService {
   }
 
   async createCmsPage(data: {
-    title: string; slug: string; content: string;
-    metaTitle?: string; metaDescription?: string; layout?: string;
+    title: string;
+    slug: string;
+    content: string;
+    metaTitle?: string;
+    metaDescription?: string;
+    layout?: string;
   }) {
     return CmsPage.create(data);
   }
@@ -944,7 +977,10 @@ export class AdminService {
   }
 
   async createRolePermission(data: {
-    role: string; permissions: { module: string; actions: string[] }[]; description?: string; isDefault?: boolean;
+    role: string;
+    permissions: { module: string; actions: string[] }[];
+    description?: string;
+    isDefault?: boolean;
   }) {
     return RolePermission.create(data);
   }
@@ -965,7 +1001,8 @@ export class AdminService {
     const [payments, total] = await Promise.all([
       Payment.find(query)
         .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('user', 'name email')
         .populate('course', 'title')
         .populate('bundle', 'title')
@@ -992,10 +1029,7 @@ export class AdminService {
     const query: any = { role: ROLES.STUDENT };
     if (search) {
       const escaped = escapeRegex(search);
-      query.$or = [
-        { name: { $regex: escaped, $options: 'i' } },
-        { email: { $regex: escaped, $options: 'i' } },
-      ];
+      query.$or = [{ name: { $regex: escaped, $options: 'i' } }, { email: { $regex: escaped, $options: 'i' } }];
     }
 
     const skip = (page - 1) * limit;
@@ -1032,7 +1066,8 @@ export class AdminService {
     const [payouts, total] = await Promise.all([
       Payout.find(query)
         .sort({ createdAt: -1 })
-        .skip(skip).limit(limit)
+        .skip(skip)
+        .limit(limit)
         .populate('instructor', 'name email avatar')
         .lean(),
       Payout.countDocuments(query),

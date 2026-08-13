@@ -146,7 +146,7 @@ describe('personSchema', () => {
     expect(schema.description).toBe('bio');
     expect(schema.jobTitle).toBe('Engineer');
     expect(schema.url).toBe('https://example.com/j');
-    expect((schema.sameAs as string[])).toEqual(['https://twitter.com/jane']);
+    expect(schema.sameAs as string[]).toEqual(['https://twitter.com/jane']);
   });
 
   it('builds a minimal person schema', () => {

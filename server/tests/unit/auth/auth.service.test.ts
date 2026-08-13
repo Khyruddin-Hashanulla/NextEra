@@ -75,9 +75,10 @@ describe('register', () => {
 
   it('rejects an existing email', async () => {
     vi.mocked(User.findOne as never).mockResolvedValue(studentUser);
-    await expect(authService.register('Jane', 'student@example.com', 'StrongPass1')).rejects.toMatchObject(
-      { statusCode: 409, message: MESSAGES.ERROR.EMAIL_EXISTS },
-    );
+    await expect(authService.register('Jane', 'student@example.com', 'StrongPass1')).rejects.toMatchObject({
+      statusCode: 409,
+      message: MESSAGES.ERROR.EMAIL_EXISTS,
+    });
     expect(User.create).not.toHaveBeenCalled();
   });
 
@@ -108,7 +109,10 @@ describe('sendVerificationOTP', () => {
     vi.mocked(User.findOne as never).mockResolvedValue(unverifiedUser);
     vi.mocked(generateOTP).mockReturnValue('111111');
     await authService.sendVerificationOTP('unverified@example.com');
-    expect(OTPStore.deleteMany).toHaveBeenCalledWith({ email: 'unverified@example.com', purpose: 'email_verification' });
+    expect(OTPStore.deleteMany).toHaveBeenCalledWith({
+      email: 'unverified@example.com',
+      purpose: 'email_verification',
+    });
     expect(OTPStore.create).toHaveBeenCalledWith(expect.objectContaining({ otp: '111111' }));
     expect(emailService.sendVerificationOTP).toHaveBeenCalled();
   });
@@ -153,17 +157,13 @@ describe('verifyEmail', () => {
 
     const result = await authService.verifyEmail('a@b.com', '123456', deviceInfo);
 
-    expect(User.findOneAndUpdate).toHaveBeenCalledWith(
-      { email: 'a@b.com' },
-      { isEmailVerified: true },
-      { new: true },
-    );
+    expect(User.findOneAndUpdate).toHaveBeenCalledWith({ email: 'a@b.com' }, { isEmailVerified: true }, { new: true });
     expect(OTPStore.deleteMany).toHaveBeenCalledWith({ email: 'a@b.com', purpose: 'email_verification' });
     expect(tokenService.generateTokens).toHaveBeenCalledWith(
       '65f1a1b2c3d4e5f6a7b8c9d0',
       'a@b.com',
       ROLES.STUDENT,
-      deviceInfo,
+      deviceInfo
     );
     expect(result.accessToken).toBe('access-token');
     expect(result.refreshToken).toBe('refresh-token');
@@ -277,7 +277,7 @@ describe('login', () => {
       expect.any(String),
       'a@b.com',
       expect.any(String),
-      deviceInfo,
+      deviceInfo
     );
     expect(user.failedLoginAttempts).toBe(0);
     expect(user.lockLevel).toBe(0);
@@ -302,7 +302,7 @@ describe('googleAuth', () => {
 
     await authService.googleAuth(
       { emails: [{ value: 'test.user@example.com' }], id: 'g-1', displayName: 'Test' },
-      deviceInfo,
+      deviceInfo
     );
 
     expect(user.googleId).toBe('g-1');
@@ -317,12 +317,17 @@ describe('googleAuth', () => {
     vi.mocked(tokenService.generateTokens).mockResolvedValue({ accessToken: 'at', refreshToken: 'rt' });
 
     const result = await authService.googleAuth(
-      { emails: [{ value: 'new@example.com' }], id: 'g-2', displayName: 'New User', photos: [{ value: 'https://p.com/a.png' }] },
-      deviceInfo,
+      {
+        emails: [{ value: 'new@example.com' }],
+        id: 'g-2',
+        displayName: 'New User',
+        photos: [{ value: 'https://p.com/a.png' }],
+      },
+      deviceInfo
     );
 
     expect(User.create).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'new@example.com', googleId: 'g-2', isEmailVerified: true }),
+      expect.objectContaining({ email: 'new@example.com', googleId: 'g-2', isEmailVerified: true })
     );
     expect(result.accessToken).toBe('at');
   });
@@ -331,7 +336,7 @@ describe('googleAuth', () => {
     const user = buildUserDoc({ googleId: undefined, isActive: false });
     vi.mocked(User.findOne as never).mockResolvedValue(user);
     await expect(
-      authService.googleAuth({ emails: [{ value: 'test.user@example.com' }], id: 'g-1' }, deviceInfo),
+      authService.googleAuth({ emails: [{ value: 'test.user@example.com' }], id: 'g-1' }, deviceInfo)
     ).rejects.toMatchObject({ statusCode: 403, message: MESSAGES.ERROR.ACCOUNT_DISABLED });
   });
 });
@@ -364,7 +369,7 @@ describe('googleAuthWithCredential', () => {
     const result = await authService.googleAuthWithCredential('valid-credential', deviceInfo);
 
     expect(User.create).toHaveBeenCalledWith(
-      expect.objectContaining({ googleId: 'g-sub-1', avatar: { url: 'https://p.com/g.png', publicId: '' } }),
+      expect.objectContaining({ googleId: 'g-sub-1', avatar: { url: 'https://p.com/g.png', publicId: '' } })
     );
     expect(result.accessToken).toBe('at');
   });
@@ -406,7 +411,10 @@ describe('logout / logoutAllDevices', () => {
 describe('refreshToken', () => {
   it('delegates to tokenService.refreshAccessToken', async () => {
     vi.mocked(tokenService.refreshAccessToken).mockResolvedValue({ accessToken: 'at', refreshToken: 'rt' });
-    await expect(authService.refreshToken('rt', deviceInfo)).resolves.toEqual({ accessToken: 'at', refreshToken: 'rt' });
+    await expect(authService.refreshToken('rt', deviceInfo)).resolves.toEqual({
+      accessToken: 'at',
+      refreshToken: 'rt',
+    });
   });
 });
 
@@ -428,10 +436,7 @@ describe('forgotPassword', () => {
     expect(user.resetPasswordToken).toMatch(/^[a-f0-9]{64}$/);
     expect(user.resetPasswordExpire).toBeInstanceOf(Date);
     expect(user.save).toHaveBeenCalledWith({ validateBeforeSave: false });
-    expect(emailService.sendPasswordReset).toHaveBeenCalledWith(
-      'a@b.com',
-      expect.any(String),
-    );
+    expect(emailService.sendPasswordReset).toHaveBeenCalledWith('a@b.com', expect.any(String));
     expect(emailService.sendPasswordReset.mock.calls[0][1]).toMatch(/^[a-f0-9]{64}$/);
   });
 

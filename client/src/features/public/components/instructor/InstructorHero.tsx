@@ -1,15 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import {
-  BadgeCheck,
-  BookOpen,
-  Users,
-  MapPin,
-  CalendarDays,
-  MessageCircle,
-  Heart,
-  Clock,
-} from 'lucide-react';
+import { BadgeCheck, BookOpen, Users, MapPin, CalendarDays, MessageCircle, Heart, Clock } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

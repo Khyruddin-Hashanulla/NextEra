@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FIELD_SIZES, ARRAY_LIMITS } from '../utils/validation';
+import { objectIdSchema } from './common';
 
 export const updateUserRoleSchema = z.object({
   role: z.enum(['student', 'instructor', 'admin']),
@@ -27,10 +28,12 @@ export const createBlogSchema = z.object({
   content: z.string().min(10).max(FIELD_SIZES.CONTENT),
   excerpt: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
   tags: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.TAGS).optional(),
-  featuredImage: z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-  }).optional(),
+  featuredImage: z
+    .object({
+      url: z.string().max(FIELD_SIZES.URL),
+      publicId: z.string().max(FIELD_SIZES.URL),
+    })
+    .optional(),
   status: z.enum(['draft', 'published']).optional(),
 });
 
@@ -39,10 +42,12 @@ export const updateBlogSchema = z.object({
   content: z.string().min(10).max(FIELD_SIZES.CONTENT).optional(),
   excerpt: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
   tags: z.array(z.string().max(FIELD_SIZES.NAME)).max(ARRAY_LIMITS.TAGS).optional(),
-  featuredImage: z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-  }).optional(),
+  featuredImage: z
+    .object({
+      url: z.string().max(FIELD_SIZES.URL),
+      publicId: z.string().max(FIELD_SIZES.URL),
+    })
+    .optional(),
   status: z.enum(['draft', 'published']).optional(),
 });
 
@@ -65,10 +70,10 @@ export const updateCouponSchema = z.object({
 });
 
 export const createNotificationSchema = z.object({
-  user: z.string().min(1).max(FIELD_SIZES.URL),
+  user: objectIdSchema,
   title: z.string().min(1).max(FIELD_SIZES.TITLE),
   message: z.string().min(1).max(FIELD_SIZES.MESSAGE),
-  type: z.enum(['system', 'course', 'payment', 'enrollment', 'approval']).optional(),
+  type: z.enum(['system', 'course', 'payment', 'enrollment', 'approval', 'referral', 'assignment']).optional(),
   link: z.string().max(FIELD_SIZES.LINK).optional(),
 });
 
@@ -81,14 +86,18 @@ export const sendBulkNotificationSchema = z.object({
 export const updateSettingsSchema = z.object({
   platformName: z.string().min(1).max(FIELD_SIZES.PLATFORM_NAME).optional(),
   platformEmail: z.string().email().max(FIELD_SIZES.EMAIL).optional(),
-  logo: z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-  }).optional(),
-  favicon: z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-  }).optional(),
+  logo: z
+    .object({
+      url: z.string().max(FIELD_SIZES.URL),
+      publicId: z.string().max(FIELD_SIZES.URL),
+    })
+    .optional(),
+  favicon: z
+    .object({
+      url: z.string().max(FIELD_SIZES.URL),
+      publicId: z.string().max(FIELD_SIZES.URL),
+    })
+    .optional(),
   metaDescription: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
   maintenanceMode: z.boolean().optional(),
   allowRegistration: z.boolean().optional(),
@@ -101,12 +110,14 @@ export const updateSettingsSchema = z.object({
   timezone: z.string().max(FIELD_SIZES.NAME).optional(),
   defaultInstructorPlan: z.string().max(FIELD_SIZES.URL).optional(),
   refundWindowDays: z.number().min(0).max(365).optional(),
-  socialLinks: z.object({
-    youtube: z.string().max(FIELD_SIZES.URL).optional(),
-    twitter: z.string().max(FIELD_SIZES.URL).optional(),
-    linkedin: z.string().max(FIELD_SIZES.URL).optional(),
-    instagram: z.string().max(FIELD_SIZES.URL).optional(),
-  }).optional(),
+  socialLinks: z
+    .object({
+      youtube: z.string().max(FIELD_SIZES.URL).optional(),
+      twitter: z.string().max(FIELD_SIZES.URL).optional(),
+      linkedin: z.string().max(FIELD_SIZES.URL).optional(),
+      instagram: z.string().max(FIELD_SIZES.URL).optional(),
+    })
+    .optional(),
 });
 
 export const rejectCourseSchema = z.object({
@@ -118,10 +129,7 @@ export const approveInstructorSchema = z.object({
 });
 
 export const rejectInstructorSchema = z.object({
-  rejectionReason: z
-    .string()
-    .min(1, 'Rejection reason is required')
-    .max(FIELD_SIZES.REASON),
+  rejectionReason: z.string().min(1, 'Rejection reason is required').max(FIELD_SIZES.REASON),
 });
 
 export const moderateReviewSchema = z.object({
@@ -164,10 +172,12 @@ export const createBannerSchema = z.object({
 export const updateBannerSchema = z.object({
   title: z.string().min(1).max(FIELD_SIZES.TITLE).trim().optional(),
   subtitle: z.string().max(FIELD_SIZES.SHORT_DESCRIPTION).optional(),
-  image: z.object({
-    url: z.string().max(FIELD_SIZES.URL),
-    publicId: z.string().max(FIELD_SIZES.URL),
-  }).optional(),
+  image: z
+    .object({
+      url: z.string().max(FIELD_SIZES.URL),
+      publicId: z.string().max(FIELD_SIZES.URL),
+    })
+    .optional(),
   link: z.string().max(FIELD_SIZES.LINK).optional(),
   position: z.enum(['hero', 'sidebar', 'promo', 'footer']).optional(),
   order: z.number().int().min(0).max(1000).optional(),
@@ -183,10 +193,10 @@ export const processRefundSchema = z.object({
 export const issueRefundSchema = z.object({
   body: z.object({
     amount: z.number().positive('Amount must be positive').max(10000000),
-    reason: z.enum([
-      'student_request', 'duplicate_payment', 'fraud',
-      'course_removed', 'admin_decision', 'technical_error',
-    ], { message: 'Invalid refund reason' }),
+    reason: z.enum(
+      ['student_request', 'duplicate_payment', 'fraud', 'course_removed', 'admin_decision', 'technical_error'],
+      { message: 'Invalid refund reason' }
+    ),
     refundType: z.enum(['full', 'partial']).default('full'),
     adminNote: z.string().max(FIELD_SIZES.ADMIN_NOTE).optional(),
   }),
@@ -254,23 +264,28 @@ export const updateCmsPageSchema = z.object({
 
 export const createRolePermissionSchema = z.object({
   role: z.enum(['admin', 'instructor', 'student']),
-  permissions: z.array(
-    z.object({
-      module: z.string().min(1).max(FIELD_SIZES.NAME),
-      actions: z.array(z.enum(['create', 'read', 'update', 'delete'])),
-    })
-  ).max(ARRAY_LIMITS.PERMISSIONS),
+  permissions: z
+    .array(
+      z.object({
+        module: z.string().min(1).max(FIELD_SIZES.NAME),
+        actions: z.array(z.enum(['create', 'read', 'update', 'delete'])),
+      })
+    )
+    .max(ARRAY_LIMITS.PERMISSIONS),
   description: z.string().max(FIELD_SIZES.ADMIN_NOTE).optional(),
   isDefault: z.boolean().optional(),
 });
 
 export const updateRolePermissionSchema = z.object({
-  permissions: z.array(
-    z.object({
-      module: z.string().min(1).max(FIELD_SIZES.NAME),
-      actions: z.array(z.enum(['create', 'read', 'update', 'delete'])),
-    })
-  ).max(ARRAY_LIMITS.PERMISSIONS).optional(),
+  permissions: z
+    .array(
+      z.object({
+        module: z.string().min(1).max(FIELD_SIZES.NAME),
+        actions: z.array(z.enum(['create', 'read', 'update', 'delete'])),
+      })
+    )
+    .max(ARRAY_LIMITS.PERMISSIONS)
+    .optional(),
   description: z.string().max(FIELD_SIZES.ADMIN_NOTE).optional(),
   isDefault: z.boolean().optional(),
 });

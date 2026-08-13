@@ -42,7 +42,16 @@ export const listMyCourses = asyncHandler(async (req: Request, res: Response) =>
 
 export const listAll = asyncHandler(async (req: Request, res: Response) => {
   const { search, category, level, status, page, limit, sort, featured } = req.query as any;
-  const data = await courseService.listAll({ search, category, level, status, page: Number(page), limit: Number(limit), sort, featured: featured === 'true' });
+  const data = await courseService.listAll({
+    search,
+    category,
+    level,
+    status,
+    page: Number(page),
+    limit: Number(limit),
+    sort,
+    featured: featured === 'true',
+  });
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Courses fetched', data));
 });
 

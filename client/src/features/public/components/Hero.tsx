@@ -35,12 +35,7 @@ export function Hero({ className, stats }: HeroProps) {
     : [];
 
   return (
-    <section
-      className={cn(
-        'relative overflow-hidden bg-background',
-        className,
-      )}
-    >
+    <section className={cn('relative overflow-hidden bg-background', className)}>
       {/* Background layers */}
       <PageBackground variant="hero" className="absolute inset-0 -z-10" />
 
@@ -76,8 +71,8 @@ export function Hero({ className, stats }: HeroProps) {
               transition={{ duration: 0.6, delay: 0.2, ease: easeOut }}
               className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0"
             >
-              Gain job-ready skills through expert-led courses, hands-on projects, and
-              recognized certificates — at your own pace, on any device.
+              Gain job-ready skills through expert-led courses, hands-on projects, and recognized certificates — at your
+              own pace, on any device.
             </motion.p>
 
             <motion.div
@@ -86,7 +81,11 @@ export function Hero({ className, stats }: HeroProps) {
               transition={{ duration: 0.6, delay: 0.3, ease: easeOut }}
               className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
             >
-              <Button asChild size="lg" className="h-12 w-full rounded-full px-8 text-base font-semibold shadow-lg shadow-primary/25 sm:w-auto">
+              <Button
+                asChild
+                size="lg"
+                className="h-12 w-full rounded-full px-8 text-base font-semibold shadow-lg shadow-primary/25 sm:w-auto"
+              >
                 <Link to={ROUTES.COURSES}>
                   Explore Courses <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>

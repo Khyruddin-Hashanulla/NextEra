@@ -33,9 +33,7 @@ export function AuthLayout({ children, className }: AuthLayoutProps) {
           <span className="text-2xl font-bold tracking-tight">NextEra</span>
         </Link>
 
-        <div className="rounded-2xl border bg-card/80 p-6 shadow-xl backdrop-blur-xl sm:p-8">
-          {children}
-        </div>
+        <div className="rounded-2xl border bg-card/80 p-6 shadow-xl backdrop-blur-xl sm:p-8">{children}</div>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
           &copy; {new Date().getFullYear()} NextEra. All rights reserved.

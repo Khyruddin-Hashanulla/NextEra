@@ -6,8 +6,4 @@ export {
   createStudent,
   type BuildUserOptions,
 } from './user.factory';
-export {
-  buildCourse,
-  createCourse,
-  type BuildCourseOptions,
-} from './course.factory';
+export { buildCourse, createCourse, type BuildCourseOptions } from './course.factory';

@@ -40,6 +40,7 @@ export class CacheManager {
       cacheService.invalidatePattern(`instructor:revenue:${userId}:*`),
       cacheService.del(cacheKeys.instructorAnalytics(userId)),
       cacheService.del(cacheKeys.instructorRevenueDetail(userId)),
+      cacheService.del(cacheKeys.instructorEntitlements(userId)),
     ]);
   }
 

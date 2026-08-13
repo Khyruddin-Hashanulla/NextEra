@@ -3,7 +3,12 @@ import { filterLectureData, normalizeVideoSource } from './lectureData';
 
 describe('normalizeVideoSource (YouTube)', () => {
   it('stores ONLY the 11-char videoId from a full watch URL and auto-generates the thumbnail', () => {
-    const source = normalizeVideoSource({ source: 'youtube', videoId: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', thumbnailUrl: '' });
+    const source = normalizeVideoSource({
+      source: 'youtube',
+      videoId: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      thumbnailUrl: '',
+    });
     expect(source.videoId).toBe('dQw4w9WgXcQ');
     expect(source.url).toBe('');
     expect(source.thumbnailUrl).toBe('https://img.youtube.com/vi/dQw4w9WgXcQ/maxresdefault.jpg');
@@ -26,7 +31,13 @@ describe('normalizeVideoSource (YouTube)', () => {
 
   it('returns a safe empty source when none is provided', () => {
     expect(normalizeVideoSource(undefined)).toEqual({
-      source: 'none', url: '', videoId: '', provider: '', thumbnailUrl: '', playbackRate: 1, qualities: [],
+      source: 'none',
+      url: '',
+      videoId: '',
+      provider: '',
+      thumbnailUrl: '',
+      playbackRate: 1,
+      qualities: [],
     });
   });
 });
@@ -39,7 +50,14 @@ describe('filterLectureData for video lectures', () => {
       duration: 120,
       isFree: true,
       sectionId: 's1',
-      videoSource: { source: 'youtube', videoId: 'https://youtu.be/dQw4w9WgXcQ', url: '', thumbnailUrl: '', playbackRate: 1, qualities: [] },
+      videoSource: {
+        source: 'youtube',
+        videoId: 'https://youtu.be/dQw4w9WgXcQ',
+        url: '',
+        thumbnailUrl: '',
+        playbackRate: 1,
+        qualities: [],
+      },
     });
     expect(payload.type).toBe('video');
     expect(payload.sectionId).toBe('s1');

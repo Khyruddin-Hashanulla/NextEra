@@ -78,10 +78,21 @@ export function NotificationsPage() {
           <p className="mt-1 text-muted-foreground">Manage platform notifications</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setSingleForm({ user: '', title: '', message: '', type: 'system' }); setShowSingle(true); }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSingleForm({ user: '', title: '', message: '', type: 'system' });
+              setShowSingle(true);
+            }}
+          >
             <Plus className="mr-1.5 h-4 w-4" /> Send to User
           </Button>
-          <Button onClick={() => { setBulkForm({ title: '', message: '', type: 'system' }); setShowBulk(true); }}>
+          <Button
+            onClick={() => {
+              setBulkForm({ title: '', message: '', type: 'system' });
+              setShowBulk(true);
+            }}
+          >
             <Send className="mr-1.5 h-4 w-4" /> Send to All
           </Button>
         </div>
@@ -112,7 +123,9 @@ export function NotificationsPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Title</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Message</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Message
+                      </th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">User</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Type</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Date</th>
@@ -130,7 +143,9 @@ export function NotificationsPage() {
                             {notif.type}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground">{new Date(notif.createdAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {new Date(notif.createdAt).toLocaleDateString()}
+                        </td>
                         <td className="px-4 py-3">
                           <Button variant="ghost" size="sm" onClick={() => setDeleteId(notif._id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -150,7 +165,12 @@ export function NotificationsPage() {
                     <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="sm" disabled={page >= (data.pagination.pages || 1)} onClick={() => setPage((p) => p + 1)}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={page >= (data.pagination.pages || 1)}
+                      onClick={() => setPage((p) => p + 1)}
+                    >
                       <ChevronRight className="h-4 w-4" />
                     </Button>
                   </div>
@@ -166,31 +186,49 @@ export function NotificationsPage() {
           <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Send Notification</h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowSingle(false)}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowSingle(false)}>
+                Close
+              </Button>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>User</Label>
-                <select value={singleForm.user} onChange={(e) => setSingleForm({ ...singleForm, user: e.target.value })}
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm">
+                <select
+                  value={singleForm.user}
+                  onChange={(e) => setSingleForm({ ...singleForm, user: e.target.value })}
+                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                >
                   <option value="">Select user</option>
                   {(users?.users || []).map((u: any) => (
-                    <option key={u._id} value={u._id}>{u.name} ({u.email})</option>
+                    <option key={u._id} value={u._id}>
+                      {u.name} ({u.email})
+                    </option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
                 <Label>Title</Label>
-                <Input value={singleForm.title} onChange={(e) => setSingleForm({ ...singleForm, title: e.target.value })} />
+                <Input
+                  value={singleForm.title}
+                  onChange={(e) => setSingleForm({ ...singleForm, title: e.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Message</Label>
-                <Textarea value={singleForm.message} onChange={(e) => setSingleForm({ ...singleForm, message: e.target.value })} />
+                <Textarea
+                  value={singleForm.message}
+                  onChange={(e) => setSingleForm({ ...singleForm, message: e.target.value })}
+                />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowSingle(false)}>Cancel</Button>
-              <Button onClick={() => createMutation.mutate(singleForm)} disabled={!singleForm.user || !singleForm.title || createMutation.isPending}>
+              <Button variant="outline" onClick={() => setShowSingle(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => createMutation.mutate(singleForm)}
+                disabled={!singleForm.user || !singleForm.title || createMutation.isPending}
+              >
                 Send
               </Button>
             </div>
@@ -203,7 +241,9 @@ export function NotificationsPage() {
           <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">Send to All Users</h2>
-              <Button variant="ghost" size="sm" onClick={() => setShowBulk(false)}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowBulk(false)}>
+                Close
+              </Button>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
@@ -212,12 +252,20 @@ export function NotificationsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Message</Label>
-                <Textarea value={bulkForm.message} onChange={(e) => setBulkForm({ ...bulkForm, message: e.target.value })} />
+                <Textarea
+                  value={bulkForm.message}
+                  onChange={(e) => setBulkForm({ ...bulkForm, message: e.target.value })}
+                />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowBulk(false)}>Cancel</Button>
-              <Button onClick={() => bulkMutation.mutate(bulkForm)} disabled={!bulkForm.title || bulkMutation.isPending}>
+              <Button variant="outline" onClick={() => setShowBulk(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => bulkMutation.mutate(bulkForm)}
+                disabled={!bulkForm.title || bulkMutation.isPending}
+              >
                 Send to All
               </Button>
             </div>
@@ -231,8 +279,16 @@ export function NotificationsPage() {
             <h2 className="text-lg font-semibold">Delete Notification</h2>
             <p className="mt-2 text-sm text-muted-foreground">Are you sure?</p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteId)} loading={deleteMutation.isPending}>Delete</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteMutation.mutate(deleteId)}
+                loading={deleteMutation.isPending}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>

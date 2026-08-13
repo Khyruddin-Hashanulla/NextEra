@@ -50,7 +50,7 @@ export function Testimonials({ testimonials, isLoading }: TestimonialsProps) {
       setDirection(target > index ? 1 : -1);
       setIndex(target);
     },
-    [index],
+    [index]
   );
 
   useEffect(() => {
@@ -128,7 +128,7 @@ export function Testimonials({ testimonials, isLoading }: TestimonialsProps) {
                         'h-2 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                         testimonialIndex === index
                           ? 'w-6 bg-primary'
-                          : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60',
+                          : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60'
                       )}
                     />
                   ))}
@@ -160,13 +160,11 @@ export function Testimonials({ testimonials, isLoading }: TestimonialsProps) {
                         'flex items-center gap-2 rounded-full border py-1 pl-1 pr-3 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                         isActive
                           ? 'border-primary/50 bg-primary/5'
-                          : 'border-border bg-card opacity-60 hover:opacity-100',
+                          : 'border-border bg-card opacity-60 hover:opacity-100'
                       )}
                     >
                       <Avatar name={testimonial.name} avatarUrl={testimonial.avatarUrl} />
-                      <span className="text-sm font-medium text-foreground">
-                        {testimonial.name}
-                      </span>
+                      <span className="text-sm font-medium text-foreground">{testimonial.name}</span>
                     </button>
                   );
                 })}

@@ -223,29 +223,29 @@ export interface FeatureToggle {
   updatedAt: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface DashboardStats extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RevenueAnalytics extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UserAnalytics extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CourseAnalytics extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AdminCourse extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SubscriptionPlan extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ReviewItem extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Banner extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RefundRequest extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SupportTicket extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FaqItem extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface EmailTemplate extends Record<string, any> {}
 export interface AuditLogItem {
   _id: string;
@@ -275,13 +275,13 @@ export interface AuditLogItem {
   timestamp: string;
   createdAt: string;
 }
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface SecurityLogItem extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Backup extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CmsPage extends Record<string, any> {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RolePermission extends Record<string, any> {}
 
 export interface AdminAssignmentSubmission {
@@ -291,7 +291,8 @@ export interface AdminAssignmentSubmission {
   lecture: { _id: string; title: string; assignment?: any };
   content: string;
   files: { url: string; publicId: string; name: string }[];
-  status: 'assigned' | 'submitted' | 'late_submission' | 'under_review' | 'graded' | 'returned_for_resubmission' | 'rejected';
+  status:
+    'assigned' | 'submitted' | 'late_submission' | 'under_review' | 'graded' | 'returned_for_resubmission' | 'rejected';
   grade?: number;
   maxMarks?: number;
   percentage?: number;

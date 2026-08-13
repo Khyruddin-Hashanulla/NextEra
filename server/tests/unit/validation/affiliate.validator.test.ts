@@ -22,7 +22,7 @@ describe('affiliate.validator', () => {
     expect(updateAffiliateProfileSchema.parse(valid).body.payoutMethod).toBe('bank');
     expect(updateAffiliateProfileSchema.parse({ body: {} }).body).toEqual({});
     expect(
-      updateAffiliateProfileSchema.parse({ body: { payoutDetails: { paypalEmail: '' } } }).body.payoutDetails,
+      updateAffiliateProfileSchema.parse({ body: { payoutDetails: { paypalEmail: '' } } }).body.payoutDetails
     ).toEqual({ paypalEmail: '' });
   });
 

@@ -42,16 +42,32 @@ export function spyOnMatchMedia() {
         onchange: null,
         addListener: (cb: (e: MediaQueryListEvent) => void) => callbacks.add(cb),
         removeListener: (cb: (e: MediaQueryListEvent) => void) => callbacks.delete(cb),
-        addEventListener: ((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => {
+        addEventListener: ((
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          _options?: boolean | AddEventListenerOptions
+        ) => {
           if (type === 'change' && typeof listener === 'function') {
             callbacks.add(listener as (e: MediaQueryListEvent) => void);
           }
-        }) as (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | AddEventListenerOptions) => void,
-        removeEventListener: ((type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) => {
+        }) as (
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          _options?: boolean | AddEventListenerOptions
+        ) => void,
+        removeEventListener: ((
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          _options?: boolean | EventListenerOptions
+        ) => {
           if (type === 'change' && typeof listener === 'function') {
             callbacks.delete(listener as (e: MediaQueryListEvent) => void);
           }
-        }) as (type: string, listener: EventListenerOrEventListenerObject, options?: boolean | EventListenerOptions) => void,
+        }) as (
+          type: string,
+          listener: EventListenerOrEventListenerObject,
+          _options?: boolean | EventListenerOptions
+        ) => void,
         dispatchEvent: () => false,
       };
       mediaQueries.set(query, mq);
@@ -66,7 +82,7 @@ export function spyOnMatchMedia() {
     Object.defineProperty(mq, 'matches', { value: matches, writable: true, configurable: true });
     const callbacks = getCallbacks(query);
     const event = { matches, media: query } as MediaQueryListEvent;
-    callbacks.forEach(cb => cb(event));
+    callbacks.forEach((cb) => cb(event));
     if (mq.onchange) mq.onchange(event);
   };
 

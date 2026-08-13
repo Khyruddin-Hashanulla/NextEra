@@ -17,18 +17,70 @@ const item = {
 };
 
 const statCards = [
-  { key: 'currentBalance', label: 'Current Balance', icon: Wallet, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400', prefix: '₹' },
-  { key: 'totalRevenue', label: 'Total Revenue', icon: DollarSign, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400', prefix: '₹' },
-  { key: 'totalCommissionCollected', label: 'Commission Collected', icon: TrendingUp, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400', prefix: '₹' },
-  { key: 'totalPayoutsMade', label: 'Total Payouts', icon: CreditCard, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400', prefix: '₹' },
-  { key: 'pendingPayouts', label: 'Pending Payouts', icon: Wallet, color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400', prefix: '₹' },
-  { key: 'activeInstructorSubscriptions', label: 'Active Subscriptions', icon: Crown, color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/30 dark:text-pink-400' },
+  {
+    key: 'currentBalance',
+    label: 'Current Balance',
+    icon: Wallet,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+    prefix: '₹',
+  },
+  {
+    key: 'totalRevenue',
+    label: 'Total Revenue',
+    icon: DollarSign,
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+    prefix: '₹',
+  },
+  {
+    key: 'totalCommissionCollected',
+    label: 'Commission Collected',
+    icon: TrendingUp,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+    prefix: '₹',
+  },
+  {
+    key: 'totalPayoutsMade',
+    label: 'Total Payouts',
+    icon: CreditCard,
+    color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+    prefix: '₹',
+  },
+  {
+    key: 'pendingPayouts',
+    label: 'Pending Payouts',
+    icon: Wallet,
+    color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
+    prefix: '₹',
+  },
+  {
+    key: 'activeInstructorSubscriptions',
+    label: 'Active Subscriptions',
+    icon: Crown,
+    color: 'text-pink-600 bg-pink-100 dark:bg-pink-900/30 dark:text-pink-400',
+  },
 ];
 
 const secondaryCards = [
-  { key: 'activePromotions', label: 'Active Promotions', icon: Star, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
-  { key: 'instructorSubscriptionRevenue', label: 'Instructor Sub Revenue', icon: Crown, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400', prefix: '₹' },
-  { key: 'featuredPromotionRevenue', label: 'Promotion Revenue', icon: Star, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400', prefix: '₹' },
+  {
+    key: 'activePromotions',
+    label: 'Active Promotions',
+    icon: Star,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+  },
+  {
+    key: 'instructorSubscriptionRevenue',
+    label: 'Instructor Sub Revenue',
+    icon: Crown,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+    prefix: '₹',
+  },
+  {
+    key: 'featuredPromotionRevenue',
+    label: 'Promotion Revenue',
+    icon: Star,
+    color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+    prefix: '₹',
+  },
 ];
 
 export function RevenueDashboardPage() {
@@ -40,10 +92,17 @@ export function RevenueDashboardPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-72" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
@@ -63,10 +122,14 @@ export function RevenueDashboardPage() {
         {statCards.map((stat) => {
           let value: string | number = 0;
           if (stat.key === 'currentBalance') value = `${stat.prefix || ''}${(w?.currentBalance || 0).toLocaleString()}`;
-          else if (stat.key === 'totalRevenue') value = `${stat.prefix || ''}${(w?.totalRevenue || 0).toLocaleString()}`;
-          else if (stat.key === 'totalCommissionCollected') value = `${stat.prefix || ''}${(w?.totalCommissionCollected || 0).toLocaleString()}`;
-          else if (stat.key === 'totalPayoutsMade') value = `${stat.prefix || ''}${(w?.totalPayoutsMade || 0).toLocaleString()}`;
-          else if (stat.key === 'pendingPayouts') value = `${stat.prefix || ''}${(w?.pendingPayouts || 0).toLocaleString()}`;
+          else if (stat.key === 'totalRevenue')
+            value = `${stat.prefix || ''}${(w?.totalRevenue || 0).toLocaleString()}`;
+          else if (stat.key === 'totalCommissionCollected')
+            value = `${stat.prefix || ''}${(w?.totalCommissionCollected || 0).toLocaleString()}`;
+          else if (stat.key === 'totalPayoutsMade')
+            value = `${stat.prefix || ''}${(w?.totalPayoutsMade || 0).toLocaleString()}`;
+          else if (stat.key === 'pendingPayouts')
+            value = `${stat.prefix || ''}${(w?.pendingPayouts || 0).toLocaleString()}`;
           else if (stat.key === 'activeInstructorSubscriptions') value = data?.activeInstructorSubscriptions || 0;
           return (
             <Card key={stat.key} className="transition-shadow hover:shadow-md">
@@ -88,8 +151,10 @@ export function RevenueDashboardPage() {
         {secondaryCards.map((stat) => {
           let value: string | number = 0;
           if (stat.key === 'activePromotions') value = data?.activePromotions || 0;
-          else if (stat.key === 'instructorSubscriptionRevenue') value = `${stat.prefix || ''}${(data?.instructorSubscriptionRevenue || 0).toLocaleString()}`;
-          else if (stat.key === 'featuredPromotionRevenue') value = `${stat.prefix || ''}${(data?.featuredPromotionRevenue || 0).toLocaleString()}`;
+          else if (stat.key === 'instructorSubscriptionRevenue')
+            value = `${stat.prefix || ''}${(data?.instructorSubscriptionRevenue || 0).toLocaleString()}`;
+          else if (stat.key === 'featuredPromotionRevenue')
+            value = `${stat.prefix || ''}${(data?.featuredPromotionRevenue || 0).toLocaleString()}`;
           return (
             <Card key={stat.key} className="transition-shadow hover:shadow-md">
               <CardContent className="flex items-center gap-4 p-5">
@@ -117,7 +182,10 @@ export function RevenueDashboardPage() {
             ) : (
               <div className="divide-y">
                 {data.revenueBySource.map((s: any) => (
-                  <div key={s._id} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30">
+                  <div
+                    key={s._id}
+                    className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30"
+                  >
                     <span className="font-medium capitalize">{s._id}</span>
                     <div className="flex items-center gap-6 text-sm">
                       <span className="text-muted-foreground">{s.count} sales</span>
@@ -141,7 +209,10 @@ export function RevenueDashboardPage() {
             ) : (
               <div className="divide-y">
                 {data.monthlyTrend.map((m: any) => (
-                  <div key={m._id} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30">
+                  <div
+                    key={m._id}
+                    className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30"
+                  >
                     <span className="font-medium">{m._id}</span>
                     <div className="flex items-center gap-6 text-sm">
                       <span>₹{m.amount.toLocaleString()}</span>
@@ -166,8 +237,12 @@ export function RevenueDashboardPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Instructor</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Total Paid</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Instructor
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Total Paid
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
@@ -176,7 +251,13 @@ export function RevenueDashboardPage() {
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             {inst.instructor?.avatar?.url ? (
-                              <OptimizedImage src={inst.instructor.avatar.url} alt={inst.instructor?.name || 'Instructor'} placeholderType="avatar" className="rounded-full object-cover" containerClassName="h-7 w-7" />
+                              <OptimizedImage
+                                src={inst.instructor.avatar.url}
+                                alt={inst.instructor?.name || 'Instructor'}
+                                placeholderType="avatar"
+                                className="rounded-full object-cover"
+                                containerClassName="h-7 w-7"
+                              />
                             ) : (
                               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                                 {inst.instructor?.name?.charAt(0)}
@@ -208,8 +289,12 @@ export function RevenueDashboardPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Date</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Revenue</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Transactions</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Revenue
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Transactions
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">

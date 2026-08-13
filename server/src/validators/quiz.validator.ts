@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { FIELD_SIZES } from '../utils/validation';
-import { ROLES } from '../constants/roles';
 
 export const startQuizSchema = z.object({
   body: z.object({

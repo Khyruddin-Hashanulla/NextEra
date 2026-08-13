@@ -17,9 +17,7 @@ function extractDeviceInfo(req: Request): DeviceInfo {
 export const register = asyncHandler(async (req: Request, res: Response) => {
   const { name, email, password } = req.body;
   const { user } = await authService.register(name, email, password);
-  res.status(HTTP_STATUS.CREATED).json(
-    ApiResponse.created(MESSAGES.AUTH.REGISTER_SUCCESS, user)
-  );
+  res.status(HTTP_STATUS.CREATED).json(ApiResponse.created(MESSAGES.AUTH.REGISTER_SUCCESS, user));
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -57,9 +55,7 @@ export const googleAuth = asyncHandler(async (req: Request, res: Response) => {
 export const sendOTP = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
   await authService.sendVerificationOTP(email);
-  res.status(HTTP_STATUS.OK).json(
-    ApiResponse.success(MESSAGES.AUTH.VERIFICATION_OTP_SENT, null)
-  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success(MESSAGES.AUTH.VERIFICATION_OTP_SENT, null));
 });
 
 export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
@@ -82,9 +78,7 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
   const token = req.cookies?.refreshToken || req.body?.refreshToken;
 
   if (!token) {
-    res.status(HTTP_STATUS.UNAUTHORIZED).json(
-      ApiResponse.success(MESSAGES.ERROR.TOKEN_REQUIRED, null)
-    );
+    res.status(HTTP_STATUS.UNAUTHORIZED).json(ApiResponse.success(MESSAGES.ERROR.TOKEN_REQUIRED, null));
     return;
   }
 
@@ -104,17 +98,13 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 export const forgotPassword = asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
   await authService.forgotPassword(email);
-  res.status(HTTP_STATUS.OK).json(
-    ApiResponse.success(MESSAGES.AUTH.PASSWORD_RESET_LINK_SENT, null)
-  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success(MESSAGES.AUTH.PASSWORD_RESET_LINK_SENT, null));
 });
 
 export const resetPassword = asyncHandler(async (req: Request, res: Response) => {
   const { token, password } = req.body;
   await authService.resetPassword(token, password);
-  res.status(HTTP_STATUS.OK).json(
-    ApiResponse.success(MESSAGES.AUTH.PASSWORD_RESET_SUCCESS, null)
-  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success(MESSAGES.AUTH.PASSWORD_RESET_SUCCESS, null));
 });
 
 function extractAccessToken(req: Request): string | undefined {
@@ -132,9 +122,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   }
 
   clearRefreshTokenCookie(res);
-  res.status(HTTP_STATUS.OK).json(
-    ApiResponse.success(MESSAGES.AUTH.LOGOUT_SUCCESS, null)
-  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success(MESSAGES.AUTH.LOGOUT_SUCCESS, null));
 });
 
 export const logoutAllDevices = asyncHandler(async (req: Request, res: Response) => {
@@ -143,7 +131,5 @@ export const logoutAllDevices = asyncHandler(async (req: Request, res: Response)
   }
 
   clearRefreshTokenCookie(res);
-  res.status(HTTP_STATUS.OK).json(
-    ApiResponse.success(MESSAGES.AUTH.LOGOUT_SUCCESS, null)
-  );
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success(MESSAGES.AUTH.LOGOUT_SUCCESS, null));
 });

@@ -59,7 +59,10 @@ function AssignmentCard({ item }: { item: AssignmentOverviewItem }) {
             {sub.lateSubmission && <p className="text-xs text-orange-600">Late submission</p>}
           </div>
         )}
-        <Link to={ROUTES.STUDENT_ASSIGNMENT_DETAIL(item._id)} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">
+        <Link
+          to={ROUTES.STUDENT_ASSIGNMENT_DETAIL(item._id)}
+          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+        >
           View Details <ChevronRight className="h-3 w-3" />
         </Link>
       </CardContent>
@@ -73,11 +76,16 @@ export function AssignmentsPage() {
   const { data, isLoading } = useQuery({
     queryKey: ['student', 'assignments', 'overview', page, statusFilter],
     queryFn: ({ signal }) =>
-      studentApi.getAssignmentsOverview({
-        page,
-        limit: 12,
-        status: statusFilter === 'all' ? undefined : statusFilter,
-      }, signal).then((r) => r.data.data),
+      studentApi
+        .getAssignmentsOverview(
+          {
+            page,
+            limit: 12,
+            status: statusFilter === 'all' ? undefined : statusFilter,
+          },
+          signal
+        )
+        .then((r) => r.data.data),
   });
 
   if (isLoading) {
@@ -95,14 +103,28 @@ export function AssignmentsPage() {
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
-        {['all', 'assigned', 'submitted', 'under_review', 'graded', 'returned_for_resubmission', 'rejected', 'overdue'].map((s) => {
+        {[
+          'all',
+          'assigned',
+          'submitted',
+          'under_review',
+          'graded',
+          'returned_for_resubmission',
+          'rejected',
+          'overdue',
+        ].map((s) => {
           const label = STATUS_STYLES[s as AssignmentStatus]?.label ?? (s === 'all' ? 'All' : s);
           return (
             <button
               key={s}
-              onClick={() => { setStatusFilter(s); setPage(1); }}
+              onClick={() => {
+                setStatusFilter(s);
+                setPage(1);
+              }}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                statusFilter === s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-accent'
+                statusFilter === s
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-muted text-muted-foreground hover:bg-accent'
               }`}
             >
               {label}
@@ -117,19 +139,25 @@ export function AssignmentsPage() {
             <ClipboardList className="mx-auto mb-2 h-8 w-8" />
             No assignments found.
             <div className="mt-2">
-              <Link to="/student/my-courses" className="text-sm text-primary hover:underline">Go to My Courses</Link>
+              <Link to="/student/my-courses" className="text-sm text-primary hover:underline">
+                Go to My Courses
+              </Link>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => <AssignmentCard key={item._id} item={item} />)}
+          {items.map((item) => (
+            <AssignmentCard key={item._id} item={item} />
+          ))}
         </div>
       )}
 
       {pagination && pagination.pages > 1 && (
         <div className="mt-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">Page {pagination.page} of {pagination.pages}</p>
+          <p className="text-sm text-muted-foreground">
+            Page {pagination.page} of {pagination.pages}
+          </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}

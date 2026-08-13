@@ -5,35 +5,45 @@ export const createProblem = async (req: Request, res: Response, next: NextFunct
   try {
     const problem = await codingService.createProblem(req.body, req.currentUser!.userId);
     res.status(201).json({ success: true, data: problem });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const updateProblem = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const problem = await codingService.updateProblem(req.params.problemId, req.body, req.currentUser!.userId);
     res.json({ success: true, data: problem });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const deleteProblem = async (req: Request, res: Response, next: NextFunction) => {
   try {
     await codingService.deleteProblem(req.params.problemId, req.currentUser!.userId);
     res.json({ success: true, message: 'Problem deleted' });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getProblemById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const problem = await codingService.getProblemById(req.params.problemId);
     res.json({ success: true, data: problem });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getProblemBySlug = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const problem = await codingService.getProblemBySlug(req.params.slug);
     res.json({ success: true, data: problem });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const listProblems = async (req: Request, res: Response, next: NextFunction) => {
@@ -51,7 +61,9 @@ export const listProblems = async (req: Request, res: Response, next: NextFuncti
       sort: (req.query.sort as string) || 'newest',
     });
     res.json({ success: true, ...result });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const listInstructorProblems = async (req: Request, res: Response, next: NextFunction) => {
@@ -60,7 +72,9 @@ export const listInstructorProblems = async (req: Request, res: Response, next: 
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
     const result = await codingService.listInstructorProblems(req.currentUser!.userId, page, limit);
     res.json({ success: true, ...result });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const submitCode = async (req: Request, res: Response, next: NextFunction) => {
@@ -70,18 +84,26 @@ export const submitCode = async (req: Request, res: Response, next: NextFunction
       req.currentUser!.userId,
       req.body.code,
       req.body.language,
-      req.body.isPractice !== false,
+      req.body.isPractice !== false
     );
     res.json({ success: true, data: submission });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getSubmissionById = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const isAdminOrInstructor = req.currentUser?.role === 'instructor' || req.currentUser?.role === 'admin';
-    const submission = await codingService.getSubmissionById(req.params.submissionId, req.currentUser!.userId, isAdminOrInstructor);
+    const submission = await codingService.getSubmissionById(
+      req.params.submissionId,
+      req.currentUser!.userId,
+      isAdminOrInstructor
+    );
     res.json({ success: true, data: submission });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getUserSubmissions = async (req: Request, res: Response, next: NextFunction) => {
@@ -90,7 +112,9 @@ export const getUserSubmissions = async (req: Request, res: Response, next: Next
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
     const result = await codingService.getUserSubmissions(req.params.problemId, req.currentUser!.userId, page, limit);
     res.json({ success: true, ...result });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const getAllUserSubmissions = async (req: Request, res: Response, next: NextFunction) => {
@@ -99,5 +123,7 @@ export const getAllUserSubmissions = async (req: Request, res: Response, next: N
     const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
     const result = await codingService.getAllUserSubmissions(req.currentUser!.userId, page, limit);
     res.json({ success: true, ...result });
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 };

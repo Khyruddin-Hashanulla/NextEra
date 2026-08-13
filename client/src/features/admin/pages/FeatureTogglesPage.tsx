@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/providers/ToastProvider';
-import { Loader2, RotateCcw, Settings2 } from 'lucide-react';
+import { RotateCcw, Settings2 } from 'lucide-react';
 import { TableSkeleton } from '@/components/skeletons/ListSkeleton';
 import type { FeatureToggle } from '@/types/admin';
 
@@ -25,7 +25,7 @@ export function FeatureTogglesPage() {
 
   const { data: featuresRes, isLoading } = useQuery({
     queryKey: ['admin', 'features'],
-    queryFn: ({ signal }) => adminApi.getFeatures(signal).then(r => r.data),
+    queryFn: ({ signal }) => adminApi.getFeatures(signal).then((r) => r.data),
   });
 
   const updateMutation = useMutation({
@@ -47,11 +47,12 @@ export function FeatureTogglesPage() {
   });
 
   const features = featuresRes?.data as FeatureToggle[] | undefined;
-  const grouped = features?.reduce<Record<string, FeatureToggle[]>>((acc, f) => {
-    if (!acc[f.category]) acc[f.category] = [];
-    acc[f.category].push(f);
-    return acc;
-  }, {}) || {};
+  const grouped =
+    features?.reduce<Record<string, FeatureToggle[]>>((acc, f) => {
+      if (!acc[f.category]) acc[f.category] = [];
+      acc[f.category].push(f);
+      return acc;
+    }, {}) || {};
 
   if (isLoading) {
     return <TableSkeleton rows={8} columns={4} />;
@@ -73,7 +74,9 @@ export function FeatureTogglesPage() {
               <CardTitle className="flex items-center gap-2 text-base">
                 <Settings2 className="h-4 w-4" />
                 <span className="capitalize">{category}</span>
-                <Badge variant="outline" className="text-xs ml-auto">{toggles.length}</Badge>
+                <Badge variant="outline" className="text-xs ml-auto">
+                  {toggles.length}
+                </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-1">

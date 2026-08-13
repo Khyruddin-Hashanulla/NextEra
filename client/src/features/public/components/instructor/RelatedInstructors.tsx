@@ -26,9 +26,7 @@ export const RelatedInstructors = memo(function RelatedInstructors({
     staleTime: 60_000,
   });
 
-  const related = (data ?? [])
-    .filter((item: InstructorCardData) => item._id !== instructorId)
-    .slice(0, EXCLUDE_COUNT);
+  const related = (data ?? []).filter((item: InstructorCardData) => item._id !== instructorId).slice(0, EXCLUDE_COUNT);
 
   return (
     <Reveal>

@@ -16,7 +16,15 @@ export interface ICodingSubmission extends Document {
   problem: mongoose.Types.ObjectId;
   code: string;
   language: string;
-  status: 'pending' | 'running' | 'accepted' | 'wrong_answer' | 'time_limit_exceeded' | 'memory_limit_exceeded' | 'runtime_error' | 'compilation_error';
+  status:
+    | 'pending'
+    | 'running'
+    | 'accepted'
+    | 'wrong_answer'
+    | 'time_limit_exceeded'
+    | 'memory_limit_exceeded'
+    | 'runtime_error'
+    | 'compilation_error';
   testResults: ITestResult[];
   score: number;
   totalTestCases: number;
@@ -29,16 +37,19 @@ export interface ICodingSubmission extends Document {
   updatedAt: Date;
 }
 
-const testResultSchema = new Schema<ITestResult>({
-  testCaseIndex: { type: Number, required: true },
-  input: { type: String, default: '' },
-  expectedOutput: { type: String, default: '' },
-  actualOutput: { type: String, default: '' },
-  passed: { type: Boolean, required: true },
-  error: { type: String },
-  runtime: { type: Number },
-  memoryUsed: { type: Number },
-}, { _id: false });
+const testResultSchema = new Schema<ITestResult>(
+  {
+    testCaseIndex: { type: Number, required: true },
+    input: { type: String, default: '' },
+    expectedOutput: { type: String, default: '' },
+    actualOutput: { type: String, default: '' },
+    passed: { type: Boolean, required: true },
+    error: { type: String },
+    runtime: { type: Number },
+    memoryUsed: { type: Number },
+  },
+  { _id: false }
+);
 
 const codingSubmissionSchema = new Schema<ICodingSubmission>(
   {
@@ -48,7 +59,16 @@ const codingSubmissionSchema = new Schema<ICodingSubmission>(
     language: { type: String, required: true },
     status: {
       type: String,
-      enum: ['pending', 'running', 'accepted', 'wrong_answer', 'time_limit_exceeded', 'memory_limit_exceeded', 'runtime_error', 'compilation_error'],
+      enum: [
+        'pending',
+        'running',
+        'accepted',
+        'wrong_answer',
+        'time_limit_exceeded',
+        'memory_limit_exceeded',
+        'runtime_error',
+        'compilation_error',
+      ],
       default: 'pending',
     },
     testResults: [testResultSchema],

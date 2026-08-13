@@ -71,7 +71,9 @@ function parseQuestion(q: QuizQuestion): EditableQuestion {
         try {
           const arr = JSON.parse(q.correctAnswer);
           correctIndices = arr.map((a: string) => q.options.indexOf(a)).filter((i: number) => i >= 0);
-        } catch {}
+        } catch {
+          // invalid stored JSON — fall back to empty selection
+        }
       }
     }
     return { ...base, correctIndices, booleanValue: 'true', fillAnswers: [], matchingPairs: [] };
@@ -92,7 +94,13 @@ function parseQuestion(q: QuizQuestion): EditableQuestion {
         fillAnswers = [q.correctAnswer];
       }
     }
-    return { ...base, correctIndices: [], booleanValue: 'true', fillAnswers: fillAnswers.length ? fillAnswers : [''], matchingPairs: [] };
+    return {
+      ...base,
+      correctIndices: [],
+      booleanValue: 'true',
+      fillAnswers: fillAnswers.length ? fillAnswers : [''],
+      matchingPairs: [],
+    };
   }
 
   if (type === 'matching') {
@@ -101,7 +109,9 @@ function parseQuestion(q: QuizQuestion): EditableQuestion {
       try {
         const obj = JSON.parse(q.correctAnswer);
         matchingPairs = Object.entries(obj).map(([left, right]) => ({ left, right: String(right) }));
-      } catch {}
+      } catch {
+        // invalid stored JSON — fall back to empty pairs
+      }
     }
     return { ...base, correctIndices: [], booleanValue: 'true', fillAnswers: [], matchingPairs };
   }
@@ -132,14 +142,22 @@ function serializeQuestion(e: EditableQuestion): QuizQuestion {
     q.correctAnswer = JSON.stringify(e.fillAnswers.map((s) => s.trim()).filter(Boolean));
   } else if (e.type === 'matching') {
     q.correctAnswer = JSON.stringify(
-      Object.fromEntries(e.matchingPairs.filter((p) => p.left.trim() && p.right.trim()).map((p) => [p.left.trim(), p.right.trim()]))
+      Object.fromEntries(
+        e.matchingPairs.filter((p) => p.left.trim() && p.right.trim()).map((p) => [p.left.trim(), p.right.trim()])
+      )
     );
   }
 
   return q;
 }
 
-export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQuestion[]; onChange: (q: QuizQuestion[]) => void }) {
+export function QuizQuestionBuilder({
+  questions,
+  onChange,
+}: {
+  questions: QuizQuestion[];
+  onChange: (q: QuizQuestion[]) => void;
+}) {
   const [items, setItems] = useState<EditableQuestion[]>(() => questions.map(parseQuestion));
 
   useEffect(() => {
@@ -174,7 +192,13 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
   const changeType = (index: number, type: QuizQuestionType) => {
     const current = items[index];
     const fresh = defaultQuestion(type);
-    commit(items.map((item, i) => (i === index ? { ...fresh, question: current.question, explanation: current.explanation, marks: current.marks } : item)));
+    commit(
+      items.map((item, i) =>
+        i === index
+          ? { ...fresh, question: current.question, explanation: current.explanation, marks: current.marks }
+          : item
+      )
+    );
   };
 
   const toggleCorrectIndex = (index: number, optIdx: number) => {
@@ -183,7 +207,9 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
       updateItem(index, { correctIndices: [optIdx] });
     } else {
       const has = item.correctIndices.includes(optIdx);
-      updateItem(index, { correctIndices: has ? item.correctIndices.filter((i) => i !== optIdx) : [...item.correctIndices, optIdx] });
+      updateItem(index, {
+        correctIndices: has ? item.correctIndices.filter((i) => i !== optIdx) : [...item.correctIndices, optIdx],
+      });
     }
   };
 
@@ -217,13 +243,26 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
               className="flex h-9 rounded-lg border border-input bg-background px-2 py-1 text-sm"
             >
               {Object.entries(QUESTION_TYPE_LABELS).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </select>
             <div className="ml-auto flex items-center gap-1">
-              <Button variant="ghost" size="sm" disabled={index === 0} onClick={() => moveQuestion(index, -1)}><ChevronUp className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="sm" disabled={index === items.length - 1} onClick={() => moveQuestion(index, 1)}><ChevronDown className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="sm" onClick={() => removeQuestion(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+              <Button variant="ghost" size="sm" disabled={index === 0} onClick={() => moveQuestion(index, -1)}>
+                <ChevronUp className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={index === items.length - 1}
+                onClick={() => moveQuestion(index, 1)}
+              >
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => removeQuestion(index)}>
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
             </div>
           </div>
 
@@ -239,7 +278,10 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
               {item.type === 'boolean' ? (
                 <div className="flex items-center gap-2">
                   {['true', 'false'].map((val) => (
-                    <label key={val} className="flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted">
+                    <label
+                      key={val}
+                      className="flex cursor-pointer items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-muted"
+                    >
                       <input
                         type="radio"
                         checked={item.booleanValue === val}
@@ -262,7 +304,11 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
                       />
                       <Input
                         value={opt}
-                        onChange={(e) => updateItem(index, { options: item.options.map((o, i) => (i === optIdx ? e.target.value : o)) })}
+                        onChange={(e) =>
+                          updateItem(index, {
+                            options: item.options.map((o, i) => (i === optIdx ? e.target.value : o)),
+                          })
+                        }
                         placeholder={`Option ${String.fromCharCode(65 + optIdx)}`}
                         className={isCorrect ? 'border-green-500' : ''}
                       />
@@ -272,7 +318,12 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
                         disabled={item.options.length <= 2}
                         onClick={() => {
                           const next = item.options.filter((_, i) => i !== optIdx);
-                          updateItem(index, { options: next, correctIndices: item.correctIndices.filter((i) => i !== optIdx).map((i) => (i > optIdx ? i - 1 : i)) });
+                          updateItem(index, {
+                            options: next,
+                            correctIndices: item.correctIndices
+                              .filter((i) => i !== optIdx)
+                              .map((i) => (i > optIdx ? i - 1 : i)),
+                          });
                         }}
                       >
                         <Trash2 className="h-3 w-3 text-muted-foreground" />
@@ -295,7 +346,11 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
                 <div key={ansIdx} className="flex items-center gap-2">
                   <Input
                     value={ans}
-                    onChange={(e) => updateItem(index, { fillAnswers: item.fillAnswers.map((a, i) => (i === ansIdx ? e.target.value : a)) })}
+                    onChange={(e) =>
+                      updateItem(index, {
+                        fillAnswers: item.fillAnswers.map((a, i) => (i === ansIdx ? e.target.value : a)),
+                      })
+                    }
                     placeholder="Accepted answer (case-insensitive)"
                   />
                   <Button
@@ -308,7 +363,11 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
                   </Button>
                 </div>
               ))}
-              <Button variant="ghost" size="sm" onClick={() => updateItem(index, { fillAnswers: [...item.fillAnswers, ''] })}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateItem(index, { fillAnswers: [...item.fillAnswers, ''] })}
+              >
                 <Plus className="mr-1 h-3 w-3" /> Add accepted answer
               </Button>
             </div>
@@ -320,26 +379,44 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
                 <div key={pairIdx} className="flex items-center gap-2">
                   <Input
                     value={pair.left}
-                    onChange={(e) => updateItem(index, { matchingPairs: item.matchingPairs.map((p, i) => (i === pairIdx ? { ...p, left: e.target.value } : p)) })}
+                    onChange={(e) =>
+                      updateItem(index, {
+                        matchingPairs: item.matchingPairs.map((p, i) =>
+                          i === pairIdx ? { ...p, left: e.target.value } : p
+                        ),
+                      })
+                    }
                     placeholder="Left item"
                   />
                   <span className="text-muted-foreground">→</span>
                   <Input
                     value={pair.right}
-                    onChange={(e) => updateItem(index, { matchingPairs: item.matchingPairs.map((p, i) => (i === pairIdx ? { ...p, right: e.target.value } : p)) })}
+                    onChange={(e) =>
+                      updateItem(index, {
+                        matchingPairs: item.matchingPairs.map((p, i) =>
+                          i === pairIdx ? { ...p, right: e.target.value } : p
+                        ),
+                      })
+                    }
                     placeholder="Right match"
                   />
                   <Button
                     variant="ghost"
                     size="sm"
                     disabled={item.matchingPairs.length <= 1}
-                    onClick={() => updateItem(index, { matchingPairs: item.matchingPairs.filter((_, i) => i !== pairIdx) })}
+                    onClick={() =>
+                      updateItem(index, { matchingPairs: item.matchingPairs.filter((_, i) => i !== pairIdx) })
+                    }
                   >
                     <Trash2 className="h-3 w-3 text-muted-foreground" />
                   </Button>
                 </div>
               ))}
-              <Button variant="ghost" size="sm" onClick={() => updateItem(index, { matchingPairs: [...item.matchingPairs, { left: '', right: '' }] })}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => updateItem(index, { matchingPairs: [...item.matchingPairs, { left: '', right: '' }] })}
+              >
                 <Plus className="mr-1 h-3 w-3" /> Add pair
               </Button>
             </div>
@@ -347,22 +424,39 @@ export function QuizQuestionBuilder({ questions, onChange }: { questions: QuizQu
 
           {(item.type === 'coding' || item.type === 'essay') && (
             <p className="text-xs text-muted-foreground">
-              {item.type === 'coding' ? 'Coding questions are graded manually by you.' : 'Essay questions are graded manually by you.'}
+              {item.type === 'coding'
+                ? 'Coding questions are graded manually by you.'
+                : 'Essay questions are graded manually by you.'}
             </p>
           )}
 
           <div className="grid gap-3 sm:grid-cols-4">
             <div className="space-y-1">
               <label className="text-xs font-medium">Marks</label>
-              <Input type="number" min={0} value={item.marks} onChange={(e) => updateItem(index, { marks: Number(e.target.value) })} />
+              <Input
+                type="number"
+                min={0}
+                value={item.marks}
+                onChange={(e) => updateItem(index, { marks: Number(e.target.value) })}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium">Negative marks</label>
-              <Input type="number" min={0} value={item.negativeMarks} onChange={(e) => updateItem(index, { negativeMarks: Number(e.target.value) })} />
+              <Input
+                type="number"
+                min={0}
+                value={item.negativeMarks}
+                onChange={(e) => updateItem(index, { negativeMarks: Number(e.target.value) })}
+              />
             </div>
             <div className="space-y-1">
               <label className="text-xs font-medium">Weight</label>
-              <Input type="number" min={0} value={item.weight} onChange={(e) => updateItem(index, { weight: Number(e.target.value) })} />
+              <Input
+                type="number"
+                min={0}
+                value={item.weight}
+                onChange={(e) => updateItem(index, { weight: Number(e.target.value) })}
+              />
             </div>
             <div className="flex items-end pb-1">
               <label className="flex items-center gap-2 text-xs font-medium">

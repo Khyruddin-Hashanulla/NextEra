@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { renderWithProviders } from '@/test/render/renderWithProviders';
 import { runA11yChecks } from '@/test/utils/a11y';
@@ -8,11 +8,23 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { HomePage } from '@/features/public/pages/HomePage';
 import { CoursesPage } from '@/features/public/pages/CoursesPage';
@@ -22,10 +34,9 @@ import { RegisterForm } from '@/features/auth/components/RegisterForm';
 import { ToastProvider } from '@/providers/ToastProvider';
 
 function wrap(ui: React.ReactNode, options?: { route?: string }) {
-  return renderWithProviders(
-    <GoogleOAuthProvider clientId="test-client-id">{ui}</GoogleOAuthProvider>,
-    { route: options?.route ?? '/' },
-  );
+  return renderWithProviders(<GoogleOAuthProvider clientId="test-client-id">{ui}</GoogleOAuthProvider>, {
+    route: options?.route ?? '/',
+  });
 }
 
 describe('Accessibility checks - UI primitives', () => {
@@ -48,7 +59,7 @@ describe('Accessibility checks - UI primitives', () => {
           <CardTitle>Card Title</CardTitle>
         </CardHeader>
         <CardContent>Card content</CardContent>
-      </Card>,
+      </Card>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -69,14 +80,16 @@ describe('Accessibility checks - UI primitives', () => {
   it('Dialog has no violations when open', async () => {
     const { container } = wrap(
       <Dialog open>
-        <DialogTrigger asChild><button>Open</button></DialogTrigger>
+        <DialogTrigger asChild>
+          <button>Open</button>
+        </DialogTrigger>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Title</DialogTitle>
             <DialogDescription>Description</DialogDescription>
           </DialogHeader>
         </DialogContent>
-      </Dialog>,
+      </Dialog>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -91,7 +104,7 @@ describe('Accessibility checks - UI primitives', () => {
         <SelectContent>
           <SelectItem value="a">Option A</SelectItem>
         </SelectContent>
-      </Select>,
+      </Select>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -106,7 +119,7 @@ describe('Accessibility checks - UI primitives', () => {
         </TabsList>
         <TabsContent value="a">Content A</TabsContent>
         <TabsContent value="b">Content B</TabsContent>
-      </Tabs>,
+      </Tabs>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -119,7 +132,7 @@ describe('Accessibility checks - UI primitives', () => {
           <AccordionTrigger>Question?</AccordionTrigger>
           <AccordionContent>Answer.</AccordionContent>
         </AccordionItem>
-      </Accordion>,
+      </Accordion>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -128,11 +141,13 @@ describe('Accessibility checks - UI primitives', () => {
   it('DropdownMenu has no violations', async () => {
     const { container } = wrap(
       <DropdownMenu>
-        <DropdownMenuTrigger asChild><button>Menu</button></DropdownMenuTrigger>
+        <DropdownMenuTrigger asChild>
+          <button>Menu</button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent>
           <DropdownMenuItem>Item 1</DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>,
+      </DropdownMenu>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -144,7 +159,7 @@ describe('Accessibility checks - UI primitives', () => {
         <div role="alert" aria-live="polite">
           <div>Toast content</div>
         </div>
-      </ToastProvider>,
+      </ToastProvider>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);
@@ -154,10 +169,12 @@ describe('Accessibility checks - UI primitives', () => {
     const { container } = render(
       <TooltipProvider>
         <Tooltip>
-          <TooltipTrigger asChild><button>Hover</button></TooltipTrigger>
+          <TooltipTrigger asChild>
+            <button>Hover</button>
+          </TooltipTrigger>
           <TooltipContent>Tip</TooltipContent>
         </Tooltip>
-      </TooltipProvider>,
+      </TooltipProvider>
     );
     const results = await runA11yChecks(container);
     expect(results.violations).toHaveLength(0);

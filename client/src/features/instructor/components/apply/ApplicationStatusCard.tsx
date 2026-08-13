@@ -1,8 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion, useReducedMotion } from 'framer-motion';
-import {
-  CheckCircle2, XCircle, Clock, Home, LayoutDashboard, ArrowRight, UserX,
-} from 'lucide-react';
+import { CheckCircle2, XCircle, Clock, Home, LayoutDashboard, ArrowRight, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES, getDashboardRoute } from '@/lib/constants';
 import { PageBackground } from '@/components/layout/PageBackground';
@@ -101,8 +99,8 @@ export function ApplicationStatusCard({ status, rejectionReason, revoked, onAppl
                         step.state === 'done'
                           ? 'bg-success'
                           : step.state === 'active'
-                          ? 'bg-warning'
-                          : 'bg-muted-foreground/30'
+                            ? 'bg-warning'
+                            : 'bg-muted-foreground/30'
                       }`}
                       aria-hidden="true"
                     />
@@ -133,9 +131,7 @@ export function ApplicationStatusCard({ status, rejectionReason, revoked, onAppl
             )}
             {revoked ? (
               <Button asChild variant="ghost" className="h-12 w-full rounded-full px-7 sm:w-auto">
-                <Link to={ROUTES.CONTACT}>
-                  Contact Administrator
-                </Link>
+                <Link to={ROUTES.CONTACT}>Contact Administrator</Link>
               </Button>
             ) : (
               <Button asChild variant="ghost" className="h-12 w-full rounded-full px-7 sm:w-auto">

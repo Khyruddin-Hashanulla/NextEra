@@ -8,7 +8,8 @@ import { Lecture } from '../src/models/lecture.model';
  * Accepts a bare 11-char ID or any YouTube URL shape (watch / youtu.be /
  * shorts / embed / v / live). Returns '' when nothing valid is found.
  */
-const YOUTUBE_ID_RE = /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|attribution_link\?a=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+const YOUTUBE_ID_RE =
+  /(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|attribution_link\?a=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
 
 function extractYouTubeId(value: string): string {
   const v = (value || '').trim();

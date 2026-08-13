@@ -73,7 +73,9 @@ describe('CacheManager invalidation', () => {
 
     expect(await cacheService.exists(cacheKeys.instructorDashboard(instructorId))).toBe(false);
     expect(await cacheService.exists(cacheKeys.instructorRevenue(instructorId))).toBe(false);
-    expect(await cacheService.exists(cacheKeys.instructorRevenue(instructorId, '2026-08-01', '2026-08-31'))).toBe(false);
+    expect(await cacheService.exists(cacheKeys.instructorRevenue(instructorId, '2026-08-01', '2026-08-31'))).toBe(
+      false
+    );
     expect(await cacheService.exists(cacheKeys.instructorAnalytics(instructorId))).toBe(false);
     expect(await cacheService.exists(cacheKeys.instructorRevenueDetail(instructorId))).toBe(false);
     expect(await cacheService.exists(cacheKeys.instructorDashboard('other-instructor'))).toBe(true);
@@ -98,11 +100,17 @@ describe('CacheManager invalidation', () => {
 
   it('invalidates the student course list cache', async () => {
     await cacheService.set(cacheKeys.studentCourseList({ page: 1, limit: 10 }), { rows: [] }, { ttl: 60 });
-    await cacheService.set(cacheKeys.studentCourseList({ page: 2, limit: 10, category: 'math' }), { rows: [] }, { ttl: 60 });
+    await cacheService.set(
+      cacheKeys.studentCourseList({ page: 2, limit: 10, category: 'math' }),
+      { rows: [] },
+      { ttl: 60 }
+    );
 
     await cacheManager.invalidateStudentCourseList();
 
     expect(await cacheService.exists(cacheKeys.studentCourseList({ page: 1, limit: 10 }))).toBe(false);
-    expect(await cacheService.exists(cacheKeys.studentCourseList({ page: 2, limit: 10, category: 'math' }))).toBe(false);
+    expect(await cacheService.exists(cacheKeys.studentCourseList({ page: 2, limit: 10, category: 'math' }))).toBe(
+      false
+    );
   });
 });

@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query';
 import { instructorApi } from '@/api/endpoints/instructor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/common/ErrorState';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 import { Users, GraduationCap, DollarSign, Star, BookOpen, TrendingUp } from 'lucide-react';
 import FeatureGate from '@/components/instructor/FeatureGate';
 
@@ -17,38 +18,91 @@ const item = {
 };
 
 const statCards = [
-  { key: 'totalStudents', label: 'Total Students', icon: Users, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
-  { key: 'totalEnrollments', label: 'Total Enrollments', icon: GraduationCap, color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400' },
-  { key: 'totalRevenue', label: 'Total Revenue', icon: DollarSign, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400', prefix: '₹' },
-  { key: 'averageRating', label: 'Average Rating', icon: Star, color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400' },
-  { key: 'totalCourses', label: 'Total Courses', icon: BookOpen, color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400' },
+  {
+    key: 'totalStudents',
+    label: 'Total Students',
+    icon: Users,
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+  },
+  {
+    key: 'totalEnrollments',
+    label: 'Total Enrollments',
+    icon: GraduationCap,
+    color: 'text-purple-600 bg-purple-100 dark:bg-purple-900/30 dark:text-purple-400',
+  },
+  {
+    key: 'totalRevenue',
+    label: 'Total Revenue',
+    icon: DollarSign,
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+    currency: true,
+  },
+  {
+    key: 'averageRating',
+    label: 'Average Rating',
+    icon: Star,
+    color: 'text-yellow-600 bg-yellow-100 dark:bg-yellow-900/30 dark:text-yellow-400',
+  },
+  {
+    key: 'totalCourses',
+    label: 'Total Courses',
+    icon: BookOpen,
+    color: 'text-orange-600 bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400',
+  },
 ];
 
 export function AnalyticsPage() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['instructor', 'analytics'],
     queryFn: ({ signal }) => instructorApi.getAnalytics(signal).then((r) => r.data.data),
   });
 
   return (
     <FeatureGate feature="advancedAnalytics">
-      <AnalyticsContent data={data} isLoading={isLoading} />
+      <AnalyticsContent data={data} isLoading={isLoading} error={error} onRetry={refetch} />
     </FeatureGate>
   );
 }
 
-function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }) {
-
+function AnalyticsContent({
+  data,
+  isLoading,
+  error,
+  onRetry,
+}: {
+  data: any;
+  isLoading: boolean;
+  error: unknown;
+  onRetry: () => void;
+}) {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <div className="space-y-2"><Skeleton className="h-8 w-48" /><Skeleton className="h-4 w-64" /></div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-6"><Skeleton className="h-20 w-full" /></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-6">
+                <Skeleton className="h-20 w-full" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        title="Unable to load analytics"
+        message="We couldn't fetch your analytics. Please try again."
+        onRetry={onRetry}
+        showHomeLink={false}
+      />
     );
   }
 
@@ -62,11 +116,11 @@ function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }
       <motion.div variants={item} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat) => {
           let value: string | number = 0;
-          if (stat.key === 'totalStudents') value = data?.totalStudents || 0;
-          else if (stat.key === 'totalEnrollments') value = data?.totalEnrollments || 0;
-          else if (stat.key === 'totalRevenue') value = `${stat.prefix || ''}${(data?.totalRevenue || 0).toLocaleString()}`;
-          else if (stat.key === 'averageRating') value = (data?.averageRating || 0).toFixed(1);
-          else if (stat.key === 'totalCourses') value = data?.totalCourses || 0;
+          if (stat.key === 'totalStudents') value = data?.totalStudents ?? 0;
+          else if (stat.key === 'totalEnrollments') value = data?.totalEnrollments ?? 0;
+          else if (stat.key === 'totalRevenue') value = formatCurrency(data?.totalRevenue ?? 0);
+          else if (stat.key === 'averageRating') value = ((data?.averageRating ?? 0) as number).toFixed(1);
+          else if (stat.key === 'totalCourses') value = data?.totalCourses ?? 0;
           return (
             <Card key={stat.key} className="transition-shadow hover:shadow-md">
               <CardContent className="flex items-center gap-4 p-5">
@@ -114,7 +168,7 @@ function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }
                 {data.revenueTrend.map((d: any) => (
                   <div key={d._id} className="flex items-center justify-between py-3">
                     <span className="text-sm text-muted-foreground">{d._id}</span>
-                    <span className="font-medium">₹{d.amount.toLocaleString()}</span>
+                    <span className="font-medium">{formatCurrency(d.amount ?? 0)}</span>
                   </div>
                 ))}
               </div>
@@ -123,7 +177,7 @@ function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }
         </motion.div>
       )}
 
-      {data?.topCourses && data.topCourses.length > 0 && (
+      {data?.topPerformingCourses && data.topPerformingCourses.length > 0 && (
         <motion.div variants={item}>
           <Card>
             <CardHeader>
@@ -131,8 +185,11 @@ function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y">
-                {data.topCourses.map((course: any, i: number) => (
-                  <div key={course._id} className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30">
+                {data.topPerformingCourses.map((course: any, i: number) => (
+                  <div
+                    key={course._id}
+                    className="flex items-center justify-between px-4 py-3 transition-colors hover:bg-muted/30"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary">
                         {i + 1}
@@ -141,7 +198,7 @@ function AnalyticsContent({ data, isLoading }: { data: any; isLoading: boolean }
                     </div>
                     <div className="flex items-center gap-6 text-sm text-muted-foreground">
                       <span>{course.enrollments} enrollments</span>
-                      <span>₹{course.revenue.toLocaleString()}</span>
+                      <span>{formatCurrency(course.revenue ?? 0)}</span>
                     </div>
                   </div>
                 ))}

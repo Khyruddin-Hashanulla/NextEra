@@ -12,6 +12,18 @@ const wrappedSchema = z.object({
   body: z.object({ title: z.string().min(2) }),
 });
 
+// superRefine/refine produce a ZodEffects wrapper that has no `.shape`; the
+// middleware must still detect a `{ body: ... }` wrapper (see "body: Required" bug).
+const refinedWrappedSchema = z
+  .object({
+    body: z.object({ title: z.string().min(2), price: z.number() }),
+  })
+  .superRefine((val, ctx) => {
+    if (val.body.price > 100) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['body', 'price'], message: 'too expensive' });
+    }
+  });
+
 describe('validate middleware', () => {
   it('passes through valid body data', () => {
     const req = mockRequest({ body: { email: 'a@b.com', password: 'secret1' } });
@@ -60,6 +72,22 @@ describe('validate middleware', () => {
     const next = mockNext();
     validate(wrappedSchema)(req, mockResponse() as never, next);
     expect(next.mock.calls[0][0]).toBeUndefined();
+  });
+
+  it('unwraps wrapped schemas produced by superRefine (ZodEffects)', () => {
+    const ok = mockRequest({ body: { title: 'ok', price: 50 } });
+    const okNext = mockNext();
+    validate(refinedWrappedSchema)(ok, mockResponse() as never, okNext);
+    expect(okNext.mock.calls[0][0]).toBeUndefined();
+    expect(ok.body).toEqual({ title: 'ok', price: 50 });
+
+    const bad = mockRequest({ body: { title: 'ok', price: 200 } });
+    const badNext = mockNext();
+    validate(refinedWrappedSchema)(bad, mockResponse() as never, badNext);
+    const err = badNext.mock.calls[0][0] as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.statusCode).toBe(400);
+    expect(err.message).toContain('price');
   });
 
   it('assigns parsed values back onto the request', () => {

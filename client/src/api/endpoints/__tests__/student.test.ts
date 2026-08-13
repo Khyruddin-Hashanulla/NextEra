@@ -15,7 +15,7 @@ beforeAll(() => {
         return HttpResponse.arrayBuffer(new ArrayBuffer(8));
       }
       return HttpResponse.json({ data: {}, success: true });
-    }),
+    })
   );
 });
 
@@ -26,15 +26,12 @@ afterEach(() => {
 afterAll(() => server.resetHandlers());
 
 describe('studentApi endpoint sweep', () => {
-  it.each(Object.entries(studentApi))(
-    '%s dispatches a request and resolves',
-    async (_name, fn) => {
-      const before = recorded.length;
-      const result = await (fn as (...args: unknown[]) => Promise<unknown>)();
-      expect(result).toBeDefined();
-      expect(recorded.length).toBeGreaterThan(before);
-    },
-  );
+  it.each(Object.entries(studentApi))('%s dispatches a request and resolves', async (_name, fn) => {
+    const before = recorded.length;
+    const result = await (fn as (...args: unknown[]) => Promise<unknown>)();
+    expect(result).toBeDefined();
+    expect(recorded.length).toBeGreaterThan(before);
+  });
 });
 
 describe('studentApi uploadAssignmentFile', () => {
@@ -53,7 +50,7 @@ describe('studentApi uploadAssignmentFile', () => {
     expect(postSpy).toHaveBeenCalledWith(
       '/upload/assignment',
       expect.any(FormData),
-      expect.objectContaining({ signal: undefined, onUploadProgress: expect.any(Function) }),
+      expect.objectContaining({ signal: undefined, onUploadProgress: expect.any(Function) })
     );
     expect(onProgress).toHaveBeenCalledWith(40);
   });
@@ -61,9 +58,7 @@ describe('studentApi uploadAssignmentFile', () => {
   it('skips progress when the total is unknown', async () => {
     const file = new File(['content'], 'notes.txt');
     const onProgress = vi.fn();
-    const postSpy = vi
-      .spyOn(axiosInstance, 'post')
-      .mockResolvedValue({ data: { data: {} } } as never);
+    const postSpy = vi.spyOn(axiosInstance, 'post').mockResolvedValue({ data: { data: {} } } as never);
 
     const promise = studentApi.uploadAssignmentFile(file, onProgress);
     const config = postSpy.mock.calls[0]?.[2] as { onUploadProgress?: (e: { loaded: number }) => void };

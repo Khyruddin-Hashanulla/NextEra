@@ -26,12 +26,7 @@ export const InstructorProfessionalInfo = memo(function InstructorProfessionalIn
   instructor,
 }: InstructorProfessionalInfoProps) {
   const profile = instructor.instructorProfile;
-  const hasData = Boolean(
-    profile.qualification ||
-      profile.experience ||
-      profile.resume?.url ||
-      profile.demoVideo?.url
-  );
+  const hasData = Boolean(profile.qualification || profile.experience || profile.resume?.url || profile.demoVideo?.url);
 
   if (!hasData) return null;
 
@@ -46,10 +41,7 @@ export const InstructorProfessionalInfo = memo(function InstructorProfessionalIn
 
         <div className="mt-6 grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <InstructorExperienceTimeline
-              qualification={profile.qualification}
-              experience={profile.experience}
-            />
+            <InstructorExperienceTimeline qualification={profile.qualification} experience={profile.experience} />
           </div>
 
           <aside className="space-y-5 rounded-xl border border-border bg-muted/30 p-5">

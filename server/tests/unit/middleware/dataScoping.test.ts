@@ -1,4 +1,8 @@
-import { createOwnerMiddleware, verifyCourseOwnership, verifySectionOwnership } from '../../../src/middlewares/dataScoping.middleware';
+import {
+  createOwnerMiddleware,
+  verifyCourseOwnership,
+  verifySectionOwnership,
+} from '../../../src/middlewares/dataScoping.middleware';
 import { Course } from '../../../src/models/course.model';
 import { Section } from '../../../src/models/section.model';
 import { AuditLog } from '../../../src/models/auditLog.model';
@@ -60,7 +64,7 @@ describe('createOwnerMiddleware', () => {
     const err = next.mock.calls[0][0];
     expect(err.statusCode).toBe(404);
     expect(AuditLog.create).toHaveBeenCalledWith(
-      expect.objectContaining({ action: 'access_denied', resourceType: 'Course' }),
+      expect.objectContaining({ action: 'access_denied', resourceType: 'Course' })
     );
   });
 
@@ -75,9 +79,7 @@ describe('createOwnerMiddleware', () => {
   });
 
   it('rejects when the owner does not match the current user', async () => {
-    vi.mocked(Course.findById as never).mockReturnValue(
-      queryChain({ instructor: 'someone-else' }),
-    );
+    vi.mocked(Course.findById as never).mockReturnValue(queryChain({ instructor: 'someone-else' }));
     const mw = createOwnerMiddleware({ model: Course, ownerField: 'instructor', resourceName: 'Course' });
     const req = mockRequest({ ...userRequest('u1'), params: { id: '507f1f77bcf86cd799439011' } });
     const res = mockResponse();

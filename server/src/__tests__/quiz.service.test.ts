@@ -40,8 +40,22 @@ const quizLecture = {
     passingScore: 60,
     maxAttempts: 3,
     questions: [
-      { questionId: 'q_0', question: 'What does JSX stand for?', options: ['JavaScript XML', 'Java Syntax'], correctAnswer: 'JavaScript XML', marks: 1, type: 'single' },
-      { questionId: 'q_1', question: 'True or false: Hooks are functions.', options: ['True', 'False'], correctAnswer: 'True', marks: 1, type: 'boolean' },
+      {
+        questionId: 'q_0',
+        question: 'What does JSX stand for?',
+        options: ['JavaScript XML', 'Java Syntax'],
+        correctAnswer: 'JavaScript XML',
+        marks: 1,
+        type: 'single',
+      },
+      {
+        questionId: 'q_1',
+        question: 'True or false: Hooks are functions.',
+        options: ['True', 'False'],
+        correctAnswer: 'True',
+        marks: 1,
+        type: 'boolean',
+      },
     ],
   },
 };

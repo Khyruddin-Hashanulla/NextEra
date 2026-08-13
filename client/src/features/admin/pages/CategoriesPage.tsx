@@ -89,7 +89,13 @@ export function CategoriesPage() {
           <h1 className="text-2xl font-bold tracking-tight">Categories</h1>
           <p className="mt-1 text-muted-foreground">Manage course categories</p>
         </div>
-        <Button onClick={() => { setEditingId(null); setForm({ name: '', description: '', icon: '' }); setShowForm(true); }}>
+        <Button
+          onClick={() => {
+            setEditingId(null);
+            setForm({ name: '', description: '', icon: '' });
+            setShowForm(true);
+          }}
+        >
           <Plus className="mr-1.5 h-4 w-4" /> Add Category
         </Button>
       </motion.div>
@@ -120,8 +126,12 @@ export function CategoriesPage() {
                     <tr className="border-b bg-muted/50">
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Name</th>
                       <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Slug</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Description</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Active</th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Description
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">
+                        Active
+                      </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
@@ -130,11 +140,15 @@ export function CategoriesPage() {
                       <tr key={cat._id} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3 font-medium">{cat.name}</td>
                         <td className="px-4 py-3 text-muted-foreground">{cat.slug}</td>
-                        <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">{cat.description || '-'}</td>
+                        <td className="max-w-[200px] truncate px-4 py-3 text-muted-foreground">
+                          {cat.description || '-'}
+                        </td>
                         <td className="px-4 py-3">
-                          {cat.isActive
-                            ? <span className="text-green-600">Yes</span>
-                            : <span className="text-muted-foreground">No</span>}
+                          {cat.isActive ? (
+                            <span className="text-green-600">Yes</span>
+                          ) : (
+                            <span className="text-muted-foreground">No</span>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">
@@ -161,25 +175,44 @@ export function CategoriesPage() {
           <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-xl">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold">{editingId ? 'Edit Category' : 'Add Category'}</h2>
-              <Button variant="ghost" size="sm" onClick={resetForm}>Close</Button>
+              <Button variant="ghost" size="sm" onClick={resetForm}>
+                Close
+              </Button>
             </div>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Name</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Category name" />
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Category name"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
-                <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Brief description" />
+                <Input
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Brief description"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Icon (emoji or URL)</Label>
-                <Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} placeholder="📚" />
+                <Input
+                  value={form.icon}
+                  onChange={(e) => setForm({ ...form, icon: e.target.value })}
+                  placeholder="📚"
+                />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={resetForm}>Cancel</Button>
-              <Button onClick={handleSubmit} disabled={!form.name || createMutation.isPending || updateMutation.isPending}>
+              <Button variant="outline" onClick={resetForm}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!form.name || createMutation.isPending || updateMutation.isPending}
+              >
                 {editingId ? 'Update' : 'Create'}
               </Button>
             </div>
@@ -193,8 +226,16 @@ export function CategoriesPage() {
             <h2 className="text-lg font-semibold">Delete Category</h2>
             <p className="mt-2 text-sm text-muted-foreground">Are you sure? This action cannot be undone.</p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
-              <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteId)} loading={deleteMutation.isPending}>Delete</Button>
+              <Button variant="outline" onClick={() => setDeleteId(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => deleteMutation.mutate(deleteId)}
+                loading={deleteMutation.isPending}
+              >
+                Delete
+              </Button>
             </div>
           </div>
         </div>

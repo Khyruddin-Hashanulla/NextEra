@@ -110,7 +110,7 @@ function OptimizedImageComponent({
         'w-full h-full',
         loaded ? 'opacity-100' : 'opacity-0',
         'transition-opacity duration-300',
-        className,
+        className
       )}
       {...rest}
     />
@@ -124,7 +124,7 @@ function OptimizedImageComponent({
           placeholderBg[placeholderType],
           placeholderColor[placeholderType],
           aspectRatio ? `aspect-[${aspectRatio}]` : '',
-          className,
+          className
         )}
         style={aspectRatio ? { aspectRatio } : undefined}
         aria-hidden={isDecorative ? true : undefined}

@@ -1,16 +1,19 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/providers/ToastProvider';
 import { Link } from 'react-router-dom';
-import { studentApi } from '@/api/endpoints/student';
+import { AxiosError } from 'axios';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
+import { ErrorState } from '@/components/common/ErrorState';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
-import { useToast } from '@/providers/ToastProvider';
-import { Heart, Trash2, BookOpen, Clock } from 'lucide-react';
+import { useWishlist } from '@/hooks/useWishlist';
+import { Heart, Trash2, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/lib/utils';
 import { isFreeCourse } from '@/lib/coursePricing';
+import { formatCurrency } from '@/lib/utils';
+import type { WishlistItem } from '@/types/student';
+import type { ApiError } from '@/types/api';
 
 const container = {
   hidden: { opacity: 0 },
@@ -26,21 +29,22 @@ const cardItem = {
 };
 
 export function WishlistPage() {
-  const queryClient = useQueryClient();
   const { addToast } = useToast();
+  const { items, isLoading, isError, error, refetch, toggle, isPending } = useWishlist();
 
-  const { data: items, isLoading } = useQuery({
-    queryKey: ['student', 'wishlist'],
-    queryFn: () => studentApi.listWishlist().then((r: any) => r.data.data),
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: (courseId: string) => studentApi.toggleWishlist(courseId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['student', 'wishlist'] });
+  const handleRemove = async (courseId: string) => {
+    if (isPending(courseId)) return;
+    try {
+      await toggle(courseId);
       addToast({ title: 'Removed from wishlist', variant: 'success' });
-    },
-  });
+    } catch (err) {
+      const message =
+        err instanceof AxiosError
+          ? (err.response?.data as ApiError | undefined)?.message || 'Could not remove from wishlist. Please try again.'
+          : 'Could not remove from wishlist. Please try again.';
+      addToast({ title: message, variant: 'error' });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -51,10 +55,28 @@ export function WishlistPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}><CardContent className="p-0"><Skeleton className="aspect-video w-full rounded-t-lg" /><div className="space-y-2 p-4"><Skeleton className="h-5 w-3/4" /><Skeleton className="h-4 w-1/2" /></div></CardContent></Card>
+            <Card key={i}>
+              <CardContent className="p-0">
+                <Skeleton className="aspect-video w-full rounded-t-lg" />
+                <div className="space-y-2 p-4">
+                  <Skeleton className="h-5 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              </CardContent>
+            </Card>
           ))}
         </div>
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <ErrorState
+        title="Could not load your wishlist"
+        message={error instanceof Error ? error.message : 'Please try again in a moment.'}
+        onRetry={refetch}
+      />
     );
   }
 
@@ -76,7 +98,7 @@ export function WishlistPage() {
         </motion.div>
       ) : (
         <motion.div variants={container} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item: any) => (
+          {items.map((item: WishlistItem) => (
             <motion.div key={item._id} variants={cardItem} layout>
               <Card className="group overflow-hidden transition-shadow hover:shadow-lg">
                 <Link to={`/courses/${item.course?._id}`}>
@@ -104,9 +126,7 @@ export function WishlistPage() {
                       {item.course?.title || 'Untitled Course'}
                     </Link>
                     {item.course?.instructor?.name && (
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {item.course.instructor.name}
-                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{item.course.instructor.name}</p>
                     )}
                   </div>
 
@@ -115,7 +135,7 @@ export function WishlistPage() {
                       {isFreeCourse(item.course) ? (
                         <span className="text-green-600 dark:text-green-400">Free</span>
                       ) : (
-                        `₹${item.course?.price?.toLocaleString() ?? 0}`
+                        formatCurrency(item.course?.price ?? 0)
                       )}
                     </span>
                     {item.course?.level && (
@@ -135,7 +155,8 @@ export function WishlistPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => removeMutation.mutate(item.course?._id)}
+                      onClick={() => handleRemove(item.course?._id)}
+                      disabled={isPending(item.course?._id)}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />

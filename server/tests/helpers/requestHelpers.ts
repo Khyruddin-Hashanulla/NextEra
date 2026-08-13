@@ -47,7 +47,7 @@ export function runMiddleware(
   middleware: (req: Request, res: Response, next: NextFunction) => void | Promise<void>,
   req: Request = mockRequest(),
   res: Response = mockResponse() as unknown as Response,
-  next: NextFunction = mockNext(),
+  next: NextFunction = mockNext()
 ): { req: Request; res: Response; next: ReturnType<typeof vi.fn> } {
   middleware(req, res, next);
   return { req, res, next };

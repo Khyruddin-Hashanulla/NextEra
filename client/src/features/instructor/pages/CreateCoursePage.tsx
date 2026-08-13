@@ -51,7 +51,10 @@ const initialForm: FormState = {
 };
 
 function deriveSlug(title: string): string {
-  return title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  return title
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
 }
 
 export function CreateCoursePage() {
@@ -60,7 +63,12 @@ export function CreateCoursePage() {
   const [form, setForm] = useState<FormState>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { data: categories, isLoading: catsLoading, isError: catsError, refetch: refetchCategories } = useQuery({
+  const {
+    data: categories,
+    isLoading: catsLoading,
+    isError: catsError,
+    refetch: refetchCategories,
+  } = useQuery({
     queryKey: QUERY_KEYS.categories.list(),
     queryFn: ({ signal }) => categoryApi.listCategories(signal).then((r) => r.data.data),
   });
@@ -86,19 +94,26 @@ export function CreateCoursePage() {
   };
 
   const mutation = useMutation({
-    mutationFn: () => instructorApi.createCourse({
-      title: form.title.trim(),
-      shortDescription: form.shortDescription.trim(),
-      description: form.description.trim(),
-      price: form.price,
-      category: form.category || undefined,
-      level: form.level,
-      language: form.language.trim() || 'English',
-      prerequisites: form.prerequisites.trim(),
-      benefits: form.benefits.trim(),
-      tags: form.tags.split(',').map((t: string) => t.trim()).filter(Boolean),
-      whatYouWillLearn: form.whatYouWillLearn.split('\n').map((l: string) => l.trim()).filter(Boolean),
-    }),
+    mutationFn: () =>
+      instructorApi.createCourse({
+        title: form.title.trim(),
+        shortDescription: form.shortDescription.trim(),
+        description: form.description.trim(),
+        price: form.price,
+        category: form.category || undefined,
+        level: form.level,
+        language: form.language.trim() || 'English',
+        prerequisites: form.prerequisites.trim(),
+        benefits: form.benefits.trim(),
+        tags: form.tags
+          .split(',')
+          .map((t: string) => t.trim())
+          .filter(Boolean),
+        whatYouWillLearn: form.whatYouWillLearn
+          .split('\n')
+          .map((l: string) => l.trim())
+          .filter(Boolean),
+      }),
     onSuccess: (res) => {
       addToast({ title: 'Draft saved', variant: 'success' });
       navigate(`/instructor/courses/${res.data.data._id}/edit`);
@@ -119,7 +134,10 @@ export function CreateCoursePage() {
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="mx-auto max-w-3xl space-y-6">
       <motion.div variants={item} className="flex items-center gap-4">
-        <Link to="/instructor/courses" className="flex h-9 w-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:bg-accent">
+        <Link
+          to="/instructor/courses"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:bg-accent"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <div>
@@ -144,9 +162,7 @@ export function CreateCoursePage() {
                 placeholder="e.g. Master React Development"
                 aria-invalid={!!errors.title}
               />
-              {form.title && (
-                <p className="text-xs text-muted-foreground">Slug: {slugPreview || '-'}</p>
-              )}
+              {form.title && <p className="text-xs text-muted-foreground">Slug: {slugPreview || '-'}</p>}
               {errors.title && <p className="text-sm text-destructive">{errors.title}</p>}
             </div>
 
@@ -160,7 +176,11 @@ export function CreateCoursePage() {
                     <span className="flex items-center gap-2">
                       <AlertCircle className="h-4 w-4" /> Could not load categories
                     </span>
-                    <button type="button" onClick={() => refetchCategories()} className="flex items-center gap-1 text-xs font-medium underline underline-offset-2">
+                    <button
+                      type="button"
+                      onClick={() => refetchCategories()}
+                      className="flex items-center gap-1 text-xs font-medium underline underline-offset-2"
+                    >
                       <RefreshCw className="h-3 w-3" /> Retry
                     </button>
                   </div>
@@ -177,7 +197,11 @@ export function CreateCoursePage() {
                       className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <option value="">Select category</option>
-                      {(categories || []).map((cat: any) => <option key={cat._id} value={cat._id}>{cat.name}</option>)}
+                      {(categories || []).map((cat: any) => (
+                        <option key={cat._id} value={cat._id}>
+                          {cat.name}
+                        </option>
+                      ))}
                     </select>
                     {errors.category && <p className="text-sm text-destructive">{errors.category}</p>}
                   </>
@@ -185,8 +209,11 @@ export function CreateCoursePage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Level</label>
-                <select value={form.level} onChange={(e) => setField('level', e.target.value as FormState['level'])}
-                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <select
+                  value={form.level}
+                  onChange={(e) => setField('level', e.target.value as FormState['level'])}
+                  className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
                   <option value="beginner">Beginner</option>
                   <option value="intermediate">Intermediate</option>
                   <option value="advanced">Advanced</option>
@@ -198,7 +225,13 @@ export function CreateCoursePage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground">Price (₹)</label>
-                <Input type="number" value={form.price} onChange={(e) => setField('price', Number(e.target.value))} min={0} aria-invalid={!!errors.price} />
+                <Input
+                  type="number"
+                  value={form.price}
+                  onChange={(e) => setField('price', Number(e.target.value))}
+                  min={0}
+                  aria-invalid={!!errors.price}
+                />
                 {errors.price && <p className="text-sm text-destructive">{errors.price}</p>}
               </div>
               <div className="space-y-2">
@@ -209,34 +242,62 @@ export function CreateCoursePage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Short Description</label>
-              <Input value={form.shortDescription} onChange={(e) => setField('shortDescription', e.target.value)} placeholder="Brief description (max 300 chars)" maxLength={300} aria-invalid={!!errors.shortDescription} />
+              <Input
+                value={form.shortDescription}
+                onChange={(e) => setField('shortDescription', e.target.value)}
+                placeholder="Brief description (max 300 chars)"
+                maxLength={300}
+                aria-invalid={!!errors.shortDescription}
+              />
               <p className="text-xs text-muted-foreground">{form.shortDescription.length}/300</p>
               {errors.shortDescription && <p className="text-sm text-destructive">{errors.shortDescription}</p>}
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Full Description</label>
-              <Textarea value={form.description} onChange={(e) => setField('description', e.target.value)} rows={5} placeholder="Detailed course description" />
+              <Textarea
+                value={form.description}
+                onChange={(e) => setField('description', e.target.value)}
+                rows={5}
+                placeholder="Detailed course description"
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Prerequisites</label>
-              <Textarea value={form.prerequisites} onChange={(e) => setField('prerequisites', e.target.value)} placeholder="What students should know before taking this course" />
+              <Textarea
+                value={form.prerequisites}
+                onChange={(e) => setField('prerequisites', e.target.value)}
+                placeholder="What students should know before taking this course"
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Benefits (what students will gain)</label>
-              <Textarea value={form.benefits} onChange={(e) => setField('benefits', e.target.value)} placeholder="What will students gain from this course?" />
+              <Textarea
+                value={form.benefits}
+                onChange={(e) => setField('benefits', e.target.value)}
+                placeholder="What will students gain from this course?"
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">What You Will Learn (one per line)</label>
-              <Textarea value={form.whatYouWillLearn} onChange={(e) => setField('whatYouWillLearn', e.target.value)} rows={4} placeholder={'Build real-world applications\nMaster React hooks\nDeploy to production'} />
+              <Textarea
+                value={form.whatYouWillLearn}
+                onChange={(e) => setField('whatYouWillLearn', e.target.value)}
+                rows={4}
+                placeholder={'Build real-world applications\nMaster React hooks\nDeploy to production'}
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Tags (comma-separated)</label>
-              <Input value={form.tags} onChange={(e) => setField('tags', e.target.value)} placeholder="react, javascript, frontend" />
+              <Input
+                value={form.tags}
+                onChange={(e) => setField('tags', e.target.value)}
+                placeholder="react, javascript, frontend"
+              />
             </div>
           </CardContent>
         </Card>
@@ -246,7 +307,12 @@ export function CreateCoursePage() {
         <Button variant="outline" asChild>
           <Link to="/instructor/courses">Cancel</Link>
         </Button>
-        <Button onClick={handleSubmit} disabled={!form.title.trim() || mutation.isPending} loading={mutation.isPending} icon={<Save className="h-4 w-4" />}>
+        <Button
+          onClick={handleSubmit}
+          disabled={!form.title.trim() || mutation.isPending}
+          loading={mutation.isPending}
+          icon={<Save className="h-4 w-4" />}
+        >
           Save Draft
         </Button>
       </motion.div>

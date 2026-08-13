@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
@@ -17,7 +17,7 @@ describe('Accordion', () => {
           <AccordionTrigger>Is it unstyled?</AccordionTrigger>
           <AccordionContent>Yes. It's unstyled by default.</AccordionContent>
         </AccordionItem>
-      </Accordion>,
+      </Accordion>
     );
   }
 
@@ -60,7 +60,7 @@ describe('Accordion', () => {
           <AccordionTrigger>Two</AccordionTrigger>
           <AccordionContent>Content two</AccordionContent>
         </AccordionItem>
-      </Accordion>,
+      </Accordion>
     );
     await user.click(screen.getByRole('button', { name: 'Two' }));
     expect(screen.getByText('Content one')).toBeInTheDocument();

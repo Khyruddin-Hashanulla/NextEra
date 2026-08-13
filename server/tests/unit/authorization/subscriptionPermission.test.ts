@@ -150,9 +150,7 @@ describe('require* permission methods', () => {
   const service = createService();
 
   it('requireAdvancedAnalyticsPermission throws for non-analytics plans', async () => {
-    await expect(service.requireAdvancedAnalyticsPermission('i1', starterPlan)).rejects.toThrow(
-      ApiError,
-    );
+    await expect(service.requireAdvancedAnalyticsPermission('i1', starterPlan)).rejects.toThrow(ApiError);
     await expect(service.requireAdvancedAnalyticsPermission('i1', proPlan)).resolves.toBeUndefined();
   });
 
@@ -167,9 +165,7 @@ describe('require* permission methods', () => {
   });
 
   it('requireLiveClassPermission throws without live classes', async () => {
-    await expect(service.requireLiveClassPermission('i1', starterPlan)).rejects.toThrow(
-      'Live classes',
-    );
+    await expect(service.requireLiveClassPermission('i1', starterPlan)).rejects.toThrow('Live classes');
     await expect(service.requireLiveClassPermission('i1', proPlan)).resolves.toBeUndefined();
   });
 
@@ -180,7 +176,7 @@ describe('require* permission methods', () => {
 
   it('requireSubscriptionProductPermission throws for non-unlimited plans', async () => {
     await expect(service.requireSubscriptionProductPermission('i1', starterPlan)).rejects.toThrow(
-      'Subscription products',
+      'Subscription products'
     );
     await expect(service.requireSubscriptionProductPermission('i1', proPlan)).resolves.toBeUndefined();
   });

@@ -29,12 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => abortController.abort();
   }, []);
 
-  const {
-    data: user,
-    isLoading,
-  } = useQuery({
+  const { data: user, isLoading } = useQuery({
     queryKey: QUERY_KEYS.auth.user,
-    queryFn: ({ signal }) => userApi.getMe(signal).then(r => r.data.data),
+    queryFn: ({ signal }) => userApi.getMe(signal).then((r) => r.data.data),
     enabled: !!localStorage.getItem(TOKEN_KEYS.ACCESS_TOKEN),
     staleTime: 5 * 60 * 1000,
     gcTime: 60 * 60 * 1000,
@@ -49,32 +46,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(TOKEN_KEYS.REFRESH_TOKEN, authData.refreshToken);
       queryClient.setQueryData(QUERY_KEYS.auth.user, authData.user);
     },
-    [queryClient],
+    [queryClient]
   );
 
-  const login = useCallback(async (email: string, password: string): Promise<User> => {
-    const { data } = await authApi.login({ email, password });
-    applySession(data.data);
-    return data.data.user;
-  }, [applySession]);
+  const login = useCallback(
+    async (email: string, password: string): Promise<User> => {
+      const { data } = await authApi.login({ email, password });
+      applySession(data.data);
+      return data.data.user;
+    },
+    [applySession]
+  );
 
-  const register = useCallback(async (name: string, email: string, password: string) => {
-    const { data } = await authApi.register({ name, email, password });
-    queryClient.setQueryData(QUERY_KEYS.auth.user, data.data);
-  }, [queryClient]);
+  const register = useCallback(
+    async (name: string, email: string, password: string) => {
+      const { data } = await authApi.register({ name, email, password });
+      queryClient.setQueryData(QUERY_KEYS.auth.user, data.data);
+    },
+    [queryClient]
+  );
 
-  const googleLogin = useCallback(async (credential: string): Promise<User> => {
-    const { data } = await authApi.googleAuth(credential);
-    applySession(data.data);
-    return data.data.user;
-  }, [applySession]);
+  const googleLogin = useCallback(
+    async (credential: string): Promise<User> => {
+      const { data } = await authApi.googleAuth(credential);
+      applySession(data.data);
+      return data.data.user;
+    },
+    [applySession]
+  );
 
-  const verifyEmail = useCallback(async (email: string, otp: string): Promise<User> => {
-    const { data } = await authApi.verifyEmail({ email, otp });
-    const { user: userData, accessToken, refreshToken } = data.data;
-    applySession({ user: userData, accessToken, refreshToken });
-    return userData;
-  }, [applySession]);
+  const verifyEmail = useCallback(
+    async (email: string, otp: string): Promise<User> => {
+      const { data } = await authApi.verifyEmail({ email, otp });
+      const { user: userData, accessToken, refreshToken } = data.data;
+      applySession({ user: userData, accessToken, refreshToken });
+      return userData;
+    },
+    [applySession]
+  );
 
   const logout = useCallback(async () => {
     try {
@@ -94,14 +103,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [queryClient]);
 
-  const setUser = useCallback((user: User | null) => {
-    if (user) {
-      queryClient.setQueryData(QUERY_KEYS.auth.user, user);
-    } else {
-      queryClient.setQueryData(QUERY_KEYS.auth.user, null);
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.auth.user });
-    }
-  }, [queryClient]);
+  const setUser = useCallback(
+    (user: User | null) => {
+      if (user) {
+        queryClient.setQueryData(QUERY_KEYS.auth.user, user);
+      } else {
+        queryClient.setQueryData(QUERY_KEYS.auth.user, null);
+        queryClient.removeQueries({ queryKey: QUERY_KEYS.auth.user });
+      }
+    },
+    [queryClient]
+  );
 
   return (
     <AuthContext.Provider

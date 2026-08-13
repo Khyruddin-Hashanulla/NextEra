@@ -33,7 +33,7 @@ function renderGuard(ui: React.ReactNode, initialEntries: string[]) {
       <Routes>
         <Route path="*" element={ui} />
       </Routes>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 }
 
@@ -43,7 +43,7 @@ describe('AuthGuard', () => {
       <MockAuthProvider value={createAuthValue({ isLoading: true })}>
         <AuthGuard>Protected</AuthGuard>
       </MockAuthProvider>,
-      ['/protected'],
+      ['/protected']
     );
     expect(screen.getAllByRole('status').length).toBeGreaterThan(0);
     expect(screen.queryByText('Protected')).not.toBeInTheDocument();
@@ -65,7 +65,7 @@ describe('AuthGuard', () => {
           <Route path="/auth/login" element={<LocationProbe />} />
         </Routes>
       </MockAuthProvider>,
-      ['/protected'],
+      ['/protected']
     );
     expect(screen.getByTestId('location')).toHaveTextContent('/auth/login');
     expect(screen.queryByText('Protected')).not.toBeInTheDocument();
@@ -76,7 +76,7 @@ describe('AuthGuard', () => {
       <MockAuthProvider value={createAuthValue({ isAuthenticated: true, user: studentUser })}>
         <AuthGuard>Protected content</AuthGuard>
       </MockAuthProvider>,
-      ['/protected'],
+      ['/protected']
     );
     expect(screen.getByText('Protected content')).toBeInTheDocument();
   });
@@ -97,7 +97,7 @@ describe('AuthGuard', () => {
           <Route path="/student" element={<LocationProbe />} />
         </Routes>
       </MockAuthProvider>,
-      ['/protected'],
+      ['/protected']
     );
     expect(screen.getByTestId('location')).toHaveTextContent('/student');
     expect(screen.queryByText('Instructor only')).not.toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('AuthGuard', () => {
       <MockAuthProvider value={createAuthValue({ isAuthenticated: true, user: studentUser })}>
         <AuthGuard allowedRoles={['student']}>Student only</AuthGuard>
       </MockAuthProvider>,
-      ['/protected'],
+      ['/protected']
     );
     expect(screen.getByText('Student only')).toBeInTheDocument();
   });
@@ -119,7 +119,7 @@ describe('Footer', () => {
     render(
       <MemoryRouter>
         <Footer />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByRole('link', { name: /NextEra/ })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Product links' })).toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('Footer', () => {
     render(
       <MemoryRouter>
         <Footer />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByText(new RegExp(String(new Date().getFullYear())))).toBeInTheDocument();
   });
@@ -143,7 +143,7 @@ describe('Footer', () => {
     render(
       <MemoryRouter>
         <Footer />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     for (const label of ['Facebook', 'Twitter', 'LinkedIn', 'YouTube']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
@@ -201,7 +201,7 @@ describe('Navbar', () => {
         <Navbar />
         <LocationProbe />
       </>,
-      { route: '/', mockAuth: createAuthValue() },
+      { route: '/', mockAuth: createAuthValue() }
     );
     await user.click(screen.getByRole('button', { name: 'Open search' }));
     const input = screen.getByPlaceholderText('Search courses...');
@@ -229,7 +229,7 @@ describe('Navbar', () => {
         <Navbar />
         <LocationProbe />
       </>,
-      { route: '/', mockAuth: createAuthValue() },
+      { route: '/', mockAuth: createAuthValue() }
     );
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     const dialog = screen.getByRole('dialog', { name: 'Navigation menu' });
@@ -250,7 +250,7 @@ describe('Navbar', () => {
       {
         route: '/',
         mockAuth: createAuthValue({ user: studentUser, isAuthenticated: true, logout }),
-      },
+      }
     );
     await user.click(screen.getByRole('button', { name: 'Account menu for Alice' }));
     await user.click(screen.getByRole('menuitem', { name: /Logout/ }));

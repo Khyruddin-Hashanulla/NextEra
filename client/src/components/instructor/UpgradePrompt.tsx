@@ -2,7 +2,15 @@ import { useInstructorSubscription } from '@/hooks/useInstructorSubscription';
 import { getFeatureLabel, getUpgradePlanForFeature } from '@/lib/subscription';
 
 interface UpgradePromptProps {
-  feature: 'unlimitedCourses' | 'advancedAnalytics' | 'coupons' | 'liveClasses' | 'featuredInstructor' | 'prioritySupport' | 'unlimitedStorage' | 'premiumMarketing';
+  feature:
+    | 'unlimitedCourses'
+    | 'advancedAnalytics'
+    | 'coupons'
+    | 'liveClasses'
+    | 'featuredInstructor'
+    | 'prioritySupport'
+    | 'unlimitedStorage'
+    | 'premiumMarketing';
   compact?: boolean;
 }
 
@@ -33,13 +41,21 @@ export default function UpgradePrompt({ feature, compact = false }: UpgradePromp
       <div className="flex flex-col items-center text-center">
         <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100">
           <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
         </div>
         <h3 className="text-lg font-semibold text-amber-900">Upgrade to Access {featureLabel}</h3>
         <p className="mt-1 text-sm text-amber-700">
           {planInfo?.planName ? (
-            <>Your current <span className="font-medium capitalize">{planInfo.planName}</span> plan does not include {featureLabel}.</>
+            <>
+              Your current <span className="font-medium capitalize">{planInfo.planName}</span> plan does not include{' '}
+              {featureLabel}.
+            </>
           ) : (
             <>You need an active subscription to use {featureLabel}.</>
           )}

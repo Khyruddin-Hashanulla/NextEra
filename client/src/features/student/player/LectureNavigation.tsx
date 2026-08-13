@@ -9,7 +9,13 @@ interface LectureNavigationProps {
   hasNext: boolean;
 }
 
-export function LectureNavigation({ onPrevious, onNext, onMarkComplete, hasPrevious, hasNext }: LectureNavigationProps) {
+export function LectureNavigation({
+  onPrevious,
+  onNext,
+  onMarkComplete,
+  hasPrevious,
+  hasNext,
+}: LectureNavigationProps) {
   return (
     <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
       <Button variant="outline" onClick={onPrevious} disabled={!hasPrevious} className="justify-center">

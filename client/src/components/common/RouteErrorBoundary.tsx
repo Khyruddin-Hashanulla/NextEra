@@ -35,17 +35,15 @@ export class RouteErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          role="alert"
-          className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8"
-        >
+        <div role="alert" className="flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8">
           <div className="rounded-full bg-destructive/10 p-4">
             <svg
               className="h-8 w-8 text-destructive"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
-              aria-hidden="true" focusable="false"
+              aria-hidden="true"
+              focusable="false"
             >
               <path
                 strokeLinecap="round"

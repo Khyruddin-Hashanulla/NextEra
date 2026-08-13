@@ -28,7 +28,12 @@ export class UserService {
 
   async updateProfile(
     userId: string,
-    updates: { name?: string; bio?: string; socialLinks?: Record<string, string>; avatar?: { url: string; publicId: string } }
+    updates: {
+      name?: string;
+      bio?: string;
+      socialLinks?: Record<string, string>;
+      avatar?: { url: string; publicId: string };
+    }
   ): Promise<IUserResponse> {
     const user = await User.findByIdAndUpdate(userId, { $set: updates }, { new: true, runValidators: true });
     if (!user) {
@@ -41,9 +46,13 @@ export class UserService {
     const { uploadService } = await import('../services/upload.service');
     const result = await uploadService.uploadImage(file);
 
-    await User.findByIdAndUpdate(userId, {
-      $set: { avatar: { url: result.url, publicId: result.publicId } },
-    }, { new: true });
+    await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: { avatar: { url: result.url, publicId: result.publicId } },
+      },
+      { new: true }
+    );
 
     return result;
   }

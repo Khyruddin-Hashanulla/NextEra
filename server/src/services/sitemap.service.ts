@@ -68,10 +68,12 @@ function sitemapXml(entries: SitemapEntry[]): string {
 
 function sitemapIndexXml(sitemaps: { loc: string; lastmod: string }[]): string {
   const items = sitemaps
-    .map(s => `<sitemap>
+    .map(
+      (s) => `<sitemap>
     <loc>${escapeXml(s.loc)}</loc>
     <lastmod>${s.lastmod}</lastmod>
-  </sitemap>`)
+  </sitemap>`
+    )
     .join('\n  ');
   return `<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -114,11 +116,9 @@ function buildStaticPages(): SitemapEntry[] {
 }
 
 async function buildCoursePages(): Promise<SitemapEntry[]> {
-  const courses = await Course.find({ status: 'published' })
-    .select('slug updatedAt publishedAt')
-    .lean();
+  const courses = await Course.find({ status: 'published' }).select('slug updatedAt publishedAt').lean();
   const b = baseUrl();
-  return courses.map(c => ({
+  return courses.map((c) => ({
     loc: `${b}/courses/${c.slug}`,
     lastmod: fmtDate(c.updatedAt || c.publishedAt),
     changefreq: 'weekly',
@@ -127,11 +127,9 @@ async function buildCoursePages(): Promise<SitemapEntry[]> {
 }
 
 async function buildBlogPages(): Promise<SitemapEntry[]> {
-  const blogs = await Blog.find({ status: 'published' })
-    .select('slug updatedAt publishedAt')
-    .lean();
+  const blogs = await Blog.find({ status: 'published' }).select('slug updatedAt publishedAt').lean();
   const b = baseUrl();
-  return blogs.map(blog => ({
+  return blogs.map((blog) => ({
     loc: `${b}/blog/${blog.slug}`,
     lastmod: fmtDate(blog.updatedAt || blog.publishedAt),
     changefreq: 'monthly',
@@ -148,7 +146,7 @@ async function buildInstructorPages(): Promise<SitemapEntry[]> {
     .select('_id updatedAt')
     .lean();
   const b = baseUrl();
-  return instructors.map(u => ({
+  return instructors.map((u) => ({
     loc: `${b}/instructors/${u._id}`,
     lastmod: fmtDate(u.updatedAt),
     changefreq: 'monthly',
@@ -157,11 +155,9 @@ async function buildInstructorPages(): Promise<SitemapEntry[]> {
 }
 
 async function buildCategoryPages(): Promise<SitemapEntry[]> {
-  const categories = await Category.find({ isActive: true })
-    .select('slug updatedAt')
-    .lean();
+  const categories = await Category.find({ isActive: true }).select('slug updatedAt').lean();
   const b = baseUrl();
-  return categories.map(c => ({
+  return categories.map((c) => ({
     loc: `${b}/categories/${c.slug}`,
     lastmod: fmtDate(c.updatedAt),
     changefreq: 'weekly',
@@ -194,7 +190,7 @@ export async function getSitemapXml(): Promise<string> {
   const now = fmtDate(new Date());
   const sb = serverBaseUrl();
   const types = ['static', 'courses', 'blogs', 'instructors', 'categories'];
-  const sitemaps = types.map(t => ({
+  const sitemaps = types.map((t) => ({
     loc: `${sb}/sitemaps/${t}.xml`,
     lastmod: now,
   }));
@@ -261,10 +257,7 @@ export async function handleSitemap(_req: Request, res: Response): Promise<void>
     res.status(200).send(xml);
   } catch (error) {
     logger.error('Failed to generate sitemap:', error);
-    res
-      .status(500)
-      .setHeader('Content-Type', 'application/xml')
-      .send(`<?xml version="1.0" encoding="UTF-8"?>
+    res.status(500).setHeader('Content-Type', 'application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </urlset>`);
   }
@@ -275,10 +268,7 @@ export async function handleSitemapType(req: Request, res: Response): Promise<vo
     const type = req.params.type;
     const xml = await getTypeSitemapXml(type);
     if (!xml) {
-      res
-        .status(404)
-        .setHeader('Content-Type', 'application/xml')
-        .send(`<?xml version="1.0" encoding="UTF-8"?>
+      res.status(404).setHeader('Content-Type', 'application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </urlset>`);
       return;
@@ -288,10 +278,7 @@ export async function handleSitemapType(req: Request, res: Response): Promise<vo
     res.status(200).send(xml);
   } catch (error) {
     logger.error('Failed to generate sitemap type:', error);
-    res
-      .status(500)
-      .setHeader('Content-Type', 'application/xml')
-      .send(`<?xml version="1.0" encoding="UTF-8"?>
+    res.status(500).setHeader('Content-Type', 'application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 </urlset>`);
   }

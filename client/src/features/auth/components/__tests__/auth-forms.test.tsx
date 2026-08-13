@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
@@ -24,7 +24,7 @@ function renderForm(ui: React.ReactNode, options: Parameters<typeof renderWithPr
       {ui}
       <PathProbe />
     </GoogleOAuthProvider>,
-    options,
+    options
   );
 }
 
@@ -104,8 +104,11 @@ describe('LoginForm', () => {
     const auth = createAuthValue({
       login: vi.fn(() =>
         Promise.reject(
-          apiError('Your account is temporarily locked due to multiple failed login attempts. Please try again later.', 423),
-        ),
+          apiError(
+            'Your account is temporarily locked due to multiple failed login attempts. Please try again later.',
+            423
+          )
+        )
       ),
     });
     renderForm(<LoginForm />, { route: '/auth/login', mockAuth: auth });

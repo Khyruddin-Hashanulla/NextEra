@@ -5,11 +5,20 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/common/EmptyState';
-import { ShoppingBag, Download, ChevronLeft, ChevronRight, CheckCircle2, Clock, XCircle, RotateCcw } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import {
+  ShoppingBag,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  RotateCcw,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/providers/ToastProvider';
+import { loadRazorpayScript } from '@/lib/razorpay';
 
 const container = {
   hidden: { opacity: 0 },
@@ -30,17 +39,6 @@ const statusConfig: Record<string, { icon: typeof CheckCircle2; className: strin
   failed: { icon: XCircle, className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
 };
 
-function loadRazorpayScript(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if ((window as any).Razorpay) return resolve(true);
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
 export function OrderHistoryPage() {
   const { addToast } = useToast();
   const queryClient = useQueryClient();
@@ -54,7 +52,7 @@ export function OrderHistoryPage() {
 
   const retryMutation = useMutation({
     mutationFn: (paymentId: string) => studentApi.retryPayment(paymentId),
-    onSuccess: async (res, paymentId) => {
+    onSuccess: async (res, _paymentId) => {
       const data = res.data.data;
       const loaded = await loadRazorpayScript();
       if (!loaded) {
@@ -94,10 +92,13 @@ export function OrderHistoryPage() {
     },
   });
 
-  const handleRetry = useCallback((paymentId: string) => {
-    setRetryingId(paymentId);
-    retryMutation.mutate(paymentId);
-  }, [retryMutation]);
+  const handleRetry = useCallback(
+    (paymentId: string) => {
+      setRetryingId(paymentId);
+      retryMutation.mutate(paymentId);
+    },
+    [retryMutation]
+  );
 
   const handleDownloadInvoice = async (paymentId: string) => {
     try {
@@ -162,9 +163,7 @@ export function OrderHistoryPage() {
                         <ShoppingBag className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">
-                          {payment.course?.title || 'Course Payment'}
-                        </p>
+                        <p className="truncate text-sm font-medium">{payment.course?.title || 'Course Payment'}</p>
                         <p className="text-xs text-muted-foreground">
                           {payment.razorpayOrderId ? `ID: ${payment.razorpayOrderId.slice(-12)}` : ''}
                           {' · '}
@@ -179,9 +178,7 @@ export function OrderHistoryPage() {
 
                     <div className="flex items-center gap-3 sm:shrink-0">
                       <div className="text-right">
-                        <p className="text-sm font-semibold tabular-nums">
-                          ₹{payment.amount?.toLocaleString() ?? 0}
-                        </p>
+                        <p className="text-sm font-semibold tabular-nums">₹{payment.amount?.toLocaleString() ?? 0}</p>
                         <span
                           className={cn(
                             'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium',
@@ -222,12 +219,7 @@ export function OrderHistoryPage() {
 
           {totalPages > 1 && (
             <motion.div variants={item} className="flex items-center justify-center gap-3">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage(page - 1)}
-              >
+              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 <ChevronLeft className="mr-1 h-4 w-4" />
                 Previous
               </Button>
@@ -238,21 +230,14 @@ export function OrderHistoryPage() {
                     onClick={() => setPage(i + 1)}
                     className={cn(
                       'flex h-8 w-8 items-center justify-center rounded-lg text-sm font-medium transition-colors',
-                      page === i + 1
-                        ? 'bg-primary text-primary-foreground'
-                        : 'text-muted-foreground hover:bg-accent'
+                      page === i + 1 ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'
                     )}
                   >
                     {i + 1}
                   </button>
                 ))}
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() => setPage(page + 1)}
-              >
+              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
                 Next
                 <ChevronRight className="ml-1 h-4 w-4" />
               </Button>

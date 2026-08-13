@@ -23,15 +23,11 @@ describe('sanitizePlainText', () => {
 
 describe('sanitizeRichText', () => {
   it('keeps allowed rich text tags', () => {
-    expect(sanitizeRichText('<p>Hello <strong>world</strong></p>')).toBe(
-      '<p>Hello <strong>world</strong></p>',
-    );
+    expect(sanitizeRichText('<p>Hello <strong>world</strong></p>')).toBe('<p>Hello <strong>world</strong></p>');
   });
 
   it('discards disallowed tags', () => {
-    expect(sanitizeRichText('<p>Safe</p><script>alert(1)</script><img src="x">')).toBe(
-      '<p>Safe</p>',
-    );
+    expect(sanitizeRichText('<p>Safe</p><script>alert(1)</script><img src="x">')).toBe('<p>Safe</p>');
   });
 
   it('blocks javascript: hrefs', () => {
@@ -50,9 +46,7 @@ describe('sanitizeRichText', () => {
   });
 
   it('allows safe http links', () => {
-    expect(sanitizeRichText('<a href="https://example.com">ok</a>')).toBe(
-      '<a href="https://example.com">ok</a>',
-    );
+    expect(sanitizeRichText('<a href="https://example.com">ok</a>')).toBe('<a href="https://example.com">ok</a>');
   });
 });
 

@@ -29,9 +29,15 @@ export const generateAssignmentSchema = z.object({
 export const chatSchema = z.object({
   body: z.object({
     message: z.string().min(1).max(FIELD_SIZES.MESSAGE),
-    history: z.array(z.object({
-      role: z.enum(['user', 'assistant']),
-      content: z.string().max(FIELD_SIZES.MESSAGE),
-    })).max(ARRAY_LIMITS.HISTORY_MESSAGES).optional().default([]),
+    history: z
+      .array(
+        z.object({
+          role: z.enum(['user', 'assistant']),
+          content: z.string().max(FIELD_SIZES.MESSAGE),
+        })
+      )
+      .max(ARRAY_LIMITS.HISTORY_MESSAGES)
+      .optional()
+      .default([]),
   }),
 });

@@ -23,7 +23,7 @@ export async function auditDenied(
   req: Request,
   resource: string,
   resourceId: string | undefined,
-  reason: string,
+  reason: string
 ): Promise<void> {
   if (!req.currentUser) return;
   try {
@@ -51,12 +51,7 @@ export async function auditDenied(
 }
 
 export class DataScopingService {
-  async scopedFindById(
-    model: mongoose.Model<any>,
-    id: string,
-    req: Request,
-    ownerField: string,
-  ): Promise<any> {
+  async scopedFindById(model: mongoose.Model<any>, id: string, req: Request, ownerField: string): Promise<any> {
     if (isAdmin(req)) return model.findById(id).lean();
     return model.findOne({ _id: id, [ownerField]: getUserId(req) }).lean();
   }
@@ -65,7 +60,7 @@ export class DataScopingService {
     model: mongoose.Model<any>,
     filter: Record<string, any>,
     req: Request,
-    ownerField: string,
+    ownerField: string
   ): Promise<any> {
     if (isAdmin(req)) return model.findOne(filter).lean();
     return model.findOne({ ...filter, [ownerField]: getUserId(req) }).lean();
@@ -75,7 +70,7 @@ export class DataScopingService {
     model: mongoose.Model<any>,
     filter: Record<string, any>,
     req: Request,
-    ownerField: string,
+    ownerField: string
   ): Promise<any[]> {
     if (isAdmin(req)) return model.find(filter).lean();
     return model.find({ ...filter, [ownerField]: getUserId(req) }).lean();
@@ -87,21 +82,17 @@ export class DataScopingService {
     update: Record<string, any>,
     req: Request,
     ownerField: string,
-    options: Record<string, any> = {},
+    options: Record<string, any> = {}
   ): Promise<any> {
     if (isAdmin(req)) return model.findByIdAndUpdate(id, update, { new: true, ...options }).lean();
-    return model.findOneAndUpdate(
-      { _id: id, [ownerField]: getUserId(req) },
-      update,
-      { new: true, ...options },
-    ).lean();
+    return model.findOneAndUpdate({ _id: id, [ownerField]: getUserId(req) }, update, { new: true, ...options }).lean();
   }
 
   async scopedFindByIdAndDelete(
     model: mongoose.Model<any>,
     id: string,
     req: Request,
-    ownerField: string,
+    ownerField: string
   ): Promise<any> {
     if (isAdmin(req)) return model.findByIdAndDelete(id).lean();
     return model.findOneAndDelete({ _id: id, [ownerField]: getUserId(req) }).lean();

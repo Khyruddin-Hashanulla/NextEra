@@ -42,7 +42,7 @@ function FloatingChip({
       transition={{ delay, duration: reducedMotion ? 0.4 : 5, repeat: reducedMotion ? 0 : Infinity, ease: 'easeInOut' }}
       className={cn(
         'absolute z-10 rounded-2xl border border-border bg-card/90 p-3.5 shadow-xl shadow-black/5 backdrop-blur-sm',
-        className,
+        className
       )}
     >
       <div className="flex items-center gap-2.5">
@@ -75,7 +75,7 @@ export function HeroShowcase({ topics = HERO_TOPICS, className }: HeroShowcasePr
     setIndex((current) => (current + 1) % topics.length);
   }, [topics.length]);
 
-  const goPrev = useCallback(() => {
+  const _goPrev = useCallback(() => {
     setDirection(-1);
     setIndex((current) => (current - 1 + topics.length) % topics.length);
   }, [topics.length]);
@@ -85,7 +85,7 @@ export function HeroShowcase({ topics = HERO_TOPICS, className }: HeroShowcasePr
       setDirection(target > index ? 1 : -1);
       setIndex(target);
     },
-    [index],
+    [index]
   );
 
   useEffect(() => {
@@ -154,9 +154,7 @@ export function HeroShowcase({ topics = HERO_TOPICS, className }: HeroShowcasePr
                 aria-current={topicIndex === index}
                 className={cn(
                   'h-2 rounded-full transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-                  topicIndex === index
-                    ? 'w-6 bg-primary'
-                    : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60',
+                  topicIndex === index ? 'w-6 bg-primary' : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60'
                 )}
               />
             ))}

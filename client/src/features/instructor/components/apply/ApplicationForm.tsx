@@ -1,9 +1,29 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  User, Mail, Phone, MapPin, GraduationCap, Briefcase, Wrench, MessageSquareQuote,
-  Tag, Linkedin, Github, Link2, Globe, CreditCard, Receipt, Landmark, Building2,
-  UserRound, Hash, Wallet, Send, CheckCircle2, ShieldCheck,
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  GraduationCap,
+  Briefcase,
+  Wrench,
+  MessageSquareQuote,
+  Tag,
+  Linkedin,
+  Github,
+  Link2,
+  Globe,
+  CreditCard,
+  Receipt,
+  Landmark,
+  Building2,
+  UserRound,
+  Hash,
+  Wallet,
+  Send,
+  CheckCircle2,
+  ShieldCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { instructorApi } from '@/api/endpoints/instructor';
@@ -46,9 +66,18 @@ export interface ApplyFormState {
 type FieldKey = keyof ApplyFormState;
 
 const REQUIRED_FIELDS: FieldKey[] = [
-  'name', 'email', 'phone', 'address',
-  'qualification', 'experience', 'categories', 'reason',
-  'bankHolder', 'bankAccount', 'bankIfsc', 'bankName',
+  'name',
+  'email',
+  'phone',
+  'address',
+  'qualification',
+  'experience',
+  'categories',
+  'reason',
+  'bankHolder',
+  'bankAccount',
+  'bankIfsc',
+  'bankName',
 ];
 
 interface SectionConfig {
@@ -93,7 +122,18 @@ const SECTIONS: SectionConfig[] = [
     icon: UserRound,
     title: 'Verification & Payouts',
     description: 'Identity documents and payout details.',
-    fields: ['resume', 'identityProof', 'taxPan', 'taxGst', 'bankHolder', 'bankAccount', 'bankIfsc', 'bankName', 'bankBranch', 'bankUpi'],
+    fields: [
+      'resume',
+      'identityProof',
+      'taxPan',
+      'taxGst',
+      'bankHolder',
+      'bankAccount',
+      'bankIfsc',
+      'bankName',
+      'bankBranch',
+      'bankUpi',
+    ],
   },
 ];
 
@@ -103,15 +143,32 @@ function FileFieldLabel({ children }: { children: string }) {
 
 export function ApplicationForm() {
   const [form, setForm] = useState<ApplyFormState>({
-    name: '', email: '', phone: '', address: '',
-    qualification: '', experience: '', expertise: '', reason: '',
-    linkedin: '', github: '', portfolio: '', website: '', bio: '', categories: '',
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    qualification: '',
+    experience: '',
+    expertise: '',
+    reason: '',
+    linkedin: '',
+    github: '',
+    portfolio: '',
+    website: '',
+    bio: '',
+    categories: '',
     photo: null,
     resume: null,
     demoVideo: null,
     identityProof: null,
-    taxPan: '', taxGst: '',
-    bankHolder: '', bankAccount: '', bankIfsc: '', bankName: '', bankBranch: '', bankUpi: '',
+    taxPan: '',
+    taxGst: '',
+    bankHolder: '',
+    bankAccount: '',
+    bankIfsc: '',
+    bankName: '',
+    bankBranch: '',
+    bankUpi: '',
   });
 
   const queryClient = useQueryClient();
@@ -140,7 +197,10 @@ export function ApplicationForm() {
       append('website', data.website);
       append('bio', data.bio);
 
-      const categories = data.categories.split(',').map((c) => c.trim()).filter(Boolean);
+      const categories = data.categories
+        .split(',')
+        .map((c) => c.trim())
+        .filter(Boolean);
       fd.append('teachingCategories', JSON.stringify(categories));
 
       const taxDetails: Record<string, string> = {};
@@ -148,14 +208,17 @@ export function ApplicationForm() {
       if (data.taxGst.trim()) taxDetails.gst = data.taxGst.trim();
       if (Object.keys(taxDetails).length > 0) fd.append('taxDetails', JSON.stringify(taxDetails));
 
-      fd.append('bankDetails', JSON.stringify({
-        accountHolderName: data.bankHolder,
-        accountNumber: data.bankAccount,
-        ifscCode: data.bankIfsc,
-        bankName: data.bankName,
-        branch: data.bankBranch,
-        upiId: data.bankUpi,
-      }));
+      fd.append(
+        'bankDetails',
+        JSON.stringify({
+          accountHolderName: data.bankHolder,
+          accountNumber: data.bankAccount,
+          ifscCode: data.bankIfsc,
+          bankName: data.bankName,
+          branch: data.bankBranch,
+          upiId: data.bankUpi,
+        })
+      );
 
       append('photo', data.photo);
       append('resume', data.resume);
@@ -169,17 +232,16 @@ export function ApplicationForm() {
       addToast({ title: 'Application submitted', variant: 'success' });
     },
     onError: (err) => {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to submit';
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Failed to submit';
       addToast({ title: message, variant: 'error' });
     },
   });
 
-  const update = (key: FieldKey) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  const update = (key: FieldKey) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm((prev) => ({ ...prev, [key]: e.target.value }));
 
-  const setFile = (key: FieldKey) => (file: File | null) =>
-    setForm((prev) => ({ ...prev, [key]: file }));
+  const setFile = (key: FieldKey) => (file: File | null) => setForm((prev) => ({ ...prev, [key]: file }));
 
   const isSectionDone = (fields: readonly FieldKey[]) =>
     fields.every((key) => {
@@ -187,8 +249,7 @@ export function ApplicationForm() {
       return value !== null && value !== undefined && (typeof value !== 'string' || value.trim() !== '');
     });
 
-  const hasRequiredField = (fields: readonly FieldKey[]) =>
-    fields.some((field) => REQUIRED_FIELDS.includes(field));
+  const hasRequiredField = (fields: readonly FieldKey[]) => fields.some((field) => REQUIRED_FIELDS.includes(field));
 
   const requiredDone = REQUIRED_FIELDS.filter((key) => (form[key] as string).trim() !== '').length;
   const progress = Math.round((requiredDone / REQUIRED_FIELDS.length) * 100);
@@ -232,9 +293,7 @@ export function ApplicationForm() {
               <li key={section.key} className="flex flex-1 items-center gap-2">
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                    done
-                      ? 'bg-success text-success-foreground'
-                      : 'bg-muted text-muted-foreground'
+                    done ? 'bg-success text-success-foreground' : 'bg-muted text-muted-foreground'
                   }`}
                   aria-label={`${section.title} ${done ? 'complete' : 'incomplete'}`}
                 >
@@ -566,7 +625,9 @@ export function ApplicationForm() {
           onClick={submit}
           disabled={canSubmit}
         >
-          {mutation.isPending ? 'Submitting...' : (
+          {mutation.isPending ? (
+            'Submitting...'
+          ) : (
             <>
               Submit Application <Send className="h-4 w-4" aria-hidden="true" />
             </>

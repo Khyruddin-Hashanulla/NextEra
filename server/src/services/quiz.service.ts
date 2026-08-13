@@ -3,12 +3,8 @@ import { Lecture } from '../models/lecture.model';
 import { QuizAttempt } from '../models/quizAttempt.model';
 import { Enrollment } from '../models/enrollment.model';
 import { User } from '../models/user.model';
-import { Course } from '../models/course.model';
 import { ApiError } from '../utils/ApiError';
-import { escapeRegex } from '../utils/escapeRegex';
-import { withTransaction } from '../utils/transaction';
-import { isAssignmentStatus } from '../utils/grading';
-import { computeAttemptResult, computeAttemptScoreByPolicy, resolveQuizQuestions, QuizConfig } from './quizScoring.service';
+import { computeAttemptResult, resolveQuizQuestions } from './quizScoring.service';
 
 export interface StartQuizInput {
   userId: string;
@@ -81,11 +77,13 @@ export class QuizService {
       throw ApiError.forbidden('Account is blocked');
     }
 
-    const quizConfig = lecture.quiz as any || {};
+    const quizConfig = (lecture.quiz as any) || {};
     const questions = resolveQuizQuestions(lecture as any);
     const lectureTitle = lecture.title;
 
-    const existingAttempts = await QuizAttempt.find({ user: userId, lecture: lectureId }).sort({ createdAt: -1 }).lean();
+    const existingAttempts = await QuizAttempt.find({ user: userId, lecture: lectureId })
+      .sort({ createdAt: -1 })
+      .lean();
     const maxAttempts = quizConfig.maxAttempts > 0 ? quizConfig.maxAttempts : 999999;
     const attemptsCount = existingAttempts.length;
 
@@ -110,7 +108,10 @@ export class QuizService {
       }
     }
 
-    const canResume = attemptsCount > 0 && quizConfig.allowResume && existingAttempts.some(a => !a.completedAt && a.evaluationStatus === 'in_progress');
+    const canResume =
+      attemptsCount > 0 &&
+      quizConfig.allowResume &&
+      existingAttempts.some((a) => !a.completedAt && a.evaluationStatus === 'in_progress');
     const startedAt = canResume ? existingAttempts[0].startedAt : new Date();
 
     let attempt: any;
@@ -144,7 +145,7 @@ export class QuizService {
         details: [],
         score: 0,
         totalQuestions: questions.length,
-        totalMarks: questions.reduce((sum, q) => sum + (q.marks * q.weight), 0),
+        totalMarks: questions.reduce((sum, q) => sum + q.marks * q.weight, 0),
         marksObtained: 0,
         percentage: 0,
         passingPercentage: quizConfig.passingScore || 60,
@@ -167,9 +168,7 @@ export class QuizService {
   }
 
   async getStudentAnalytics(lectureId: string, userId: string): Promise<any> {
-    const attempts = await QuizAttempt.find({ user: userId, lecture: lectureId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const attempts = await QuizAttempt.find({ user: userId, lecture: lectureId }).sort({ createdAt: -1 }).lean();
 
     const total = attempts.length;
     if (total === 0) {
@@ -184,20 +183,23 @@ export class QuizService {
       };
     }
 
-    const scores = attempts.map(a => a.score);
-    const totalMarks = attempts.map(a => a.totalMarks);
+    const scores = attempts.map((a) => a.score);
+    const totalMarks = attempts.map((a) => a.totalMarks);
     const averageScore = scores.reduce((a, b) => a + b, 0) / total;
     const averageTotal = totalMarks.reduce((a, b) => a + b, 0) / total;
     const averagePercentage = averageTotal > 0 ? (averageScore / averageTotal) * 100 : 0;
 
-    const passedCount = attempts.filter(a => a.passed).length;
+    const passedCount = attempts.filter((a) => a.passed).length;
     const passRate = (passedCount / total) * 100;
 
-    const completedCount = attempts.filter(a => a.completedAt).length;
+    const completedCount = attempts.filter((a) => a.completedAt).length;
     const completionRate = (completedCount / total) * 100;
 
     const latestAttempt = attempts[0];
-    const bestAttempt = attempts.reduce((best, current) => current.percentage > best.percentage ? current : best, attempts[0]);
+    const bestAttempt = attempts.reduce(
+      (best, current) => (current.percentage > best.percentage ? current : best),
+      attempts[0]
+    );
 
     return {
       totalAttempts: total,
@@ -214,15 +216,17 @@ export class QuizService {
         passed: latestAttempt.passed,
         completedAt: latestAttempt.completedAt,
       },
-      bestAttempt: bestAttempt ? {
-        attemptId: bestAttempt._id,
-        attemptNumber: bestAttempt.attemptNumber,
-        score: bestAttempt.score,
-        totalMarks: bestAttempt.totalMarks,
-        percentage: bestAttempt.percentage,
-        passed: bestAttempt.passed,
-        completedAt: bestAttempt.completedAt,
-      } : null,
+      bestAttempt: bestAttempt
+        ? {
+            attemptId: bestAttempt._id,
+            attemptNumber: bestAttempt.attemptNumber,
+            score: bestAttempt.score,
+            totalMarks: bestAttempt.totalMarks,
+            percentage: bestAttempt.percentage,
+            passed: bestAttempt.passed,
+            completedAt: bestAttempt.completedAt,
+          }
+        : null,
     };
   }
 
@@ -249,11 +253,13 @@ export class QuizService {
       throw ApiError.forbidden('Account is blocked');
     }
 
-    const quizConfig = lecture.quiz as any || {};
+    const quizConfig = (lecture.quiz as any) || {};
     const questions = resolveQuizQuestions(lecture as any);
     const lectureTitle = lecture.title;
 
-    const existingAttempts = await QuizAttempt.find({ user: userId, lecture: lectureId }).sort({ createdAt: -1 }).lean();
+    const existingAttempts = await QuizAttempt.find({ user: userId, lecture: lectureId })
+      .sort({ createdAt: -1 })
+      .lean();
     const maxAttempts = quizConfig.maxAttempts > 0 ? quizConfig.maxAttempts : 999999;
     const attemptsCount = existingAttempts.length;
 
@@ -278,7 +284,10 @@ export class QuizService {
       }
     }
 
-    const canResume = attemptsCount > 0 && quizConfig.allowResume && existingAttempts.some(a => !a.completedAt && a.evaluationStatus === 'in_progress');
+    const canResume =
+      attemptsCount > 0 &&
+      quizConfig.allowResume &&
+      existingAttempts.some((a) => !a.completedAt && a.evaluationStatus === 'in_progress');
     const startedAt = canResume ? existingAttempts[0].startedAt : new Date();
 
     let attempt: any;
@@ -351,7 +360,7 @@ export class QuizService {
       throw ApiError.badRequest('Lecture not found');
     }
 
-    const quizConfig = lecture.quiz as any || {};
+    const quizConfig = (lecture.quiz as any) || {};
     const questions = resolveQuizQuestions(lecture as any);
 
     const now = new Date();
@@ -371,7 +380,7 @@ export class QuizService {
 
     const updated: any = {
       answers,
-      details: result.details.map(d => ({
+      details: result.details.map((d) => ({
         ...d,
         gradedAt: d.status === 'pending' ? undefined : d.gradedAt || now,
         gradedBy: d.status === 'pending' ? undefined : attempt.user,
@@ -423,7 +432,7 @@ export class QuizService {
       throw ApiError.badRequest('Lecture not found');
     }
 
-    const quizConfig = lecture.quiz as any || {};
+    const quizConfig = (lecture.quiz as any) || {};
 
     if (attempt.completedAt) {
       return { attempt, canResume: false };
@@ -441,17 +450,13 @@ export class QuizService {
   }
 
   async getStudentQuizAttempts(userId: string, lectureId: string): Promise<any[]> {
-    const attempts = await QuizAttempt.find({ user: userId, lecture: lectureId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const attempts = await QuizAttempt.find({ user: userId, lecture: lectureId }).sort({ createdAt: -1 }).lean();
 
     return attempts;
   }
 
   async getStudentQuizOverview(userId: string): Promise<any> {
-    const attempts = await QuizAttempt.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .lean();
+    const attempts = await QuizAttempt.find({ user: userId }).sort({ createdAt: -1 }).lean();
 
     if (attempts.length === 0) {
       return {
@@ -470,24 +475,27 @@ export class QuizService {
 
     const total = attempts.length;
     const averageScore = attempts.reduce((sum, a) => sum + (a.percentage || 0), 0) / total;
-    const passedCount = attempts.filter(a => a.passed).length;
+    const passedCount = attempts.filter((a) => a.passed).length;
     const latestAttempt = attempts[0];
-    const bestAttempt = attempts.reduce((best, current) => current.percentage > best.percentage ? current : best, attempts[0]);
+    const bestAttempt = attempts.reduce(
+      (best, current) => (current.percentage > best.percentage ? current : best),
+      attempts[0]
+    );
 
     const scoreHistory = attempts
-      .filter(a => a.completedAt)
-      .map(a => ({
+      .filter((a) => a.completedAt)
+      .map((a) => ({
         attemptNumber: a.attemptNumber,
         percentage: a.percentage,
         completedAt: a.completedAt,
       }));
 
     const attemptDistribution: Record<string, number> = {};
-    attempts.forEach(a => {
+    attempts.forEach((a) => {
       attemptDistribution[String(a.attemptNumber)] = (attemptDistribution[String(a.attemptNumber)] || 0) + 1;
     });
 
-    const quizzes = attempts.map(a => ({
+    const quizzes = attempts.map((a) => ({
       _id: a._id,
       title: a.quizTitle || 'Quiz',
       attemptNumber: a.attemptNumber,
@@ -513,24 +521,28 @@ export class QuizService {
         totalAttempts: total,
         averageScore: Math.round(averageScore * 10) / 10,
         passedCount,
-        latestAttempt: latestAttempt ? {
-          attemptId: latestAttempt._id,
-          attemptNumber: latestAttempt.attemptNumber,
-          score: latestAttempt.score,
-          totalMarks: latestAttempt.totalMarks,
-          percentage: latestAttempt.percentage,
-          passed: latestAttempt.passed,
-          completedAt: latestAttempt.completedAt,
-        } : null,
-        bestAttempt: bestAttempt ? {
-          attemptId: bestAttempt._id,
-          attemptNumber: bestAttempt.attemptNumber,
-          score: bestAttempt.score,
-          totalMarks: bestAttempt.totalMarks,
-          percentage: bestAttempt.percentage,
-          passed: bestAttempt.passed,
-          completedAt: bestAttempt.completedAt,
-        } : null,
+        latestAttempt: latestAttempt
+          ? {
+              attemptId: latestAttempt._id,
+              attemptNumber: latestAttempt.attemptNumber,
+              score: latestAttempt.score,
+              totalMarks: latestAttempt.totalMarks,
+              percentage: latestAttempt.percentage,
+              passed: latestAttempt.passed,
+              completedAt: latestAttempt.completedAt,
+            }
+          : null,
+        bestAttempt: bestAttempt
+          ? {
+              attemptId: bestAttempt._id,
+              attemptNumber: bestAttempt.attemptNumber,
+              score: bestAttempt.score,
+              totalMarks: bestAttempt.totalMarks,
+              percentage: bestAttempt.percentage,
+              passed: bestAttempt.passed,
+              completedAt: bestAttempt.completedAt,
+            }
+          : null,
         scoreHistory,
         attemptDistribution,
       },
@@ -566,8 +578,8 @@ export class QuizService {
       throw ApiError.notFound('Lecture not found');
     }
 
-    const quizConfig = lecture.quiz as any || {};
-    const questions = resolveQuizQuestions(lecture as any);
+    const quizConfig = (lecture.quiz as any) || {};
+    const _questions = resolveQuizQuestions(lecture as any);
 
     const updates: any = {};
     if (input.grade !== undefined) {
@@ -577,7 +589,7 @@ export class QuizService {
       updates.passed = updates.percentage >= (quizConfig.passingScore || 60);
     }
     if (input.feedback !== undefined) {
-      (updates as any).details = attempt.details?.map(d => ({ ...d, feedback: input.feedback })) || [];
+      (updates as any).details = attempt.details?.map((d) => ({ ...d, feedback: input.feedback })) || [];
     }
     if (input.letterGrade !== undefined) {
       (updates as any).letterGrade = input.letterGrade;
@@ -604,7 +616,15 @@ export class QuizService {
     const updatedAttempt = await QuizAttempt.findByIdAndUpdate(attempt._id, updates);
 
     if (input.publish) {
-      await this.addGradingHistory(attempt._id.toString(), new mongoose.Types.ObjectId(input.attemptId), input.grade || 0, input.letterGrade || '', 'manual_grade', input.feedback, new mongoose.Types.ObjectId(input.attemptId));
+      await this.addGradingHistory(
+        attempt._id.toString(),
+        new mongoose.Types.ObjectId(input.attemptId),
+        input.grade || 0,
+        input.letterGrade || '',
+        'manual_grade',
+        input.feedback,
+        new mongoose.Types.ObjectId(input.attemptId)
+      );
     }
 
     return updatedAttempt;
@@ -630,7 +650,15 @@ export class QuizService {
       throw ApiError.notFound('Quiz attempt not found');
     }
 
-    await this.addGradingHistory(attempt._id.toString(), publishedBy, updated.marksObtained || 0, updated.letterGrade || '', 'publish', '', publishedBy);
+    await this.addGradingHistory(
+      attempt._id.toString(),
+      publishedBy,
+      updated.marksObtained || 0,
+      updated.letterGrade || '',
+      'publish',
+      '',
+      publishedBy
+    );
 
     return updated;
   }
@@ -641,22 +669,22 @@ export class QuizService {
     const total = attempts.length;
     if (total === 0) return { total, averageScore: 0, passRate: 0, completionRate: 0 };
 
-    const scores = attempts.map(a => a.score);
-    const totalMarks = attempts.map(a => a.totalMarks);
+    const scores = attempts.map((a) => a.score);
+    const totalMarks = attempts.map((a) => a.totalMarks);
     const averageScore = scores.reduce((a, b) => a + b, 0) / total;
     const averageTotal = totalMarks.reduce((a, b) => a + b, 0) / total;
     const averagePercentage = averageTotal > 0 ? (averageScore / averageTotal) * 100 : 0;
-    const passedCount = attempts.filter(a => a.passed).length;
+    const passedCount = attempts.filter((a) => a.passed).length;
     const passRate = (passedCount / total) * 100;
-    const completedCount = attempts.filter(a => a.completedAt).length;
+    const completedCount = attempts.filter((a) => a.completedAt).length;
     const completionRate = (completedCount / total) * 100;
 
     const scoreDistribution = {
-      excellent: attempts.filter(a => a.percentage >= 90).length,
-      good: attempts.filter(a => a.percentage >= 80 && a.percentage < 90).length,
-      satisfactory: attempts.filter(a => a.percentage >= 70 && a.percentage < 80).length,
-      needsImprovement: attempts.filter(a => a.percentage >= 60 && a.percentage < 70).length,
-      belowPassing: attempts.filter(a => a.percentage < 60).length,
+      excellent: attempts.filter((a) => a.percentage >= 90).length,
+      good: attempts.filter((a) => a.percentage >= 80 && a.percentage < 90).length,
+      satisfactory: attempts.filter((a) => a.percentage >= 70 && a.percentage < 80).length,
+      needsImprovement: attempts.filter((a) => a.percentage >= 60 && a.percentage < 70).length,
+      belowPassing: attempts.filter((a) => a.percentage < 60).length,
     };
 
     return {
@@ -676,9 +704,13 @@ export class QuizService {
     const lecture = await Lecture.findById(lectureId).lean();
     const questions = resolveQuizQuestions(lecture as any);
 
-    const questionStats = questions.map((q, idx) => {
-      const correct = attempts.filter(a => a.details?.some(d => d.questionId === q.questionId && d.isCorrect)).length;
-      const attempted = attempts.filter(a => a.details?.some(d => d.questionId === q.questionId && d.selectedAnswer)).length;
+    const questionStats = questions.map((q, _idx) => {
+      const correct = attempts.filter((a) =>
+        a.details?.some((d) => d.questionId === q.questionId && d.isCorrect)
+      ).length;
+      const attempted = attempts.filter((a) =>
+        a.details?.some((d) => d.questionId === q.questionId && d.selectedAnswer)
+      ).length;
       const incorrect = attempted - correct;
       const skipped = attempts.length - attempted;
       const accuracy = attempted > 0 ? (correct / attempted) * 100 : 0;
@@ -730,33 +762,35 @@ export class QuizService {
 
     const lecture = await Lecture.findById(attempt.lecture).lean();
 
-    const exportData = [{
-      attemptId: attempt._id,
-      studentId: attempt.user,
-      studentName: `Student ${attempt.user.toString().slice(-6)}`,
-      studentEmail: `student${attempt.user.toString().slice(-6)}@example.com`,
-      course: lecture?.course?.toString() || '',
-      quizTitle: attempt.quizTitle || lecture?.title || '',
-      attemptNumber: attempt.attemptNumber,
-      score: attempt.score,
-      totalMarks: attempt.totalMarks,
-      percentage: attempt.percentage,
-      passFail: attempt.passFail,
-      letterGrade: attempt.letterGrade || '',
-      correctAnswers: attempt.correctAnswers,
-      incorrectAnswers: attempt.incorrectAnswers,
-      skippedQuestions: attempt.skippedQuestions,
-      timeTaken: attempt.timeTaken,
-      timeLimit: attempt.timeLimit,
-      autoSubmitted: attempt.autoSubmitted,
-      evaluationStatus: attempt.evaluationStatus,
-      startedAt: attempt.startedAt,
-      submittedAt: attempt.submittedAt,
-      gradedBy: typeof attempt.gradedBy === 'object' ? attempt.gradedBy?.toString() : '',
-      publishedAt: attempt.publishedAt,
-      answers: JSON.stringify(attempt.answers),
-      details: JSON.stringify(attempt.details),
-    }];
+    const exportData = [
+      {
+        attemptId: attempt._id,
+        studentId: attempt.user,
+        studentName: `Student ${attempt.user.toString().slice(-6)}`,
+        studentEmail: `student${attempt.user.toString().slice(-6)}@example.com`,
+        course: lecture?.course?.toString() || '',
+        quizTitle: attempt.quizTitle || lecture?.title || '',
+        attemptNumber: attempt.attemptNumber,
+        score: attempt.score,
+        totalMarks: attempt.totalMarks,
+        percentage: attempt.percentage,
+        passFail: attempt.passFail,
+        letterGrade: attempt.letterGrade || '',
+        correctAnswers: attempt.correctAnswers,
+        incorrectAnswers: attempt.incorrectAnswers,
+        skippedQuestions: attempt.skippedQuestions,
+        timeTaken: attempt.timeTaken,
+        timeLimit: attempt.timeLimit,
+        autoSubmitted: attempt.autoSubmitted,
+        evaluationStatus: attempt.evaluationStatus,
+        startedAt: attempt.startedAt,
+        submittedAt: attempt.submittedAt,
+        gradedBy: typeof attempt.gradedBy === 'object' ? attempt.gradedBy?.toString() : '',
+        publishedAt: attempt.publishedAt,
+        answers: JSON.stringify(attempt.answers),
+        details: JSON.stringify(attempt.details),
+      },
+    ];
 
     const csvHeaders = [
       'Attempt ID',
@@ -794,36 +828,38 @@ export class QuizService {
     const lectures = await Lecture.find({ course: courseId }).lean();
 
     const totalQuizzes = attempts.length;
-    const totalStudents = new Set(attempts.map(a => a.user)).size;
+    const totalStudents = new Set(attempts.map((a) => a.user)).size;
     const averageScore = attempts.reduce((sum, a) => sum + a.score, 0) / (totalQuizzes || 1);
-    const passRate = attempts.filter(a => a.passed).length / (totalQuizzes || 1) * 100;
+    const passRate = (attempts.filter((a) => a.passed).length / (totalQuizzes || 1)) * 100;
     const failureRate = 100 - passRate;
 
-    const quizStats = lectures.map(lecture => {
-      const lectureAttempts = attempts.filter(a => a.lecture.toString() === lecture._id.toString());
-      if (lectureAttempts.length === 0) return null;
+    const quizStats = lectures
+      .map((lecture) => {
+        const lectureAttempts = attempts.filter((a) => a.lecture.toString() === lecture._id.toString());
+        if (lectureAttempts.length === 0) return null;
 
-      const averageScore = lectureAttempts.reduce((sum, a) => sum + a.score, 0) / lectureAttempts.length;
-      const passRate = lectureAttempts.filter(a => a.passed).length / lectureAttempts.length * 100;
-      const totalAttempts = lectureAttempts.length;
+        const averageScore = lectureAttempts.reduce((sum, a) => sum + a.score, 0) / lectureAttempts.length;
+        const passRate = (lectureAttempts.filter((a) => a.passed).length / lectureAttempts.length) * 100;
+        const totalAttempts = lectureAttempts.length;
 
-      return {
-        lectureId: lecture._id,
-        lectureTitle: lecture.title,
-        type: lecture.type,
-        totalAttempts,
-        averageScore,
-        passRate,
-        difficulty: 'medium',
-      };
-    }).filter(Boolean) as any;
+        return {
+          lectureId: lecture._id,
+          lectureTitle: lecture.title,
+          type: lecture.type,
+          totalAttempts,
+          averageScore,
+          passRate,
+          difficulty: 'medium',
+        };
+      })
+      .filter(Boolean) as any;
 
     const difficultQuizzes = quizStats.sort((a: any, b: any) => b.averageScore - a.averageScore).slice(0, 5);
 
     const highScorers = attempts
       .sort((a, b) => b.score - a.score)
       .slice(0, 5)
-      .map(a => ({
+      .map((a) => ({
         studentId: a.user,
         score: a.score,
         percentage: a.percentage,
@@ -843,7 +879,9 @@ export class QuizService {
       difficultQuizzes,
       highScorers,
       questionStats,
-      recentActivity: attempts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10),
+      recentActivity: attempts
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 10),
     };
   }
 
@@ -883,7 +921,7 @@ export class QuizService {
 
     for (const attempt of attempts) {
       if (attempt.details && Array.isArray(attempt.details)) {
-        attempt.details.forEach(d => {
+        attempt.details.forEach((d) => {
           if (d.questionId) uniqueQuestions.add(d.questionId);
         });
       }
@@ -891,36 +929,35 @@ export class QuizService {
 
     if (uniqueQuestions.size === 0) return [];
 
-    const questionStats = Array.from(uniqueQuestions).map((qId): any => {
-      const matchingDetails = attempts.flatMap(a => a.details?.filter(d => d.questionId === qId) || []);
-      const total = matchingDetails.length;
-      if (total === 0) return null;
+    const questionStats = Array.from(uniqueQuestions)
+      .map((qId): any => {
+        const matchingDetails = attempts.flatMap((a) => a.details?.filter((d) => d.questionId === qId) || []);
+        const total = matchingDetails.length;
+        if (total === 0) return null;
 
-      const correct = matchingDetails.filter(d => d.isCorrect).length;
-      const attempted = matchingDetails.filter(d => d.selectedAnswer).length;
-      const incorrect = attempted - correct;
-      const skipped = total - attempted;
-      const accuracy = attempted > 0 ? (correct / attempted) * 100 : 0;
+        const correct = matchingDetails.filter((d) => d.isCorrect).length;
+        const attempted = matchingDetails.filter((d) => d.selectedAnswer).length;
+        const incorrect = attempted - correct;
+        const skipped = total - attempted;
+        const accuracy = attempted > 0 ? (correct / attempted) * 100 : 0;
 
-      return {
-        questionId: qId,
-        total: total,
-        correct,
-        incorrect,
-        skipped,
-        accuracy,
-        difficulty: accuracy >= 80 ? 'easy' : accuracy >= 60 ? 'medium' : 'hard',
-      };
-    }).filter(Boolean);
+        return {
+          questionId: qId,
+          total: total,
+          correct,
+          incorrect,
+          skipped,
+          accuracy,
+          difficulty: accuracy >= 80 ? 'easy' : accuracy >= 60 ? 'medium' : 'hard',
+        };
+      })
+      .filter(Boolean);
 
     return questionStats.sort((a, b) => b.correct - a.correct);
   }
 
   async invalidateCache(lectureId: string): Promise<void> {
-    await QuizAttempt.updateMany(
-      { lecture: lectureId },
-      { $set: { evaluationStatus: 'pending' } }
-    );
+    await QuizAttempt.updateMany({ lecture: lectureId }, { $set: { evaluationStatus: 'pending' } });
   }
 }
 

@@ -71,7 +71,8 @@ export const ROUTES = {
   INSTRUCTOR_PROFILE: '/instructor/profile',
   INSTRUCTOR_ASSIGNMENTS: '/instructor/assignments',
   INSTRUCTOR_ASSIGNMENT_SUBMISSIONS: (lectureId: string) => `/instructor/assignments/${lectureId}/submissions`,
-  INSTRUCTOR_ASSIGNMENT_SUBMISSION_DETAIL: (submissionId: string) => `/instructor/assignments/submissions/${submissionId}`,
+  INSTRUCTOR_ASSIGNMENT_SUBMISSION_DETAIL: (submissionId: string) =>
+    `/instructor/assignments/submissions/${submissionId}`,
 
   // Admin
   ADMIN_DASHBOARD: '/admin',

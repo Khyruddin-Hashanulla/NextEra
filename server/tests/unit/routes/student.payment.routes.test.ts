@@ -64,11 +64,7 @@ describe('student payment routes', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.message).toBe('Payment initiated');
       expect(res.body.data).toEqual(order);
-      expect(mockedStudentService.initiatePayment).toHaveBeenCalledWith(
-        '65f1a1b2c3d4e5f6a7b8c9d0',
-        'c1',
-        'SAVE10',
-      );
+      expect(mockedStudentService.initiatePayment).toHaveBeenCalledWith('65f1a1b2c3d4e5f6a7b8c9d0', 'c1', 'SAVE10');
     });
 
     it('rejects a payload without a courseId', async () => {
@@ -95,7 +91,7 @@ describe('student payment routes', () => {
         '65f1a1b2c3d4e5f6a7b8c9d0',
         'order_test_1',
         'pay_1',
-        'sig',
+        'sig'
       );
     });
 
@@ -118,10 +114,7 @@ describe('student payment routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.message).toBe('Payment retry initiated');
-      expect(mockedStudentService.retryPayment).toHaveBeenCalledWith(
-        '65f1a1b2c3d4e5f6a7b8c9d0',
-        'p1',
-      );
+      expect(mockedStudentService.retryPayment).toHaveBeenCalledWith('65f1a1b2c3d4e5f6a7b8c9d0', 'p1');
     });
   });
 
@@ -134,22 +127,14 @@ describe('student payment routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data).toEqual(data);
-      expect(mockedStudentService.listMyPayments).toHaveBeenCalledWith(
-        '65f1a1b2c3d4e5f6a7b8c9d0',
-        1,
-        10,
-      );
+      expect(mockedStudentService.listMyPayments).toHaveBeenCalledWith('65f1a1b2c3d4e5f6a7b8c9d0', 1, 10);
     });
 
     it('passes pagination query params through', async () => {
       mockedStudentService.listMyPayments.mockResolvedValue({} as never);
       await request(app).get('/api/v1/student/payments?page=3&limit=50');
 
-      expect(mockedStudentService.listMyPayments).toHaveBeenCalledWith(
-        '65f1a1b2c3d4e5f6a7b8c9d0',
-        3,
-        50,
-      );
+      expect(mockedStudentService.listMyPayments).toHaveBeenCalledWith('65f1a1b2c3d4e5f6a7b8c9d0', 3, 50);
     });
   });
 
@@ -162,10 +147,7 @@ describe('student payment routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body.data).toEqual(payment);
-      expect(mockedStudentService.getPaymentById).toHaveBeenCalledWith(
-        'p1',
-        '65f1a1b2c3d4e5f6a7b8c9d0',
-      );
+      expect(mockedStudentService.getPaymentById).toHaveBeenCalledWith('p1', '65f1a1b2c3d4e5f6a7b8c9d0');
     });
   });
 
@@ -199,7 +181,7 @@ describe('student payment routes', () => {
       expect(mockedStudentService.initiateBundlePayment).toHaveBeenCalledWith(
         '65f1a1b2c3d4e5f6a7b8c9d0',
         'b1',
-        'FLAT50',
+        'FLAT50'
       );
     });
 
@@ -230,7 +212,7 @@ describe('student payment routes', () => {
       expect(mockedStudentService.initiateSubscriptionPayment).toHaveBeenCalledWith(
         '65f1a1b2c3d4e5f6a7b8c9d0',
         's1',
-        undefined,
+        undefined
       );
     });
 
@@ -252,11 +234,7 @@ describe('student payment routes', () => {
       mockedStudentService.listMyPayments.mockResolvedValue({} as never);
       const res = await request(app).get('/api/v1/student/payments');
       expect(res.status).toBe(200);
-      expect(mockedStudentService.listMyPayments).toHaveBeenCalledWith(
-        '65f1a1b2c3d4e5f6a7b8c9d0',
-        1,
-        10,
-      );
+      expect(mockedStudentService.listMyPayments).toHaveBeenCalledWith('65f1a1b2c3d4e5f6a7b8c9d0', 1, 10);
     });
   });
 });

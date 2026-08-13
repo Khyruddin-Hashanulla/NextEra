@@ -1,4 +1,11 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from '@/components/ui/dialog';
 import { X } from 'lucide-react';
 import { resolveVideoEmbed } from '@/lib/video';
 
@@ -33,16 +40,7 @@ function renderEmbed(lecture: PreviewLecture): React.ReactNode {
   }
   const directUrl = lecture?.videoSource?.url || lecture?.videoUrl?.url;
   if (directUrl) {
-    return (
-      <video
-        key={directUrl}
-        src={directUrl}
-        controls
-        autoPlay
-        playsInline
-        className="h-full w-full rounded-lg"
-      />
-    );
+    return <video key={directUrl} src={directUrl} controls autoPlay playsInline className="h-full w-full rounded-lg" />;
   }
   return (
     <div className="flex h-full items-center justify-center text-muted-foreground">

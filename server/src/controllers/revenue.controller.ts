@@ -1,6 +1,5 @@
 import { Request, Response } from 'express';
 import { revenueService } from '../services/revenue.service';
-import { paymentService } from '../services/payment.service';
 import { asyncHandler } from '../utils/asyncHandler';
 import { ApiResponse } from '../utils/ApiResponse';
 import { HTTP_STATUS } from '../constants/httpStatus';
@@ -112,10 +111,35 @@ export const getMyInstructorSubscription = asyncHandler(async (req: Request, res
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Subscription fetched', data));
 });
 
-export const purchaseInstructorSubscription = asyncHandler(async (req: Request, res: Response) => {
+export const getPlansForInstructor = asyncHandler(async (_req: Request, res: Response) => {
+  const plans = await revenueService.listSubscribablePlans();
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Plans fetched', plans));
+});
+
+export const getMySubscriptionOverview = asyncHandler(async (req: Request, res: Response) => {
+  const data = await revenueService.getSubscriptionOverview(req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Subscription overview fetched', data));
+});
+
+export const getMyEntitlements = asyncHandler(async (req: Request, res: Response) => {
+  const data = await revenueService.getEntitlementsForInstructor(req.currentUser!.userId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Entitlements fetched', data));
+});
+
+export const subscribeToInstructorPlan = asyncHandler(async (req: Request, res: Response) => {
   const { planId } = req.body;
-  const data = await revenueService.subscribeToPlan(req.currentUser!.userId, planId);
-  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Subscription processed', data));
+  const data = await revenueService.initiateOrRenew(req.currentUser!.userId, planId);
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Subscription initiated', data));
+});
+
+export const verifyInstructorSubscription = asyncHandler(async (req: Request, res: Response) => {
+  const { planId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+  await revenueService.verifyInstructorSubscriptionPayment(req.currentUser!.userId, planId, {
+    razorpayOrderId,
+    razorpayPaymentId,
+    razorpaySignature,
+  });
+  res.status(HTTP_STATUS.OK).json(ApiResponse.success('Subscription activated', { success: true }));
 });
 
 export const cancelMyInstructorSubscription = asyncHandler(async (req: Request, res: Response) => {

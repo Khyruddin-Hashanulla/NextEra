@@ -11,8 +11,15 @@ import { FormSkeleton } from '@/components/skeletons/FormSkeleton';
 import { FileUpload } from '@/components/ui/file-upload';
 import type { AssignmentFile, AssignmentStatus } from '@/types/student';
 import {
-  ArrowLeft, Download, Upload, Loader2, File as FileIcon,
-  CheckCircle, XCircle, Clock, RotateCcw,
+  ArrowLeft,
+  Download,
+  Upload,
+  Loader2,
+  File as FileIcon,
+  CheckCircle,
+  XCircle,
+  Clock,
+  RotateCcw,
 } from 'lucide-react';
 
 const STATUS_STYLES: Record<AssignmentStatus, { label: string; className: string }> = {
@@ -44,12 +51,13 @@ export function AssignmentDetailPage() {
   });
 
   const submitMutation = useMutation({
-    mutationFn: () => studentApi.submitAssignment({
-      courseId: data!.lecture.course._id,
-      lectureId: lectureId!,
-      content,
-      files: files.length ? files : undefined,
-    }),
+    mutationFn: () =>
+      studentApi.submitAssignment({
+        courseId: data!.lecture.course._id,
+        lectureId: lectureId!,
+        content,
+        files: files.length ? files : undefined,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'assignment', lectureId] });
       queryClient.invalidateQueries({ queryKey: ['student', 'assignments', 'overview'] });
@@ -96,7 +104,10 @@ export function AssignmentDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/student/assignments" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <Link
+          to="/student/assignments"
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Back to Assignments
         </Link>
       </div>
@@ -111,7 +122,9 @@ export function AssignmentDetailPage() {
 
       {assignment?.instructions && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">Instructions</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm">Instructions</CardTitle>
+          </CardHeader>
           <CardContent>
             <p className="whitespace-pre-line text-sm text-muted-foreground">{assignment.instructions}</p>
           </CardContent>
@@ -143,14 +156,24 @@ export function AssignmentDetailPage() {
 
       {gradeView && submission && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">Your Grade</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm">Your Grade</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-2">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-2xl font-bold">{submission.letterGrade || `${submission.grade}/${submission.maxMarks}`}</span>
+              <span className="text-2xl font-bold">
+                {submission.letterGrade || `${submission.grade}/${submission.maxMarks}`}
+              </span>
               {submission.percentage !== undefined && <Badge variant="secondary">{submission.percentage}%</Badge>}
               {submission.passFail && (
-                <span className={`inline-flex items-center gap-1 text-sm font-medium ${submission.passFail === 'pass' ? 'text-green-600' : 'text-red-600'}`}>
-                  {submission.passFail === 'pass' ? <CheckCircle className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                <span
+                  className={`inline-flex items-center gap-1 text-sm font-medium ${submission.passFail === 'pass' ? 'text-green-600' : 'text-red-600'}`}
+                >
+                  {submission.passFail === 'pass' ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <XCircle className="h-4 w-4" />
+                  )}
                   {submission.passFail === 'pass' ? 'Passed' : 'Failed'}
                 </span>
               )}
@@ -178,7 +201,9 @@ export function AssignmentDetailPage() {
                         <span className="truncate text-sm">{f.name}</span>
                       </div>
                       <a href={f.url} target="_blank" rel="noopener noreferrer" download>
-                        <Button variant="ghost" size="sm"><Download className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-3 w-3" />
+                        </Button>
                       </a>
                     </div>
                   ))}
@@ -191,7 +216,9 @@ export function AssignmentDetailPage() {
 
       {submission && (
         <Card>
-          <CardHeader><CardTitle className="text-sm">Your Submission</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-sm">Your Submission</CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">
               Submitted: {new Date(submission.submittedAt).toLocaleString()}
@@ -207,7 +234,9 @@ export function AssignmentDetailPage() {
                       <span className="truncate text-sm">{f.name}</span>
                     </div>
                     <a href={f.url} target="_blank" rel="noopener noreferrer" download>
-                      <Button variant="ghost" size="sm"><Download className="h-3 w-3" /></Button>
+                      <Button variant="ghost" size="sm">
+                        <Download className="h-3 w-3" />
+                      </Button>
                     </a>
                   </div>
                 ))}
@@ -261,7 +290,12 @@ export function AssignmentDetailPage() {
                         <FileIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                         <span className="truncate text-sm">{f.name}</span>
                       </div>
-                      <button onClick={() => removeFile(f.publicId)} className="text-xs text-destructive hover:underline">Remove</button>
+                      <button
+                        onClick={() => removeFile(f.publicId)}
+                        className="text-xs text-destructive hover:underline"
+                      >
+                        Remove
+                      </button>
                     </div>
                   ))}
                 </div>

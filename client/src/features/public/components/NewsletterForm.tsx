@@ -5,7 +5,6 @@ import { z } from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/providers/ToastProvider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { Loader2, CheckCircle2, Mail } from 'lucide-react';
 
@@ -52,25 +51,30 @@ export function NewsletterForm({ className }: NewsletterFormProps) {
               </div>
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">You're subscribed!</h3>
-            <p className="text-sm text-muted-foreground">Thanks for joining. We'll send you the latest updates and learning resources.</p>
+            <p className="text-sm text-muted-foreground">
+              Thanks for joining. We'll send you the latest updates and learning resources.
+            </p>
           </motion.div>
         ) : (
-          <motion.div
-            key="form"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center"
-          >
+          <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center">
             <div className="flex items-center justify-center mb-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                 <Mail className="h-6 w-6 text-primary" aria-hidden="true" />
               </div>
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">Stay Updated</h3>
-            <p className="text-sm text-muted-foreground mb-6">Get the latest courses, resources, and learning tips delivered to your inbox.</p>
-            <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto" noValidate>
+            <p className="text-sm text-muted-foreground mb-6">
+              Get the latest courses, resources, and learning tips delivered to your inbox.
+            </p>
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+              noValidate
+            >
               <div className="flex-1">
-                <label htmlFor="newsletter-email" className="sr-only">Email address</label>
+                <label htmlFor="newsletter-email" className="sr-only">
+                  Email address
+                </label>
                 <input
                   id="newsletter-email"
                   type="email"
@@ -83,7 +87,11 @@ export function NewsletterForm({ className }: NewsletterFormProps) {
                   aria-invalid={!!errors.email}
                   aria-describedby={errors.email ? 'newsletter-error' : undefined}
                 />
-                {errors.email && <p id="newsletter-error" className="text-xs text-destructive mt-1 text-left" role="alert">{errors.email.message}</p>}
+                {errors.email && (
+                  <p id="newsletter-error" className="text-xs text-destructive mt-1 text-left" role="alert">
+                    {errors.email.message}
+                  </p>
+                )}
               </div>
               <Button
                 type="submit"
@@ -95,7 +103,13 @@ export function NewsletterForm({ className }: NewsletterFormProps) {
             </form>
             <p className="text-xs text-muted-foreground/70 mt-4">
               No spam. Unsubscribe anytime. Read our{' '}
-              <a href="/privacy" className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded">Privacy Policy</a>.
+              <a
+                href="/privacy"
+                className="text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded"
+              >
+                Privacy Policy
+              </a>
+              .
             </p>
           </motion.div>
         )}

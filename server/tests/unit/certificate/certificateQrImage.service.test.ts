@@ -28,7 +28,7 @@ describe('StudentService.getCertificateQrImage', () => {
       mockQuery({
         certificateId: 'NXLMS-2026-CS-000008',
         verificationUrl: 'http://localhost:5173/certificates/verify/NXLMS-2026-CS-000008',
-      }) as never,
+      }) as never
     );
     vi.mocked(generateQrCodePngBuffer).mockResolvedValue(Buffer.from('png-bytes'));
 
@@ -40,18 +40,16 @@ describe('StudentService.getCertificateQrImage', () => {
 
   it('encodes the canonical verification URL (derived from the current client origin) into the QR', async () => {
     vi.mocked(Certificate.findOne as never).mockReturnValue(
-      mockQuery({ certificateId: 'NXLMS-2026-CS-000008' }) as never,
+      mockQuery({ certificateId: 'NXLMS-2026-CS-000008' }) as never
     );
     vi.mocked(generateQrCodePngBuffer).mockResolvedValue(Buffer.from('png-bytes'));
-    vi.mocked(getVerificationUrl).mockReturnValue(
-      'http://localhost:5173/certificates/verify/NXLMS-2026-CS-000008',
-    );
+    vi.mocked(getVerificationUrl).mockReturnValue('http://localhost:5173/certificates/verify/NXLMS-2026-CS-000008');
 
     await studentService.getCertificateQrImage('NXLMS-2026-CS-000008');
 
     expect(getVerificationUrl).toHaveBeenCalledWith('NXLMS-2026-CS-000008');
     expect(generateQrCodePngBuffer).toHaveBeenCalledWith(
-      'http://localhost:5173/certificates/verify/NXLMS-2026-CS-000008',
+      'http://localhost:5173/certificates/verify/NXLMS-2026-CS-000008'
     );
   });
 

@@ -42,7 +42,7 @@ export function StarRating({ rating, className }: { rating: number; className?: 
           key={index}
           className={cn(
             'h-4 w-4',
-            index < Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'fill-muted text-muted',
+            index < Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'fill-muted text-muted'
           )}
           aria-hidden="true"
         />
@@ -61,7 +61,7 @@ export function TestimonialCard({ testimonial, className }: TestimonialCardProps
     <figure
       className={cn(
         'relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card/80 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8',
-        className,
+        className
       )}
     >
       <div

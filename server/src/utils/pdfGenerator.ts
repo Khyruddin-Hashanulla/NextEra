@@ -54,16 +54,10 @@ interface CertificateData {
 
 type PDF = InstanceType<typeof PDFDocument>;
 
-function roundedRectPath(
-  doc: PDF,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  r: number
-) {
+function roundedRectPath(doc: PDF, x: number, y: number, w: number, h: number, r: number) {
   const radius = Math.min(r, w / 2, h / 2);
-  doc.moveTo(x + radius, y)
+  doc
+    .moveTo(x + radius, y)
     .lineTo(x + w - radius, y)
     .quadraticCurveTo(x + w, y, x + w, y + radius)
     .lineTo(x + w, y + h - radius)
@@ -105,13 +99,7 @@ interface TextStyle {
  * `width`, which triggers word-wrapping; instead we measure the string, then
  * anchor it at `centerX - width / 2` and disable line breaks.
  */
-function drawCenteredLine(
-  doc: PDF,
-  text: string,
-  centerX: number,
-  topY: number,
-  options: TextStyle
-): void {
+function drawCenteredLine(doc: PDF, text: string, centerX: number, topY: number, options: TextStyle): void {
   if (!text) return;
   const spacing = options.characterSpacing || 0;
   doc.font(options.font).fontSize(options.size);
@@ -123,13 +111,7 @@ function drawCenteredLine(
 }
 
 /** Draw text anchored at its left edge at (x, topY). */
-function drawLeftLine(
-  doc: PDF,
-  text: string,
-  x: number,
-  topY: number,
-  options: TextStyle
-): void {
+function drawLeftLine(doc: PDF, text: string, x: number, topY: number, options: TextStyle): void {
   if (!text) return;
   const spacing = options.characterSpacing || 0;
   doc.font(options.font).fontSize(options.size);
@@ -242,7 +224,7 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
       if (LOGO_PATH) {
         try {
           doc.image(LOGO_PATH, PLATE_L, BOARD.top + 10, { fit: [logoSize, logoSize], valign: 'center' });
-        } catch (err) {
+        } catch (_err) {
           logger.warn('Could not embed NextEra logo in certificate PDF', { certificateId: data.certificateId });
         }
       }
@@ -250,7 +232,12 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
       // ── Header region ────────────────
       const brandX = PLATE_L + (LOGO_PATH ? logoSize + 18 : 0);
       drawLeftLine(doc, 'NextEra', brandX, BOARD.top + 30, { font: 'Helvetica-Bold', size: 24, color: C.slate });
-      drawLeftLine(doc, 'LEARNING PLATFORM', brandX, BOARD.top + 62, { font: 'Helvetica', size: 9, color: C.slate400, characterSpacing: 2 });
+      drawLeftLine(doc, 'LEARNING PLATFORM', brandX, BOARD.top + 62, {
+        font: 'Helvetica',
+        size: 9,
+        color: C.slate400,
+        characterSpacing: 2,
+      });
 
       // Verified badge (top right)
       const badgeW = 168;
@@ -289,16 +276,13 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
       const nameText = data.studentName || 'Student';
       const midText = 'who has successfully completed the course';
       const courseBase = data.courseTitle || 'Course';
-      const levelText = data.courseLevel
-        ? data.courseLevel.charAt(0).toUpperCase() + data.courseLevel.slice(1)
-        : '';
+      const levelText = data.courseLevel ? data.courseLevel.charAt(0).toUpperCase() + data.courseLevel.slice(1) : '';
 
       // Wrap long names / courses with measured widths (max 2 lines each)
       const nameMaxW = pageW - 340;
       const nameLines = wrapText(doc, nameText, nameMaxW, mName).slice(0, 2);
       const courseLines = wrapText(doc, courseBase, 560, mCourse).slice(0, 2);
       const maxNameW = Math.max(...nameLines.map((l) => stringWidth(doc, l, mName)));
-      const maxCourseW = Math.max(...courseLines.map((l) => stringWidth(doc, l, mCourse)));
 
       const kickerH = lineHeight(doc, mtl);
       const titleH = lineHeight(doc, mti);
@@ -362,7 +346,10 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
       const underlineY = y + 8;
       const ulw = Math.min(Math.max(maxNameW, 120), 380);
       doc.lineWidth(2);
-      doc.moveTo(CX - ulw / 2, underlineY).lineTo(CX + ulw / 2, underlineY).stroke(C.orange);
+      doc
+        .moveTo(CX - ulw / 2, underlineY)
+        .lineTo(CX + ulw / 2, underlineY)
+        .stroke(C.orange);
       y += 12;
 
       // Mid line
@@ -393,10 +380,20 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
 
       // Bottom-left: issue date + certificate id
       const lx = PLATE_L;
-      drawLeftLine(doc, 'ISSUE DATE', lx, footTop, { font: 'Helvetica-Bold', size: 9, color: C.slate400, characterSpacing: 1.5 });
+      drawLeftLine(doc, 'ISSUE DATE', lx, footTop, {
+        font: 'Helvetica-Bold',
+        size: 9,
+        color: C.slate400,
+        characterSpacing: 1.5,
+      });
       const dateStr = data.issuedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       drawLeftLine(doc, dateStr, lx, footTop + 14, { font: 'Helvetica-Bold', size: 13, color: C.slate700 });
-      drawLeftLine(doc, 'CERTIFICATE ID', lx, footTop + 34, { font: 'Helvetica-Bold', size: 9, color: C.slate400, characterSpacing: 1.5 });
+      drawLeftLine(doc, 'CERTIFICATE ID', lx, footTop + 34, {
+        font: 'Helvetica-Bold',
+        size: 9,
+        color: C.slate400,
+        characterSpacing: 1.5,
+      });
       drawLeftLine(doc, data.certificateId, lx, footTop + 48, { font: 'Courier', size: 11, color: C.slate700 });
 
       // Bottom-center: instructor signature block
@@ -405,8 +402,16 @@ export async function generateCertificatePdf(data: CertificateData): Promise<str
       drawCenteredLine(doc, sig, CX, footTop + 2, sigM);
       const sigW = stringWidth(doc, sig, sigM);
       doc.lineWidth(1);
-      doc.moveTo(CX - sigW / 2 - 4, footTop + 22).lineTo(CX + sigW / 2 + 4, footTop + 22).stroke(C.slate400);
-      drawCenteredLine(doc, 'INSTRUCTOR', CX, footTop + 28, { font: 'Helvetica-Bold', size: 10, color: C.slate500, characterSpacing: 2 });
+      doc
+        .moveTo(CX - sigW / 2 - 4, footTop + 22)
+        .lineTo(CX + sigW / 2 + 4, footTop + 22)
+        .stroke(C.slate400);
+      drawCenteredLine(doc, 'INSTRUCTOR', CX, footTop + 28, {
+        font: 'Helvetica-Bold',
+        size: 10,
+        color: C.slate500,
+        characterSpacing: 2,
+      });
 
       // Bottom-right: QR code + caption (quiet-zone box keeps it fully on-page).
       // The full verification URL is encoded in the QR; only a short hint is shown.
