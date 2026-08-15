@@ -50,7 +50,7 @@ describe('HomePage', () => {
     await waitFor(
       () =>
         expect(
-          screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })
+          screen.getByRole('heading', { name: /Connecting Students With Tutors/i })
         ).toBeInTheDocument(),
       { timeout: LONG_TIMEOUT }
     );

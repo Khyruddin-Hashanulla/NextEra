@@ -53,7 +53,7 @@ describe('Responsive behavior', () => {
       setViewport(BREAKPOINTS.mobile);
       wrap(<HomePage />, { route: '/' });
       expect(
-        screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })
+        screen.getByRole('heading', { name: /Connecting Students With Tutors/i })
       ).toBeInTheDocument();
     });
 
@@ -61,7 +61,7 @@ describe('Responsive behavior', () => {
       setViewport(BREAKPOINTS.tablet);
       wrap(<HomePage />, { route: '/' });
       expect(
-        screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })
+        screen.getByRole('heading', { name: /Connecting Students With Tutors/i })
       ).toBeInTheDocument();
     });
 
@@ -69,7 +69,7 @@ describe('Responsive behavior', () => {
       setViewport(BREAKPOINTS.desktop);
       wrap(<HomePage />, { route: '/' });
       expect(
-        screen.getByRole('heading', { name: /Learn from industry experts and build your career/i })
+        screen.getByRole('heading', { name: /Connecting Students With Tutors/i })
       ).toBeInTheDocument();
     });
   });

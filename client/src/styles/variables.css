@@ -6,7 +6,7 @@
   --card-foreground: 222.2 84% 4.9%;
   --popover: 0 0% 100%;
   --popover-foreground: 222.2 84% 4.9%;
-  --primary: 24 96% 53%;
+  --primary: 262 83% 58%;
   --primary-foreground: 0 0% 100%;
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 47.4% 11.2%;
@@ -22,11 +22,11 @@
   --warning-foreground: 210 40% 98%;
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 24 96% 53%;
+  --ring: 262 83% 58%;
   --radius: 0.75rem;
 
   /* Decorative background glows */
-  --aura-primary: 24 96% 53%;
+  --aura-primary: 262 83% 58%;
   --aura-secondary: 262 83% 58%;
 
   /* Typography */
@@ -74,8 +74,8 @@
   --card-foreground: 210 40% 98%;
   --popover: 222.2 84% 4.9%;
   --popover-foreground: 210 40% 98%;
-  --primary: 24 96% 53%;
-  --primary-foreground: 222.2 47.4% 11.2%;
+  --primary: 262 83% 58%;
+  --primary-foreground: 0 0% 100%;
   --secondary: 217.2 32.6% 17.5%;
   --secondary-foreground: 210 40% 98%;
   --muted: 217.2 32.6% 17.5%;
@@ -90,7 +90,7 @@
   --warning-foreground: 222.2 47.4% 11.2%;
   --border: 217.2 32.6% 17.5%;
   --input: 217.2 32.6% 17.5%;
-  --ring: 24 96% 53%;
+  --ring: 262 83% 58%;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -101,8 +101,8 @@
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 24 96% 53%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 262 83% 58%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -117,7 +117,7 @@
     --warning-foreground: 222.2 47.4% 11.2%;
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 24 96% 53%;
+    --ring: 262 83% 58%;
   }
 }
 

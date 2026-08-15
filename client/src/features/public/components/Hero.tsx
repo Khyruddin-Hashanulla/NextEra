@@ -1,12 +1,14 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useAuth } from '@/providers/AuthProvider';
 import { getDashboardRoute, ROUTES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, GraduationCap, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, GraduationCap, Search, Sparkles, Users } from 'lucide-react';
 import { formatCompactCount } from '@/features/public/components/home/AnimatedNumber';
-import { HeroShowcase } from '@/features/public/components/home/HeroShowcase';
+import { HeroProfiles } from '@/features/public/components/home/HeroProfiles';
 import type { HomeStats } from '@/features/public/components/home/useHomePageData';
 import { PageBackground } from '@/components/layout/PageBackground';
 
@@ -19,6 +21,8 @@ const easeOut = [0.22, 1, 0.36, 1] as const;
 
 export function Hero({ className, stats }: HeroProps) {
   const { isAuthenticated, user } = useAuth();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
 
   const secondaryCta = isAuthenticated
     ? { label: 'Go to Dashboard', to: getDashboardRoute(user?.role) }
@@ -34,34 +38,42 @@ export function Hero({ className, stats }: HeroProps) {
       ]
     : [];
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`${ROUTES.COURSES}?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   return (
     <section className={cn('relative overflow-hidden bg-background', className)}>
       {/* Background layers */}
       <PageBackground variant="hero" className="absolute inset-0 -z-10" />
 
       <div className="container-custom relative z-10">
-        <div className="grid items-center gap-14 py-16 sm:py-20 lg:grid-cols-2 lg:gap-16 lg:py-24">
+        <div className="grid grid-cols-1 items-start gap-12 pb-16 pt-12 sm:pb-24 sm:pt-20 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-14 lg:pb-32 lg:pt-24">
           {/* Copy */}
-          <div className="text-center lg:text-left">
+          <div className="order-2 text-center lg:col-start-1 lg:row-start-1 lg:text-left">
             <motion.span
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, ease: easeOut }}
-              className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm font-medium text-primary"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground"
             >
-              <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Master in-demand skills with NextEra
+              <Sparkles className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
+              The learning platform for computer science
             </motion.span>
 
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1, ease: easeOut }}
-              className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl font-display"
+              className="mx-auto mt-6 max-w-3xl font-display text-4xl font-bold leading-[1.05] tracking-tight text-foreground sm:text-5xl lg:mx-0 lg:text-6xl"
             >
-              Learn from industry experts and{' '}
+              <span className="block">Connecting</span>{' '}
+              <span className="block">Students With</span>{' '}
               <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
-                build your career
+                Tutors
               </span>
             </motion.h1>
 
@@ -71,15 +83,48 @@ export function Hero({ className, stats }: HeroProps) {
               transition={{ duration: 0.6, delay: 0.2, ease: easeOut }}
               className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg lg:mx-0"
             >
-              Gain job-ready skills through expert-led courses, hands-on projects, and recognized certificates — at your
-              own pace, on any device.
+              Master computer science with hands-on courses, live classes, coding practice, and certificates you can
+              verify — built to take you from learner to career-ready developer.
             </motion.p>
+
+            {/* Course discovery search */}
+            <motion.form
+              role="search"
+              onSubmit={handleSearch}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.28, ease: easeOut }}
+              className="mx-auto mt-9 flex max-w-xl items-center gap-2 rounded-full border border-border bg-background/70 p-2 shadow-lg shadow-primary/10 backdrop-blur-sm sm:rounded-full lg:mx-0"
+            >
+              <div className="relative flex-1">
+                <Search
+                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
+                <Input
+                  type="search"
+                  aria-label="Search courses"
+                  placeholder="Search courses, topics, instructors…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-11 w-full border-0 bg-transparent pl-11 pr-4 text-sm shadow-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="h-11 shrink-0 rounded-full px-5 text-sm font-semibold"
+                disabled={!searchQuery.trim()}
+              >
+                Search
+              </Button>
+            </motion.form>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3, ease: easeOut }}
-              className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
+              transition={{ duration: 0.6, delay: 0.34, ease: easeOut }}
+              className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start"
             >
               <Button
                 asChild
@@ -99,36 +144,38 @@ export function Hero({ className, stats }: HeroProps) {
                 <Link to={secondaryCta.to}>{secondaryCta.label}</Link>
               </Button>
             </motion.div>
-
-            {heroStats.length > 0 && (
-              <motion.dl
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.4, ease: easeOut }}
-                className="mt-10 grid grid-cols-3 gap-6 border-t border-border/70 pt-8"
-              >
-                {heroStats.map((stat) => (
-                  <div key={stat.label} className="text-center lg:text-left">
-                    <dt className="sr-only">{stat.label}</dt>
-                    <dd className="flex items-center justify-center gap-1.5 text-2xl font-bold text-foreground lg:justify-start">
-                      <stat.icon className="h-5 w-5 text-primary" aria-hidden="true" />
-                      {formatCompactCount(stat.value)}+
-                    </dd>
-                    <dd className="mt-1 text-sm text-muted-foreground">{stat.label}</dd>
-                  </div>
-                ))}
-              </motion.dl>
-            )}
           </div>
 
-          {/* Learning topics showcase */}
+          {/* Founders visual */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.94, y: 20 }}
+            initial={{ opacity: 0, scale: 0.94, y: 24 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.25, ease: easeOut }}
+            className="order-1 mx-auto w-full max-w-xl lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:max-w-none lg:self-center"
           >
-            <HeroShowcase />
+            <HeroProfiles />
           </motion.div>
+
+          {/* Statistics — left column bottom on desktop, after the visual on mobile */}
+          {heroStats.length > 0 && (
+            <motion.dl
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.42, ease: easeOut }}
+              className="order-3 mx-auto grid w-full max-w-md grid-cols-3 gap-6 border-t border-border/70 pt-8 sm:max-w-lg lg:col-start-1 lg:mx-0 lg:row-start-2 lg:max-w-none"
+            >
+              {heroStats.map((stat) => (
+                <div key={stat.label} className="text-center lg:text-left">
+                  <dt className="sr-only">{stat.label}</dt>
+                  <dd className="flex items-center justify-center gap-1.5 text-2xl font-bold text-foreground lg:justify-start">
+                    <stat.icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                    {formatCompactCount(stat.value)}+
+                  </dd>
+                  <dd className="mt-1 text-sm text-muted-foreground">{stat.label}</dd>
+                </div>
+              ))}
+            </motion.dl>
+          )}
         </div>
       </div>
     </section>
