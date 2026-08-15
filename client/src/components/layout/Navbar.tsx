@@ -3,12 +3,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/providers/AuthProvider';
 import { useTheme } from '@/providers/ThemeProvider';
-import { getDashboardRoute, getProfileRoute, ROUTES } from '@/lib/constants';
+import { getProfileRoute, ROUTES } from '@/lib/constants';
 import { useToast } from '@/providers/ToastProvider';
 import { UserMenu } from '@/components/layout/UserMenu';
-import { Menu, X, Search, ChevronDown, LogOut, BookOpen, GraduationCap, Sun, Moon, Monitor } from 'lucide-react';
-import { useState, useRef, useEffect, useId, useMemo } from 'react';
+import { Menu, X, Search, CircleHelp, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { useState, useRef, useEffect, useId } from 'react';
 import { cn } from '@/lib/utils';
+
+const navLinks: { label: string; path: string }[] = [
+  { label: 'Courses', path: ROUTES.COURSES },
+  { label: 'Instructors', path: '/instructors' },
+  { label: 'Blog', path: ROUTES.BLOG },
+  { label: 'About', path: ROUTES.ABOUT },
+];
+
+const secondaryLinks: { label: string; path: string }[] = [
+  { label: 'Contact', path: ROUTES.CONTACT },
+  { label: 'FAQ', path: ROUTES.FAQ },
+  { label: 'Become an Instructor', path: ROUTES.INSTRUCTOR_APPLY },
+];
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -19,38 +32,16 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [exploreOpen, setExploreOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
-  const exploreRef = useRef<HTMLDivElement>(null);
   const mobileMenuId = useId();
-  const exploreMenuId = useId();
   const searchInputId = useId();
 
   const themeIcon = mode === 'light' ? Sun : mode === 'dark' ? Moon : Monitor;
   const ThemeIcon = themeIcon;
 
-  const navLinks = useMemo<{ label: string; path: string }[]>(() => {
-    const links: { label: string; path: string }[] = [
-      { label: 'Home', path: ROUTES.HOME },
-      { label: 'Courses', path: ROUTES.COURSES },
-      { label: 'Become an Instructor', path: ROUTES.INSTRUCTOR_APPLY },
-    ];
-    if (isAuthenticated) {
-      links.push({ label: 'Dashboard', path: getDashboardRoute(user?.role) });
-    }
-    links.push(
-      { label: 'Blog', path: ROUTES.BLOG },
-      { label: 'About', path: ROUTES.ABOUT },
-      { label: 'Contact', path: ROUTES.CONTACT },
-      { label: 'FAQ', path: ROUTES.FAQ }
-    );
-    return links;
-  }, [isAuthenticated, user?.role]);
-
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) setSearchOpen(false);
-      if (exploreRef.current && !exploreRef.current.contains(e.target as Node)) setExploreOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -60,7 +51,6 @@ export function Navbar() {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMobileMenuOpen(false);
-        setExploreOpen(false);
         setSearchOpen(false);
       }
     };
@@ -94,12 +84,15 @@ export function Navbar() {
     navigate(ROUTES.LOGIN);
   };
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(`${path}/`);
+
+  const themeLabel = `Switch to ${mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'} theme`;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between gap-3 lg:h-[4.25rem]">
+        <div className="flex h-16 items-center justify-between gap-3 lg:h-[4.5rem]">
           {/* Brand */}
           <Link
             to={ROUTES.HOME}
@@ -118,7 +111,9 @@ export function Navbar() {
               />
             </span>
             <span className="text-xl font-bold tracking-tight font-display">
-              <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">Next</span>
+              <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
+                Next
+              </span>
               <span className="text-foreground">Era</span>
             </span>
           </Link>
@@ -126,51 +121,16 @@ export function Navbar() {
           {/* Desktop navigation */}
           <nav
             aria-label="Main navigation"
-            className="hidden items-center justify-center gap-0.5 lg:flex xl:gap-1"
+            className="hidden items-center justify-center gap-1 lg:flex"
           >
-            <div className="relative" ref={exploreRef}>
-              <button
-                onClick={() => setExploreOpen(!exploreOpen)}
-                className="flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                aria-expanded={exploreOpen}
-                aria-controls={exploreMenuId}
-                aria-haspopup="true"
-              >
-                Explore <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />
-              </button>
-              {exploreOpen && (
-                <div
-                  id={exploreMenuId}
-                  role="menu"
-                  className="absolute left-0 top-full mt-2 w-52 rounded-2xl border border-border bg-popover p-1.5 shadow-xl shadow-primary/10 animate-in fade-in slide-in-from-top-2"
-                >
-                  <Link
-                    to={ROUTES.COURSES}
-                    role="menuitem"
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    onClick={() => setExploreOpen(false)}
-                  >
-                    <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" /> All Courses
-                  </Link>
-                  <Link
-                    to="/instructors"
-                    role="menuitem"
-                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-                    onClick={() => setExploreOpen(false)}
-                  >
-                    <GraduationCap className="h-4 w-4 text-primary" aria-hidden="true" /> Instructors
-                  </Link>
-                </div>
-              )}
-            </div>
             {navLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
                 className={cn(
-                  'rounded-full px-3 py-2 text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                  'rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
                   isActive(link.path)
-                    ? 'text-primary'
+                    ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground'
                 )}
               >
@@ -180,7 +140,7 @@ export function Navbar() {
           </nav>
 
           {/* Actions */}
-          <div className="flex items-center gap-1.5 lg:gap-2">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             <div className="relative hidden sm:block" ref={searchRef}>
               {searchOpen ? (
                 <form onSubmit={handleSearch} className="flex items-center" role="search">
@@ -201,7 +161,7 @@ export function Navbar() {
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="flex items-center gap-2 rounded-full px-3 py-2 text-sm text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="flex items-center gap-2 rounded-full px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Open search"
                   aria-expanded={searchOpen}
                 >
@@ -211,20 +171,33 @@ export function Navbar() {
               )}
             </div>
 
+            <Link
+              to={ROUTES.FAQ}
+              className={cn(
+                'rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+                isActive(ROUTES.FAQ) && 'text-primary'
+              )}
+              aria-label="Help center"
+            >
+              <CircleHelp className="h-4 w-4" aria-hidden="true" />
+            </Link>
+
             <button
               onClick={toggleTheme}
-              className="rounded-full p-2 text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label={`Switch to ${mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'} theme`}
+              className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label={themeLabel}
             >
               <ThemeIcon className="h-4 w-4" aria-hidden="true" />
             </button>
 
+            <div className="mx-1 hidden h-6 w-px shrink-0 bg-border sm:block" aria-hidden="true" />
+
             {isAuthenticated ? (
-              <div className="hidden md:flex items-center gap-2">
+              <div className="hidden items-center gap-2 md:flex">
                 <UserMenu />
               </div>
             ) : (
-              <div className="hidden md:flex items-center gap-1.5">
+              <div className="hidden items-center gap-1.5 md:flex">
                 <Button
                   variant="ghost"
                   onClick={() => navigate(ROUTES.LOGIN)}
@@ -242,7 +215,7 @@ export function Navbar() {
             )}
 
             <button
-              className="lg:hidden flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 lg:hidden"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-expanded={mobileMenuOpen}
               aria-controls={mobileMenuId}
@@ -261,7 +234,7 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div
           id={mobileMenuId}
-          className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border bg-background lg:hidden"
+          className="max-h-[calc(100dvh-4rem)] overflow-y-auto border-t border-border bg-background lg:hidden animate-in fade-in slide-in-from-top-2"
           role="dialog"
           aria-modal="true"
           aria-label="Navigation menu"
@@ -294,7 +267,7 @@ export function Navbar() {
                   to={link.path}
                   onClick={() => setMobileMenuOpen(false)}
                   className={cn(
-                    'rounded-xl px-3 py-2.5 text-sm font-medium transition-all',
+                    'rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
                     isActive(link.path)
                       ? 'text-primary bg-primary/10'
                       : 'text-muted-foreground hover:bg-accent hover:text-foreground'
@@ -303,14 +276,19 @@ export function Navbar() {
                   {link.label}
                 </Link>
               ))}
-              <Link
-                to="/instructors"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all hover:bg-accent hover:text-foreground"
-              >
-                Instructors
-              </Link>
             </nav>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-border pt-3">
+              {secondaryLinks.map((link) => (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
           </div>
           {isAuthenticated ? (
             <div className="flex items-center justify-between border-t border-border px-4 py-3">
@@ -331,14 +309,14 @@ export function Navbar() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={toggleTheme}
-                  className="rounded-full p-2 text-muted-foreground transition-all hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  aria-label={`Switch to ${mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'} theme`}
+                  className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  aria-label={themeLabel}
                 >
                   <ThemeIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="rounded-full p-2 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   aria-label="Sign out"
                 >
                   <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -370,6 +348,6 @@ export function Navbar() {
           )}
         </div>
       )}
-    </nav>
+    </header>
   );
 }

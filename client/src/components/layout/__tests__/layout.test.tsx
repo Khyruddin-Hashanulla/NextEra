@@ -156,6 +156,9 @@ describe('Navbar', () => {
     renderWithProviders(<Navbar />, { route: '/', mockAuth: createAuthValue() });
     expect(screen.getByRole('link', { name: /NextEra/ })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Courses' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Instructors' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sign In' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Create Free Account' })).toBeInTheDocument();
   });
@@ -166,7 +169,7 @@ describe('Navbar', () => {
       route: '/',
       mockAuth: createAuthValue({ user: studentUser, isAuthenticated: true }),
     });
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/student');
+    expect(screen.getByRole('button', { name: 'Account menu for Alice' })).toBeInTheDocument();
     expect(screen.getByText('Alice')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Account menu for Alice' }));
     expect(screen.getByRole('menuitem', { name: /Profile/ })).toBeInTheDocument();
@@ -176,22 +179,19 @@ describe('Navbar', () => {
     expect(screen.getByRole('menuitem', { name: /Logout/ })).toBeInTheDocument();
   });
 
-  it('opens the Explore dropdown', async () => {
-    const user = userEvent.setup();
-    renderWithProviders(<Navbar />, { route: '/', mockAuth: createAuthValue() });
-    await user.click(screen.getByRole('button', { name: /Explore/ }));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /All Courses/ })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: /Instructors/ })).toBeInTheDocument();
+  it('highlights the primary navigation link for nested routes', () => {
+    renderWithProviders(<Navbar />, { route: '/courses/abc123', mockAuth: createAuthValue() });
+    expect(screen.getByRole('link', { name: 'Courses' })).toHaveClass('bg-primary/10');
+    expect(screen.getByRole('link', { name: 'Blog' })).not.toHaveClass('bg-primary/10');
   });
 
-  it('closes the Explore dropdown when Escape is pressed', async () => {
+  it('closes the mobile menu when Escape is pressed', async () => {
     const user = userEvent.setup();
     renderWithProviders(<Navbar />, { route: '/', mockAuth: createAuthValue() });
-    await user.click(screen.getByRole('button', { name: /Explore/ }));
-    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    expect(screen.getByRole('dialog', { name: 'Navigation menu' })).toBeInTheDocument();
     await user.keyboard('{Escape}');
-    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'Navigation menu' })).not.toBeInTheDocument();
   });
 
   it('opens the search input and navigates on submit', async () => {
