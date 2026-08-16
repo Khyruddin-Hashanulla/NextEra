@@ -31,6 +31,7 @@ export interface HomeTestimonial {
   rating: number;
   course: string;
   date: string;
+  featured?: boolean;
 }
 
 interface CategoryMeta {
@@ -187,6 +188,7 @@ export function useHomePageData() {
         name: 'Sarah Johnson',
         role: 'Software Engineer',
         avatarUrl: undefined,
+        featured: true,
         content:
           'The structured curriculum and hands-on projects helped me move from beginner to a full-time developer. The instructors genuinely care about your progress.',
         rating: 5,
@@ -236,6 +238,61 @@ export function useHomePageData() {
         rating: 5,
         course: 'Cloud Computing Professional',
         date: '2026-05-15',
+      },
+      {
+        id: 't6',
+        name: 'Aisha Khan',
+        role: 'DevOps Engineer',
+        avatarUrl: undefined,
+        content: 'Concise, practical and immediately applicable. The deployment labs are the best I have seen anywhere.',
+        rating: 5,
+        course: 'Docker & Kubernetes',
+        date: '2026-06-10',
+      },
+      {
+        id: 't7',
+        name: 'Daniel Kim',
+        role: 'Product Designer',
+        avatarUrl: undefined,
+        content:
+          'The design critique workflows and real briefs made me portfolio-ready. Recruiters now notice my work instantly.',
+        rating: 5,
+        course: 'UI/UX Design Masterclass',
+        date: '2026-05-02',
+      },
+      {
+        id: 't8',
+        name: 'Lucia Martinez',
+        role: 'Data Analyst',
+        avatarUrl: undefined,
+        featured: true,
+        content:
+          'I moved from spreadsheets to building dashboards and pipelines in under six months. NextEra broke everything into digestible milestones, and the mentorship calls kept me accountable when motivation dipped. This platform genuinely changes how fast you can grow.',
+        rating: 5,
+        course: 'Data Analytics with Python',
+        date: '2026-04-18',
+      },
+      {
+        id: 't9',
+        name: 'Omar Hassan',
+        role: 'Backend Engineer',
+        avatarUrl: undefined,
+        content:
+          'Advanced Node.js patterns explained clearly, with production-grade examples I now use daily at work.',
+        rating: 5,
+        course: 'Node.js Advanced Patterns',
+        date: '2026-06-25',
+      },
+      {
+        id: 't10',
+        name: 'Grace Li',
+        role: 'ML Engineer',
+        avatarUrl: undefined,
+        content:
+          'The deep learning path finally made backpropagation and transformers click. Each module builds on the last without ever feeling rushed, and the graded notebooks gave me the confidence to apply for ML roles.',
+        rating: 5,
+        course: 'Deep Learning Specialization',
+        date: '2026-03-30',
       },
     ],
     []

@@ -3,7 +3,13 @@ import { cn } from '@/lib/utils';
 import { formatDate } from '@/lib/utils';
 import type { HomeTestimonial } from './useHomePageData';
 
-export function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }) {
+interface AvatarProps {
+  name: string;
+  avatarUrl?: string;
+  className?: string;
+}
+
+export function Avatar({ name, avatarUrl, className }: AvatarProps) {
   if (avatarUrl) {
     return (
       <img
@@ -11,7 +17,7 @@ export function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }
         alt={name}
         loading="lazy"
         decoding="async"
-        className="h-11 w-11 shrink-0 rounded-full object-cover"
+        className={cn('h-10 w-10 shrink-0 rounded-full object-cover', className)}
       />
     );
   }
@@ -24,7 +30,12 @@ export function Avatar({ name, avatarUrl }: { name: string; avatarUrl?: string }
     .toUpperCase();
 
   return (
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-600 text-sm font-semibold text-white">
+    <div
+      className={cn(
+        'flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-600 text-sm font-semibold text-white',
+        className
+      )}
+    >
       {initials}
     </div>
   );
@@ -57,51 +68,70 @@ interface TestimonialCardProps {
 }
 
 export function TestimonialCard({ testimonial, className }: TestimonialCardProps) {
+  const isFeatured = !!testimonial.featured;
+
   return (
     <figure
       className={cn(
-        'relative flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-card/80 p-6 shadow-xl shadow-black/5 backdrop-blur-xl sm:p-8',
+        'group relative flex flex-col break-inside-avoid rounded-2xl border bg-card p-5 shadow-sm transition-all duration-300 sm:p-6',
+        isFeatured
+          ? 'border-primary/40 shadow-lg shadow-primary/10 hover:shadow-xl hover:shadow-primary/15'
+          : 'border-border hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-black/5',
         className
       )}
     >
       <div
-        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
+        className="pointer-events-none absolute -right-10 -top-10 h-28 w-28 rounded-full bg-primary/10 blur-2xl"
         aria-hidden="true"
       />
       <div
-        className="pointer-events-none absolute -bottom-20 -left-16 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl"
+        className="pointer-events-none absolute -bottom-12 -left-10 h-28 w-28 rounded-full bg-violet-500/10 blur-2xl"
         aria-hidden="true"
       />
 
       <div className="relative flex items-center justify-between gap-4">
-        <Quote className="h-8 w-8 shrink-0 text-primary/30" aria-hidden="true" />
+        <Quote
+          className={cn('shrink-0 text-primary/30', isFeatured ? 'h-8 w-8' : 'h-6 w-6')}
+          aria-hidden="true"
+        />
         <StarRating rating={testimonial.rating} />
       </div>
 
-      <blockquote className="relative mt-5 flex-1 text-lg font-medium leading-relaxed text-foreground sm:text-xl">
+      <blockquote
+        className={cn(
+          'relative mt-4 leading-relaxed text-foreground sm:text-[0.95rem]',
+          isFeatured ? 'text-base sm:text-lg' : 'text-sm'
+        )}
+      >
         “{testimonial.content}”
       </blockquote>
 
-      <div className="relative mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-border/60 pt-5">
-        <figcaption className="flex min-w-0 items-center gap-3">
+      <figcaption className="relative mt-5 border-t border-border/60 pt-4">
+        <div className="flex items-center gap-3">
           <Avatar name={testimonial.name} avatarUrl={testimonial.avatarUrl} />
-          <div className="min-w-0">
-            <div className="truncate font-semibold text-foreground">{testimonial.name}</div>
-            <div className="truncate text-sm text-muted-foreground">{testimonial.role}</div>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-foreground">{testimonial.name}</div>
+            <div className="truncate text-xs text-muted-foreground">{testimonial.role}</div>
           </div>
-        </figcaption>
-        <div className="flex flex-col items-start gap-1.5 sm:items-end">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-            <GraduationCap className="h-3.5 w-3.5" aria-hidden="true" />
-            Completed: {testimonial.course}
-          </span>
           {testimonial.date && (
-            <time className="text-xs text-muted-foreground" dateTime={testimonial.date}>
+            <time className="shrink-0 text-[11px] text-muted-foreground" dateTime={testimonial.date}>
               {formatDate(testimonial.date)}
             </time>
           )}
         </div>
-      </div>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-primary">
+            <GraduationCap className="h-3 w-3" aria-hidden="true" />
+            Completed: {testimonial.course}
+          </span>
+          {isFeatured && (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-medium text-amber-600">
+              <Star className="h-3 w-3 fill-current" aria-hidden="true" />
+              Featured story
+            </span>
+          )}
+        </div>
+      </figcaption>
     </figure>
   );
 }
