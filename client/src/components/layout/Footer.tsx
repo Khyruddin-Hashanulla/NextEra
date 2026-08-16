@@ -146,7 +146,7 @@ export function Footer() {
 
         <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} NextEra LMS. All rights reserved.</p>
-          <nav aria-label="Legal links" className="flex items-center gap-6">
+          <nav aria-label="Legal links" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
             <Link
               to="/privacy"
               className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
