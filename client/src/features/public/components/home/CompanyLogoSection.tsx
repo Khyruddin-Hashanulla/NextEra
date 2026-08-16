@@ -53,10 +53,12 @@ export function CompanyLogoSection({ companies = DEFAULT_COMPANIES, className }:
                 <span
                   key={`${company}-${index}`}
                   aria-hidden={isDuplicate}
-                  className="flex items-center gap-2 whitespace-nowrap font-display text-xl font-bold tracking-tight text-muted-foreground/50 transition-colors duration-300 hover:text-foreground sm:text-2xl"
+                  className="flex items-center gap-2 whitespace-nowrap font-display text-xl font-bold tracking-tight sm:text-2xl"
                 >
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-current opacity-60" aria-hidden="true" />
-                  {company}
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+                  <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
+                    {company}
+                  </span>
                 </span>
               );
             })}
