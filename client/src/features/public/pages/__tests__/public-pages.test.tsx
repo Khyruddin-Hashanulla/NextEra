@@ -61,8 +61,8 @@ describe('HomePage', () => {
       () => expect(screen.getByRole('heading', { name: /Featured courses to level up/i })).toBeInTheDocument(),
       { timeout: LONG_TIMEOUT }
     );
-    expect(screen.getByRole('heading', { name: /Everything you need to succeed/i })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Share your expertise. Inspire thousands./i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Everything you need to learn, build & grow/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Turn your knowledge into impact/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /A learning platform you can trust/i })).toBeInTheDocument();
     await waitFor(
       () => expect(screen.getByRole('heading', { name: /Success stories from our community/i })).toBeInTheDocument(),
