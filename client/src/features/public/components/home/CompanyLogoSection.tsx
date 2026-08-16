@@ -1,24 +1,16 @@
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { COMPANY_LOGOS, CompanyLogo } from './companyLogos';
 
 interface CompanyLogoSectionProps {
   companies?: string[];
   className?: string;
 }
 
-export const DEFAULT_COMPANIES = [
-  'Google',
-  'Microsoft',
-  'Amazon',
-  'Meta',
-  'Netflix',
-  'Adobe',
-  'Spotify',
-  'Figma',
-  'Slack',
-  'Notion',
-];
+const logoByName = new Map(COMPANY_LOGOS.map((logo) => [logo.name, logo]));
+
+export const DEFAULT_COMPANIES = COMPANY_LOGOS.map((logo) => logo.name);
 
 export function CompanyLogoSection({ companies = DEFAULT_COMPANIES, className }: CompanyLogoSectionProps) {
   const marqueeItems = useMemo(() => [...companies, ...companies], [companies]);
@@ -49,13 +41,21 @@ export function CompanyLogoSection({ companies = DEFAULT_COMPANIES, className }:
           <div className="animate-marquee flex w-max items-center gap-16 pr-16 group-hover:[animation-play-state:paused]">
             {marqueeItems.map((company, index) => {
               const isDuplicate = index >= companies.length;
+              const logo = logoByName.get(company);
               return (
                 <span
                   key={`${company}-${index}`}
                   aria-hidden={isDuplicate}
-                  className="flex items-center gap-2 whitespace-nowrap font-display text-xl font-bold tracking-tight sm:text-2xl"
+                  className="flex items-center gap-2.5 whitespace-nowrap font-display text-xl font-bold tracking-tight sm:text-2xl"
                 >
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-muted-foreground/40" aria-hidden="true" />
+                  {logo && (
+                    <CompanyLogo
+                      name={logo.name}
+                      path={logo.path}
+                      aria-hidden="true"
+                      className="h-5 w-5 shrink-0 text-muted-foreground/60 transition-colors duration-300 hover:text-foreground sm:h-6 sm:w-6"
+                    />
+                  )}
                   <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
                     {company}
                   </span>
