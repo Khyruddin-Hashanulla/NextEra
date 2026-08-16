@@ -101,8 +101,8 @@ function getCourseCategoryName(course: MockCourse): string {
 
 export function useHomePageData() {
   const featuredCoursesQuery = useQuery({
-    queryKey: QUERY_KEYS.courses.list({ home: 'featured', limit: 6 }),
-    queryFn: ({ signal }) => studentApi.listCourses({ featured: 'true', limit: 6 }, signal).then((r) => r.data.data),
+    queryKey: QUERY_KEYS.courses.list({ home: 'popular', limit: 4 }),
+    queryFn: ({ signal }) => studentApi.listCourses({ limit: 4 }, signal).then((r) => r.data.data),
   });
 
   const allCoursesQuery = useQuery({

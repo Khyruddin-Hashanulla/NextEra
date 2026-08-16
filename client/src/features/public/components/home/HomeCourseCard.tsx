@@ -9,9 +9,10 @@ import { getCoursePricing } from '@/lib/coursePricing';
 interface HomeCourseCardProps {
   course: MockCourse;
   className?: string;
+  spotlight?: boolean;
 }
 
-export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
+export function HomeCourseCard({ course, className, spotlight = false }: HomeCourseCardProps) {
   const pricing = getCoursePricing(course);
   const thumbUrl = course.thumbnail?.url;
   const catName =
@@ -27,16 +28,23 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
       to={ROUTES.COURSE_DETAIL(course._id)}
       className={cn(
         'group relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        spotlight && 'lg:flex-row',
         className
       )}
     >
-      <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+      <div
+        className={cn(
+          'relative aspect-[16/10] shrink-0 overflow-hidden bg-muted',
+          spotlight && 'lg:aspect-auto lg:h-full lg:w-[55%]'
+        )}
+      >
         {thumbUrl ? (
           <OptimizedImage
             src={thumbUrl}
             alt={`${course.title} course thumbnail`}
             placeholderType="course"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            containerClassName="h-full w-full"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             lazy
           />
         ) : (
@@ -44,11 +52,19 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
             <BookOpen className="h-12 w-12" aria-hidden="true" />
           </div>
         )}
-        {pricing.hasDiscount && (
-          <span className="absolute left-3 top-3 rounded-full bg-red-500 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
-            {pricing.discountPercent}% OFF
-          </span>
-        )}
+
+        <div className="absolute left-3 top-3 flex flex-wrap items-center gap-2">
+          {spotlight && (
+            <span className="rounded-full bg-gradient-to-r from-primary to-violet-500 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+              Featured
+            </span>
+          )}
+          {pricing.hasDiscount && (
+            <span className="rounded-full bg-red-500 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+              {pricing.discountPercent}% OFF
+            </span>
+          )}
+        </div>
         {level && (
           <span className="absolute right-3 top-3 rounded-full bg-background/90 px-2.5 py-1 text-xs font-semibold text-foreground backdrop-blur-sm">
             {level}
@@ -56,20 +72,33 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-5">
+      <div className={cn('flex flex-1 flex-col p-5', spotlight && 'lg:w-[45%] lg:flex-none lg:p-7')}>
         {catName && (
           <span className="mb-2 inline-block w-fit rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             {catName}
           </span>
         )}
 
-        <h3 className="line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-primary">
+        <h3
+          className={cn(
+            'line-clamp-2 font-semibold text-foreground transition-colors group-hover:text-primary',
+            spotlight && 'text-2xl sm:text-3xl'
+          )}
+        >
           {course.title}
         </h3>
 
-        <p className="mt-1.5 text-sm text-muted-foreground">{course.instructor?.name || 'Expert instructor'}</p>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {course.instructor?.name || 'Expert instructor'}
+        </p>
 
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+        {spotlight && course.shortDescription && (
+          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+            {course.shortDescription}
+          </p>
+        )}
+
+        <div className={cn('mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground', !spotlight && 'mb-6')}>
           <span className="flex items-center gap-1.5">
             <Star className="h-4 w-4 fill-amber-400 text-amber-400" aria-hidden="true" />
             <span className="font-semibold text-foreground">
@@ -88,13 +117,15 @@ export function HomeCourseCard({ course, className }: HomeCourseCardProps) {
           ) : null}
         </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-4 max-lg:mt-6">
           <div className="flex items-baseline gap-2">
             {pricing.isFree ? (
-              <span className="text-lg font-bold text-foreground">Free</span>
+              <span className={cn('text-lg font-bold text-foreground', spotlight && 'text-2xl sm:text-3xl')}>Free</span>
             ) : (
               <>
-                <span className="text-lg font-bold text-foreground">{formatCurrency(pricing.price)}</span>
+                <span className={cn('text-lg font-bold text-foreground', spotlight && 'text-2xl sm:text-3xl')}>
+                  {formatCurrency(pricing.price)}
+                </span>
                 {pricing.hasDiscount && (
                   <span className="text-sm text-muted-foreground line-through">
                     {formatCurrency(pricing.originalPrice)}
