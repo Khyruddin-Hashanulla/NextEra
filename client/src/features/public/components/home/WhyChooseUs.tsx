@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { SectionHeading } from './SectionHeading';
 
 interface Feature {
@@ -131,9 +132,19 @@ function LearningComposition() {
               </span>
             </div>
 
-            <div className="relative aspect-video bg-gradient-to-br from-primary/25 via-primary/5 to-cyan-400/15">
+            <div className="group relative aspect-video overflow-hidden bg-muted">
+              <OptimizedImage
+                src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=900&q=80"
+                alt=""
+                placeholderType="course"
+                containerClassName="absolute inset-0"
+              />
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-black/30"
+                aria-hidden="true"
+              />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 sm:h-16 sm:w-16">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-primary shadow-lg shadow-black/30 backdrop-blur-sm transition-transform duration-300 group-hover:scale-110 sm:h-16 sm:w-16">
                   <Play className="h-6 w-6 fill-current" aria-hidden="true" />
                 </div>
               </div>
