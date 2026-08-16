@@ -4,10 +4,11 @@ import { Star, Users, Clock, BookOpen } from 'lucide-react';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { WishlistButton } from '@/components/course/WishlistButton';
 import type { MockCourse } from '@/mocks/types';
+import type { Course } from '@/types/instructor';
 import { getCoursePricing } from '@/lib/coursePricing';
 
 interface CourseCardProps {
-  course: MockCourse;
+  course: MockCourse | Course;
   variant?: 'default' | 'compact' | 'featured';
   className?: string;
 }
@@ -15,33 +16,33 @@ interface CourseCardProps {
 export function CourseCard({ course, variant = 'default', className }: CourseCardProps) {
   const pricing = getCoursePricing(course);
   const thumbUrl = course.thumbnail?.url;
-  const catName = course.category?.name;
+  const catName = typeof course.category === 'object' ? course.category?.name : undefined;
 
   if (variant === 'compact') {
     return (
       <Link
         to={`/courses/${course._id}`}
         className={cn(
-          'group flex gap-3 rounded-xl bg-white p-3 shadow-sm border border-gray-100 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300',
+          'group flex gap-3 rounded-xl bg-card p-3 shadow-sm border border-border hover:shadow-md hover:-translate-y-0.5 transition-all duration-300',
           className
         )}
       >
-        <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+        <div className="relative w-24 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-muted">
           {thumbUrl ? (
             <OptimizedImage src={thumbUrl} alt={course.title} placeholderType="course" className="object-cover" lazy />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-300">
+            <div className="flex items-center justify-center h-full text-muted-foreground/40">
               <BookOpen className="h-6 w-6" aria-hidden="true" />
             </div>
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-semibold text-gray-900 line-clamp-1 group-hover:text-primary transition-colors">
+          <h4 className="text-sm font-semibold text-foreground line-clamp-1 group-hover:text-primary transition-colors">
             {course.title}
           </h4>
-          <p className="text-xs text-gray-500 mt-0.5">{course.instructor?.name}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{course.instructor?.name}</p>
           <div className="flex items-center gap-3 mt-1">
-            <div className="flex items-center gap-1 text-xs text-gray-400">
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" aria-hidden="true" /> {course.totalDuration}h
             </div>
             <span className="text-xs font-semibold text-primary">
@@ -58,11 +59,11 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
       <Link
         to={`/courses/${course._id}`}
         className={cn(
-          'group block rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden',
+          'group block rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden',
           className
         )}
       >
-        <div className="relative h-48 overflow-hidden bg-gray-100">
+        <div className="relative h-48 overflow-hidden bg-muted">
           {thumbUrl ? (
             <OptimizedImage
               src={thumbUrl}
@@ -72,7 +73,7 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
               lazy
             />
           ) : (
-            <div className="flex items-center justify-center h-full text-gray-300">
+            <div className="flex items-center justify-center h-full text-muted-foreground/40">
               <BookOpen className="h-10 w-10" aria-hidden="true" />
             </div>
           )}
@@ -91,21 +92,21 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
               </span>
             )}
           </div>
-          <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
             {course.title}
           </h3>
           <div className="flex items-center gap-2 mt-2">
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Users className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" /> {course.totalEnrollments ?? 0}
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Users className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" /> {course.totalEnrollments ?? 0}
             </div>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <Clock className="h-3.5 w-3.5 text-gray-400" aria-hidden="true" /> {course.totalDuration}h
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" /> {course.totalDuration}h
             </div>
           </div>
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-50">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
             <div className="flex items-center gap-1">
-              <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
-              <span className="text-sm font-semibold text-gray-700">{course.averageRating?.toFixed(1) ?? '—'}</span>
+              <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+              <span className="text-sm font-semibold text-foreground">{course.averageRating?.toFixed(1) ?? '—'}</span>
             </div>
             <span className="text-sm font-bold text-primary">
               {pricing.isFree ? 'Free' : formatCurrency(pricing.price)}
@@ -120,11 +121,11 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
     <Link
       to={`/courses/${course._id}`}
       className={cn(
-        'group block rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden',
+        'group block rounded-2xl bg-card border border-border shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden',
         className
       )}
     >
-      <div className="relative h-44 overflow-hidden bg-gray-100">
+      <div className="relative h-44 overflow-hidden bg-muted">
         {thumbUrl ? (
           <OptimizedImage
             src={thumbUrl}
@@ -134,7 +135,7 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
             lazy
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-300">
+          <div className="flex items-center justify-center h-full text-muted-foreground/40">
             <BookOpen className="h-10 w-10" aria-hidden="true" />
           </div>
         )}
@@ -142,9 +143,9 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
           <span
             className={cn(
               'absolute top-3 left-3 text-xs font-medium px-2.5 py-1 rounded-full',
-              course.level === 'beginner' && 'bg-green-100 text-green-700',
-              course.level === 'intermediate' && 'bg-yellow-100 text-yellow-700',
-              course.level === 'advanced' && 'bg-red-100 text-red-700'
+              course.level === 'beginner' && 'bg-success/10 text-success',
+              course.level === 'intermediate' && 'bg-warning/10 text-warning',
+              course.level === 'advanced' && 'bg-destructive/10 text-destructive'
             )}
           >
             {course.level.charAt(0).toUpperCase() + course.level.slice(1)}
@@ -162,31 +163,31 @@ export function CourseCard({ course, variant = 'default', className }: CourseCar
             {catName}
           </span>
         )}
-        <h3 className="font-semibold text-gray-900 line-clamp-2 group-hover:text-primary transition-colors">
+        <h3 className="font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors">
           {course.title}
         </h3>
-        <p className="text-sm text-gray-500 mt-1">{course.instructor?.name}</p>
+        <p className="text-sm text-muted-foreground mt-1">{course.instructor?.name}</p>
         <div className="flex items-center gap-3 mt-2">
           <div className="flex items-center gap-1">
-            <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" aria-hidden="true" />
-            <span className="text-sm font-medium text-gray-700">{course.averageRating?.toFixed(1) ?? '4.5'}</span>
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
+            <span className="text-sm font-medium text-foreground">{course.averageRating?.toFixed(1) ?? '4.5'}</span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-gray-400">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Users className="h-3.5 w-3.5" aria-hidden="true" /> {course.totalEnrollments ?? 0}
           </div>
-          <div className="flex items-center gap-1 text-xs text-gray-400">
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3.5 w-3.5" aria-hidden="true" /> {course.totalDuration}h
           </div>
         </div>
-        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-50">
+        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border">
           <div className="flex items-baseline gap-1.5">
             {pricing.isFree ? (
-              <span className="text-lg font-bold text-gray-900">Free</span>
+              <span className="text-lg font-bold text-foreground">Free</span>
             ) : (
-              <span className="text-lg font-bold text-gray-900">{formatCurrency(pricing.price)}</span>
+              <span className="text-lg font-bold text-foreground">{formatCurrency(pricing.price)}</span>
             )}
             {pricing.hasDiscount && (
-              <span className="text-sm text-gray-400 line-through">{formatCurrency(pricing.originalPrice)}</span>
+              <span className="text-sm text-muted-foreground line-through">{formatCurrency(pricing.originalPrice)}</span>
             )}
           </div>
         </div>
