@@ -135,6 +135,8 @@ export function FileUpload({
       <div
         role="button"
         tabIndex={0}
+        aria-label={label}
+        aria-disabled={disabled || undefined}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -147,7 +149,7 @@ export function FileUpload({
         }}
         className={`
           relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6
-          transition-colors
+          text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
           ${dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
           ${error ? 'border-destructive' : ''}
@@ -162,16 +164,17 @@ export function FileUpload({
           className="hidden"
         />
         {value && preview ? (
-          <div className="relative">
+          <div className="relative max-w-full">
             <OptimizedImage
               src={preview}
               alt="Uploaded image preview"
-              className="max-h-40 rounded object-contain"
+              className="max-h-40 w-auto max-w-full rounded object-contain"
               lazy={false}
             />
             {!disabled && (
               <button
                 type="button"
+                aria-label="Remove image"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemove();
@@ -183,24 +186,25 @@ export function FileUpload({
             )}
           </div>
         ) : value ? (
-          <div className="flex items-center gap-3">
+          <div className="flex w-full min-w-0 items-center gap-3">
             {value.type.startsWith('image/') ? (
-              <ImageIcon className="h-8 w-8 text-muted-foreground" />
+              <ImageIcon className="h-8 w-8 shrink-0 text-muted-foreground" />
             ) : (
-              <FileIcon className="h-8 w-8 text-muted-foreground" />
+              <FileIcon className="h-8 w-8 shrink-0 text-muted-foreground" />
             )}
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{value.name}</p>
               <p className="text-xs text-muted-foreground">{formatSize(value.size)}</p>
             </div>
             {!disabled && (
               <button
                 type="button"
+                aria-label="Remove file"
                 onClick={(e) => {
                   e.stopPropagation();
                   handleRemove();
                 }}
-                className="rounded-full p-1 hover:bg-muted"
+                className="shrink-0 rounded-full p-1 hover:bg-muted"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -215,16 +219,16 @@ export function FileUpload({
             )}
             <p className="text-sm font-medium">{label}</p>
             <p className="mt-1 text-xs text-muted-foreground">Drag & drop or click to browse</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="w-full max-w-full break-words text-xs leading-relaxed text-muted-foreground">
               Accepted: {accept} (max {formatSize(maxSize)})
             </p>
           </>
         )}
       </div>
       {error && (
-        <p className="flex items-center gap-1 text-xs text-destructive">
-          <AlertCircle className="h-3 w-3" />
-          {error}
+        <p className="flex items-start gap-1 break-words text-xs leading-relaxed text-destructive">
+          <AlertCircle className="mt-0.5 h-3 w-3 shrink-0" />
+          <span>{error}</span>
         </p>
       )}
     </div>

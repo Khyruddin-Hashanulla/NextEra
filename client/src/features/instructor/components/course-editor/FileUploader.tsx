@@ -100,10 +100,10 @@ export function FileUploader({
 
   if (value?.url && !isUploading) {
     return (
-      <div className={`flex items-center justify-between gap-3 rounded-lg border p-3 ${compact ? 'px-3 py-2' : ''}`}>
+      <div className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-lg border p-3 ${compact ? 'px-3 py-2' : ''}`}>
         <div className="flex min-w-0 items-center gap-3">
           <FileIcon className="h-5 w-5 shrink-0 text-muted-foreground" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{value.name || 'Uploaded file'}</p>
             <a href={value.url} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline">
               View file
@@ -111,7 +111,7 @@ export function FileUploader({
           </div>
         </div>
         {!disabled && (
-          <Button variant="ghost" size="sm" onClick={handleRemove}>
+          <Button variant="ghost" size="sm" aria-label="Remove file" onClick={handleRemove} className="shrink-0">
             <X className="h-4 w-4 text-muted-foreground" />
           </Button>
         )}
@@ -124,6 +124,8 @@ export function FileUploader({
       <div
         role="button"
         tabIndex={0}
+        aria-label={label}
+        aria-disabled={disabled || isUploading || undefined}
         onDragOver={(e) => {
           e.preventDefault();
           setDragOver(true);
@@ -135,7 +137,8 @@ export function FileUploader({
           if ((e.key === 'Enter' || e.key === ' ') && !isUploading) inputRef.current?.click();
         }}
         className={`
-          relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors
+          relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6
+          text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
           ${dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'}
           ${disabled || isUploading ? 'cursor-not-allowed opacity-60' : ''}
           ${error ? 'border-destructive' : ''}
@@ -166,15 +169,17 @@ export function FileUploader({
         ) : error ? (
           <>
             <AlertCircle className="mb-2 h-8 w-8 text-destructive" />
-            <p className="text-sm font-medium">{error}</p>
+            <p className="w-full break-words text-sm font-medium">{error}</p>
           </>
         ) : (
           <>
             <Upload className="mb-2 h-8 w-8 text-muted-foreground" />
             <p className="text-sm font-medium">{label}</p>
             <p className="mt-1 text-xs text-muted-foreground">Drag & drop or click to browse</p>
-            {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
-            <p className="text-xs text-muted-foreground">
+            {hint && (
+              <p className="w-full max-w-full break-words text-xs leading-relaxed text-muted-foreground">{hint}</p>
+            )}
+            <p className="w-full max-w-full break-words text-xs leading-relaxed text-muted-foreground">
               Accepted: {accept} (max {formatSize(maxSize)})
             </p>
           </>
