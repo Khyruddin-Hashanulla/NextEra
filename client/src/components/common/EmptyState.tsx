@@ -8,7 +8,8 @@ interface EmptyStateProps {
   description?: string;
   action?: {
     label: string;
-    href: string;
+    href?: string;
+    onClick?: () => void;
     variant?: 'default' | 'outline' | 'ghost';
   };
   className?: string;
@@ -20,11 +21,15 @@ export function EmptyState({ icon, title, description, action, className }: Empt
       {icon && <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">{icon}</div>}
       <h3 className="text-lg font-semibold text-foreground">{title}</h3>
       {description && <p className="mt-2 text-muted-foreground max-w-sm">{description}</p>}
-      {action && (
-        <Button asChild variant={action.variant || 'default'} className="mt-4">
-          <Link to={action.href}>{action.label}</Link>
+      {action && (action.onClick ? (
+        <Button variant={action.variant || 'default'} className="mt-4" onClick={action.onClick}>
+          {action.label}
         </Button>
-      )}
+      ) : (
+        <Button asChild variant={action.variant || 'default'} className="mt-4">
+          <Link to={action.href!}>{action.label}</Link>
+        </Button>
+      ))}
     </div>
   );
 }

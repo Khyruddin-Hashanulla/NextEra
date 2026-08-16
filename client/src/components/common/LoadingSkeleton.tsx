@@ -59,6 +59,40 @@ export function CourseGridSkeleton({ count = 6 }: { count?: number }) {
   );
 }
 
+export function CourseFlipCardSkeleton() {
+  return (
+    <div className="flex h-full min-h-[420px] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm" aria-hidden="true">
+      <Skeleton className="h-44 w-full shrink-0 rounded-none" />
+      <div className="space-y-3 p-4">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-20 rounded-full" />
+          <Skeleton className="h-4 w-16 rounded-full" />
+        </div>
+        <Skeleton className="h-5 w-3/4" />
+        <Skeleton className="h-4 w-1/2" />
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-20" />
+        </div>
+        <div className="flex items-center justify-between border-t border-border pt-3">
+          <Skeleton className="h-6 w-16" />
+          <Skeleton className="h-9 w-24 rounded-lg" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function CourseFlipGridSkeleton({ count = 12 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      {Array.from({ length: count }).map((_, i) => (
+        <CourseFlipCardSkeleton key={i} />
+      ))}
+    </div>
+  );
+}
+
 export function BlogGridSkeleton({ count = 6 }: { count?: number }) {
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

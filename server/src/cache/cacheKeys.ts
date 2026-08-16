@@ -99,6 +99,7 @@ export const cacheKeys = {
     search?: string;
     category?: string;
     level?: string;
+    sort?: string;
     page?: number;
     limit?: number;
   }): string {

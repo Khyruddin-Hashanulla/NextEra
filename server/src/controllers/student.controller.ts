@@ -12,8 +12,15 @@ export const getDashboard = asyncHandler(async (req: Request, res: Response) => 
 
 // ─── Courses ───────────────────────────────────────────────────
 export const listCourses = asyncHandler(async (req: Request, res: Response) => {
-  const { search, category, level, page, limit } = req.query as any;
-  const data = await studentService.listCourses(search, category, level, Number(page) || 1, Number(limit) || 12);
+  const { search, category, level, sort, page, limit } = req.query as any;
+  const data = await studentService.listCourses(
+    search,
+    category,
+    level,
+    sort,
+    Number(page) || 1,
+    Number(limit) || 12
+  );
   res.status(HTTP_STATUS.OK).json(ApiResponse.success('Courses fetched', data));
 });
 

@@ -1,23 +1,46 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { BookOpen, Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import { studentApi } from '@/api/endpoints/student';
-import { CourseCard } from '@/components/course/CourseCard';
-import { CourseGridSkeleton } from '@/components/common/LoadingSkeleton';
+import { FlipCourseCard } from '@/components/course/FlipCourseCard';
+import { Skeleton, CourseFlipGridSkeleton } from '@/components/common/LoadingSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Pagination } from '@/components/ui/pagination';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { Search, Filter, BookOpen } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
 import { ROUTES } from '@/lib/constants';
-import { Link } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { breadcrumbListSchema } from '@/lib/schema';
-import type { MockCourse } from '@/mocks/types';
+import type { Course } from '@/types/instructor';
+
+interface CoursesListResponse {
+  courses: Course[];
+  total?: number;
+  totalPages?: number;
+  page?: number;
+  pagination?: { total?: number; pages?: number; page?: number };
+}
+
+const SORT_OPTIONS = [
+  { value: 'popular', label: 'Most Popular' },
+  { value: 'newest', label: 'Newest First' },
+  { value: 'rating', label: 'Highest Rated' },
+  { value: 'price-low', label: 'Price: Low to High' },
+  { value: 'price-high', label: 'Price: High to Low' },
+  { value: 'duration', label: 'Shortest Duration' },
+];
+
+const LEVEL_OPTIONS = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
+];
 
 export function CoursesPage() {
   const [page, setPage] = useState(1);
@@ -41,56 +64,105 @@ export function CoursesPage() {
           },
           signal
         )
-        .then((r) => r.data.data),
+        .then((r) => r.data.data as CoursesListResponse),
     placeholderData: (previousData) => previousData,
   });
 
   const courses = data?.courses || [];
-  const pagination = data?.pagination;
-  const totalPages = pagination?.pages || 1;
+  const totalCourses = data?.pagination?.total ?? data?.total ?? courses.length;
+  const totalPages = data?.pagination?.pages ?? data?.totalPages ?? 1;
 
   const { data: categoriesData } = useQuery({
     queryKey: ['course-categories'],
     queryFn: ({ signal }) =>
       studentApi.listCourses({ limit: 100 }, signal).then((r) => {
-        const cats = new Set<string>();
-        r.data.data.courses.forEach((c: any) => {
-          if (c.category?.name) cats.add(c.category.name);
-          else if (typeof c.category === 'string') cats.add(c.category);
+        const cats = new Map<string, string>();
+        r.data.data.courses.forEach((c: Course) => {
+          if (c.category && typeof c.category === 'object' && c.category._id && c.category.name) {
+            cats.set(String(c.category._id), c.category.name);
+          } else if (typeof c.category === 'string') {
+            cats.set(c.category, c.category);
+          }
         });
-        return Array.from(cats).sort();
+        return Array.from(cats, ([value, label]) => ({ value, label })).sort((a, b) =>
+          a.label.localeCompare(b.label)
+        );
       }),
   });
 
   const categories = categoriesData || [];
+
+  const categoryLabel = categories.find((c) => c.value === category)?.label ?? category;
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
     setPage(1);
   };
 
-  const handleFilterChange = (filter: string, value: string) => {
+  const handleFilterChange = (filter: 'level' | 'category' | 'sort', value: string) => {
     if (filter === 'level') setLevel(value);
     else if (filter === 'category') setCategory(value);
     else if (filter === 'sort') setSort(value);
     setPage(1);
   };
 
+  const clearFilters = () => {
+    setSearch('');
+    setLevel('');
+    setCategory('');
+    setSort('popular');
+    setPage(1);
+  };
+
+  const activeFilterChips = [
+    { key: 'search', label: search ? `"${search}"` : '', filter: 'search' as const },
+    { key: 'level', label: level, filter: 'level' as const },
+    { key: 'category', label: category ? categoryLabel : '', filter: 'category' as const },
+  ].filter((chip) => chip.label);
+
   if (isLoading && page === 1) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <CourseGridSkeleton count={6} />
+      <div className="min-h-screen">
+        <Section size="sm" background="gradient">
+          <Container>
+            <div className="mx-auto max-w-3xl space-y-4 text-center">
+              <Skeleton className="mx-auto h-9 w-72" />
+              <Skeleton className="mx-auto h-4 w-full max-w-xl" />
+              <Skeleton className="mx-auto h-4 w-52" />
+            </div>
+          </Container>
+        </Section>
+        <Section size="lg">
+          <Container>
+            <div className="mb-8 rounded-2xl border border-border bg-card p-4 sm:p-5">
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto_auto]">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-40" />
+                <Skeleton className="h-10 w-36" />
+                <Skeleton className="h-10 w-44" />
+              </div>
+            </div>
+            <CourseFlipGridSkeleton count={12} />
+          </Container>
+        </Section>
       </div>
     );
   }
 
   if (error) {
     return (
-      <ErrorState
-        title="Failed to load courses"
-        message="Please try again or check your connection."
-        onRetry={() => refetch()}
-      />
+      <div className="min-h-screen">
+        <SEO
+          title="Courses"
+          description="Browse our comprehensive catalog of web development, programming, and technology courses."
+          canonical={ROUTES.COURSES}
+        />
+        <ErrorState
+          title="Failed to load courses"
+          message="Please try again or check your connection."
+          onRetry={() => refetch()}
+        />
+      </div>
     );
   }
 
@@ -109,10 +181,11 @@ export function CoursesPage() {
           ]),
         ]}
       />
+
       {/* Page Header */}
       <Section size="sm" background="gradient">
         <Container>
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="mx-auto max-w-3xl text-center">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -126,190 +199,181 @@ export function CoursesPage() {
               transition={{ delay: 0.1 }}
               className="mt-3 text-body-lg text-muted-foreground"
             >
-              Find the perfect course to advance your career. Filter by level, category, or search topics.
+              Learn practical skills from industry-focused courses designed to help you grow.
             </motion.p>
+            {totalCourses > 0 && (
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="mt-5"
+              >
+                <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-sm text-muted-foreground shadow-sm">
+                  <BookOpen className="h-4 w-4 text-primary" aria-hidden="true" />
+                  {totalCourses.toLocaleString()} courses
+                </span>
+              </motion.p>
+            )}
           </div>
         </Container>
       </Section>
 
-      {/* Filters & Courses */}
-      <Section size="lg">
+      {/* Discovery Toolbar & Courses */}
+      <Section size="lg" className="pt-0 sm:pt-0 lg:pt-0">
         <Container>
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Sidebar Filters */}
-            <aside className="lg:w-64 flex-shrink-0">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="sticky top-24 space-y-6 p-6 rounded-2xl bg-card border"
-              >
-                {/* Search */}
-                <div>
-                  <label htmlFor="search" className="label-base">
-                    Search Courses
-                  </label>
-                  <div className="relative mt-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="search"
-                      placeholder="Search topics..."
-                      value={search}
-                      onChange={handleSearch}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-
-                {/* Level Filter */}
-                <div>
-                  <label htmlFor="level" className="label-base">
-                    Level
-                  </label>
-                  <Select value={level} onValueChange={(value) => handleFilterChange('level', value)}>
-                    <SelectTrigger id="level" className="mt-1">
-                      <SelectValue placeholder="All Levels" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">All Levels</SelectItem>
-                      <SelectItem value="beginner">Beginner</SelectItem>
-                      <SelectItem value="intermediate">Intermediate</SelectItem>
-                      <SelectItem value="advanced">Advanced</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Category Filter */}
-                {categories.length > 0 && (
-                  <div>
-                    <label htmlFor="category" className="label-base">
-                      Category
-                    </label>
-                    <Select value={category} onValueChange={(value) => handleFilterChange('category', value)}>
-                      <SelectTrigger id="category" className="mt-1">
-                        <SelectValue placeholder="All Categories" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="">All Categories</SelectItem>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat} value={cat}>
-                            {cat}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                {/* Sort */}
-                <div>
-                  <label htmlFor="sort" className="label-base">
-                    Sort By
-                  </label>
-                  <Select value={sort} onValueChange={(value) => handleFilterChange('sort', value)}>
-                    <SelectTrigger id="sort" className="mt-1">
-                      <SelectValue placeholder="Popular" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="popular">Most Popular</SelectItem>
-                      <SelectItem value="newest">Newest First</SelectItem>
-                      <SelectItem value="rating">Highest Rated</SelectItem>
-                      <SelectItem value="price-low">Price: Low to High</SelectItem>
-                      <SelectItem value="price-high">Price: High to Low</SelectItem>
-                      <SelectItem value="duration">Shortest Duration</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Clear Filters */}
-                {(search || level || category || sort !== 'popular') && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setSearch('');
-                      setLevel('');
-                      setCategory('');
-                      setSort('popular');
-                      setPage(1);
-                    }}
-                  >
-                    <Filter className="h-4 w-4" />
-                    Clear All Filters
-                  </Button>
-                )}
-              </motion.div>
-            </aside>
-
-            {/* Courses Grid */}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>{pagination?.total || courses.length} courses found</span>
-                  {search && <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">"{search}"</span>}
-                  {level && <span className="px-2 py-0.5 rounded bg-primary/10 text-primary capitalize">{level}</span>}
-                  {category && <span className="px-2 py-0.5 rounded bg-primary/10 text-primary">{category}</span>}
+          <div className="mb-8 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto_auto_auto] md:items-end">
+              <div>
+                <label htmlFor="course-search" className="label-base">
+                  Search Courses
+                </label>
+                <div className="relative">
+                  <Search
+                    className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    id="course-search"
+                    type="search"
+                    placeholder="Search topics..."
+                    value={search}
+                    onChange={handleSearch}
+                    className="pl-9"
+                  />
                 </div>
               </div>
 
-              <AnimatePresence mode="wait">
-                {courses.length === 0 ? (
-                  <motion.div
-                    key="empty"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="py-16"
-                  >
-                    <EmptyState
-                      icon={<BookOpen className="h-12 w-12 text-muted-foreground/50" />}
-                      title="No courses found"
-                      description="Try adjusting your search or filters to find what you're looking for."
-                      action={{ label: 'Clear Filters', href: '/courses', variant: 'outline' }}
-                    />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="grid"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-                  >
-                    {courses.map((course: MockCourse, index: number) => (
-                      <motion.div
-                        key={course._id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05, duration: 0.3 }}
-                      >
-                        <CourseCard course={course} variant="default" />
-                      </motion.div>
-                    ))}
-                  </motion.div>
-                )}
+              {categories.length > 0 && (
+                <div>
+                  <label htmlFor="category" className="label-base">
+                    Category
+                  </label>
+                  <Select value={category} onValueChange={(value) => handleFilterChange('category', value)}>
+                    <SelectTrigger id="category" className="w-full md:w-44">
+                      <SelectValue placeholder="All Categories" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Categories</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mt-10">
-                    <Pagination
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={setPage}
-                      showPageNumbers
-                      siblingCount={1}
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div>
+                <label htmlFor="level" className="label-base">
+                  Level
+                </label>
+                <Select value={level} onValueChange={(value) => handleFilterChange('level', value)}>
+                  <SelectTrigger id="level" className="w-full md:w-40">
+                    <SelectValue placeholder="All Levels" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">All Levels</SelectItem>
+                    {LEVEL_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label htmlFor="sort" className="label-base">
+                  Sort By
+                </label>
+                <Select value={sort} onValueChange={(value) => handleFilterChange('sort', value)}>
+                  <SelectTrigger id="sort" className="w-full md:w-48">
+                    <SelectValue placeholder="Most Popular" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SORT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
+            {(activeFilterChips.length > 0 || sort !== 'popular') && (
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+                <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  Active filters
+                </span>
+                {activeFilterChips.map((chip) => (
+                  <button
+                    key={chip.key}
+                    type="button"
+                    onClick={() => {
+                      if (chip.filter === 'search') setSearch('');
+                      else if (chip.filter === 'level') setLevel('');
+                      else setCategory('');
+                      setPage(1);
+                    }}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <span className="capitalize">{chip.label}</span>
+                    <X className="h-3 w-3" aria-hidden="true" />
+                  </button>
+                ))}
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5">
+                  <Filter className="h-4 w-4" aria-hidden="true" />
+                  Clear All Filters
+                </Button>
+              </div>
+            )}
           </div>
+
+          {/* Results header */}
+          <div className="mb-6 flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{totalCourses.toLocaleString()}</span> courses found
+            </p>
+          </div>
+
+          {/* Grid / Empty / Error */}
+          {courses.length === 0 ? (
+            <EmptyState
+              icon={<BookOpen className="h-12 w-12 text-muted-foreground/50" />}
+              title="No courses found"
+              description="Try changing your search or filters to find what you're looking for."
+              action={{ label: 'Clear Filters', variant: 'outline', onClick: clearFilters }}
+            />
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {courses.map((course) => (
+                <FlipCourseCard key={course._id} course={course} />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && courses.length > 0 && (
+            <div className="mt-10">
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                showPageNumbers
+                siblingCount={1}
+              />
+            </div>
+          )}
         </Container>
       </Section>
 
       {/* CTA */}
       <Section size="sm" background="gradient">
         <Container>
-          <div className="max-w-2xl mx-auto text-center">
+          <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-heading-md font-semibold">Can't find what you're looking for?</h2>
             <p className="mt-3 text-muted-foreground">
               Request a course topic and we'll notify you when it's available.

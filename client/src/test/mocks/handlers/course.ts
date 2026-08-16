@@ -1,6 +1,7 @@
 import { http } from 'msw';
 import { failure, success } from '../helpers';
 import { sampleCourse, freeCourse, instructorUser } from '@/test/fixtures';
+import type { Course } from '@/types/instructor';
 
 const courses = [sampleCourse, freeCourse];
 
@@ -60,16 +61,27 @@ export const courseHandlers = [
     const search = url.searchParams.get('search')?.toLowerCase();
     const level = url.searchParams.get('level');
     const category = url.searchParams.get('category');
+    const sort = url.searchParams.get('sort') ?? 'popular';
 
     let filtered = courses;
     if (search) filtered = filtered.filter((c) => c.title.toLowerCase().includes(search));
     if (level) filtered = filtered.filter((c) => c.level === level);
     if (category) {
       filtered = filtered.filter((c) => {
-        const catName = typeof c.category === 'string' ? c.category : c.category?.name;
-        return catName === category;
+        const catId = typeof c.category === 'string' ? c.category : c.category?._id;
+        return String(catId) === category;
       });
     }
+
+    const SORTS: Record<string, (a: Course, b: Course) => number> = {
+      popular: (a, b) => (b.totalEnrollments ?? 0) - (a.totalEnrollments ?? 0),
+      newest: (a, b) => String(b.createdAt ?? '').localeCompare(String(a.createdAt ?? '')),
+      rating: (a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0),
+      'price-low': (a, b) => (a.price ?? 0) - (b.price ?? 0),
+      'price-high': (a, b) => (b.price ?? 0) - (a.price ?? 0),
+      duration: (a, b) => (a.totalDuration ?? 0) - (b.totalDuration ?? 0),
+    };
+    filtered = [...filtered].sort(SORTS[sort] ?? SORTS.popular);
 
     return success({
       courses: filtered,

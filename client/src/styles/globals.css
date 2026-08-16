@@ -77,6 +77,17 @@
     @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
   }
 
+  /* Course flip-card 3D helpers (Safari needs the -webkit- prefixes) */
+  .flip-preserve-3d {
+    -webkit-transform-style: preserve-3d;
+    transform-style: preserve-3d;
+  }
+
+  .flip-face {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
   /* Rendered lecture article content (Tiptap HTML) */
   .lecture-article-content {
     @apply text-sm leading-relaxed text-foreground sm:text-base;

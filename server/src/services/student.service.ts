@@ -89,11 +89,11 @@ export class StudentService {
   }
 
   // ─── Course Catalog ──────────────────────────────────────────
-  async listCourses(search?: string, category?: string, level?: string, page = 1, limit = 12) {
+  async listCourses(search?: string, category?: string, level?: string, sort?: string, page = 1, limit = 12) {
     // Search queries are unique per user and low hit-rate; only cache unfiltered
     // catalog browsing (homepage, category/level listing).
     return cacheService.remember(
-      cacheKeys.studentCourseList({ search, category, level, page, limit }),
+      cacheKeys.studentCourseList({ search, category, level, sort, page, limit }),
       { ttl: CACHE_TTL.STUDENT_COURSE_LIST },
       async () => {
         const filter: any = { status: 'published', isApproved: true };
@@ -101,12 +101,22 @@ export class StudentService {
         if (category) filter.category = category;
         if (level) filter.level = level;
 
+        const SORTS: Record<string, Record<string, 1 | -1>> = {
+          popular: { totalEnrollments: -1 },
+          newest: { createdAt: -1 },
+          rating: { averageRating: -1 },
+          'price-low': { price: 1 },
+          'price-high': { price: -1 },
+          duration: { totalDuration: 1 },
+        };
+        const sortBy = (sort && SORTS[sort]) || { createdAt: -1 };
+
         const skip = (page - 1) * limit;
         const [courses, total] = await Promise.all([
           Course.find(filter)
             .populate('category', 'name')
             .populate('instructor', 'name avatar')
-            .sort({ createdAt: -1 })
+            .sort(sortBy)
             .skip(skip)
             .limit(limit)
             .lean(),

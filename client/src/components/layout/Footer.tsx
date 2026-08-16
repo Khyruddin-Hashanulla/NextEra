@@ -44,7 +44,7 @@ const socialLinks = [
 
 export function Footer() {
   return (
-    <footer className="relative overflow-hidden bg-slate-950 text-slate-200">
+    <footer className="relative overflow-hidden border-t border-border bg-background text-foreground">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <div className="absolute -top-32 right-[10%] h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
         <div className="absolute -bottom-24 left-[5%] h-64 w-64 rounded-full bg-violet-600/20 blur-3xl" />
@@ -61,13 +61,13 @@ export function Footer() {
                   className="h-9 w-9 rounded-md object-cover shadow-md shadow-primary/30"
                 />
                 <span className="text-xl font-bold tracking-tight font-display">
-                  <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
+                  <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
                     Next
                   </span>
-                  <span className="text-white">Era</span>
+                  <span className="text-foreground">Era</span>
                 </span>
               </Link>
-              <p className="text-sm leading-relaxed text-slate-400 max-w-xs">
+              <p className="text-sm leading-relaxed text-muted-foreground max-w-xs">
                 Empowering learners worldwide with industry-focused courses, expert instructors, and hands-on projects.
               </p>
               <div className="flex items-center gap-3">
@@ -78,7 +78,7 @@ export function Footer() {
                     aria-label={social.label}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-400 hover:bg-primary hover:text-white transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -95,13 +95,13 @@ export function Footer() {
             </div>
 
             <nav aria-label="Product links">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">Product</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">Product</h4>
               <ul className="space-y-3">
                 {productLinks.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.path}
-                      className="text-sm text-slate-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
                     >
                       {link.label}
                     </Link>
@@ -111,13 +111,13 @@ export function Footer() {
             </nav>
 
             <nav aria-label="Company links">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">Company</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">Company</h4>
               <ul className="space-y-3">
                 {companyLinks.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.path}
-                      className="text-sm text-slate-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
                     >
                       {link.label}
                     </Link>
@@ -127,13 +127,13 @@ export function Footer() {
             </nav>
 
             <nav aria-label="Support links">
-              <h4 className="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-4">Support</h4>
+              <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground mb-4">Support</h4>
               <ul className="space-y-3">
                 {supportLinks.map((link) => (
                   <li key={link.label}>
                     <Link
                       to={link.path}
-                      className="text-sm text-slate-400 hover:text-white transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+                      className="text-sm text-muted-foreground hover:text-foreground transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
                     >
                       {link.label}
                     </Link>
@@ -144,24 +144,24 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-white/10 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} NextEra LMS. All rights reserved.</p>
+        <div className="border-t border-border py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-sm text-muted-foreground">&copy; {new Date().getFullYear()} NextEra LMS. All rights reserved.</p>
           <nav aria-label="Legal links" className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 sm:justify-end">
             <Link
               to="/privacy"
-              className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
             >
               Privacy Policy
             </Link>
             <Link
               to="/terms"
-              className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
             >
               Terms of Service
             </Link>
             <Link
               to="/faq"
-              className="text-sm text-slate-500 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 rounded"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded"
             >
               FAQ
             </Link>

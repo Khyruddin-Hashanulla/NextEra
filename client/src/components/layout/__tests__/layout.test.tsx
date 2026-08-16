@@ -155,6 +155,7 @@ describe('Navbar', () => {
   it('renders the logo, primary links and auth buttons when logged out', () => {
     renderWithProviders(<Navbar />, { route: '/', mockAuth: createAuthValue() });
     expect(screen.getByRole('link', { name: /NextEra/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Courses' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Instructors' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Blog' })).toBeInTheDocument();

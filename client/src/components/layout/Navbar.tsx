@@ -11,6 +11,7 @@ import { useState, useRef, useEffect, useId } from 'react';
 import { cn } from '@/lib/utils';
 
 const navLinks: { label: string; path: string }[] = [
+  { label: 'Home', path: ROUTES.HOME },
   { label: 'Courses', path: ROUTES.COURSES },
   { label: 'Instructors', path: '/instructors' },
   { label: 'Blog', path: ROUTES.BLOG },
