@@ -18,6 +18,7 @@ export const ROUTES = {
   ABOUT: '/about',
   CONTACT: '/contact',
   FAQ: '/faq',
+  HELP: '/help',
   PRIVACY: '/privacy',
   TERMS: '/terms',
   CERTIFICATE_VERIFY: (certificateId: string) => `/certificates/verify/${certificateId}`,

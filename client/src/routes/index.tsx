@@ -33,6 +33,9 @@ const ContactPage = lazy(() => import('@/features/public/pages/ContactPage').the
 const PublicFAQPage = lazy(() => import('@/features/public/pages/FAQPage').then((m) => ({ default: m.FAQPage })));
 const PrivacyPage = lazy(() => import('@/features/public/pages/PrivacyPage').then((m) => ({ default: m.PrivacyPage })));
 const TermsPage = lazy(() => import('@/features/public/pages/TermsPage').then((m) => ({ default: m.TermsPage })));
+const HelpCenterPage = lazy(() =>
+  import('@/features/public/pages/HelpCenterPage').then((m) => ({ default: m.HelpCenterPage }))
+);
 const PublicCoursesPage = lazy(() =>
   import('@/features/public/pages/CoursesPage').then((m) => ({ default: m.CoursesPage }))
 );
@@ -324,6 +327,7 @@ export const router = createBrowserRouter([
       { path: ROUTES.ABOUT, element: <SuspendedPage Component={AboutPage} /> },
       { path: ROUTES.CONTACT, element: <SuspendedPage Component={ContactPage} /> },
       { path: ROUTES.FAQ, element: <SuspendedPage Component={PublicFAQPage} /> },
+      { path: ROUTES.HELP, element: <SuspendedPage Component={HelpCenterPage} /> },
       { path: ROUTES.PRIVACY, element: <SuspendedPage Component={PrivacyPage} /> },
       { path: ROUTES.TERMS, element: <SuspendedPage Component={TermsPage} /> },
       { path: ROUTES.COURSES, element: <SuspendedPage Component={PublicCoursesPage} /> },

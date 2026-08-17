@@ -16,6 +16,7 @@ import { ContactPage } from '@/features/public/pages/ContactPage';
 import { FAQPage } from '@/features/public/pages/FAQPage';
 import { PrivacyPage } from '@/features/public/pages/PrivacyPage';
 import { TermsPage } from '@/features/public/pages/TermsPage';
+import { HelpCenterPage } from '@/features/public/pages/HelpCenterPage';
 import { InstructorsPage } from '@/features/public/pages/InstructorsPage';
 import { InstructorProfilePage } from '@/features/public/pages/InstructorProfilePage';
 import { NotFoundPage } from '@/features/public/pages/NotFoundPage';
@@ -368,5 +369,76 @@ describe('Static public pages', () => {
     renderPage(<NotFoundPage />, '/nonexistent', '*');
     expect(screen.getByRole('heading', { name: /Page Not Found/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Go Home/i })).toBeInTheDocument();
+  });
+});
+
+describe('HelpCenterPage', () => {
+  it('renders hero, search, category cards, FAQ and support CTA', async () => {
+    renderPage(<HelpCenterPage />, '/help', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /How can we help you/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+
+    expect(screen.getByRole('searchbox', { name: /Search the Help Center/i })).toBeInTheDocument();
+
+    expect(screen.getAllByRole('button', { name: /Browse topics/ })).toHaveLength(8);
+    expect(screen.getByRole('button', { name: /Getting Started/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Payments & Billing/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Technical Support/ })).toBeInTheDocument();
+
+    expect(screen.getByRole('heading', { level: 3, name: 'Getting Started' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Frequently Asked Questions' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Still need help?' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Contact Support/i })).toBeInTheDocument();
+  });
+
+  it('filters answers by search term', async () => {
+    const user = userEvent.setup();
+    renderPage(<HelpCenterPage />, '/help', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /How can we help you/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+
+    const searchBox = screen.getByRole('searchbox', { name: /Search the Help Center/i });
+    await user.type(searchBox, 'refund');
+
+    expect(screen.getByRole('heading', { name: 'Search Results' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /How do refunds work/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Getting Started' })).not.toBeInTheDocument();
+  });
+
+  it('shows the no-results state and restores content after clearing', async () => {
+    const user = userEvent.setup();
+    renderPage(<HelpCenterPage />, '/help', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /How can we help you/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+
+    const searchBox = screen.getByRole('searchbox', { name: /Search the Help Center/i });
+    await user.type(searchBox, 'zzzzzzzz');
+
+    expect(screen.getByText(/We couldn't find an answer for that/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Browse categories/i })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Clear search' }));
+    expect(screen.getByRole('button', { name: /Getting Started/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Frequently Asked Questions' })).toBeInTheDocument();
+  });
+
+  it('filters the FAQ by category when a category card is selected', async () => {
+    const user = userEvent.setup();
+    renderPage(<HelpCenterPage />, '/help', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /How can we help you/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+
+    await user.click(screen.getByRole('button', { name: /Getting Started/ }));
+
+    expect(screen.getByText(/Showing answers for Getting Started/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /How do I create an account/i })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { level: 3, name: 'Payments & Billing' })).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Show all topics/ }));
+    expect(screen.getByRole('heading', { level: 3, name: 'Payments & Billing' })).toBeInTheDocument();
   });
 });
