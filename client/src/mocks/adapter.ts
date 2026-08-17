@@ -8,6 +8,8 @@ import {
   mockCategories,
   mockCoupons,
   mockCourses,
+  mockForumCategories,
+  mockForumTopics,
   mockInstructorApplications,
   mockInstructors,
   mockLiveClasses,
@@ -17,7 +19,7 @@ import {
   mockStudents,
   mockWalletTransactions,
 } from './data';
-import type { MockScenario } from './types';
+import type { MockScenario, MockForumTopic } from './types';
 
 type Query = Record<string, unknown>;
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms));
@@ -50,6 +52,13 @@ const queryOf = (config: AxiosRequestConfig): Query => (config.params as Query |
 const requestUrl = (config: AxiosRequestConfig) => (config.url?.split('?')[0] ?? '').replace(/^\/api\/v1/, '');
 const scenarioOf = (config: AxiosRequestConfig): MockScenario =>
   (queryOf(config).__mockScenario as MockScenario | undefined) ?? mockConfig.scenario;
+
+const parseBody = (config: AxiosRequestConfig): Record<string, unknown> =>
+  typeof config.data === 'string'
+    ? (JSON.parse(config.data || '{}') as Record<string, unknown>)
+    : ((config.data ?? {}) as Record<string, unknown>);
+
+const mockForumList: MockForumTopic[] = [...mockForumTopics];
 
 const coursesFor = (query: Query) => {
   const search = String(query.search ?? '').toLowerCase();
@@ -340,6 +349,142 @@ function route(config: AxiosRequestConfig): unknown {
       },
     };
   if (url.endsWith('/users/me') && method === 'get') return { data: mockStudents[0] };
+  if (url === '/forum' && method === 'get') {
+    const search = String(query.search ?? '').toLowerCase();
+    const category = String(query.category ?? '');
+    const solved = query.solved;
+    const instructor = String(query.instructor ?? '') === 'true';
+    let topics = mockForumList
+      .filter((topic) => !search || `${topic.title} ${topic.content}`.toLowerCase().includes(search))
+      .filter((topic) => !category || topic.category === category)
+      .filter((topic) => solved === undefined || String(topic.isSolved) === String(solved))
+      .filter((topic) => !instructor || topic.author.role === 'instructor');
+    const sort = String(query.sort ?? 'latest');
+    topics = [...topics].sort((a, b) => {
+      if (sort === 'active') return b.updatedAt.localeCompare(a.updatedAt);
+      if (sort === 'viewed') return b.views - a.views;
+      if (sort === 'discussed') return b.replyCount - a.replyCount;
+      if (sort === 'trending') return b.likeCount + b.replyCount * 2 - (a.likeCount + a.replyCount * 2);
+      return b.createdAt.localeCompare(a.createdAt);
+    });
+    const result = page(topics, query);
+    return { discussions: result.items, pagination: result.pagination };
+  }
+  if (url === '/forum/categories' && method === 'get')
+    return {
+      categories: mockForumCategories.map((category) => ({
+        ...category,
+        count: mockForumList.filter((topic) => topic.category === category.slug).length,
+      })),
+    };
+  if (url === '/forum/stats' && method === 'get')
+    return {
+      stats: {
+        members: 245,
+        discussions: mockForumList.length,
+        replies: mockForumList.reduce((total, topic) => total + topic.replyCount, 0),
+      },
+    };
+  if (/^\/forum\/[^/]+\/replies\/[^/]+$/.test(url) && method === 'delete') {
+    const id = url.split('/')[2];
+    const replyId = url.split('/')[4];
+    const topic = mockForumList.find((item) => item._id === id);
+    if (topic) {
+      topic.replies = (topic.replies ?? []).filter((reply) => reply._id !== replyId);
+      topic.replyCount = topic.replies.length;
+      topic.updatedAt = new Date().toISOString();
+    }
+    return unwrap({ success: true });
+  }
+  if (/^\/forum\/[^/]+\/reply$/.test(url) && method === 'post') {
+    const id = url.split('/')[2];
+    const body = parseBody(config);
+    const topic = mockForumList.find((item) => item._id === id);
+    if (topic) {
+      topic.replies = [
+        ...(topic.replies ?? []),
+        {
+          _id: 'mock-reply-' + Date.now(),
+          author: { _id: mockStudents[0]._id, name: mockStudents[0].name, avatar: mockStudents[0].avatar, role: 'student' },
+          content: String(body.content ?? ''),
+          createdAt: new Date().toISOString(),
+          isBestAnswer: false,
+        },
+      ];
+      topic.replyCount = topic.replies.length;
+      topic.updatedAt = new Date().toISOString();
+    }
+    return { topic };
+  }
+  if (/^\/forum\/[^/]+\/like$/.test(url) && method === 'post') {
+    const topic = mockForumList.find((item) => item._id === url.split('/')[2]);
+    if (topic) {
+      topic.likedByMe = !topic.likedByMe;
+      topic.likeCount = topic.likeCount + (topic.likedByMe ? 1 : -1);
+    }
+    return { liked: topic?.likedByMe ?? false, likeCount: topic?.likeCount ?? 0 };
+  }
+  if (/^\/forum\/[^/]+\/solved$/.test(url) && method === 'patch') {
+    const topic = mockForumList.find((item) => item._id === url.split('/')[2]);
+    if (topic) topic.isSolved = Boolean(parseBody(config).solved);
+    return { topic };
+  }
+  if (/^\/forum\/[^/]+\/pin$/.test(url) && method === 'patch') {
+    const topic = mockForumList.find((item) => item._id === url.split('/')[2]);
+    if (topic) topic.isPinned = Boolean(parseBody(config).pinned);
+    return { topic };
+  }
+  if (/^\/forum\/[^/]+\/lock$/.test(url) && method === 'patch') {
+    const topic = mockForumList.find((item) => item._id === url.split('/')[2]);
+    if (topic) topic.isLocked = Boolean(parseBody(config).locked);
+    return { topic };
+  }
+  if (/^\/forum\/[^/]+\/best-answer$/.test(url) && method === 'patch') {
+    const topic = mockForumList.find((item) => item._id === url.split('/')[2]);
+    const replyId = String(parseBody(config).replyId ?? '');
+    if (topic) {
+      topic.bestReplyId = replyId;
+      topic.replies = (topic.replies ?? []).map((reply) => ({ ...reply, isBestAnswer: reply._id === replyId }));
+      topic.isSolved = true;
+    }
+    return { topic };
+  }
+  if (/^\/forum\/[^/]+$/.test(url) && method === 'delete') {
+    const id = url.split('/').pop();
+    const index = mockForumList.findIndex((topic) => topic._id === id);
+    if (index >= 0) mockForumList.splice(index, 1);
+    return unwrap({ success: true });
+  }
+  if (/^\/forum\/[^/]+$/.test(url) && method === 'get') {
+    const topic = mockForumList.find((item) => item._id === url.split('/').pop());
+    if (topic) topic.views += 1;
+    return topic ? { topic } : { topic: mockForumList[0] };
+  }
+  if (url === '/forum' && method === 'post') {
+    const body = parseBody(config);
+    const now = new Date().toISOString();
+    const newTopic: MockForumTopic = {
+      _id: 'mock-topic-' + Date.now(),
+      author: { _id: mockStudents[0]._id, name: mockStudents[0].name, avatar: mockStudents[0].avatar, role: 'student' },
+      category: String(body.category ?? 'general'),
+      categoryName: mockForumCategories.find((c) => c.slug === body.category)?.name ?? 'General',
+      title: String(body.title ?? ''),
+      content: String(body.content ?? ''),
+      tags: Array.isArray(body.tags) ? (body.tags as string[]) : [],
+      views: 0,
+      likeCount: 0,
+      likedByMe: false,
+      replyCount: 0,
+      isPinned: false,
+      isLocked: false,
+      isSolved: false,
+      replies: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+    mockForumList.unshift(newTopic);
+    return { topic: newTopic };
+  }
   if (method === 'post' || method === 'put' || method === 'delete')
     return unwrap({
       ...(typeof config.data === 'string' ? JSON.parse(config.data || '{}') : config.data),

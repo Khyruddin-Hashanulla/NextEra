@@ -36,6 +36,12 @@ const TermsPage = lazy(() => import('@/features/public/pages/TermsPage').then((m
 const HelpCenterPage = lazy(() =>
   import('@/features/public/pages/HelpCenterPage').then((m) => ({ default: m.HelpCenterPage }))
 );
+const CommunityForumsPage = lazy(() =>
+  import('@/features/community/pages/CommunityForumsPage').then((m) => ({ default: m.CommunityForumsPage }))
+);
+const CommunityTopicPage = lazy(() =>
+  import('@/features/community/pages/CommunityTopicPage').then((m) => ({ default: m.CommunityTopicPage }))
+);
 const PublicCoursesPage = lazy(() =>
   import('@/features/public/pages/CoursesPage').then((m) => ({ default: m.CoursesPage }))
 );
@@ -328,6 +334,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.CONTACT, element: <SuspendedPage Component={ContactPage} /> },
       { path: ROUTES.FAQ, element: <SuspendedPage Component={PublicFAQPage} /> },
       { path: ROUTES.HELP, element: <SuspendedPage Component={HelpCenterPage} /> },
+      { path: ROUTES.COMMUNITY, element: <SuspendedPage Component={CommunityForumsPage} /> },
+      { path: '/community/:id', element: <SuspendedPage Component={CommunityTopicPage} /> },
       { path: ROUTES.PRIVACY, element: <SuspendedPage Component={PrivacyPage} /> },
       { path: ROUTES.TERMS, element: <SuspendedPage Component={TermsPage} /> },
       { path: ROUTES.COURSES, element: <SuspendedPage Component={PublicCoursesPage} /> },

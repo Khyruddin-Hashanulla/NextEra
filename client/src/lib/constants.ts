@@ -19,6 +19,8 @@ export const ROUTES = {
   CONTACT: '/contact',
   FAQ: '/faq',
   HELP: '/help',
+  COMMUNITY: '/community',
+  COMMUNITY_TOPIC: (id: string) => `/community/${id}`,
   PRIVACY: '/privacy',
   TERMS: '/terms',
   CERTIFICATE_VERIFY: (certificateId: string) => `/certificates/verify/${certificateId}`,
@@ -191,6 +193,12 @@ export const QUERY_KEYS = {
     list: (params?: Record<string, unknown>) => ['blog', params] as const,
     detail: (slug: string) => ['blog', slug] as const,
     categories: () => ['blog', 'categories'] as const,
+  },
+  community: {
+    topics: (params?: unknown) => ['community', 'topics', params] as const,
+    categories: () => ['community', 'categories'] as const,
+    stats: () => ['community', 'stats'] as const,
+    topic: (id: string) => ['community', 'topic', id] as const,
   },
   student: {
     dashboard: () => ['student', 'dashboard'] as const,

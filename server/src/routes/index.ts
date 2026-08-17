@@ -16,6 +16,7 @@ import studyReminderRoutes from './studyReminder.routes';
 import aiRoutes from './ai.routes';
 import affiliateRoutes from './affiliate.routes';
 import quizRoutes from './quiz.routes';
+import forumRoutes from './forum.routes';
 
 const router = Router();
 
@@ -36,5 +37,6 @@ router.use('/study-reminders', studyReminderRoutes);
 router.use('/ai', aiRoutes);
 router.use('/affiliate', affiliateRoutes);
 router.use('/quiz', quizRoutes);
+router.use('/', forumRoutes);
 
 export default router;

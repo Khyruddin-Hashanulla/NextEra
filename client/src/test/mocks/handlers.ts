@@ -8,6 +8,7 @@ import { blogHandlers } from './handlers/blog';
 import { notificationHandlers } from './handlers/notification';
 import { paymentHandlers, failureHandlers, networkErrorHandlers } from './handlers/payment';
 import { instructorHandlers } from './handlers/instructor';
+import { communityHandlers } from './handlers/community';
 
 export const baseHandlers = [
   http.get('/api/v1/csrf-token', () => {
@@ -24,6 +25,7 @@ export const baseHandlers = [
   ...notificationHandlers,
   ...paymentHandlers,
   ...instructorHandlers,
+  ...communityHandlers,
 ];
 
 export {
@@ -39,6 +41,7 @@ export {
   notificationHandlers,
   paymentHandlers,
   instructorHandlers,
+  communityHandlers,
   failureHandlers,
   networkErrorHandlers,
 };

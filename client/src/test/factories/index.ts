@@ -3,3 +3,10 @@ export { buildBlogPost, buildBlogComment, buildBlogCategory } from './blog.facto
 export { buildNotification, buildPayment, type TestNotification } from './notification.factory';
 export { buildUser, buildUserWithRole } from './user.factory';
 export { buildCourse } from './course.factory';
+export {
+  buildForumAuthor,
+  buildForumReply,
+  buildForumTopic,
+  buildForumCategory,
+  buildForumStats,
+} from './community.factory';

@@ -149,4 +149,11 @@ export const DEFAULT_FEATURES = [
     enabled: true,
     category: 'general' as const,
   },
+  {
+    key: 'community_forum',
+    name: 'Community Forums',
+    description: 'Enable the community discussion forums',
+    enabled: true,
+    category: 'communication' as const,
+  },
 ];

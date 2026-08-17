@@ -124,6 +124,48 @@ export interface MockBlogPost {
   createdAt: string;
 }
 
+export interface MockForumAuthor {
+  _id: string;
+  name: string;
+  avatar: MockImage;
+  role: 'student' | 'instructor' | 'admin';
+}
+
+export interface MockForumReply {
+  _id: string;
+  author: MockForumAuthor;
+  content: string;
+  createdAt: string;
+  isBestAnswer: boolean;
+}
+
+export interface MockForumTopic {
+  _id: string;
+  author: MockForumAuthor;
+  category: string;
+  categoryName: string;
+  title: string;
+  content: string;
+  tags: string[];
+  views: number;
+  likeCount: number;
+  likedByMe: boolean;
+  replyCount: number;
+  isPinned: boolean;
+  isLocked: boolean;
+  isSolved: boolean;
+  bestReplyId?: string | null;
+  replies?: MockForumReply[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MockForumCategory {
+  slug: string;
+  name: string;
+  count: number;
+}
+
 export interface MockNotification {
   _id: string;
   title: string;
