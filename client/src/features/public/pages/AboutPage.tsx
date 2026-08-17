@@ -1,12 +1,17 @@
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { webPageSchema, breadcrumbListSchema } from '@/lib/schema';
 import { Section, Container } from '@/components/common/Section';
+import { PageBackground } from '@/components/layout/PageBackground';
+import { Button } from '@/components/ui/button';
+import { ROUTES } from '@/lib/constants';
 import { FeatureGrid } from '../components/FeatureGrid';
 import { StatsBar } from '../components/StatsBar';
 import { CTASection } from '../components/CTASection';
 import { TeamMember } from '../components/TeamMember';
+import { AboutTimeline, type AboutTimelineItem } from '../components/about/AboutTimeline';
 import { Users, Target, Lightbulb, Heart, Globe, Shield, Award, BookOpen, Rocket } from 'lucide-react';
 
 const values = [
@@ -80,7 +85,7 @@ const team = [
   },
 ];
 
-const milestones = [
+const milestones: AboutTimelineItem[] = [
   { year: '2020', title: 'Founded', description: 'Started with a mission to make quality tech education accessible' },
   {
     year: '2021',
@@ -117,117 +122,187 @@ export function AboutPage() {
           ]),
         ]}
       />
-      <div className="min-h-screen">
+      <div className="min-h-screen overflow-x-clip">
         {/* Hero */}
-        <Section size="xl" background="gradient" id="hero">
+        <Section size="sm" id="hero" className="relative overflow-hidden">
+          <PageBackground variant="hero" className="absolute inset-0" />
           <Container>
-            <div className="max-w-4xl mx-auto text-center space-y-8">
-              <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-                <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+            <div className="relative z-10 mx-auto max-w-5xl">
+              <div className="max-w-3xl">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                >
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                    </span>
+                    Our Story
                   </span>
-                  Our Story
-                </span>
-              </motion.div>
+                </motion.div>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1, duration: 0.6 }}
-                className="text-display-xl font-display font-bold tracking-tight text-foreground text-balance"
-              >
-                Empowering Learners <span className="text-primary">Worldwide</span>
-              </motion.h1>
+                <motion.h1
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.6 }}
+                  className="mt-6 text-display-xl font-display font-bold tracking-tight text-foreground text-balance"
+                >
+                  Empowering Learners <span className="text-primary">Worldwide</span>
+                </motion.h1>
 
-              <motion.p
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-                className="text-body-lg text-muted-foreground max-w-2xl mx-auto text-balance"
-              >
-                Founded in 2020, NextEra was born from a simple belief: everyone deserves access to high-quality,
-                practical education that transforms careers and lives.
-              </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="mt-6 max-w-2xl text-body-lg text-muted-foreground text-balance"
+                >
+                  Founded in 2020, NextEra was born from a simple belief: everyone deserves access to high-quality,
+                  practical education that transforms careers and lives.
+                </motion.p>
+
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="mt-8 flex flex-wrap gap-3"
+                >
+                  <Button asChild size="lg" className="rounded-full px-7">
+                    <Link to={ROUTES.COURSES}>Explore Courses</Link>
+                  </Button>
+                  <Button asChild variant="outline" size="lg" className="rounded-full px-7">
+                    <Link to={ROUTES.INSTRUCTOR_APPLY}>Become an Instructor</Link>
+                  </Button>
+                </motion.div>
+              </div>
             </div>
           </Container>
         </Section>
 
         {/* Mission */}
-        <Section size="lg" id="mission">
+        <Section size="sm" id="mission" className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="space-y-6"
-              >
-                <span className="text-sm font-medium text-primary uppercase tracking-wider">Our Mission</span>
-                <h2 className="text-heading-lg font-semibold text-foreground">
-                  Making Quality Education Accessible to Everyone
-                </h2>
-                <div className="space-y-4 text-body text-muted-foreground">
-                  <p>
-                    Traditional education is expensive, rigid, and often outdated. We saw millions of talented people
-                    unable to access the skills they needed to thrive in the digital economy.
-                  </p>
-                  <p>
-                    NextEra bridges this gap by partnering with industry experts to create practical, up-to-date courses
-                    that teach real-world skills—at a fraction of the cost of traditional education.
-                  </p>
-                  <p>
-                    But we're more than just courses. We're a global community of learners, mentors, and industry
-                    professionals supporting each other's growth every step of the way.
-                  </p>
-                </div>
-              </motion.div>
+            <div className="mx-auto max-w-5xl">
+              <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
+                <motion.div
+                  initial={{ opacity: 0, x: -30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="space-y-6"
+                >
+                  <span className="text-sm font-medium uppercase tracking-wider text-primary">Our Mission</span>
+                  <h2 className="text-heading-lg font-semibold text-foreground">
+                    Making Quality Education Accessible to Everyone
+                  </h2>
+                  <div className="space-y-4 text-body text-muted-foreground">
+                    <p>
+                      Traditional education is expensive, rigid, and often outdated. We saw millions of talented people
+                      unable to access the skills they needed to thrive in the digital economy.
+                    </p>
+                    <p>
+                      NextEra bridges this gap by partnering with industry experts to create practical, up-to-date courses
+                      that teach real-world skills—at a fraction of the cost of traditional education.
+                    </p>
+                    <p>
+                      But we're more than just courses. We're a global community of learners, mentors, and industry
+                      professionals supporting each other's growth every step of the way.
+                    </p>
+                  </div>
+                </motion.div>
 
-              <motion.div
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                className="relative"
-              >
-                <div className="aspect-video rounded-2xl overflow-hidden bg-muted">
-                  <div className="flex h-full items-center justify-center">
-                    <div className="text-center p-8">
-                      <Rocket className="h-16 w-16 mx-auto mb-4 text-primary/50" />
-                      <h3 className="text-heading-md font-semibold mb-2">Platform Preview</h3>
-                      <p className="text-muted-foreground">Interactive learning experience coming soon</p>
+                <motion.div
+                  initial={{ opacity: 0, x: 30 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="relative"
+                >
+                  <div className="relative overflow-hidden rounded-2xl border border-border/50 bg-card/30 p-10 backdrop-blur-md">
+                    <div
+                      className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-60"
+                      aria-hidden="true"
+                    />
+                    <div className="relative flex min-h-[180px] flex-col items-center justify-center text-center">
+                      <Rocket className="h-16 w-16 text-primary/50" aria-hidden="true" />
+                      <h3 className="mt-4 text-heading-md font-semibold text-foreground">NextEra Learning Platform</h3>
+                      <p className="mt-2 max-w-xs text-sm text-muted-foreground">
+                        Hands-on courses, live classes, and AI-assisted learning in one place.
+                      </p>
                     </div>
                   </div>
-                </div>
-                <div className="absolute -bottom-6 -right-6 sm:-bottom-8 sm:-right-8 p-6 rounded-2xl bg-card border shadow-xl max-w-xs">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Award className="h-6 w-6 text-primary" />
+
+                  <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-border/50 bg-card/30 p-5 backdrop-blur-md">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                          <Award className="h-6 w-6 text-primary" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">4.9/5</p>
+                          <p className="text-sm text-muted-foreground">Student Satisfaction</p>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold">4.9/5</p>
-                      <p className="text-sm text-muted-foreground">Student Satisfaction</p>
+                    <div className="rounded-2xl border border-border/50 bg-card/30 p-5 backdrop-blur-md">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/10">
+                          <Users className="h-6 w-6 text-success" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-foreground">95%</p>
+                          <p className="text-sm text-muted-foreground">Completion Rate</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-success/10 flex items-center justify-center">
-                      <Users className="h-6 w-6 text-success" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">95%</p>
-                      <p className="text-sm text-muted-foreground">Completion Rate</p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </div>
+            </div>
+          </Container>
+        </Section>
+
+        {/* Journey — Timeline */}
+        <Section size="sm" id="journey" className="pt-0 sm:pt-0 lg:pt-0">
+          <Container>
+            <div className="mx-auto max-w-5xl">
+              <div className="mb-14 max-w-3xl">
+                <motion.h2
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="text-heading-lg font-semibold text-foreground"
+                >
+                  Our Journey
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="mt-4 text-body-lg text-muted-foreground"
+                >
+                  From a small team with a big vision to a global learning platform
+                </motion.p>
+              </div>
+
+              <AboutTimeline items={milestones} />
+            </div>
+          </Container>
+        </Section>
+
+        {/* Stats */}
+        <Section size="sm" id="impact" className="pt-0 sm:pt-0 lg:pt-0">
+          <Container>
+            <div className="mx-auto max-w-5xl">
+              <StatsBar stats={stats} />
             </div>
           </Container>
         </Section>
 
         {/* Values */}
-        <Section size="lg" background="muted" id="values">
+        <Section size="sm" id="values" className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="mx-auto mb-16 max-w-3xl text-center">
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -246,83 +321,16 @@ export function AboutPage() {
                 These principles guide every decision we make and every course we create.
               </motion.p>
             </div>
-            <FeatureGrid features={values} />
-          </Container>
-        </Section>
-
-        {/* Stats */}
-        <Section size="lg" id="impact">
-          <Container>
-            <StatsBar stats={stats} />
-          </Container>
-        </Section>
-
-        {/* Journey */}
-        <Section size="lg" id="journey">
-          <Container>
-            <div className="text-center max-w-3xl mx-auto mb-16">
-              <motion.h2
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-heading-lg font-semibold text-foreground"
-              >
-                Our Journey
-              </motion.h2>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="mt-4 text-body-lg text-muted-foreground"
-              >
-                From a small team with a big vision to a global learning platform
-              </motion.p>
-            </div>
-
-            <div className="relative">
-              <motion.div
-                className="absolute left-1/2 top-0 bottom-0 w-0.5 bg-border"
-                initial={{ scaleY: 0 }}
-                whileInView={{ scaleY: 1 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
-              />
-              <div className="space-y-12">
-                {milestones.map((milestone, index) => (
-                  <motion.div
-                    key={milestone.year}
-                    initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    className={index % 2 === 0 ? 'flex' : 'flex flex-row-reverse'}
-                  >
-                    <div className={index % 2 === 0 ? 'flex-1 max-w-md pr-8' : 'flex-1 max-w-md pl-8'}>
-                      <div className={index % 2 === 0 ? 'flex justify-end' : ''}>
-                        <span className="absolute top-1/2 -translate-y-1/2 right-[-8px] w-4 h-4 rounded-full bg-primary border-4 border-background z-10" />
-                        <span
-                          className={`inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground font-bold text-lg ${index % 2 === 0 ? 'ml-auto' : 'mr-auto'}`}
-                        >
-                          {milestone.year}
-                        </span>
-                      </div>
-                      <div className={`mt-4 p-6 rounded-2xl bg-card border ${index % 2 === 0 ? 'mr-4' : 'ml-4'}`}>
-                        <h3 className="font-semibold text-foreground">{milestone.title}</h3>
-                        <p className="mt-2 text-muted-foreground">{milestone.description}</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
+            <div className="mx-auto max-w-5xl">
+              <FeatureGrid features={values} />
             </div>
           </Container>
         </Section>
 
         {/* Team */}
-        <Section size="lg" background="muted" id="team">
+        <Section size="sm" id="team" className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            <div className="text-center max-w-3xl mx-auto mb-16">
+            <div className="mx-auto mb-16 max-w-3xl text-center">
               <motion.h2
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -350,10 +358,18 @@ export function AboutPage() {
                 hidden: { opacity: 0 },
                 show: { opacity: 1, transition: { staggerChildren: 0.1 } },
               }}
-              className="grid gap-8 md:grid-cols-2 lg:grid-cols-4"
+              className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2 lg:grid-cols-4"
             >
-              {team.map((member, _index) => (
-                <TeamMember key={member.name} {...member} />
+              {team.map((member) => (
+                <TeamMember
+                  key={member.name}
+                  name={member.name}
+                  role={member.role}
+                  bio={member.bio}
+                  avatar={member.avatar}
+                  twitter={member.social.twitter === '#' ? undefined : member.social.twitter}
+                  linkedin={member.social.linkedin === '#' ? undefined : member.social.linkedin}
+                />
               ))}
             </motion.div>
           </Container>
