@@ -1,13 +1,14 @@
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { ChevronDown, Search, Mail, MessageCircle } from 'lucide-react';
+import { Mail, MessageCircle, Search, X } from 'lucide-react';
 import { Section, Container } from '@/components/common/Section';
+import { PageBackground } from '@/components/layout/PageBackground';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { faqPageSchema } from '@/lib/schema';
-import { Input } from '@/components/ui/input';
+import { FaqAccordion } from '../components/faq/FaqAccordion';
 
 const faqs = [
   {
@@ -150,16 +151,25 @@ const faqs = [
 export function FAQPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredFAQs = faqs
-    .map((cat) => ({
-      ...cat,
-      items: cat.items.filter(
-        (item) =>
-          item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          item.answer.toLowerCase().includes(searchQuery.toLowerCase())
-      ),
-    }))
-    .filter((cat) => cat.items.length > 0);
+  const hasQuery = searchQuery.trim().length > 0;
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const filteredFAQs = useMemo(
+    () =>
+      faqs
+        .map((cat) => ({
+          ...cat,
+          items: cat.items.filter(
+            (item) =>
+              item.question.toLowerCase().includes(normalizedQuery) ||
+              item.answer.toLowerCase().includes(normalizedQuery)
+          ),
+        }))
+        .filter((cat) => cat.items.length > 0),
+    [normalizedQuery]
+  );
+
+  const totalResults = filteredFAQs.reduce((acc, cat) => acc + cat.items.length, 0);
 
   return (
     <>
@@ -169,148 +179,182 @@ export function FAQPage() {
         canonical="/faq"
       />
       <StructuredData schemas={[faqPageSchema(faqs.flatMap((c) => c.items))]} />
-      <div className="min-h-screen">
+      <div className="min-h-screen overflow-x-clip">
         {/* Hero */}
-        <Section size="lg" background="gradient" id="hero">
+        <Section size="sm" id="hero" className="relative overflow-hidden">
+          <PageBackground variant="hero" className="absolute inset-0" />
           <Container>
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="max-w-3xl mx-auto text-center space-y-6"
-            >
-              <motion.span
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1, duration: 0.4 }}
-                className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary"
-              >
-                <Search className="h-4 w-4" />
-                Frequently Asked Questions
-              </motion.span>
+            <div className="relative z-10 mx-auto max-w-5xl">
+              <div className="max-w-3xl">
+                <motion.span
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-primary"
+                >
+                  FAQ
+                </motion.span>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="text-display-xl font-display font-bold tracking-tight text-foreground text-balance"
-              >
-                Quick Answers to Common Questions
-              </motion.h1>
+                <motion.h1
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1, duration: 0.6 }}
+                  className="mt-6 text-display-xl font-display font-bold tracking-tight text-foreground text-balance"
+                >
+                  Quick Answers to Common Questions
+                </motion.h1>
 
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="text-body-lg text-muted-foreground max-w-2xl mx-auto text-balance"
-              >
-                Can\'t find what you\'re looking for? Search below or{' '}
-                <a href="/contact" className="text-primary hover:underline font-medium">
-                  contact our support team
-                </a>
-                .
-              </motion.p>
+                <motion.p
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2, duration: 0.6 }}
+                  className="mt-6 max-w-2xl text-body-lg text-muted-foreground text-balance"
+                >
+                  Can't find what you're looking for? Search below or{' '}
+                  <a href="/contact" className="font-medium text-primary hover:underline">
+                    contact our support team
+                  </a>
+                  .
+                </motion.p>
 
-              {/* Search */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="max-w-xl mx-auto"
-              >
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    placeholder="Search questions..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-11 h-12 text-base"
-                  />
-                </div>
-              </motion.div>
-            </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="mt-9 max-w-xl"
+                >
+                  <div className="relative">
+                    <Search
+                      className="pointer-events-none absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      type="search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      aria-label="Search questions"
+                      placeholder="Search questions…"
+                      className="h-12 rounded-full border-border/60 bg-background/70 pl-12 pr-12 text-base shadow-sm backdrop-blur-sm"
+                    />
+                    {hasQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setSearchQuery('')}
+                        aria-label="Clear search"
+                        className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      >
+                        <X className="h-4 w-4" aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
           </Container>
         </Section>
 
-        {/* FAQ Categories */}
-        <Section size="lg" id="faqs">
+        {/* FAQ Accordions */}
+        <Section size="sm" id="faqs" className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            {searchQuery ? (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                {filteredFAQs
-                  .flatMap((cat) => cat.items)
-                  .map((item, _index) => (
-                    <Accordion key={item.question} type="single" collapsible className="w-full">
-                      <AccordionItem value={item.question}>
-                        <AccordionTrigger className="text-left py-4 text-lg">{item.question}</AccordionTrigger>
-                        <AccordionContent className="pt-2 pb-6 text-muted-foreground">{item.answer}</AccordionContent>
-                      </AccordionItem>
-                    </Accordion>
-                  ))}
-              </motion.div>
-            ) : (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-8">
-                {faqs.map((category, catIndex) => (
-                  <motion.div
-                    key={category.category}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: catIndex * 0.1 }}
-                  >
-                    <div className="mb-4">
-                      <h2 className="text-heading-md font-semibold text-foreground flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <ChevronDown className="h-4 w-4 text-primary" />
-                        </span>
-                        {category.category}
-                      </h2>
+            <div className="mx-auto max-w-5xl">
+              {hasQuery ? (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4 }}>
+                  <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+                    <div>
+                      <h2 className="text-heading-md font-semibold text-foreground">Search Results</h2>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {totalResults} {totalResults === 1 ? 'question' : 'questions'} match your search
+                      </p>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                      className="gap-1.5 rounded-full"
+                    >
+                      <X className="h-3.5 w-3.5" aria-hidden="true" />
+                      Clear search
+                    </Button>
+                  </div>
 
-                    <div className="space-y-3">
-                      {category.items.map((item, _itemIndex) => (
-                        <Accordion key={item.question} type="single" collapsible className="w-full">
-                          <AccordionItem value={item.question}>
-                            <AccordionTrigger className="text-left py-3 text-body hover:bg-muted/50">
-                              {item.question}
-                            </AccordionTrigger>
-                            <AccordionContent className="pt-2 pb-6 text-muted-foreground">
-                              {item.answer}
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
+                  {totalResults > 0 ? (
+                    <div className="space-y-4">
+                      {filteredFAQs.flatMap((cat) => cat.items).map((item) => (
+                        <FaqAccordion key={item.question} question={item.question} answer={item.answer} />
                       ))}
                     </div>
-                  </motion.div>
-                ))}
-              </motion.div>
-            )}
+                  ) : (
+                    <div className="rounded-2xl border border-border/60 bg-card/40 p-10 text-center sm:p-12">
+                      <h3 className="text-heading-md font-semibold text-foreground">No questions found</h3>
+                      <p className="mx-auto mt-3 max-w-md text-body text-muted-foreground">
+                        We couldn't find anything matching &ldquo;{searchQuery}&rdquo;. Try a different keyword or browse
+                        all categories below.
+                      </p>
+                      <Button variant="outline" size="lg" className="mt-7 rounded-full" onClick={() => setSearchQuery('')}>
+                        View all questions
+                      </Button>
+                    </div>
+                  )}
+                </motion.div>
+              ) : (
+                <div className="space-y-16">
+                  {faqs.map((category, catIndex) => (
+                    <motion.section
+                      key={category.category}
+                      initial={{ opacity: 0, y: 24 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: '-40px' }}
+                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    >
+                      <div className="mb-6 flex items-baseline gap-3 border-b border-border/40 pb-4">
+                        <span className="text-sm font-semibold tabular-nums text-primary">0{catIndex + 1}</span>
+                        <h2 className="text-heading-md font-semibold text-foreground">{category.category}</h2>
+                      </div>
+                      <div className="space-y-4">
+                        {category.items.map((item) => (
+                          <FaqAccordion key={item.question} question={item.question} answer={item.answer} />
+                        ))}
+                      </div>
+                    </motion.section>
+                  ))}
+                </div>
+              )}
 
-            {/* Still need help? */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-              className="mt-16 p-8 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-center"
-            >
-              <h2 className="text-heading-md font-semibold mb-3">Still Need Help?</h2>
-              <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-                Our support team is here to help. Response time is typically under 24 hours.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button asChild size="lg" className="gap-2">
-                  <a href="/contact">
-                    <MessageCircle className="h-4 w-4" />
-                    Contact Support
-                  </a>
-                </Button>
-                <Button asChild variant="outline" size="lg">
-                  <a href="mailto:support@nextera.io">
-                    <Mail className="h-4 w-4" />
-                    Email Us
-                  </a>
-                </Button>
-              </div>
-            </motion.div>
+              {/* Still need help? */}
+              <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, ease: 'easeOut' }}
+                className="relative mt-20 overflow-hidden rounded-3xl border border-border/60 bg-card/40 p-8 text-center sm:p-12"
+              >
+                <div className="pointer-events-none absolute inset-0 bg-grid-pattern opacity-30" aria-hidden="true" />
+                <div
+                  className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
+                  aria-hidden="true"
+                />
+                <div className="relative">
+                  <h2 className="text-heading-md font-semibold text-foreground">Still Need Help?</h2>
+                  <p className="mx-auto mt-3 max-w-xl text-body text-muted-foreground">
+                    Our support team is here to help. Response time is typically under 24 hours.
+                  </p>
+                  <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                    <Button asChild size="lg" className="gap-2 rounded-full">
+                      <a href="/contact">
+                        <MessageCircle className="h-4 w-4" aria-hidden="true" />
+                        Contact Support
+                      </a>
+                    </Button>
+                    <Button asChild variant="outline" size="lg" className="gap-2 rounded-full">
+                      <a href="mailto:support@nextera.io">
+                        <Mail className="h-4 w-4" aria-hidden="true" />
+                        Email Us
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
           </Container>
         </Section>
       </div>
