@@ -49,6 +49,7 @@ export function avatarUrl(avatar?: AvatarSource): string {
 export interface InstructorCardData {
   _id: string;
   name: string;
+  email?: string;
   avatar?: AvatarSource;
   bio?: string;
   title?: string;

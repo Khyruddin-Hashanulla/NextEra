@@ -221,6 +221,31 @@ describe('Static public pages', () => {
     expect(screen.getByText(/Instructor User/i)).toBeInTheDocument();
   });
 
+  it('InstructorsPage search filters the instructor list', async () => {
+    renderPage(<InstructorsPage />, '/instructors', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Our Expert Instructors/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    await waitFor(() => expect(screen.getByText(/Instructor User/i)).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+
+    const searchInput = screen.getByLabelText(/Search Instructors/i);
+    await userEvent.type(searchInput, 'no-such-name');
+
+    await waitFor(() => expect(screen.getByText(/No instructors found/i)).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    expect(screen.queryByText(/Instructor User/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/0 instructors?/i)).toBeInTheDocument();
+
+    await userEvent.clear(searchInput);
+    await waitFor(() => expect(screen.getByText(/Instructor User/i)).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    expect(screen.queryByText(/No instructors found/i)).not.toBeInTheDocument();
+  });
+
   it('InstructorProfilePage renders instructor details', async () => {
     renderPage(<InstructorProfilePage />, '/instructors/instructor-1', '/instructors/:id');
     await waitFor(() => expect(screen.getAllByText(/Instructor User/i).length).toBeGreaterThan(0), {

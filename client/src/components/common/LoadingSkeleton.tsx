@@ -33,16 +33,25 @@ export function BlogCardSkeleton() {
 export function InstructorCardSkeleton() {
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="relative h-24 bg-gradient-to-br from-primary/30 to-aura-primary/20" aria-hidden="true" />
-      <div className="-mt-10 flex justify-center px-6">
-        <Skeleton className="h-20 w-20 rounded-full ring-4 ring-card" />
+      <div className="flex items-center justify-between px-5 pt-4" aria-hidden="true">
+        <Skeleton className="h-3 w-14 rounded-full" />
+        <Skeleton className="h-3 w-12 rounded-full" />
       </div>
-      <div className="flex flex-1 flex-col items-center px-6 pb-6 pt-3 text-center">
-        <Skeleton className="h-5 w-1/2" />
-        <Skeleton className="mt-2 h-4 w-3/4" />
-        <Skeleton className="mt-2 h-4 w-full" />
-        <div className="mt-4 w-full border-t border-border pt-4">
-          <Skeleton className="mx-auto h-9 w-full rounded-xl" />
+      <div className="px-5 pt-3" aria-hidden="true">
+        <Skeleton className="aspect-video w-full rounded-xl" />
+      </div>
+      <div className="flex flex-1 flex-col items-center px-5 pb-0 pt-4 text-center" aria-hidden="true">
+        <Skeleton className="h-5 w-1/2 rounded-md" />
+        <Skeleton className="mt-1.5 h-3 w-2/3 rounded-md" />
+        <Skeleton className="mt-2 h-3 w-1/3 rounded-full" />
+        <div className="mt-auto w-full pt-4">
+          <Skeleton className="h-10 w-full rounded-lg" />
+        </div>
+      </div>
+      <div className="mt-3 border-t border-success/15 bg-success/10 px-5 py-2.5" aria-hidden="true">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-3 w-16 rounded-full" />
+          <Skeleton className="h-3 w-20 rounded-full" />
         </div>
       </div>
     </div>
