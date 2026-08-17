@@ -249,9 +249,16 @@ describe('Static public pages', () => {
 
   it('PrivacyPage renders', async () => {
     renderPage(<PrivacyPage />, '/privacy', '*');
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Privacy Policy/i })).toBeInTheDocument(), {
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Privacy Policy' })).toBeInTheDocument(), {
       timeout: LONG_TIMEOUT,
     });
+    expect(screen.getByText(/Last updated: January 2024/i)).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Information We Collect' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Your Rights' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Contact Us' })).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('navigation', { name: 'Privacy policy sections', hidden: true }).length
+    ).toBeGreaterThan(0);
   });
 
   it('TermsPage renders', async () => {
