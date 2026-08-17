@@ -19,6 +19,8 @@ import { TermsPage } from '@/features/public/pages/TermsPage';
 import { InstructorsPage } from '@/features/public/pages/InstructorsPage';
 import { InstructorProfilePage } from '@/features/public/pages/InstructorProfilePage';
 import { NotFoundPage } from '@/features/public/pages/NotFoundPage';
+import { CategoriesPage } from '@/features/public/pages/CategoriesPage';
+import { CategoryPage } from '@/features/public/pages/CategoryPage';
 
 const LONG_TIMEOUT = 10000;
 
@@ -171,6 +173,53 @@ describe('BlogDetailPage', () => {
       },
       { timeout: LONG_TIMEOUT }
     );
+  });
+});
+
+describe('CategoriesPage', () => {
+  it('renders the hero and category cards', async () => {
+    renderPage(<CategoriesPage />, '/categories', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Explore Our Categories/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Development' })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    expect(screen.getByRole('heading', { name: 'Data Science' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Business' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Design' })).toBeInTheDocument();
+    expect(screen.getAllByRole('link', { name: /Explore category/i })).toHaveLength(4);
+  });
+
+  it('links to category detail pages', async () => {
+    renderPage(<CategoriesPage />, '/categories', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Development' })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    const link = screen.getByRole('link', { name: /Development/i });
+    expect(link).toHaveAttribute('href', '/categories/development');
+  });
+});
+
+describe('CategoryPage', () => {
+  it('renders category details and its courses', async () => {
+    renderPage(<CategoryPage />, '/categories/development', '/categories/:slug');
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Development' })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Courses in Development/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    expect(screen.getByLabelText('Breadcrumb')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Categories' })).toBeInTheDocument();
+  });
+
+  it('shows category not found for an invalid slug', async () => {
+    renderPage(<CategoryPage />, '/categories/does-not-exist', '/categories/:slug');
+    await waitFor(() => expect(screen.getByRole('heading', { name: /Category not found/i })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    expect(screen.getByRole('link', { name: /Browse All Categories/i })).toBeInTheDocument();
   });
 });
 

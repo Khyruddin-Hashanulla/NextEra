@@ -51,6 +51,12 @@ const PublicBlogListPage = lazy(() =>
 const PublicBlogDetailPage = lazy(() =>
   import('@/features/public/pages/BlogDetailPage').then((m) => ({ default: m.BlogDetailPage }))
 );
+const PublicCategoriesPage = lazy(() =>
+  import('@/features/public/pages/CategoriesPage').then((m) => ({ default: m.CategoriesPage }))
+);
+const PublicCategoryPage = lazy(() =>
+  import('@/features/public/pages/CategoryPage').then((m) => ({ default: m.CategoryPage }))
+);
 const NotFoundPage = lazy(() =>
   import('@/features/public/pages/NotFoundPage').then((m) => ({ default: m.NotFoundPage }))
 );
@@ -322,6 +328,8 @@ export const router = createBrowserRouter([
       { path: ROUTES.TERMS, element: <SuspendedPage Component={TermsPage} /> },
       { path: ROUTES.COURSES, element: <SuspendedPage Component={PublicCoursesPage} /> },
       { path: ROUTES.COURSE_DETAIL(':id'), element: <SuspendedPage Component={CourseDetailPage} /> },
+      { path: '/categories', element: <SuspendedPage Component={PublicCategoriesPage} /> },
+      { path: '/categories/:slug', element: <SuspendedPage Component={PublicCategoryPage} /> },
       { path: ROUTES.BUNDLES, element: <SuspendedPage Component={BundlesListPage} /> },
       { path: ROUTES.BUNDLE_DETAIL(':id'), element: <SuspendedPage Component={BundleDetailPage} /> },
       { path: '/instructors', element: <SuspendedPage Component={PublicInstructorsPage} /> },
