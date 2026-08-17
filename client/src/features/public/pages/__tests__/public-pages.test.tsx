@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -261,11 +261,48 @@ describe('Static public pages', () => {
     ).toBeGreaterThan(0);
   });
 
-  it('TermsPage renders', async () => {
-    renderPage(<TermsPage />, '/terms', '*');
-    await waitFor(() => expect(screen.getByRole('heading', { name: /Terms of Service/i })).toBeInTheDocument(), {
+  it('PrivacyPage mobile TOC collapses after selecting a section', async () => {
+    const user = userEvent.setup();
+    const { container } = renderPage(<PrivacyPage />, '/privacy', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Privacy Policy' })).toBeInTheDocument(), {
       timeout: LONG_TIMEOUT,
     });
+    const details = container.querySelector('details');
+    expect(details).not.toBeNull();
+    details!.open = true;
+    const link = within(details as HTMLElement).getByRole('link', { name: 'Your Rights' });
+    await user.click(link);
+    expect(details!.open).toBe(false);
+  });
+
+  it('TermsPage renders', async () => {
+    renderPage(<TermsPage />, '/terms', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Terms of Service' })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    expect(screen.getByRole('heading', { name: 'Acceptance of Terms' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Prohibited Conduct' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Contact Us' })).toBeInTheDocument();
+    expect(
+      screen.getByText(/Harassment, intimidation, or discrimination against any user or instructor/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole('navigation', { name: 'Terms of service sections', hidden: true }).length
+    ).toBeGreaterThan(0);
+  });
+
+  it('TermsPage mobile TOC collapses after selecting a section', async () => {
+    const user = userEvent.setup();
+    const { container } = renderPage(<TermsPage />, '/terms', '*');
+    await waitFor(() => expect(screen.getByRole('heading', { name: 'Terms of Service' })).toBeInTheDocument(), {
+      timeout: LONG_TIMEOUT,
+    });
+    const details = container.querySelector('details');
+    expect(details).not.toBeNull();
+    details!.open = true;
+    const link = within(details as HTMLElement).getByRole('link', { name: 'Eligibility' });
+    await user.click(link);
+    expect(details!.open).toBe(false);
   });
 
   it('InstructorsPage renders', async () => {

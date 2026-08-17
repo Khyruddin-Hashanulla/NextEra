@@ -156,6 +156,10 @@ function TocList({ items }: { items: { id: string; title: string }[] }) {
         <li key={item.id}>
           <a
             href={`#${item.id}`}
+            onClick={(event) => {
+              const details = event.currentTarget.closest('details');
+              if (details) details.open = false;
+            }}
             className="group flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
           >
             {item.title}
