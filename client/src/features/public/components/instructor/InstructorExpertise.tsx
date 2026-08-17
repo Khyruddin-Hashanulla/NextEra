@@ -40,8 +40,20 @@ export const InstructorExpertise = memo(function InstructorExpertise({ instructo
 
   return (
     <Reveal>
-      <div id="expertise" className="scroll-mt-24 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Areas of Expertise</h2>
+      <div
+        id="expertise"
+        className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8"
+      >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+          aria-hidden="true"
+        />
+        <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+            <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
+          </span>
+          Areas of Expertise
+        </h2>
         <div className="mt-6 grid gap-6 md:grid-cols-3">
           {groups.map((group) => (
             <div key={group.title}>

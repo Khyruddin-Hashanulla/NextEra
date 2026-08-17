@@ -65,8 +65,12 @@ export const InstructorStats = memo(function InstructorStats({ instructor }: Ins
         <motion.div
           key={label}
           variants={itemVariants}
-          className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg sm:p-5"
+          className="group relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 sm:p-5"
         >
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+            aria-hidden="true"
+          />
           <div
             className={cn(
               'absolute inset-0 bg-gradient-to-br opacity-50 transition-opacity duration-300 group-hover:opacity-80',
@@ -75,7 +79,9 @@ export const InstructorStats = memo(function InstructorStats({ instructor }: Ins
             aria-hidden="true"
           />
           <div className="relative">
-            <Icon className={cn('h-5 w-5', accent)} aria-hidden="true" />
+            <span className="inline-flex items-center justify-center rounded-lg bg-card/80 p-1.5 shadow-sm ring-1 ring-border">
+              <Icon className={cn('h-5 w-5', accent)} aria-hidden="true" />
+            </span>
             <p className="mt-3 text-2xl font-bold text-foreground sm:text-3xl">{value}</p>
             <p className="mt-0.5 text-sm text-muted-foreground">{label}</p>
           </div>

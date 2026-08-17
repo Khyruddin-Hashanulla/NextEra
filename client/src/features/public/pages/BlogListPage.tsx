@@ -1,8 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+import { BookOpen, Clock, Filter, Search, SlidersHorizontal, X } from 'lucide-react';
 import { blogApi } from '@/api/endpoints/blog';
-import { BlogGridSkeleton } from '@/components/common/LoadingSkeleton';
+import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorState } from '@/components/common/ErrorState';
 import { Pagination } from '@/components/ui/pagination';
@@ -12,15 +14,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Section, Container } from '@/components/common/Section';
 import { PageTransition } from '@/components/common/PageTransition';
 import { OptimizedImage } from '@/components/common/OptimizedImage';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SEO } from '@/components/seo/SEO';
 import { StructuredData } from '@/components/seo/StructuredData';
 import { breadcrumbListSchema } from '@/lib/schema';
-import { Search, BookOpen, X } from 'lucide-react';
-import { cn, formatDate } from '@/lib/utils';
-import { Link } from 'react-router-dom';
+import { cn, formatDate, getInitials } from '@/lib/utils';
+import { BlogCard } from '@/features/public/components/blog/BlogCard';
+import { BlogGridSkeleton } from '@/features/public/components/blog/BlogCardSkeleton';
 import type { BlogPost } from '@/types/blog';
 
 const CATEGORIES = ['All', 'Technology', 'Design', 'Business', 'Career', 'Learning Tips'];
+
+const SORT_LABELS: Record<string, string> = {
+  newest: 'Newest First',
+  oldest: 'Oldest First',
+  popular: 'Most Popular',
+};
 
 export function BlogListPage() {
   const [page, setPage] = useState(1);
@@ -63,6 +72,7 @@ export function BlogListPage() {
   const featured = featuredData || [];
   const pagination = blogsData?.pagination;
   const totalPages = pagination?.pages || 1;
+  const totalArticles = pagination?.total ?? allBlogs.length;
 
   const isLoading = blogsLoading && page === 1;
 
@@ -73,6 +83,11 @@ export function BlogListPage() {
 
   const handleCategoryChange = (cat: string) => {
     setCategory(cat);
+    setPage(1);
+  };
+
+  const handleSortChange = (value: string) => {
+    setSort(value);
     setPage(1);
   };
 
@@ -87,6 +102,7 @@ export function BlogListPage() {
 
   const bigFeatured = featured[0];
   const smallFeatured = featured.slice(1, 3);
+  const bigFeaturedAuthor = bigFeatured?.author?.name || 'NextEra';
 
   return (
     <PageTransition>
@@ -104,99 +120,121 @@ export function BlogListPage() {
         ]}
       />
       <div className="min-h-screen">
-        <Section size="sm" className="bg-gradient-to-br from-primary/10 via-background to-background">
+        {/* Page Header */}
+        <Section size="sm" background="gradient">
           <Container>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-3xl mx-auto text-center"
-            >
-              <h1 className="text-4xl sm:text-5xl font-bold text-foreground">NextEra Blog</h1>
-              <p className="mt-4 text-lg text-muted-foreground">
+            <div className="mx-auto max-w-3xl text-center">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-heading-lg font-semibold text-foreground"
+              >
+                NextEra Blog
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="mt-3 text-body-lg text-muted-foreground"
+              >
                 Insights, tutorials, and stories from the learning community.
-              </p>
-            </motion.div>
+              </motion.p>
+            </div>
           </Container>
         </Section>
 
+        {/* Featured Articles */}
         {featured.length > 0 && !search && category === 'All' && page === 1 && (
           <Section size="md">
             <Container>
-              <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-                <h2 className="text-2xl font-bold text-foreground mb-8">Featured Articles</h2>
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="lg:w-2/3">
-                    <Link to={`/blog/${bigFeatured.slug}`}>
-                      <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full">
-                        <div className="h-64 overflow-hidden">
-                          <OptimizedImage
-                            src={bigFeatured.featuredImage?.url || '/placeholder-blog.jpg'}
-                            alt={`${bigFeatured.title} featured image`}
-                            placeholderType="blog"
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="p-5">
-                          <span className="text-xs text-muted-foreground/70">
-                            {formatDate(bigFeatured.publishedAt || bigFeatured.createdAt)}
-                          </span>
-                          <div className="mt-2">
-                            {bigFeatured.categories?.slice(0, 1).map((cat) => (
-                              <span
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+              >
+                <h2 className="mb-8 text-2xl font-bold text-foreground">Featured Articles</h2>
+                <div className="flex flex-col gap-6 lg:flex-row">
+                  <Link to={`/blog/${bigFeatured.slug}`} className="lg:w-2/3">
+                    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-card/30 backdrop-blur-md transition-all duration-300 hover:border-primary/50 hover:shadow-xl hover:shadow-primary/10">
+                      <div className="relative aspect-video w-full overflow-hidden bg-muted lg:aspect-auto lg:h-72">
+                        <OptimizedImage
+                          src={bigFeatured.featuredImage?.url || '/images/blog.jpg'}
+                          alt={`${bigFeatured.title} featured image`}
+                          placeholderType="blog"
+                          fallbackSrc="/images/blog.jpg"
+                          containerClassName="h-full w-full"
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        />
+
+                        <div
+                          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background/80 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-40"
+                          aria-hidden="true"
+                        />
+
+                        {bigFeatured.categories && bigFeatured.categories.length > 0 && (
+                          <div className="absolute bottom-3 left-3 flex flex-wrap gap-2">
+                            {bigFeatured.categories.slice(0, 2).map((cat) => (
+                              <Badge
                                 key={cat}
-                                className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full inline-block mb-2"
+                                variant="secondary"
+                                className="bg-background/50 backdrop-blur-sm hover:bg-background/80"
                               >
                                 {cat}
-                              </span>
+                              </Badge>
                             ))}
                           </div>
-                          <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors text-lg">
-                            {bigFeatured.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{bigFeatured.excerpt}</p>
-                          <span className="text-xs text-muted-foreground/70 mt-3 block">
-                            {bigFeatured.readingTime} min read
+                        )}
+
+                        <div
+                          className="absolute inset-0 flex items-center justify-center bg-background/20 opacity-0 backdrop-blur-[2px] transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100"
+                          aria-hidden="true"
+                        >
+                          <span className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25">
+                            <BookOpen className="h-4 w-4" aria-hidden="true" />
+                            Read Article
                           </span>
                         </div>
-                      </article>
-                    </Link>
-                  </div>
-                  <div className="lg:w-1/3 flex flex-col gap-6">
-                    {smallFeatured.map((blog) => (
-                      <Link key={blog._id} to={`/blog/${blog.slug}`}>
-                        <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 flex-1">
-                          <div className="h-40 overflow-hidden">
-                            <OptimizedImage
-                              src={blog.featuredImage?.url || '/placeholder-blog.jpg'}
-                              alt={`${blog.title} featured image`}
-                              placeholderType="blog"
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="p-5">
-                            <span className="text-xs text-muted-foreground/70">
-                              {formatDate(blog.publishedAt || blog.createdAt)}
-                            </span>
-                            <div className="mt-2">
-                              {blog.categories?.slice(0, 1).map((cat) => (
-                                <span
-                                  key={cat}
-                                  className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full inline-block mb-2"
-                                >
-                                  {cat}
-                                </span>
-                              ))}
+                      </div>
+                      <div className="flex flex-1 flex-col gap-4 p-5 sm:p-6">
+                        <div className="space-y-2">
+                          <h3 className="line-clamp-2 break-words text-xl font-semibold leading-tight tracking-tight text-foreground transition-colors group-hover:text-primary">
+                            {bigFeatured.title}
+                          </h3>
+                          {bigFeatured.excerpt && (
+                            <p className="line-clamp-2 text-sm text-muted-foreground sm:line-clamp-3">
+                              {bigFeatured.excerpt}
+                            </p>
+                          )}
+                        </div>
+                        <div className="mt-auto flex items-center justify-between gap-3 border-t border-border/50 pt-4">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <Avatar className="h-8 w-8 shrink-0 border border-border/50">
+                              <AvatarImage
+                                src={bigFeatured.author?.avatar?.url}
+                                alt={`Profile photo of ${bigFeaturedAuthor}`}
+                              />
+                              <AvatarFallback className="bg-muted text-xs font-semibold text-primary">
+                                {getInitials(bigFeaturedAuthor)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex min-w-0 flex-col text-xs">
+                              <span className="truncate font-medium text-foreground">{bigFeaturedAuthor}</span>
+                              <span className="truncate text-muted-foreground">
+                                {formatDate(bigFeatured.publishedAt || bigFeatured.createdAt)}
+                              </span>
                             </div>
-                            <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
-                              {blog.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{blog.excerpt}</p>
-                            <span className="text-xs text-muted-foreground/70 mt-3 block">
-                              {blog.readingTime} min read
-                            </span>
                           </div>
-                        </article>
-                      </Link>
+                          <div className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" aria-hidden="true" />
+                            <span>{bigFeatured.readingTime} min read</span>
+                          </div>
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                  <div className="flex flex-col gap-6 lg:w-1/3">
+                    {smallFeatured.map((blog) => (
+                      <BlogCard key={blog._id} blog={blog} />
                     ))}
                   </div>
                 </div>
@@ -205,186 +243,197 @@ export function BlogListPage() {
           </Section>
         )}
 
-        <Section size="md" background="muted">
+        {/* Discovery Toolbar & Articles */}
+        <Section size="lg" className="pt-0 sm:pt-0 lg:pt-0">
           <Container>
-            <div className="flex flex-col lg:flex-row gap-8">
-              <aside className="lg:w-64 flex-shrink-0">
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="sticky top-24 space-y-6"
-                >
-                  <div>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
-                      <Input
-                        placeholder="Search articles..."
-                        value={search}
-                        onChange={handleSearch}
-                        className="pl-9 rounded-full"
-                      />
-                    </div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-8 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5"
+            >
+              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                <div>
+                  <label htmlFor="blog-search" className="label-base">
+                    Search Articles
+                  </label>
+                  <div className="relative">
+                    <Search
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                      aria-hidden="true"
+                    />
+                    <Input
+                      id="blog-search"
+                      type="search"
+                      placeholder="Search articles..."
+                      value={search}
+                      onChange={handleSearch}
+                      className="pl-9"
+                    />
                   </div>
+                </div>
+                <div>
+                  <label htmlFor="blog-sort" className="label-base">
+                    Sort By
+                  </label>
+                  <Select value={sort} onValueChange={handleSortChange}>
+                    <SelectTrigger id="blog-sort" className="w-full md:w-48">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="popular">Most Popular</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-                  <div>
-                    <p className="text-sm font-medium text-foreground/80 mb-3">Categories</p>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.map((cat) => (
-                        <button
-                          key={cat}
-                          onClick={() => handleCategoryChange(cat)}
-                          className={cn(
-                            'px-4 py-2 rounded-full text-sm font-medium border transition-all',
-                            category === cat
-                              ? 'bg-primary text-white border-primary'
-                              : 'bg-background text-muted-foreground border-border hover:border-foreground/20'
-                          )}
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {/* Categories */}
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+                <span className="mr-1 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                  Categories
+                </span>
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => handleCategoryChange(cat)}
+                    className={cn(
+                      'inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition-colors',
+                      category === cat
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'border-border bg-background text-muted-foreground hover:border-foreground/20 hover:text-foreground'
+                    )}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
 
-                  <div>
-                    <p className="text-sm font-medium text-foreground/80 mb-3">Sort By</p>
-                    <Select
-                      value={sort}
-                      onValueChange={(value) => {
-                        setSort(value);
+              {/* Active filters */}
+              {hasActiveFilters && (
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+                  <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                    Active filters
+                  </span>
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSearch('');
                         setPage(1);
                       }}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sort by" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="newest">Newest First</SelectItem>
-                        <SelectItem value="oldest">Oldest First</SelectItem>
-                        <SelectItem value="popular">Most Popular</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {hasActiveFilters && (
-                    <Button variant="ghost" size="sm" className="w-full justify-start" onClick={clearFilters}>
-                      <X className="h-4 w-4" />
-                      Clear Filters
-                    </Button>
+                      "{search}"
+                      <X className="h-3 w-3" aria-hidden="true" />
+                    </button>
                   )}
-                </motion.div>
-              </aside>
+                  {sort !== 'newest' && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSort('newest');
+                        setPage(1);
+                      }}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
+                    >
+                      {SORT_LABELS[sort]}
+                      <X className="h-3 w-3" aria-hidden="true" />
+                    </button>
+                  )}
+                  <Button variant="ghost" size="sm" onClick={clearFilters} className="gap-1.5">
+                    <Filter className="h-4 w-4" aria-hidden="true" />
+                    Clear All Filters
+                  </Button>
+                </div>
+              )}
+            </motion.div>
 
-              <div className="flex-1 min-w-0">
-                {isLoading ? (
+            {/* Results header */}
+            <div className="mb-6 flex items-center justify-between">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{totalArticles} articles</span> found
+              </p>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {isLoading ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                >
                   <BlogGridSkeleton count={6} />
-                ) : error ? (
+                </motion.div>
+              ) : error ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
                   <ErrorState
                     title="Failed to load blog posts"
                     message="Please try again or check your connection."
                     onRetry={() => refetch()}
                   />
-                ) : (
-                  <AnimatePresence mode="wait">
-                    {allBlogs.length === 0 ? (
-                      <motion.div
-                        key="empty"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                      >
-                        <EmptyState
-                          icon={<BookOpen className="h-12 w-12 text-muted-foreground/50" />}
-                          title="No articles found"
-                          description="Try adjusting your search or filters to find what you're looking for."
-                          action={{ label: 'Clear Filters', href: '/blog', variant: 'outline' }}
-                        />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="grid"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        className="grid grid-cols-1 sm:grid-cols-2 gap-6"
-                      >
-                        {allBlogs.map((blog: BlogPost, index: number) => (
-                          <motion.div
-                            key={blog._id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05, duration: 0.3 }}
-                          >
-                            <Link to={`/blog/${blog.slug}`}>
-                              <article className="rounded-2xl bg-background border border-border shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 h-full">
-                                <div className="h-48 overflow-hidden">
-                                  <OptimizedImage
-                                    src={blog.featuredImage?.url || '/placeholder-blog.jpg'}
-                                    alt={`${blog.title} featured image`}
-                                    placeholderType="blog"
-                                    className="object-cover"
-                                  />
-                                </div>
-                                <div className="p-5">
-                                  <div className="flex items-center gap-2 text-xs text-muted-foreground/70 mb-2">
-                                    <span>{formatDate(blog.publishedAt || blog.createdAt)}</span>
-                                    {blog.categories?.slice(0, 1).map((cat) => (
-                                      <span
-                                        key={cat}
-                                        className="text-xs font-medium text-primary bg-primary/10 px-2.5 py-0.5 rounded-full"
-                                      >
-                                        {cat}
-                                      </span>
-                                    ))}
-                                  </div>
-                                  <h3 className="font-semibold text-foreground line-clamp-2 hover:text-primary transition-colors">
-                                    {blog.title}
-                                  </h3>
-                                  <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{blog.excerpt}</p>
-                                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border">
-                                    {blog.author?.avatar?.url ? (
-                                      <OptimizedImage
-                                        src={blog.author.avatar.url}
-                                        alt={`Profile photo of ${blog.author.name}`}
-                                        placeholderType="avatar"
-                                        className="rounded-full object-cover"
-                                        containerClassName="h-6 w-6"
-                                      />
-                                    ) : (
-                                      <div className="h-6 w-6 rounded-full bg-muted" />
-                                    )}
-                                    <span className="text-sm text-muted-foreground">{blog.author?.name}</span>
-                                    <span className="text-xs text-muted-foreground/70">
-                                      {blog.readingTime} min read
-                                    </span>
-                                  </div>
-                                </div>
-                              </article>
-                            </Link>
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                )}
+                </motion.div>
+              ) : allBlogs.length === 0 ? (
+                <motion.div
+                  key="empty"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                >
+                  <EmptyState
+                    icon={<BookOpen className="h-12 w-12 text-muted-foreground/50" />}
+                    title="No articles found"
+                    description="Try adjusting your search or filters to find what you're looking for."
+                    action={{ label: 'Clear Filters', variant: 'outline', onClick: clearFilters }}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="grid"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                >
+                  {allBlogs.map((blog: BlogPost, index: number) => (
+                    <motion.div
+                      key={blog._id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05, duration: 0.3 }}
+                      className="h-full"
+                    >
+                      <BlogCard blog={blog} />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-                {totalPages > 1 && !isLoading && allBlogs.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="mt-10 flex justify-center"
-                  >
-                    <Pagination
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={setPage}
-                      showPageNumbers
-                      siblingCount={1}
-                    />
-                  </motion.div>
-                )}
-              </div>
-            </div>
+            {totalPages > 1 && !isLoading && allBlogs.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-10 flex justify-center"
+              >
+                <Pagination
+                  currentPage={page}
+                  totalPages={totalPages}
+                  onPageChange={setPage}
+                  showPageNumbers
+                  siblingCount={1}
+                />
+              </motion.div>
+            )}
           </Container>
         </Section>
       </div>

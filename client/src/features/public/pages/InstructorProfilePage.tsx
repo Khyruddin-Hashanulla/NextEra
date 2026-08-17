@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Section, Container } from '@/components/common/Section';
+import { Section } from '@/components/common/Section';
 import { ErrorState } from '@/components/common/ErrorState';
 import { ResourceNotFound } from '@/components/common/ResourceNotFound';
 import { studentApi } from '@/api/endpoints/student';
@@ -23,6 +23,7 @@ import { InstructorCourses } from '@/features/public/components/instructor/Instr
 import { InstructorSidebar } from '@/features/public/components/instructor/InstructorSidebar';
 import { InstructorPageSkeleton } from '@/features/public/components/instructor/InstructorPageSkeleton';
 import type { InstructorProfile } from '@/features/public/components/instructor/types';
+import type { Course } from '@/types/instructor';
 
 const InstructorReviews = lazy(() =>
   import('@/features/public/components/instructor/InstructorReviews').then((m) => ({
@@ -56,7 +57,7 @@ export function InstructorProfilePage() {
     queryFn: ({ signal }) =>
       studentApi
         .listCourses({ limit: 100 }, signal)
-        .then((r) => (r.data.data.courses || []).filter((c: any) => c.instructor?._id === id)),
+        .then((r) => ((r.data.data?.courses ?? []) as Course[]).filter((c) => c.instructor?._id === id)),
     enabled: !!id,
   });
 
@@ -101,7 +102,7 @@ export function InstructorProfilePage() {
   const seoTitle = `${instructor.name} - Instructor`;
 
   return (
-    <div className="min-h-screen pb-16">
+    <div className="min-h-screen">
       <SEO
         title={seoTitle}
         description={instructor.bio || `Learn from instructor ${instructor.name} on NextEra.`}
@@ -136,65 +137,59 @@ export function InstructorProfilePage() {
 
       <InstructorHero instructor={instructor} />
 
-      <Section size="lg">
-        <Container>
-          {/* In-page anchor nav */}
-          <nav
-            aria-label="On this page"
-            className="-mt-2 mb-8 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-            {SECTION_NAV.map((item) => (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className="shrink-0 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              >
-                {item.label}
-              </a>
-            ))}
-          </nav>
+      <Section size="sm" className="pt-8 sm:pt-10 lg:pt-12 pb-10 sm:pb-12 lg:pb-14">
+        {/* In-page anchor nav */}
+        <nav
+          aria-label="On this page"
+          className="-mt-2 mb-6 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {SECTION_NAV.map((item) => (
+            <a
+              key={item.id}
+              href={`#${item.id}`}
+              className="shrink-0 rounded-full border border-border bg-card px-4 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
 
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Main column */}
-            <div className="min-w-0 space-y-8 lg:col-span-2">
-              <InstructorStats instructor={instructor} />
-              <InstructorAbout name={instructor.name} bio={instructor.bio} />
-              <InstructorExpertise instructor={instructor} />
-              <InstructorProfessionalInfo instructor={instructor} />
-              <InstructorCourses courses={courses} instructorName={instructor.name} isLoading={coursesLoading} />
-              <Suspense fallback={<SectionFallback />}>
-                <InstructorReviews instructor={instructor} />
-              </Suspense>
-            </div>
-
-            {/* Sticky sidebar */}
-            <InstructorSidebar instructor={instructor} />
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main column */}
+          <div className="min-w-0 space-y-6 lg:col-span-2">
+            <InstructorStats instructor={instructor} />
+            <InstructorAbout name={instructor.name} bio={instructor.bio} />
+            <InstructorExpertise instructor={instructor} />
+            <InstructorProfessionalInfo instructor={instructor} />
+            <InstructorCourses courses={courses} instructorName={instructor.name} isLoading={coursesLoading} />
+            <Suspense fallback={<SectionFallback />}>
+              <InstructorReviews instructor={instructor} />
+            </Suspense>
           </div>
-        </Container>
+
+          {/* Sticky sidebar */}
+          <InstructorSidebar instructor={instructor} />
+        </div>
       </Section>
 
       {/* Related instructors */}
-      <Section size="lg">
-        <Container>
-          <Suspense fallback={<SectionFallback className="h-72" />}>
-            <RelatedInstructors instructorId={instructor._id} instructorName={instructor.name} />
-          </Suspense>
-        </Container>
+      <Section size="sm" className="pt-8 sm:pt-10 lg:pt-12 pb-8 sm:pb-10 lg:pb-12">
+        <Suspense fallback={<SectionFallback className="h-72" />}>
+          <RelatedInstructors instructorId={instructor._id} instructorName={instructor.name} />
+        </Suspense>
       </Section>
 
       {/* CTA */}
-      <Section size="sm" background="gradient">
-        <Container>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Ready to learn from {instructor.name}?
-            </h2>
-            <p className="mt-3 text-muted-foreground">Explore their courses and start building new skills today.</p>
-            <Button asChild variant="outline" size="lg" className="mt-4">
-              <Link to={ROUTES.COURSES}>Browse All Courses</Link>
-            </Button>
-          </div>
-        </Container>
+      <Section size="sm" background="gradient" className="pt-10 sm:pt-12 lg:pt-14">
+        <div className="mx-auto max-w-2xl text-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Ready to learn from {instructor.name}?
+          </h2>
+          <p className="mt-3 text-muted-foreground">Explore their courses and start building new skills today.</p>
+          <Button asChild variant="outline" size="lg" className="mt-4">
+            <Link to={ROUTES.COURSES}>Browse All Courses</Link>
+          </Button>
+        </div>
       </Section>
     </div>
   );

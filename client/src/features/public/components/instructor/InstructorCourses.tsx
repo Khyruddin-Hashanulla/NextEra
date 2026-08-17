@@ -81,7 +81,14 @@ export const InstructorCourses = memo(function InstructorCourses({
       <div id="courses" className="scroll-mt-24">
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Recent Courses</h2>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Recent Courses</h2>
+              {courses.length > 0 && (
+                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                  {courses.length} {courses.length === 1 ? 'course' : 'courses'}
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">Courses taught by {instructorName}</p>
           </div>
           {courses.length > 0 && (

@@ -21,7 +21,14 @@ export const InstructorReviews = memo(function InstructorReviews({ instructor }:
 
   return (
     <Reveal>
-      <div id="reviews" className="scroll-mt-24 rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+      <div
+        id="reviews"
+        className="relative scroll-mt-24 overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8"
+      >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent"
+          aria-hidden="true"
+        />
         <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
             <MessagesSquare className="h-4 w-4 text-primary" aria-hidden="true" />

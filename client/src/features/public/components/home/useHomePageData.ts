@@ -111,9 +111,9 @@ export function useHomePageData() {
     queryFn: ({ signal }) => studentApi.listCourses({ limit: 100 }, signal).then((r) => r.data.data),
   });
 
-  const featuredBlogsQuery = useQuery({
-    queryKey: QUERY_KEYS.blog.list({ home: 'featured', limit: 3 }),
-    queryFn: ({ signal }) => blogApi.getFeatured(3, signal).then((r) => r.data.blogs),
+  const latestBlogsQuery = useQuery({
+    queryKey: QUERY_KEYS.blog.list({ home: 'latest', limit: 3 }),
+    queryFn: ({ signal }) => blogApi.listPublished({ page: 1, limit: 3 }, signal).then((r) => r.data.blogs),
   });
 
   const featuredCourses: MockCourse[] = useMemo(
@@ -305,10 +305,10 @@ export function useHomePageData() {
     featuredCoursesRefetch: featuredCoursesQuery.refetch,
     allCoursesLoading: allCoursesQuery.isLoading,
     allCoursesError: allCoursesQuery.error,
-    blogs: featuredBlogsQuery.data ?? [],
-    blogsLoading: featuredBlogsQuery.isLoading,
-    blogsError: featuredBlogsQuery.error,
-    blogsRefetch: featuredBlogsQuery.refetch,
+    blogs: latestBlogsQuery.data ?? [],
+    blogsLoading: latestBlogsQuery.isLoading,
+    blogsError: latestBlogsQuery.error,
+    blogsRefetch: latestBlogsQuery.refetch,
     categories,
     stats,
     testimonials: fallbackTestimonials,

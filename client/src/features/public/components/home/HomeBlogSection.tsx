@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Clock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { OptimizedImage } from '@/components/common/OptimizedImage';
 import { ROUTES } from '@/lib/constants';
 import type { BlogPost } from '@/types/blog';
 import { SectionHeading } from './SectionHeading';
@@ -30,19 +31,14 @@ function HomeBlogCard({ post }: { post: BlogPost }) {
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
     >
       <div className="relative aspect-[16/9] overflow-hidden bg-muted">
-        {post.featuredImage?.url ? (
-          <img
-            src={post.featuredImage.url}
-            alt={post.title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/15 to-violet-500/15 text-primary/50">
-            <FileText className="h-12 w-12" aria-hidden="true" />
-          </div>
-        )}
+        <OptimizedImage
+          src={post.featuredImage?.url || '/images/blog.jpg'}
+          alt={post.title}
+          placeholderType="blog"
+          fallbackSrc="/images/blog.jpg"
+          containerClassName="h-full w-full"
+          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        />
         <div className="absolute left-3 top-3 rounded-full bg-background/90 px-3 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
           {post.categories?.[0] ?? 'Insights'}
         </div>

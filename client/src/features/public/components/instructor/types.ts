@@ -71,7 +71,7 @@ export interface InstructorCourse {
   title: string;
   slug?: string;
   thumbnail?: { url: string; publicId?: string };
-  category?: { _id?: string; name?: string };
+  category?: string | { _id?: string; name?: string };
   level?: string;
   language?: string;
   price?: number;

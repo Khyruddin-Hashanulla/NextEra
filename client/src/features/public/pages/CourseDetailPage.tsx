@@ -623,15 +623,17 @@ export function CourseDetailPage() {
                   <Accordion type="single" collapsible className="w-full space-y-3">
                     {curriculum.map((section: any, sectionIndex: number) => (
                       <AccordionItem key={section._id} value={section._id}>
-                        <AccordionTrigger className="text-lg font-medium">
-                          <span className="mr-3 text-primary font-bold">{sectionIndex + 1}.</span>
-                          {section.title}
-                          <span className="ml-auto text-sm text-muted-foreground">
+                        <AccordionTrigger className="text-base font-medium sm:text-lg">
+                          <span className="flex min-w-0 flex-1 items-center gap-3 text-left">
+                            <span className="shrink-0 text-primary font-bold">{sectionIndex + 1}.</span>
+                            <span className="min-w-0 flex-1 break-words">{section.title}</span>
+                          </span>
+                          <span className="ml-3 shrink-0 whitespace-nowrap text-xs text-muted-foreground sm:text-sm">
                             {section.lectures?.length || 0} lectures · {section.totalDuration || 0}h
                           </span>
                         </AccordionTrigger>
                         <AccordionContent className="pt-4">
-                          <div className="space-y-2 ml-8">
+                          <div className="ml-4 space-y-2 sm:ml-8">
                             {section.lectures?.map((lecture: any, lectureIndex: number) => {
                               const canPlay = isEnrolled || lecture.isFree;
                               return (
@@ -648,27 +650,27 @@ export function CourseDetailPage() {
                                     setPreviewOpen(true);
                                   }}
                                   disabled={!canPlay}
-                                  className="flex w-full items-center gap-3 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left disabled:cursor-not-allowed disabled:opacity-70"
+                                  className="flex w-full items-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left disabled:cursor-not-allowed disabled:opacity-70 sm:gap-3"
                                 >
-                                  <span className="text-muted-foreground flex-shrink-0">
+                                  <span className="shrink-0 text-muted-foreground">
                                     {sectionIndex + 1}.{lectureIndex + 1}
                                   </span>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="font-medium truncate">{lecture.title}</p>
-                                    <p className="text-sm text-muted-foreground">
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate font-medium">{lecture.title}</p>
+                                    <p className="truncate text-sm text-muted-foreground">
                                       {lecture.type}
                                       {formatLectureDuration(lecture.duration) &&
                                         ` · ${formatLectureDuration(lecture.duration)}`}
                                     </p>
                                   </div>
                                   {isEnrolled ? (
-                                    <PlayCircle className="h-4 w-4 text-success" />
+                                    <PlayCircle className="h-4 w-4 shrink-0 text-success" />
                                   ) : lecture.isFree ? (
-                                    <Badge variant="secondary" className="text-xs">
+                                    <Badge variant="secondary" className="shrink-0 whitespace-nowrap text-xs">
                                       Free Preview
                                     </Badge>
                                   ) : (
-                                    <Lock className="h-4 w-4 text-muted-foreground" />
+                                    <Lock className="h-4 w-4 shrink-0 text-muted-foreground" />
                                   )}
                                 </button>
                               );
