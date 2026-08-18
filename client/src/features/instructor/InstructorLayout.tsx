@@ -184,7 +184,7 @@ export function InstructorLayout() {
           </div>
         </aside>
 
-        <div className={cn('flex flex-1 flex-col', 'lg:pl-0')}>
+        <div className={cn('flex min-w-0 flex-1 flex-col', 'lg:pl-0')}>
           <div className="sticky top-0 z-20 flex h-16 items-center gap-3 border-b bg-background/80 px-4 backdrop-blur-sm lg:hidden">
             <button
               onClick={() => setMobileOpen(true)}
@@ -201,7 +201,7 @@ export function InstructorLayout() {
             </div>
           </div>
 
-          <div className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </div>
