@@ -1,10 +1,29 @@
+export interface StudentDashboardEnrollment {
+  _id: string;
+  user?: string;
+  course: {
+    _id: string;
+    title: string;
+    thumbnail?: { url: string; publicId: string };
+    price: number;
+    level: string;
+    totalLectures: number;
+    totalDuration: number;
+    contentStatus?: 'IN_PROGRESS' | 'COMPLETED';
+  };
+  completionPercentage: number;
+  isCompleted: boolean;
+  lastWatchedLecture?: { _id: string; title: string; duration: number };
+  enrolledAt?: string;
+}
+
 export interface StudentDashboard {
   totalCourses: number;
   completedCourses: number;
   inProgress: number;
   certificates: number;
-  recentCourses: any[];
-  enrollments: any[];
+  recentCourses: StudentDashboardEnrollment[];
+  enrollments: StudentDashboardEnrollment[];
 }
 
 export interface EnrolledCourse {
