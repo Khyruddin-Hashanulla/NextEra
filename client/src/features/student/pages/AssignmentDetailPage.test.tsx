@@ -14,8 +14,8 @@ vi.mock('@/providers/ToastProvider', () => ({
   useToast: () => ({ addToast }),
 }));
 
-vi.mock('@/components/skeletons/FormSkeleton', () => ({
-  FormSkeleton: () => <div>Loading skeleton</div>,
+vi.mock('@/features/student/assignments/AssignmentDetailSkeleton', () => ({
+  AssignmentDetailSkeleton: () => <div>Loading skeleton</div>,
 }));
 
 vi.mock('@/api/endpoints/student', () => ({

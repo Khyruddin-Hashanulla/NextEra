@@ -226,6 +226,7 @@ export interface AssignmentDetailResponse {
       passingMarks: number;
       dueDate?: string;
       allowLateSubmission: boolean;
+      penaltyPercent?: number;
       instructions?: string;
     };
     resources: { title: string; url: string; type: string }[];
