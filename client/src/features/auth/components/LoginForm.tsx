@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { AxiosError } from 'axios';
 import { loginSchema, LoginFormData } from '@/lib/validators/authSchema';
 import { useLoginMutation, useSendOTPMutation } from '../hooks/useAuthMutations';
@@ -14,24 +14,14 @@ import { useToast } from '@/providers/ToastProvider';
 import { Mail, Lock, Eye, EyeOff, AlertTriangle, Send } from 'lucide-react';
 import { ApiError } from '@/types/api';
 
-const stagger = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.07 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
-};
+const easeOut = [0.22, 1, 0.36, 1] as const;
 
 const EMAIL_NOT_VERIFIED_MESSAGE = 'Please verify your email before logging in.';
 const ACCOUNT_LOCKED_MESSAGE =
   'Your account is temporarily locked due to multiple failed login attempts. Please try again later.';
 
 export function LoginForm() {
+  const reduceMotion = useReducedMotion();
   const [showPassword, setShowPassword] = useState(false);
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const [_accountLocked, setAccountLocked] = useState(false);
@@ -90,15 +80,29 @@ export function LoginForm() {
     }
   };
 
+  const fadeUp = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 12 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.35, ease: easeOut },
+      };
+
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
-      <motion.div variants={item} className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Welcome back</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Sign in to your NextEra account</p>
+    <div className="space-y-6">
+      <motion.div {...fadeUp}>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Welcome back</h1>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+          Sign in to your NextEra account
+        </p>
       </motion.div>
 
       {unverifiedEmail && (
-        <motion.div variants={item} className="rounded-lg border border-warning/30 bg-warning/5 p-4">
+        <motion.div
+          {...fadeUp}
+          className="rounded-lg border border-warning/30 bg-warning/5 p-4"
+          role="alert"
+        >
           <div className="flex gap-3">
             <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-warning" />
             <div className="space-y-2 text-sm">
@@ -122,7 +126,7 @@ export function LoginForm() {
         </motion.div>
       )}
 
-      <motion.form variants={item} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <motion.form {...fadeUp} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
           id="email"
           type="email"
@@ -179,7 +183,7 @@ export function LoginForm() {
         </Button>
       </motion.form>
 
-      <motion.div variants={item}>
+      <motion.div {...fadeUp}>
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -190,16 +194,16 @@ export function LoginForm() {
         </div>
       </motion.div>
 
-      <motion.div variants={item}>
+      <motion.div {...fadeUp}>
         <GoogleOAuthButton />
       </motion.div>
 
-      <motion.p variants={item} className="text-center text-sm text-muted-foreground">
+      <motion.p {...fadeUp} className="text-center text-sm text-muted-foreground">
         Don&apos;t have an account?{' '}
         <Link to={ROUTES.REGISTER} className="font-medium text-primary transition-colors hover:text-primary/80">
           Sign up
         </Link>
       </motion.p>
-    </motion.div>
+    </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { registerSchema, RegisterFormData } from '@/lib/validators/authSchema';
 import { useRegisterMutation } from '../hooks/useAuthMutations';
 import { Button } from '@/components/ui/button';
@@ -11,20 +11,10 @@ import { ROUTES } from '@/lib/constants';
 import { GoogleOAuthButton } from './GoogleOAuthButton';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 
-const stagger = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: 'easeOut' as const } },
-};
+const easeOut = [0.22, 1, 0.36, 1] as const;
 
 export function RegisterForm() {
+  const reduceMotion = useReducedMotion();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const registerMutation = useRegisterMutation();
@@ -45,14 +35,24 @@ export function RegisterForm() {
     });
   };
 
+  const fadeUp = reduceMotion
+    ? {}
+    : {
+        initial: { opacity: 0, y: 12 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.35, ease: easeOut },
+      };
+
   return (
-    <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-6">
-      <motion.div variants={item} className="text-center">
-        <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Join NextEra and start learning</p>
+    <div className="space-y-6">
+      <motion.div {...fadeUp}>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Create an account</h1>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+          Join NextEra and start your learning journey
+        </p>
       </motion.div>
 
-      <motion.form variants={item} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <motion.form {...fadeUp} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <Input
           id="name"
           type="text"
@@ -144,7 +144,7 @@ export function RegisterForm() {
         </Button>
       </motion.form>
 
-      <motion.div variants={item}>
+      <motion.div {...fadeUp}>
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t" />
@@ -155,16 +155,16 @@ export function RegisterForm() {
         </div>
       </motion.div>
 
-      <motion.div variants={item}>
+      <motion.div {...fadeUp}>
         <GoogleOAuthButton />
       </motion.div>
 
-      <motion.p variants={item} className="text-center text-sm text-muted-foreground">
+      <motion.p {...fadeUp} className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
         <Link to={ROUTES.LOGIN} className="font-medium text-primary transition-colors hover:text-primary/80">
           Sign in
         </Link>
       </motion.p>
-    </motion.div>
+    </div>
   );
 }
