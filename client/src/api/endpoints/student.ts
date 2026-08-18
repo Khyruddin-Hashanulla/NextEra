@@ -18,6 +18,7 @@ import type {
   WishlistItem,
 } from '@/types/student';
 import type { Announcement } from '@/types/instructor';
+import type { QuizHistoryOverview } from '@/types/quiz';
 
 export const studentApi = {
   getDashboard: (signal?: AbortSignal) =>
@@ -120,7 +121,8 @@ export const studentApi = {
   getQuizAttempts: (lectureId: string, signal?: AbortSignal) =>
     axiosInstance.get<{ data: QuizAttempt[] }>(`/student/quiz/${lectureId}/attempts`, { signal }),
 
-  getQuizzes: (signal?: AbortSignal) => axiosInstance.get<{ data: any }>('/quiz/overview', { signal }),
+  getQuizzes: (signal?: AbortSignal) =>
+    axiosInstance.get<{ data: QuizHistoryOverview }>('/quiz/overview', { signal }),
 
   submitAssignment: (
     data: {
