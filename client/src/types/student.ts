@@ -358,3 +358,39 @@ export interface PayoutItem {
   notes?: string;
   createdAt: string;
 }
+
+export interface PaymentFailureDetails {
+  failureCode?: string;
+  failureReason?: string;
+  failureDescription?: string;
+  paymentMethod?: string;
+  bank?: string;
+  cardLast4?: string;
+  cardNetwork?: string;
+  failedAt?: string;
+}
+
+export interface StudentPayment {
+  _id: string;
+  user?: { _id: string; name?: string; email?: string };
+  course?: { _id: string; title?: string; thumbnail?: { url: string; publicId?: string } };
+  bundle?: { _id: string; title?: string; thumbnail?: { url: string; publicId?: string } };
+  subscription?: { _id: string; name?: string };
+  amount: number;
+  currency?: string;
+  type?: string;
+  status: string;
+  paymentMethod?: string;
+  createdAt: string;
+  razorpayOrderId?: string;
+  razorpayPaymentId?: string;
+  pendingReason?: string;
+  failureDetails?: PaymentFailureDetails;
+}
+
+export interface StudentOrdersResponse {
+  payments: StudentPayment[];
+  total: number;
+  page: number;
+  totalPages: number;
+}
