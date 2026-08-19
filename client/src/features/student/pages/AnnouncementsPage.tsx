@@ -1,86 +1,87 @@
-import { useQuery } from '@tanstack/react-query';
-import { studentApi } from '@/api/endpoints/student';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { useAnnouncements } from '@/features/student/announcements/useAnnouncements';
+import { AnnouncementsHeader } from '@/features/student/announcements/AnnouncementsHeader';
+import { AnnouncementCard } from '@/features/student/announcements/AnnouncementCard';
+import { AnnouncementDetailDialog } from '@/features/student/announcements/AnnouncementDetailDialog';
+import { AnnouncementsPagination } from '@/features/student/announcements/AnnouncementsPagination';
+import { AnnouncementsSkeleton } from '@/features/student/announcements/AnnouncementsSkeleton';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Megaphone, BookOpen } from 'lucide-react';
-import { motion } from 'framer-motion';
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.04 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' as const } },
-};
+import { ErrorState } from '@/components/common/ErrorState';
+import { StaggerContainer, StaggerItem } from '@/components/common/PageTransition';
+import { categorizeError } from '@/lib/error-utils';
+import type { Announcement } from '@/types/instructor';
+import { Megaphone } from 'lucide-react';
 
 export function AnnouncementsPage() {
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['student', 'announcements'],
-    queryFn: () => studentApi.listAnnouncements({ page: 1, limit: 20 }).then((r: any) => r.data.data),
-  });
+  const [page, setPage] = useState(1);
+  const [selected, setSelected] = useState<Announcement | null>(null);
+  const { data, isLoading, error, refetch } = useAnnouncements(page);
 
   if (isLoading) {
+    return <AnnouncementsSkeleton />;
+  }
+
+  if (error) {
+    const category = categorizeError(error);
     return (
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-56" />
-          <Skeleton className="h-4 w-80" />
-        </div>
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24 w-full rounded-xl" />
-          ))}
-        </div>
-      </div>
+      <ErrorState
+        title={category === 'network' ? 'Unable to reach the server' : 'Could not load announcements'}
+        message={
+          category === 'network'
+            ? 'Check your internet connection and try again.'
+            : 'Something went wrong while loading your announcements.'
+        }
+        onRetry={refetch}
+      />
     );
   }
 
-  const announcements = data?.announcements || [];
+  const announcements = data?.announcements ?? [];
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
-      <motion.div variants={item}>
-        <h1 className="text-2xl font-bold tracking-tight">Announcements</h1>
-        <p className="mt-1 text-muted-foreground">Latest updates from your course instructors</p>
-      </motion.div>
+    <>
+      <div className="space-y-6">
+        <StaggerContainer>
+          <div className="space-y-6">
+            <AnnouncementsHeader total={data?.total} />
 
-      {isError || !announcements.length ? (
-        <motion.div variants={item}>
-          <EmptyState
-            icon={<Megaphone className="h-8 w-8" />}
-            title="No announcements yet"
-            description="Instructor updates for your enrolled courses will appear here"
-          />
-        </motion.div>
-      ) : (
-        <motion.div variants={container} className="space-y-3">
-          {announcements.map((a: any) => (
-            <motion.div key={a._id} variants={item} className="rounded-xl border bg-card p-5">
-              <div className="flex items-start gap-3">
-                <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <Megaphone className="h-4 w-4" />
+            {!announcements.length ? (
+              <EmptyState
+                icon={<Megaphone className="h-7 w-7 text-primary" />}
+                title="No announcements yet"
+                description="Instructor updates for your enrolled courses will appear here."
+                action={{ label: 'Go to My Courses', href: '/student/my-courses' }}
+              />
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {announcements.map((announcement) => (
+                    <StaggerItem key={announcement._id}>
+                      <AnnouncementCard announcement={announcement} onOpen={() => setSelected(announcement)} />
+                    </StaggerItem>
+                  ))}
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold">{a.title}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleString()}</p>
-                  </div>
-                  <p className="mt-1.5 whitespace-pre-wrap text-sm text-muted-foreground">{a.message}</p>
-                  <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <BookOpen className="h-3.5 w-3.5" />
-                    {a.course?.title || 'Course'}
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
-    </motion.div>
+
+                {data && (
+                  <AnnouncementsPagination
+                    page={page}
+                    totalPages={data.totalPages}
+                    total={data.total}
+                    onPageChange={setPage}
+                  />
+                )}
+              </>
+            )}
+          </div>
+        </StaggerContainer>
+      </div>
+
+      <AnnouncementDetailDialog
+        announcement={selected}
+        onOpenChange={(open) => {
+          if (!open) setSelected(null);
+        }}
+      />
+    </>
   );
 }

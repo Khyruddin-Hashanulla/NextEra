@@ -1,3 +1,5 @@
+import type { Announcement } from './instructor';
+
 export interface StudentDashboardEnrollment {
   _id: string;
   user?: string;
@@ -235,6 +237,13 @@ export interface AssignmentDetailResponse {
   submission: AssignmentSubmission | null;
   canResubmit: boolean;
   canSubmit: boolean;
+}
+
+export interface StudentAnnouncementsResponse {
+  announcements: Announcement[];
+  total: number;
+  page: number;
+  totalPages: number;
 }
 
 export interface Certificate {
