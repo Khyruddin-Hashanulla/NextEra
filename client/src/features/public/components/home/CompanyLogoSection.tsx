@@ -52,8 +52,10 @@ export function CompanyLogoSection({ companies = DEFAULT_COMPANIES, className }:
                     <CompanyLogo
                       name={logo.name}
                       path={logo.path}
+                      color={logo.color}
+                      brand={logo.brand}
                       aria-hidden="true"
-                      className="h-5 w-5 shrink-0 text-muted-foreground/60 transition-colors duration-300 hover:text-foreground sm:h-6 sm:w-6"
+                      className="h-5 w-5 shrink-0 transition-opacity duration-300 hover:opacity-75 sm:h-6 sm:w-6"
                     />
                   )}
                   <span className="bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
